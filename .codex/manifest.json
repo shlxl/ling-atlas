@@ -1,0 +1,27 @@
+{
+  "name": "ling-atlas agents",
+  "version": "1.0.0",
+  "commands": {
+    "setup": {
+      "script": "./.codex/setup.mjs"
+    },
+    "precheck": {
+      "script": "./.codex/precheck.mjs"
+    },
+    "gen": {
+      "script": "./.codex/gen.mjs"
+    },
+    "build": {
+      "script": "./.codex/build.mjs"
+    },
+    "publish": {
+      "script": "./.codex/publish.mjs"
+    },
+    "dev": {
+      "script": "./.codex/dev.mjs"
+    },
+    "audit": {
+      "script": "./.codex/audit.mjs"
+    }
+  }
+}
