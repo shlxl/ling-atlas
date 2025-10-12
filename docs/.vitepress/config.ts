@@ -35,7 +35,7 @@ export default defineConfig({
   themeConfig: {
     nav: navFromMeta(),
     sidebar: 'auto',
-    socialLinks: [{ icon: 'github', link: 'https://github.com/your/ling-atlas' }]
+    socialLinks: [{ icon: 'github', link: 'https://github.com/shlxl/ling-atlas' }]
   },
   vite: { server: { fs: { allow: ['..'] } } }
 })
