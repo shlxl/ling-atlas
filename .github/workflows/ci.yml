@@ -1,0 +1,25 @@
+name: CI
+on:
+  pull_request:
+    branches: [ main, master ]
+  push:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+      - run: npm ci
+      - name: 归一标签（非阻断）
+        run: npm run tags:normalize
+      - name: Frontmatter 校验（阻断）
+        run: npm run precheck
+      - name: 生成聚合页（pagegen）
+        run: npm run gen
+      - name: 构建（阻断）
+        run: npm run build
