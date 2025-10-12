@@ -3,8 +3,15 @@ import { globby } from 'globby'
 import matter from 'gray-matter'
 import Ajv from 'ajv'
 
+// Load schema
 const schema = JSON.parse(await fs.readFile('schema/frontmatter.schema.json', 'utf8'))
-const ajv = new Ajv({ allErrors: true, allowUnionTypes: true })
+
+// Ajv: turn off strict mode to allow vendor keys like "x-schema-version"
+const ajv = new Ajv({
+  allErrors: true,
+  allowUnionTypes: true,
+  strict: false
+})
 const validate = ajv.compile(schema)
 
 const files = await globby('docs/content/**/index.md')
