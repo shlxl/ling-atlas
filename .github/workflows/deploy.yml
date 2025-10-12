@@ -16,6 +16,9 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      BASE: /ling-atlas/
+      SITE_ORIGIN: https://shlxl.github.io/ling-atlas
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
