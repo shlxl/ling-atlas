@@ -21,14 +21,19 @@ function toExcerpt(md) {
 
 function ymd(s) { return s?.slice(0,10) || '' }
 
+// Always use POSIX-style separators from globby and normalize backslashes just in case
 const files = await globby('**/index.md', { cwd: CONTENT })
 const posts = []
 for (const f of files) {
   const raw = await fs.readFile(path.join(CONTENT, f), 'utf8')
   const { data, content } = matter(raw)
   if (data.status === 'draft') continue
-  const without = f.split(path.sep).slice(0, -1).join('/')
-  const url = '/' + without + '/'
+
+  // 🔧 Cross-platform path handling: normalize to POSIX
+  const posix = String(f).replace(/\\/g, '/')
+  const without = posix.includes('/') ? posix.substring(0, posix.lastIndexOf('/')) : ''
+  const url = '/content/' + (without ? without + '/' : '')
+
   posts.push({
     title: data.title,
     date: ymd(data.date),
@@ -48,7 +53,7 @@ posts.sort((a,b)=> (b.updated||b.date).localeCompare(a.updated||a.date))
 
 const meta = { byCategory:{}, bySeries:{}, byTag:{}, byYear:{}, all: posts }
 for (const p of posts) {
-  (meta.byCategory[p.category_zh] ||= []).push(p)
+  ;(meta.byCategory[p.category_zh] ||= []).push(p)
   if (p.series) (meta.bySeries[p.series_slug||p.series] ||= []).push(p)
   for (const t of p.tags_zh) (meta.byTag[t] ||= []).push(p)
   const y = (p.updated||p.date).slice(0,4); (meta.byYear[y] ||= []).push(p)
