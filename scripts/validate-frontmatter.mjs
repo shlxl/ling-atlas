@@ -6,7 +6,7 @@ import Ajv from 'ajv'
 // Load schema
 const schema = JSON.parse(await fs.readFile('schema/frontmatter.schema.json', 'utf8'))
 
-// Ajv: turn off strict mode to allow vendor keys like "x-schema-version"
+// Ajv options: allow vendor keys and collect all errors
 const ajv = new Ajv({
   allErrors: true,
   allowUnionTypes: true,
@@ -14,11 +14,23 @@ const ajv = new Ajv({
 })
 const validate = ajv.compile(schema)
 
+function toYMD(v) {
+  if (!v) return v
+  if (v instanceof Date) return v.toISOString().slice(0, 10)
+  if (typeof v === 'number') return new Date(v).toISOString().slice(0, 10)
+  if (typeof v === 'string') return v.slice(0, 10)
+  return v
+}
+
 const files = await globby('docs/content/**/index.md')
 let failed = 0
 for (const f of files) {
   const src = await fs.readFile(f, 'utf8')
   const { data } = matter(src)
+  // Normalize date fields so YAML's auto-parsed Date won't fail schema
+  data.date = toYMD(data.date)
+  data.updated = toYMD(data.updated)
+
   const ok = validate(data)
   if (!ok) {
     failed++

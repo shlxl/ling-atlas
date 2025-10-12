@@ -1,6 +1,6 @@
 ---
 title: 你好，知识库
-date: 2025-10-12
+date: "2025-10-12"
 status: published
 category_zh: 工程笔记
 tags_zh: [向量检索, BM25]
