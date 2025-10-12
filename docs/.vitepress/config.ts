@@ -27,6 +27,8 @@ function navFromMeta(){
 }
 
 export default defineConfig({
+  // Inject base from env to support GitHub Pages subpath deployment
+  base: (process.env.BASE as string) || '/',
   lang: 'zh-CN',
   title: 'Ling Atlas · 小凌的个人知识库',
   description: '现代化、可演进、可检索的知识库工程',

@@ -1,9 +1,11 @@
 ---
 title: 你好，知识库
-date: "2025-10-12"
+date: '2025-10-12'
 status: published
 category_zh: 工程笔记
-tags_zh: [向量检索, BM25]
+tags_zh:
+  - vector-search
+  - BM25
 series: 起步
 series_slug: kick-off
 slug: hello-kb
