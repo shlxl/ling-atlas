@@ -10,7 +10,10 @@
     "build": "npm run gen && vitepress build docs",
     "dev": "npm run gen && vitepress dev docs",
     "check": "npm run precheck && npm run build",
-    "preview": "vitepress preview docs"
+    "preview": "vitepress preview docs",
+    "search:index": "pagefind --site docs/.vitepress/dist --output-path docs/public/pagefind --force-language zh",
+    "dev:search": "vitepress build docs && npm run search:index && node -e \"import('node:fs').then(fs=>fs.cpSync('docs/public/pagefind','docs/.vitepress/dist/pagefind',{recursive:true}))\" && vitepress dev docs --host 0.0.0.0 --port 5173",
+    "preview:search": "vitepress build docs && npm run search:index && node -e \"import('node:fs').then(fs=>fs.cpSync('docs/public/pagefind','docs/.vitepress/dist/pagefind',{recursive:true}))\" && vitepress preview docs --host 0.0.0.0 --port 4173"
   },
   "devDependencies": {
     "ajv": "^8.17.1",
@@ -19,6 +22,7 @@
     "pinyin-pro": "^3.22.2",
     "vitepress": "^1.5.0",
     "marked": "^12.0.2",
-    "fast-xml-parser": "^4.4.1"
+    "fast-xml-parser": "^4.4.1",
+    "pagefind": "^1.2.0"
   }
 }

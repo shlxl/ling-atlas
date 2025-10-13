@@ -27,3 +27,12 @@ jobs:
         run: npm run gen
       - name: 构建（阻断）
         run: npm run build
+      - name: Build search index (Pagefind)
+        run: npm run search:index
+      - name: Sync pagefind to dist
+        shell: bash
+        run: |
+          if [ -d "docs/public/pagefind" ]; then
+            mkdir -p docs/.vitepress/dist/pagefind
+            cp -r docs/public/pagefind/* docs/.vitepress/dist/pagefind/
+          fi
