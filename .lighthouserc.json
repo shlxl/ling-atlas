@@ -3,7 +3,6 @@
     "collect": {
       "staticDistDir": "docs/.vitepress/dist",
       "numberOfRuns": 1,
-      "chromeFlags": "--headless=new --disable-dev-shm-usage --no-sandbox --disable-setuid-sandbox"
     },
     "assert": {
       "assertions": {
