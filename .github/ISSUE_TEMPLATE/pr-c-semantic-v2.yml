@@ -1,0 +1,37 @@
+name: "[PR-C] 搜索 v2：语义检索 + RRF/MMR"
+description: "在浏览器端集成 Transformers.js，构建 embeddings.json，融合 Pagefind + 语义搜索"
+title: "[PR-C] 搜索 v2：语义检索 + RRF/MMR"
+labels: ["type:feature", "area:search", "priority:P0", "status:ready"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **目标**
+        - 使用 Transformers.js（如 Xenova/gte-small）在浏览器端实现语义检索
+        - 构建期生成 `docs/public/embeddings.json`
+        - 运行时与 Pagefind 结果融合（RRF + MMR），中英双语可检
+        - 模型加载失败时自动降级为 Pagefind-only
+        - 模型+索引总载荷 ≤ 25 MB
+  - type: checkboxes
+    id: changes
+    attributes:
+      label: 变更清单
+      options:
+        - label: 新增 `scripts/build-embeddings.mjs`（生成 embeddings.json）
+        - label: 新增 `docs/public/worker/embeddings.worker.js`（浏览器端模型推理）
+        - label: 扩展 `SearchBox.vue` 逻辑（RRF+MMR 融合）
+        - label: 在 CI 增加 `npm run embeddings:build` 步骤
+  - type: checkboxes
+    id: acceptance
+    attributes:
+      label: 验收标准
+      options:
+        - label: 中文/英文/混合关键词均可检
+        - label: 模型 + 索引载荷 ≤ 25MB
+        - label: 加载失败自动降级为 Pagefind-only
+        - label: RRF+MMR 融合逻辑正确、结果合理
+  - type: input
+    id: rollback
+    attributes:
+      label: 回滚策略
+      description: "若模型加载异常或性能下降，可暂时移除语义合并逻辑，仅保留 Pagefind"
