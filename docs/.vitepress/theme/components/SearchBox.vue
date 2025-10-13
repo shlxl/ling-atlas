@@ -78,10 +78,6 @@ async function ensurePagefind() {
       if (!instance || typeof instance.search !== 'function') {
         throw new Error('Pagefind runtime missing search implementation')
       }
-      if (typeof instance.options === 'function') {
-        await instance.options({ baseUrl: normalizeBase('/') })
-      }
-      pagefind = instance
       return true
     } catch (err) {
       error.value = '搜索运行时未准备好。请先执行：npm run build && npm run search:index'
@@ -315,14 +311,6 @@ async function runSearch(input: string) {
     loading.value = false
     return
   }
-
-  if (!(await ensurePagefind())) {
-    loading.value = false
-    return
-  }
-
-  let lexical: LexicalResult[] = []
-  try {
   try {
     semanticPending.value = true
     const semantic = await semanticSearch(q)
