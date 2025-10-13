@@ -308,7 +308,6 @@ async function runSearch(input: string) {
   const token = ++searchToken
   results.value = []
   error.value = null
-  lastQueryHash.value = ''
   semanticPending.value = false
   loading.value = true
 
@@ -324,26 +323,6 @@ async function runSearch(input: string) {
 
   let lexical: LexicalResult[] = []
   try {
-    const hashPromise = hashQuery(q).catch(() => '')
-    lexical = await getLexicalResults(q)
-    if (token !== searchToken) return
-
-    results.value = lexical.slice(0, 20).map(item => ({ url: item.url, title: item.title, excerpt: item.excerpt }))
-
-    void hashPromise.then((qHash) => {
-      if (!qHash || token !== searchToken) return
-      lastQueryHash.value = qHash
-      void trackEvent('search_query', { qHash, len: q.length })
-    })
-  } catch (err) {
-    console.error('[search failed]', err)
-    error.value = '搜索失败，请检查控制台日志'
-  } finally {
-    if (token === searchToken) loading.value = false
-  }
-
-  if (token !== searchToken || semanticDisabled) return
-
   try {
     semanticPending.value = true
     const semantic = await semanticSearch(q)
@@ -423,18 +402,6 @@ onBeforeUnmount(() => {
         <div class="la-search-body">
           <div v-if="error" class="la-error">{{ error }}</div>
           <div v-else-if="loading" class="la-loading">正在搜索...</div>
-          <div v-else-if="noResults" class="la-loading">暂无匹配的结果，换个关键词试试～</div>
-          <div v-else class="la-results-wrapper">
-            <div v-if="semanticPending" class="la-semantic-hint">语义结果加载中，先为你展示基础结果…</div>
-            <ul class="la-results">
-              <li v-for="(item, index) in results" :key="item.url">
-                <a :href="withBase(item.url)" @click="onResultClick(item, index)">
-                  <div class="la-title">{{ item.title }}</div>
-                  <div class="la-excerpt">{{ item.excerpt }}</div>
-                </a>
-              </li>
-            </ul>
-          </div>
         </div>
       </div>
     </div>
