@@ -2,61 +2,334 @@
 import { onMounted, onBeforeUnmount, ref } from 'vue'
 import { withBase } from 'vitepress'
 
+type LexicalResult = { url: string; title: string; excerpt: string; rank: number }
+type SemanticCandidate = { url: string; score: number; vector: number[] | null; rank: number }
+type TextItem = { url: string; title: string; text: string }
+
 const isOpen = ref(false)
 const query = ref('')
-const results = ref<Array<any>>([])
+const results = ref<Array<{ url: string; title: string; excerpt: string }>>([])
 const loading = ref(false)
 const error = ref<string | null>(null)
+
 let pagefind: any = null
+let semanticWorker: Worker | null = null
+const workerPending = new Map<string, { resolve: (vecs: number[][]) => void; reject: (reason: any) => void; timer: number }>()
+const semanticReady = ref(false)
+let semanticDisabled = false
+let texts: TextItem[] = []
+const textMap = new Map<string, TextItem>()
+const textVectors = new Map<string, number[]>()
+const vectorPromises = new Map<string, Promise<number[]>>()
+const queryVecCache = new Map<string, number[]>()
+let searchToken = 0
+let debounceTimer = 0
+
+function normalizeBase(path: string) {
+  return withBase(path)
+}
 
 function open() {
   isOpen.value = true
   error.value = null
-  // focus input shortly after open
   requestAnimationFrame(() => {
     const el = document.getElementById('la-search-input') as HTMLInputElement | null
     el?.focus()
   })
+  if (!semanticReady.value && !semanticDisabled) void initSemantic()
 }
+
 function close() {
   isOpen.value = false
 }
 
-async function ensureLoaded() {
+function disableSemantic(reason: unknown) {
+  if (semanticDisabled) return
+  semanticDisabled = true
+  semanticReady.value = false
+  workerPending.forEach(({ reject, timer }) => {
+    clearTimeout(timer)
+    reject(reason ?? new Error('semantic disabled'))
+  })
+  workerPending.clear()
+  if (semanticWorker) {
+    semanticWorker.terminate()
+    semanticWorker = null
+  }
+  console.warn('[semantic disabled]', reason)
+}
+
+async function ensurePagefind() {
   if (pagefind) return true
   try {
-    // Pagefind runtime served from <base>/pagefind/
-    const runtimePath = withBase('/pagefind/pagefind.js')
-    // @vite-ignore: avoid bundler resolution
+    const runtimePath = normalizeBase('/pagefind/pagefind.js')
+    // @vite-ignore
     pagefind = await import(/* @vite-ignore */ (runtimePath as any))
     return true
-  } catch (e) {
+  } catch (err) {
     error.value = '搜索运行时未准备好。请先执行：npm run build && npm run search:index'
+    console.error(err)
     return false
   }
 }
 
-async function doSearch() {
-  const q = query.value.trim()
+function handleWorkerMessage(ev: MessageEvent<any>) {
+  const data = ev.data || {}
+  if (data.type === 'cache:get') {
+    const { key, requestId } = data
+    let value: any = null
+    try {
+      const stored = localStorage.getItem(String(key))
+      if (stored) value = JSON.parse(stored)
+    } catch (err) {
+      console.warn('[semantic cache:get]', err)
+    }
+    try {
+      semanticWorker?.postMessage({ type: 'cache:result', requestId, value })
+    } catch (err) {
+      console.warn('[semantic cache:result]', err)
+    }
+    return
+  }
+  if (data.type === 'cache:set') {
+    const { key, value } = data
+    try {
+      localStorage.setItem(String(key), JSON.stringify(value))
+    } catch (err) {
+      console.warn('[semantic cache:set]', err)
+    }
+    return
+  }
+  if (data.type === 'ready') {
+    semanticReady.value = true
+    return
+  }
+  if (data.type === 'vecs') {
+    const pending = data.requestId ? workerPending.get(data.requestId) : undefined
+    if (pending) {
+      clearTimeout(pending.timer)
+      workerPending.delete(data.requestId)
+      pending.resolve(data.vecs || [])
+    }
+    return
+  }
+  if (data.type === 'error') {
+    const pending = data.requestId ? workerPending.get(data.requestId) : undefined
+    if (pending) {
+      clearTimeout(pending.timer)
+      workerPending.delete(data.requestId)
+      pending.reject(data.reason)
+    }
+    disableSemantic(data.reason)
+  }
+}
+
+async function initSemantic() {
+  if (semanticWorker || semanticDisabled) return
+  try {
+    const res = await fetch(normalizeBase('/embeddings-texts.json'), { cache: 'no-store' })
+    if (!res.ok) throw new Error(`Failed to load embeddings-texts.json (${res.status})`)
+    const payload = await res.json()
+    const items = Array.isArray(payload?.items) ? payload.items : []
+    texts = items.map((item: any) => ({
+      url: String(item.url || ''),
+      title: String(item.title || ''),
+      text: String(item.text || '')
+    })).filter(it => it.url)
+    texts.forEach(it => textMap.set(it.url, it))
+
+    const workerUrl = normalizeBase('/worker/embeddings.worker.js')
+    semanticWorker = new Worker(workerUrl, { type: 'module' })
+    semanticWorker.onmessage = handleWorkerMessage
+    semanticWorker.onerror = (err) => disableSemantic(err?.message || err)
+    semanticWorker.postMessage({ type: 'init' })
+  } catch (err) {
+    disableSemantic(err)
+  }
+}
+
+function enqueueWorker(batch: string[]): Promise<number[][]> {
+  if (!semanticWorker || !semanticReady.value) {
+    return Promise.reject(new Error('Semantic worker unavailable'))
+  }
+  const requestId = `req_${Math.random().toString(36).slice(2)}`
+  return new Promise((resolve, reject) => {
+    const timer = window.setTimeout(() => {
+      workerPending.delete(requestId)
+      reject(new Error('Embedding timeout'))
+    }, 30000)
+    workerPending.set(requestId, { resolve, reject, timer })
+    try {
+      semanticWorker!.postMessage({ type: 'encode', batch, requestId })
+    } catch (err) {
+      clearTimeout(timer)
+      workerPending.delete(requestId)
+      reject(err)
+    }
+  })
+}
+
+async function encodeQueryVector(input: string) {
+  const key = input.trim().toLowerCase()
+  if (queryVecCache.has(key)) return queryVecCache.get(key) as number[]
+  const [vec] = await enqueueWorker([input])
+  queryVecCache.set(key, vec)
+  return vec
+}
+
+async function getVectorForItem(item: TextItem) {
+  if (textVectors.has(item.url)) return textVectors.get(item.url) as number[]
+  let promise = vectorPromises.get(item.url)
+  if (!promise) {
+    const payload = `${item.title}\n\n${item.text}`.trim()
+    promise = enqueueWorker([payload]).then(([vec]) => {
+      textVectors.set(item.url, vec)
+      vectorPromises.delete(item.url)
+      return vec
+    })
+    vectorPromises.set(item.url, promise)
+  }
+  return promise
+}
+
+async function getLexicalResults(q: string): Promise<LexicalResult[]> {
+  const res = await pagefind.search(q)
+  const list = res?.results || []
+  const limited = list.slice(0, 50)
+  const items = await Promise.all(limited.map(async (entry: any, idx: number) => {
+    const data = await entry.data()
+    return {
+      url: data.url,
+      title: data.meta?.title || data.excerpt?.slice(0, 60) || data.url,
+      excerpt: data.excerpt || '',
+      rank: idx + 1
+    }
+  }))
+  return items
+}
+
+function dot(a: number[], b: number[]) {
+  let sum = 0
+  for (let i = 0; i < a.length && i < b.length; i++) sum += a[i] * b[i]
+  return sum
+}
+
+async function semanticSearch(q: string): Promise<{ items: SemanticCandidate[]; queryVec: number[] | null }> {
+  if (semanticDisabled || !semanticReady.value || !semanticWorker || !texts.length) {
+    return { items: [], queryVec: null }
+  }
+  try {
+    const queryVec = await encodeQueryVector(q)
+    const vectors = await Promise.all(texts.map(item => getVectorForItem(item)))
+    const scored = texts.map((item, idx) => ({
+      url: item.url,
+      score: dot(queryVec, vectors[idx]),
+      vector: vectors[idx],
+      rank: idx + 1
+    }))
+    scored.sort((a, b) => b.score - a.score)
+    return { items: scored.slice(0, 50), queryVec }
+  } catch (err) {
+    console.warn('[semantic search failed]', err)
+    disableSemantic(err)
+    return { items: [], queryVec: null }
+  }
+}
+
+function rrfFuse(lexical: LexicalResult[], semantic: SemanticCandidate[], k = 60) {
+  const combined = new Map<string, { url: string; score: number; vector: number[] | null; lex?: LexicalResult }>()
+  lexical.forEach((item, idx) => {
+    const entry = combined.get(item.url) || { url: item.url, score: 0, vector: null }
+    entry.score += 1 / (k + idx + 1)
+    entry.lex = item
+    combined.set(item.url, entry)
+  })
+  semantic.forEach((item, idx) => {
+    const entry = combined.get(item.url) || { url: item.url, score: 0, vector: null }
+    entry.score += 1 / (k + idx + 1)
+    entry.vector = item.vector
+    combined.set(item.url, entry)
+  })
+  return Array.from(combined.values()).sort((a, b) => b.score - a.score)
+}
+
+function mmrSelect(candidates: Array<{ url: string; score: number; vector: number[] | null }>, queryVec: number[] | null, top = 20, lambda = 0.7) {
+  if (!candidates.length) return []
+  const pool = candidates.slice()
+  const selected: Array<{ url: string; score: number; vector: number[] | null }> = []
+  while (pool.length && selected.length < top) {
+    let bestIdx = 0
+    let bestScore = -Infinity
+    for (let i = 0; i < pool.length; i++) {
+      const cand = pool[i]
+      const relevance = cand.score
+      let diversity = 0
+      if (cand.vector && selected.length) {
+        for (const chosen of selected) {
+          if (!chosen.vector) continue
+          const sim = dot(cand.vector, chosen.vector)
+          if (sim > diversity) diversity = sim
+        }
+      }
+      const mmrScore = queryVec ? lambda * relevance - (1 - lambda) * diversity : relevance
+      if (mmrScore > bestScore) {
+        bestScore = mmrScore
+        bestIdx = i
+      }
+    }
+    selected.push(pool.splice(bestIdx, 1)[0])
+  }
+  return selected
+}
+
+async function runSearch(input: string) {
+  const q = input.trim()
+  const token = ++searchToken
   results.value = []
-  if (!q) return
-  if (!(await ensureLoaded())) return
+  error.value = null
+  if (!q) {
+    loading.value = false
+    return
+  }
+  if (!(await ensurePagefind())) return
   loading.value = true
   try {
-    const res = await pagefind.search(q)
-    const limited = res?.results?.slice(0, 20) || []
-    const items = await Promise.all(limited.map((r: any) => r.data()))
-    results.value = items.map((d: any) => ({
-      url: d.url,
-      title: d.meta?.title || d.excerpt?.slice(0, 60) || d.url,
-      excerpt: d.excerpt || '',
-    }))
-  } catch (e) {
-    error.value = '搜索失败，请检查控制台与 /pagefind/ 路径'
-    console.error(e)
+    const lexicalPromise = getLexicalResults(q)
+    const semanticPromise = semanticDisabled ? Promise.resolve({ items: [], queryVec: null }) : semanticSearch(q)
+    const [lexical, semantic] = await Promise.all([lexicalPromise, semanticPromise])
+    if (token !== searchToken) return
+
+    if (!semantic.items.length) {
+      results.value = lexical.slice(0, 20).map(item => ({ url: item.url, title: item.title, excerpt: item.excerpt }))
+      return
+    }
+
+    const fused = rrfFuse(lexical, semantic.items)
+    const reranked = mmrSelect(fused, semantic.queryVec, 20)
+    const lexicalMap = new Map(lexical.map(item => [item.url, item]))
+    results.value = reranked.map(item => {
+      const lex = lexicalMap.get(item.url)
+      if (lex) return { url: lex.url, title: lex.title, excerpt: lex.excerpt }
+      const fallback = textMap.get(item.url)
+      return {
+        url: item.url,
+        title: fallback?.title || item.url,
+        excerpt: (fallback?.text || '').slice(0, 160)
+      }
+    })
+  } catch (err) {
+    console.error('[search failed]', err)
+    error.value = '搜索失败，请检查控制台日志'
   } finally {
-    loading.value = false
+    if (token === searchToken) loading.value = false
   }
+}
+
+function scheduleSearch() {
+  window.clearTimeout(debounceTimer)
+  debounceTimer = window.setTimeout(() => {
+    void runSearch(query.value)
+  }, 160)
 }
 
 function onKey(e: KeyboardEvent) {
@@ -71,10 +344,15 @@ function onKey(e: KeyboardEvent) {
 
 onMounted(() => {
   window.addEventListener('keydown', onKey)
+  void initSemantic()
 })
 
 onBeforeUnmount(() => {
   window.removeEventListener('keydown', onKey)
+  if (semanticWorker) {
+    semanticWorker.terminate()
+    semanticWorker = null
+  }
 })
 </script>
 
@@ -87,7 +365,7 @@ onBeforeUnmount(() => {
     <div v-if="isOpen" class="la-search-overlay" @click.self="close">
       <div class="la-search-panel">
         <div class="la-search-header">
-          <input id="la-search-input" class="la-search-input" v-model="query" @input="doSearch" placeholder="输入关键词搜索..." />
+          <input id="la-search-input" class="la-search-input" v-model="query" @input="scheduleSearch" placeholder="输入关键词搜索..." />
           <button class="la-close" @click="close">Esc</button>
         </div>
         <div class="la-search-body">

@@ -9,12 +9,13 @@
     "gen": "node scripts/pagegen.mjs",
     "build": "npm run gen && vitepress build docs",
     "dev": "npm run gen && vitepress dev docs",
-    "build:search": "npm run build && npm run search:index && node -e \"import('node:fs').then(fs=>fs.cpSync('docs/public/pagefind','docs/.vitepress/dist/pagefind',{recursive:true}))\"",
+    "build:search": "npm run embeddings:build && npm run build && npm run search:index && node -e \"import('node:fs').then(fs=>fs.cpSync('docs/public/pagefind','docs/.vitepress/dist/pagefind',{recursive:true}))\"",
     "check": "npm run precheck && npm run build",
     "preview": "vitepress preview docs",
     "search:index": "pagefind --site docs/.vitepress/dist --output-path docs/public/pagefind --force-language zh",
-    "dev:search": "vitepress build docs && npm run search:index && node -e \"import('node:fs').then(fs=>fs.cpSync('docs/public/pagefind','docs/.vitepress/dist/pagefind',{recursive:true}))\" && vitepress dev docs --host 0.0.0.0 --port 5173",
-    "preview:search": "vitepress build docs && npm run search:index && node -e \"import('node:fs').then(fs=>fs.cpSync('docs/public/pagefind','docs/.vitepress/dist/pagefind',{recursive:true}))\" && vitepress preview docs --host 0.0.0.0 --port 4173"
+    "embeddings:build": "node scripts/build-embeddings.mjs",
+    "dev:search": "vitepress build docs && npm run search:index && npm run embeddings:build && node -e \"import('node:fs').then(fs=>fs.cpSync('docs/public/pagefind','docs/.vitepress/dist/pagefind',{recursive:true}))\" && vitepress dev docs --host 0.0.0.0 --port 5173",
+    "preview:search": "vitepress build docs && npm run search:index && npm run embeddings:build && node -e \"import('node:fs').then(fs=>fs.cpSync('docs/public/pagefind','docs/.vitepress/dist/pagefind',{recursive:true}))\" && vitepress preview docs --host 0.0.0.0 --port 4173"
   },
   "devDependencies": {
     "ajv": "^8.17.1",

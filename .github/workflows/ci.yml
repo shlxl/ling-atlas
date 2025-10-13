@@ -33,6 +33,8 @@ jobs:
         run: npm run precheck
       - name: 生成聚合页（pagegen）
         run: npm run gen
+      - name: Build semantic texts
+        run: npm run embeddings:build
       - name: 构建 + 搜索索引（阻断）
         run: npm run build:search
       - name: 上传 Pages 产物
