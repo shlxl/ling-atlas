@@ -15,7 +15,6 @@ const semanticPending = ref(false)
 const error = ref<string | null>(null)
 const lastQueryHash = ref('')
 const noResults = computed(() => !loading.value && !error.value && query.value.trim().length > 0 && results.value.length === 0)
-
 let pagefind: any = null
 let semanticWorker: Worker | null = null
 const workerPending = new Map<string, { resolve: (vecs: number[][]) => void; reject: (reason: any) => void; timer: number }>()
@@ -307,26 +306,27 @@ async function runSearch(input: string) {
     loading.value = false
     return
   }
-    if (!semantic.items.length) return
-
-    const fused = rrfFuse(lexical, semantic.items)
-    const reranked = mmrSelect(fused, semantic.queryVec, 20)
-    const lexicalMap = new Map(lexical.map(item => [item.url, item]))
-    results.value = reranked.map(item => {
-      const lex = lexicalMap.get(item.url)
-      if (lex) return { url: lex.url, title: lex.title, excerpt: lex.excerpt }
-      const fallback = textMap.get(item.url)
-      return {
-        url: item.url,
-        title: fallback?.title || item.url,
-        excerpt: (fallback?.text || '').slice(0, 160)
-      }
-    })
   } catch (err) {
     console.warn('[semantic search failed]', err)
   } finally {
     if (token === searchToken) semanticPending.value = false
   }
+
+  if (!semantic || token !== searchToken || !semantic.items.length) return
+
+  const fused = rrfFuse(lexical, semantic.items)
+  const reranked = mmrSelect(fused, semantic.queryVec, 20)
+  const lexicalMap = new Map(lexical.map(item => [item.url, item]))
+  results.value = reranked.map(item => {
+    const lex = lexicalMap.get(item.url)
+    if (lex) return { url: lex.url, title: lex.title, excerpt: lex.excerpt }
+    const fallback = textMap.get(item.url)
+    return {
+      url: item.url,
+      title: fallback?.title || item.url,
+      excerpt: (fallback?.text || '').slice(0, 160)
+    }
+  })
 }
 
 function scheduleSearch() {
