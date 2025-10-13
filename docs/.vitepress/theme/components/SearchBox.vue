@@ -155,6 +155,7 @@ onBeforeUnmount(() => {
 .la-search-body { max-height: 60vh; overflow: auto; }
 .la-results { list-style: none; padding: 0; margin: 0; }
 .la-results li { border-bottom: 1px solid var(--vp-c-divider); }
+.la-results a { display: block; padding: 8px 12px; text-decoration: none; color: inherit; }
 .la-title { font-weight: 600; margin: 6px 0; }
 .la-excerpt { font-size: 13px; color: var(--vp-c-text-2); margin-bottom: 10px; }
 .la-error, .la-loading { padding: 14px; }
