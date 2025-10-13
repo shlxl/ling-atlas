@@ -64,10 +64,13 @@ async function ensurePagefind() {
   if (pagefindPromise) return pagefindPromise
   pagefindPromise = (async () => {
     try {
-      const instance = (mod && 'default' in mod ? mod.default : mod)
+      const modulePath = '/pagefind/pagefind.js'
+      const mod = await import(/* @vite-ignore */ modulePath)
+      const instance = mod && 'default' in mod ? mod.default : mod
       if (!instance || typeof instance.search !== 'function') {
         throw new Error('Pagefind runtime missing search implementation')
       }
+      pagefind = instance
       return true
     } catch (err) {
       error.value = '搜索运行时未准备好。请先执行：npm run build && npm run search:index'
