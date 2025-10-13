@@ -4,7 +4,11 @@
       "staticDistDir": "docs/.vitepress/dist",
       "numberOfRuns": 1,
       "chromePath": "",
-      "chromeFlags": "--headless=new --no-sandbox --disable-dev-shm-usage"
+      "chromeFlags": [
+        "--headless=new",
+        "--no-sandbox",
+        "--disable-dev-shm-usage"
+      ]
     },
     "assert": {
       "assertions": {
