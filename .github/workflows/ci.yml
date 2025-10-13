@@ -41,6 +41,7 @@ jobs:
         run: npm run gen
       - name: 安装 Chrome 依赖
         run: |
+          set -e
           sudo apt-get update
           sudo apt-get install -y \
             libnss3 \
@@ -57,10 +58,12 @@ jobs:
             libpango-1.0-0 \
             libpangocairo-1.0-0 \
             libgbm1 \
-            libasound2 \
             libdrm2 \
             libxcb-dri3-0 \
             libxshmfence1
+          if ! dpkg -s libasound2 >/dev/null 2>&1 && ! dpkg -s libasound2t64 >/dev/null 2>&1; then
+            sudo apt-get install -y libasound2t64 || sudo apt-get install -y libasound2
+          fi
       - name: Build semantic texts
         run: npm run embeddings:build
       - name: 构建 + 搜索索引（阻断）
