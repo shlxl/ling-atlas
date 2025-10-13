@@ -31,16 +31,8 @@ jobs:
           npm -v
       - run: npm ci
       - run: npm run gen
-      - run: npm run build
-      - name: Build search index (Pagefind)
-        run: npm run search:index
-      - name: Sync pagefind to dist
-        shell: bash
-        run: |
-          if [ -d "docs/public/pagefind" ]; then
-            mkdir -p docs/.vitepress/dist/pagefind
-            cp -r docs/public/pagefind/* docs/.vitepress/dist/pagefind/
-          fi
+      - name: Build site + search index
+        run: npm run build:search
       - uses: actions/upload-pages-artifact@v3
         with:
           path: docs/.vitepress/dist
