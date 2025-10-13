@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, onBeforeUnmount, ref, computed } from 'vue'
+import { onMounted, onBeforeUnmount, ref } from 'vue'
 import { trackEvent, hashQuery } from '../telemetry'
 
 type LexicalResult = { url: string; title: string; excerpt: string; rank: number }
@@ -304,6 +304,39 @@ async function runSearch(input: string) {
     loading.value = false
     return
   }
+  const hashPromise = hashQuery(q)
+
+  if (!(await ensurePagefind())) {
+    loading.value = false
+    return
+  }
+
+  let lexical: LexicalResult[] = []
+  try {
+    lexical = await getLexicalResults(q)
+    if (token !== searchToken) return
+
+    results.value = lexical.slice(0, 20).map(item => ({ url: item.url, title: item.title, excerpt: item.excerpt }))
+    loading.value = false
+
+    void hashPromise.then(qHash => {
+      if (!qHash || token !== searchToken) return
+      lastQueryHash.value = qHash
+      void trackEvent('search_query', { qHash, len: q.length })
+    })
+  } catch (err) {
+    console.error('[search failed]', err)
+    error.value = '搜索失败，请稍后再试'
+    loading.value = false
+    return
+  }
+
+  if (token !== searchToken || semanticDisabled) return
+
+  let semantic: Awaited<ReturnType<typeof semanticSearch>> | null = null
+  try {
+    semanticPending.value = true
+    semantic = await semanticSearch(q)
   } catch (err) {
     console.warn('[semantic search failed]', err)
   } finally {
