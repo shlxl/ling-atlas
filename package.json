@@ -9,6 +9,7 @@
     "gen": "node scripts/pagegen.mjs",
     "build": "npm run gen && vitepress build docs",
     "dev": "npm run gen && vitepress dev docs",
+    "md:lint": "markdownlint-cli2 'docs/**/*.md'",
     "build:search": "npm run embeddings:build && npm run build && npm run search:index && node -e \"import('node:fs').then(fs=>fs.cpSync('docs/public/pagefind','docs/.vitepress/dist/pagefind',{recursive:true}))\"",
     "check": "npm run precheck && npm run build",
     "preview": "vitepress preview docs",
@@ -21,13 +22,18 @@
     "@lhci/cli": "^0.15.1",
     "@sparticuz/chromium": "^141.0.0",
     "ajv": "^8.17.1",
+    "cssnano": "^7.1.1",
     "fast-xml-parser": "^4.4.1",
     "globby": "^14.0.1",
     "gray-matter": "^4.0.3",
+    "lightningcss": "^1.30.2",
+    "markdown-link-check": "^3.14.1",
+    "markdownlint-cli2": "^0.18.1",
     "marked": "^12.0.2",
     "pagefind": "^1.2.0",
     "pinyin-pro": "^3.22.2",
     "puppeteer": "^24.24.0",
+    "sharp": "^0.34.4",
     "vitepress": "^1.5.0"
   }
 }

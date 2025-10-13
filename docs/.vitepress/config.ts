@@ -1,4 +1,5 @@
 import { defineConfig } from 'vitepress'
+import cssnano from 'cssnano'
 import fs from 'node:fs'
 
 function slug(input:string){
@@ -37,5 +38,13 @@ export default defineConfig({
     sidebar: 'auto',
     socialLinks: [{ icon: 'github', link: 'https://github.com/shlxl/ling-atlas' }]
   },
-  vite: { server: { fs: { allow: ['..'] } } }
+  vite: {
+    server: { fs: { allow: ['..'] } },
+    build: { cssMinify: 'lightningcss' },
+    css: {
+      postcss: {
+        plugins: [cssnano({ preset: 'default' })]
+      }
+    }
+  }
 })

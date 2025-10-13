@@ -31,8 +31,18 @@ jobs:
         run: npm run tags:normalize
       - name: Frontmatter 校验（阻断）
         run: npm run precheck
+      - name: Markdown lint
+        run: npm run md:lint
+      - name: 链接检查
+        run: node scripts/check-links.mjs
+      - name: 图片优化
+        run: node scripts/img-opt.mjs
       - name: 生成聚合页（pagegen）
         run: npm run gen
+      - name: 安装 Chrome 依赖
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libnss3 libnspr4 fonts-liberation
       - name: Build semantic texts
         run: npm run embeddings:build
       - name: 构建 + 搜索索引（阻断）
@@ -41,6 +51,8 @@ jobs:
         run: node .codex/budget.mjs
       - name: Lighthouse CI
         run: npx lhci autorun
+      - name: Merge telemetry data
+        run: node scripts/telemetry-merge.mjs
       - name: 上传 Pages 产物
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: actions/upload-pages-artifact@v3
