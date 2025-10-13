@@ -8,6 +8,7 @@ docs/.vitepress/cache/
 docs/.vitepress/dist/
 docs/public/rss.xml
 docs/public/sitemap.xml
+docs/public/embeddings-texts.json
 
 # generated pages
 docs/_generated/
