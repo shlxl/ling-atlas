@@ -2,6 +2,26 @@ import { defineConfig } from 'vitepress'
 import cssnano from 'cssnano'
 import fs from 'node:fs'
 
+function loadCspTemplate() {
+  try {
+    const raw = fs.readFileSync('security/csp-base.json', 'utf8')
+    return JSON.parse(raw)
+  } catch (error) {
+    console.warn('[security] failed to read security/csp-base.json:', error)
+    return null
+  }
+}
+
+function serializeCsp(directives: Record<string, string[] | string> | null) {
+  if (!directives) return ''
+  return Object.entries(directives)
+    .map(([name, values]) => {
+      const parts = Array.isArray(values) ? values : [values]
+      return `${name} ${parts.join(' ')}`
+    })
+    .join('; ')
+}
+
 function slug(input:string){
   return input.normalize('NFKD')
     .replace(/[\u0300-\u036f]/g,'')
@@ -15,6 +35,9 @@ let meta = { byCategory:{}, bySeries:{}, byTag:{}, byYear:{}, all:[] } as any
 if (fs.existsSync(metaPath)) {
   meta = JSON.parse(fs.readFileSync(metaPath,'utf8'))
 }
+
+const cspTemplate = loadCspTemplate()
+const cspContent = serializeCsp(cspTemplate)
 
 function navFromMeta(){
   const years = Object.keys(meta.byYear || {}).sort().reverse()
@@ -33,6 +56,10 @@ export default defineConfig({
   lang: 'zh-CN',
   title: 'Ling Atlas · 小凌的个人知识库',
   description: '现代化、可演进、可检索的知识库工程',
+  head: [
+    ['meta', { 'http-equiv': 'Content-Security-Policy', content: cspContent }],
+    ['meta', { name: 'referrer', content: 'no-referrer' }]
+  ],
   themeConfig: {
     nav: navFromMeta(),
     sidebar: 'auto',

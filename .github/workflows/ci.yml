@@ -50,7 +50,9 @@ jobs:
       - name: Bundle budget check
         run: node .codex/budget.mjs
       - name: Lighthouse CI
-        run: npx lhci autorun
+        run: |
+          LHCI_CHROME_PATH=$(node -e "process.stdout.write(require('puppeteer').executablePath())") \
+            npx lhci autorun --collect.chromeFlags="--headless=new --no-sandbox --disable-dev-shm-usage"
       - name: Merge telemetry data
         run: node scripts/telemetry-merge.mjs
       - name: 上传 Pages 产物

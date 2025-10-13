@@ -3,7 +3,8 @@
     "collect": {
       "staticDistDir": "docs/.vitepress/dist",
       "numberOfRuns": 1,
-      "chromeFlags": "--headless=new --no-sandbox --disable-dev-shm-usage --remote-debugging-address=0.0.0.0 --remote-debugging-port=9222"
+      "chromePath": "",
+      "chromeFlags": "--headless=new --no-sandbox --disable-dev-shm-usage"
     },
     "assert": {
       "assertions": {

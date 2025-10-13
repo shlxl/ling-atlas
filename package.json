@@ -10,7 +10,7 @@
     "build": "npm run gen && vitepress build docs",
     "dev": "npm run gen && vitepress dev docs",
     "md:lint": "markdownlint-cli2 'docs/**/*.md'",
-    "build:search": "npm run embeddings:build && npm run build && npm run search:index && node -e \"import('node:fs').then(fs=>fs.cpSync('docs/public/pagefind','docs/.vitepress/dist/pagefind',{recursive:true}))\"",
+    "build:search": "npm run embeddings:build && npm run build && npm run search:index && node -e \"import('node:fs').then(fs=>fs.cpSync('docs/public/pagefind','docs/.vitepress/dist/pagefind',{recursive:true}))\" && node scripts/generate-headers.mjs && node scripts/sri.mjs",
     "check": "npm run precheck && npm run build",
     "preview": "vitepress preview docs",
     "search:index": "pagefind --site docs/.vitepress/dist --output-path docs/public/pagefind --force-language zh",
