@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { onMounted, onBeforeUnmount, ref, computed } from 'vue'
-import { withBase } from 'vitepress'
 import { trackEvent, hashQuery } from '../telemetry'
 
 type LexicalResult = { url: string; title: string; excerpt: string; rank: number }
@@ -14,7 +13,6 @@ const loading = ref(false)
 const semanticPending = ref(false)
 const error = ref<string | null>(null)
 const lastQueryHash = ref('')
-const noResults = computed(() => !loading.value && !error.value && query.value.trim().length > 0 && results.value.length === 0)
 let pagefind: any = null
 let semanticWorker: Worker | null = null
 const workerPending = new Map<string, { resolve: (vecs: number[][]) => void; reject: (reason: any) => void; timer: number }>()
@@ -306,19 +304,6 @@ async function runSearch(input: string) {
     loading.value = false
     return
   }
-    })
-  } catch (err) {
-    console.warn('[semantic search failed]', err)
-  } finally {
-    if (token === searchToken) semanticPending.value = false
-  }
-
-  if (token !== searchToken || semanticDisabled) return
-
-  semanticPending.value = true
-  let semantic: Awaited<ReturnType<typeof semanticSearch>> | null = null
-  try {
-    semantic = await semanticSearch(q)
   } catch (err) {
     console.warn('[semantic search failed]', err)
   } finally {
