@@ -15,7 +15,6 @@ const semanticPending = ref(false)
 const error = ref<string | null>(null)
 const lastQueryHash = ref('')
 const noResults = computed(() => !loading.value && !error.value && query.value.trim().length > 0 && results.value.length === 0)
-
 let pagefind: any = null
 let semanticWorker: Worker | null = null
 const workerPending = new Map<string, { resolve: (vecs: number[][]) => void; reject: (reason: any) => void; timer: number }>()
