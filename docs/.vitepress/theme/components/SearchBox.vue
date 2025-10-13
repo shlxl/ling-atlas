@@ -25,11 +25,6 @@ function close() {
 async function ensureLoaded() {
   if (pagefind) return true
   try {
-    // Pagefind runtime is served from /<base>/pagefind/ in dev/preview/production
-    // Resolve with site base to work under GitHub Pages subpath
-    const runtimePath = withBase('/pagefind/pagefind.js')
-    // @vite-ignore prevents Rollup from trying to resolve this at build-time
-    pagefind = await import(/* @vite-ignore */ (runtimePath as any))
     return true
   } catch (e) {
     error.value = '搜索运行时未准备好。请先执行：npm run build && npm run search:index'
@@ -85,23 +80,6 @@ onBeforeUnmount(() => {
       搜索（Ctrl/⌘K）
     </button>
 
-    <div v-if="isOpen" class="la-search-overlay" @click.self="close">
-      <div class="la-search-panel">
-        <div class="la-search-header">
-          <input id="la-search-input" class="la-search-input" v-model="query" @input="doSearch" placeholder="输入关键词搜索..." />
-          <button class="la-close" @click="close">Esc</button>
-        </div>
-        <div class="la-search-body">
-          <div v-if="error" class="la-error">{{ error }}</div>
-          <div v-else-if="loading" class="la-loading">正在搜索...</div>
-          <ul v-else class="la-results">
-            <li v-for="item in results" :key="item.url">
-              <a :href="withBase(item.url)" @click="close">
-                <div class="la-title">{{ item.title }}</div>
-                <div class="la-excerpt">{{ item.excerpt }}</div>
-              </a>
-            </li>
-          </ul>
         </div>
       </div>
     </div>
