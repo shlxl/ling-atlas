@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, onBeforeUnmount, ref } from 'vue'
+import { onMounted, onBeforeUnmount, ref, computed } from 'vue'
 import { withBase } from 'vitepress'
 import { trackEvent, hashQuery } from '../telemetry'
 
@@ -11,8 +11,61 @@ const isOpen = ref(false)
 const query = ref('')
 const results = ref<Array<{ url: string; title: string; excerpt: string }>>([])
 const loading = ref(false)
+const semanticPending = ref(false)
 const error = ref<string | null>(null)
 const lastQueryHash = ref('')
+const noResults = computed(() => !loading.value && !error.value && query.value.trim().length > 0 && results.value.length === 0)
+
+function getSiteBase() {
+  const base = withBase('/') || '/'
+  return base.endsWith('/') ? base : `${base}/`
+}
+
+function getSiteBasePrefix() {
+  const base = getSiteBase()
+  if (base === '/' || base === '') return ''
+  return base.endsWith('/') ? base.slice(0, -1) : base
+}
+
+function resolveAsset(path: string) {
+  const cleaned = path.startsWith('/') ? path.slice(1) : path
+  const siteBase = getSiteBase()
+  if (typeof window === 'undefined' || typeof window.location === 'undefined') {
+    const joined = `${siteBase}${cleaned}`.replace(/\/+/g, '/')
+    const normalized = joined.startsWith('/') ? joined : `/${joined}`
+    return {
+      href: normalized,
+      pathname: normalized
+    }
+  }
+  const baseUrl = new URL(siteBase, window.location.origin)
+  const resolved = new URL(cleaned, baseUrl)
+  return {
+    href: resolved.toString(),
+    pathname: resolved.pathname
+  }
+}
+
+function normalizeResultUrl(raw: string) {
+  if (!raw) return '/'
+  const value = raw.trim()
+  if (/^https?:\/\//i.test(value)) return value
+  const basePrefix = getSiteBasePrefix()
+  if (basePrefix && value === basePrefix) return '/'
+  if (basePrefix && value.startsWith(`${basePrefix}/`)) {
+    const sliced = value.slice(basePrefix.length)
+    return sliced.startsWith('/') ? sliced : `/${sliced}`
+  }
+  if (value.startsWith('/')) return value
+  return `/${value}`
+}
+
+function resolveHref(url: string) {
+  if (!url) return withBase('/')
+  if (/^https?:\/\//i.test(url)) return url
+  const normalized = url.startsWith('/') ? url : `/${url}`
+  return withBase(normalized)
+}
 
 let pagefind: any = null
 let semanticWorker: Worker | null = null
@@ -26,10 +79,6 @@ const vectorPromises = new Map<string, Promise<number[]>>()
 const queryVecCache = new Map<string, number[]>()
 let searchToken = 0
 let debounceTimer = 0
-
-function normalizeBase(path: string) {
-  return withBase(path)
-}
 
 function open() {
   isOpen.value = true
@@ -62,18 +111,44 @@ function disableSemantic(reason: unknown) {
   console.warn('[semantic disabled]', reason)
 }
 
+let pagefindPromise: Promise<boolean> | null = null
+
 async function ensurePagefind() {
   if (pagefind) return true
-  try {
-    const runtimePath = normalizeBase('/pagefind/pagefind.js')
-    // @vite-ignore
-    pagefind = await import(/* @vite-ignore */ (runtimePath as any))
-    return true
-  } catch (err) {
-    error.value = '搜索运行时未准备好。请先执行：npm run build && npm run search:index'
-    console.error(err)
-    return false
-  }
+  if (pagefindPromise) return pagefindPromise
+  pagefindPromise = (async () => {
+    try {
+      const runtime = resolveAsset('/pagefind/pagefind.js')
+      const basePathAsset = resolveAsset('/pagefind/')
+      const baseAsset = resolveAsset('/')
+      // @vite-ignore
+      const runtimePath = runtime.pathname.startsWith('/') ? runtime.pathname : `/${runtime.pathname}`
+      const mod = await import(/* @vite-ignore */ (runtimePath as any))
+      const instance = (mod && 'default' in mod ? mod.default : mod)
+      if (!instance || typeof instance.search !== 'function') {
+        throw new Error('Pagefind runtime missing search implementation')
+      }
+      const pagefindOptions: Record<string, unknown> = {
+        basePath: basePathAsset.pathname,
+        baseUrl: baseAsset.pathname
+      }
+      if (typeof instance.options === 'function') {
+        await instance.options(pagefindOptions)
+      }
+      if (typeof instance.init === 'function') {
+        await instance.init()
+      }
+      pagefind = instance
+      return true
+    } catch (err) {
+      error.value = '搜索运行时未准备好。请先执行：npm run build && npm run search:index'
+      console.error(err)
+      return false
+    } finally {
+      pagefindPromise = null
+    }
+  })()
+  return pagefindPromise
 }
 
 function handleWorkerMessage(ev: MessageEvent<any>) {
@@ -130,7 +205,8 @@ function handleWorkerMessage(ev: MessageEvent<any>) {
 async function initSemantic() {
   if (semanticWorker || semanticDisabled) return
   try {
-    const res = await fetch(normalizeBase('/embeddings-texts.json'), { cache: 'no-store' })
+    const embeddingsUrl = resolveAsset('/embeddings-texts.json').href
+    const res = await fetch(embeddingsUrl, { cache: 'no-store' })
     if (!res.ok) throw new Error(`Failed to load embeddings-texts.json (${res.status})`)
     const payload = await res.json()
     const items = Array.isArray(payload?.items) ? payload.items : []
@@ -141,7 +217,7 @@ async function initSemantic() {
     })).filter(it => it.url)
     texts.forEach(it => textMap.set(it.url, it))
 
-    const workerUrl = normalizeBase('/worker/embeddings.worker.js')
+    const workerUrl = resolveAsset('/worker/embeddings.worker.js').href
     semanticWorker = new Worker(workerUrl, { type: 'module' })
     semanticWorker.onmessage = handleWorkerMessage
     semanticWorker.onerror = (err) => disableSemantic(err?.message || err)
@@ -201,9 +277,11 @@ async function getLexicalResults(q: string): Promise<LexicalResult[]> {
   const limited = list.slice(0, 50)
   const items = await Promise.all(limited.map(async (entry: any, idx: number) => {
     const data = await entry.data()
+    const rawUrl = data.url || entry?.url || ''
+    const normalizedUrl = normalizeResultUrl(rawUrl)
     return {
-      url: data.url,
-      title: data.meta?.title || data.excerpt?.slice(0, 60) || data.url,
+      url: normalizedUrl,
+      title: data.meta?.title || data.excerpt?.slice(0, 60) || rawUrl,
       excerpt: data.excerpt || '',
       rank: idx + 1
     }
@@ -290,42 +368,32 @@ async function runSearch(input: string) {
   const token = ++searchToken
   results.value = []
   error.value = null
+  lastQueryHash.value = ''
+  semanticPending.value = false
+  loading.value = true
+
   if (!q) {
     loading.value = false
     return
   }
-  if (!(await ensurePagefind())) return
-  loading.value = true
+
+  if (!(await ensurePagefind())) {
+    loading.value = false
+    return
+  }
+
+  let lexical: LexicalResult[] = []
   try {
-    const hashPromise = hashQuery(q)
-    const lexicalPromise = getLexicalResults(q)
-    const semanticPromise = semanticDisabled ? Promise.resolve({ items: [], queryVec: null }) : semanticSearch(q)
-    const [lexical, semantic] = await Promise.all([lexicalPromise, semanticPromise])
+    const hashPromise = hashQuery(q).catch(() => '')
+    lexical = await getLexicalResults(q)
     if (token !== searchToken) return
 
-    const qHash = await hashPromise
-    if (qHash) {
+    results.value = lexical.slice(0, 20).map(item => ({ url: item.url, title: item.title, excerpt: item.excerpt }))
+
+    void hashPromise.then((qHash) => {
+      if (!qHash || token !== searchToken) return
       lastQueryHash.value = qHash
       void trackEvent('search_query', { qHash, len: q.length })
-    }
-
-    if (!semantic.items.length) {
-      results.value = lexical.slice(0, 20).map(item => ({ url: item.url, title: item.title, excerpt: item.excerpt }))
-      return
-    }
-
-    const fused = rrfFuse(lexical, semantic.items)
-    const reranked = mmrSelect(fused, semantic.queryVec, 20)
-    const lexicalMap = new Map(lexical.map(item => [item.url, item]))
-    results.value = reranked.map(item => {
-      const lex = lexicalMap.get(item.url)
-      if (lex) return { url: lex.url, title: lex.title, excerpt: lex.excerpt }
-      const fallback = textMap.get(item.url)
-      return {
-        url: item.url,
-        title: fallback?.title || item.url,
-        excerpt: (fallback?.text || '').slice(0, 160)
-      }
     })
   } catch (err) {
     console.error('[search failed]', err)
@@ -333,6 +401,34 @@ async function runSearch(input: string) {
   } finally {
     if (token === searchToken) loading.value = false
   }
+
+  if (token !== searchToken || semanticDisabled) return
+
+  semanticPending.value = true
+  let semantic: Awaited<ReturnType<typeof semanticSearch>> | null = null
+  try {
+    semantic = await semanticSearch(q)
+  } catch (err) {
+    console.warn('[semantic search failed]', err)
+  } finally {
+    if (token === searchToken) semanticPending.value = false
+  }
+
+  if (!semantic || token !== searchToken || !semantic.items.length) return
+
+  const fused = rrfFuse(lexical, semantic.items)
+  const reranked = mmrSelect(fused, semantic.queryVec, 20)
+  const lexicalMap = new Map(lexical.map(item => [item.url, item]))
+  results.value = reranked.map(item => {
+    const lex = lexicalMap.get(item.url)
+    if (lex) return { url: lex.url, title: lex.title, excerpt: lex.excerpt }
+    const fallback = textMap.get(item.url)
+    return {
+      url: item.url,
+      title: fallback?.title || item.url,
+      excerpt: (fallback?.text || '').slice(0, 160)
+    }
+  })
 }
 
 function scheduleSearch() {
@@ -388,14 +484,18 @@ onBeforeUnmount(() => {
         <div class="la-search-body">
           <div v-if="error" class="la-error">{{ error }}</div>
           <div v-else-if="loading" class="la-loading">正在搜索...</div>
-          <ul v-else class="la-results">
-            <li v-for="(item, index) in results" :key="item.url">
-              <a :href="withBase(item.url)" @click="onResultClick(item, index)">
-                <div class="la-title">{{ item.title }}</div>
-                <div class="la-excerpt">{{ item.excerpt }}</div>
-              </a>
-            </li>
-          </ul>
+          <div v-else-if="noResults" class="la-loading">暂无匹配的结果，换个关键词试试～</div>
+          <div v-else class="la-results-wrapper">
+            <div v-if="semanticPending" class="la-semantic-hint">语义结果加载中，先为你展示基础结果…</div>
+            <ul class="la-results">
+              <li v-for="(item, index) in results" :key="item.url">
+                <a :href="resolveHref(item.url)" @click="onResultClick(item, index)">
+                  <div class="la-title">{{ item.title }}</div>
+                  <div class="la-excerpt">{{ item.excerpt }}</div>
+                </a>
+              </li>
+            </ul>
+          </div>
         </div>
       </div>
     </div>
@@ -447,6 +547,8 @@ onBeforeUnmount(() => {
 }
 .la-close { padding: 8px 10px; }
 .la-search-body { max-height: 60vh; overflow: auto; }
+.la-results-wrapper { display: flex; flex-direction: column; gap: 4px; }
+.la-semantic-hint { font-size: 12px; color: var(--vp-c-text-2); padding: 6px 12px 0; }
 .la-results { list-style: none; padding: 0; margin: 0; }
 .la-results li { border-bottom: 1px solid var(--vp-c-divider); }
 .la-results a { display: block; padding: 8px 12px; text-decoration: none; color: inherit; }
