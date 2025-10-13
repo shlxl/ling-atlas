@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { onMounted, onBeforeUnmount, ref } from 'vue'
+import { withBase } from 'vitepress'
 
 const isOpen = ref(false)
 const query = ref('')
@@ -79,27 +80,9 @@ onBeforeUnmount(() => {
       搜索（Ctrl/⌘K）
     </button>
 
-    <teleport to="body">
-      <div v-if="isOpen" class="la-search-overlay" @click.self="close">
-        <div class="la-search-panel">
-          <div class="la-search-header">
-            <input id="la-search-input" class="la-search-input" v-model="query" @input="doSearch" placeholder="输入关键词搜索..." />
-            <button class="la-close" @click="close">Esc</button>
-          </div>
-          <div class="la-search-body">
-            <div v-if="error" class="la-error">{{ error }}</div>
-            <div v-else-if="loading" class="la-loading">正在搜索...</div>
-            <ul v-else class="la-results">
-              <li v-for="item in results" :key="item.url">
-                  <div class="la-title">{{ item.title }}</div>
-                  <div class="la-excerpt">{{ item.excerpt }}</div>
-                </a>
-              </li>
-            </ul>
-          </div>
         </div>
       </div>
-    </teleport>
+    </div>
   </div>
 </template>
 
@@ -150,6 +133,7 @@ onBeforeUnmount(() => {
 .la-search-body { max-height: 60vh; overflow: auto; }
 .la-results { list-style: none; padding: 0; margin: 0; }
 .la-results li { border-bottom: 1px solid var(--vp-c-divider); }
+.la-results a { display: block; padding: 8px 12px; text-decoration: none; color: inherit; }
 .la-title { font-weight: 600; margin: 6px 0; }
 .la-excerpt { font-size: 13px; color: var(--vp-c-text-2); margin-bottom: 10px; }
 .la-error, .la-loading { padding: 14px; }
