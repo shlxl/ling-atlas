@@ -11,6 +11,7 @@ const isOpen = ref(false)
 const query = ref('')
 const results = ref<Array<{ url: string; title: string; excerpt: string }>>([])
 const loading = ref(false)
+const semanticPending = ref(false)
 const error = ref<string | null>(null)
 const lastQueryHash = ref('')
 
@@ -290,17 +291,22 @@ async function runSearch(input: string) {
   const token = ++searchToken
   results.value = []
   error.value = null
+  semanticPending.value = false
+  loading.value = true
+
   if (!q) {
     loading.value = false
     return
   }
-  if (!(await ensurePagefind())) return
-  loading.value = true
+
+  if (!(await ensurePagefind())) {
+    loading.value = false
+    return
+  }
+
+  let lexical: LexicalResult[] = []
   try {
     const hashPromise = hashQuery(q)
-    const lexicalPromise = getLexicalResults(q)
-    const semanticPromise = semanticDisabled ? Promise.resolve({ items: [], queryVec: null }) : semanticSearch(q)
-    const [lexical, semantic] = await Promise.all([lexicalPromise, semanticPromise])
     if (token !== searchToken) return
 
     const qHash = await hashPromise
@@ -309,10 +315,21 @@ async function runSearch(input: string) {
       void trackEvent('search_query', { qHash, len: q.length })
     }
 
-    if (!semantic.items.length) {
-      results.value = lexical.slice(0, 20).map(item => ({ url: item.url, title: item.title, excerpt: item.excerpt }))
-      return
-    }
+    results.value = lexical.slice(0, 20).map(item => ({ url: item.url, title: item.title, excerpt: item.excerpt }))
+  } catch (err) {
+    console.error('[search failed]', err)
+    error.value = '搜索失败，请检查控制台日志'
+  } finally {
+    if (token === searchToken) loading.value = false
+  }
+
+  if (token !== searchToken || semanticDisabled) return
+
+  try {
+    semanticPending.value = true
+    const semantic = await semanticSearch(q)
+    if (token !== searchToken) return
+    if (!semantic.items.length) return
 
     const fused = rrfFuse(lexical, semantic.items)
     const reranked = mmrSelect(fused, semantic.queryVec, 20)
@@ -328,10 +345,9 @@ async function runSearch(input: string) {
       }
     })
   } catch (err) {
-    console.error('[search failed]', err)
-    error.value = '搜索失败，请检查控制台日志'
+    console.warn('[semantic search failed]', err)
   } finally {
-    if (token === searchToken) loading.value = false
+    if (token === searchToken) semanticPending.value = false
   }
 }
 
@@ -388,14 +404,6 @@ onBeforeUnmount(() => {
         <div class="la-search-body">
           <div v-if="error" class="la-error">{{ error }}</div>
           <div v-else-if="loading" class="la-loading">正在搜索...</div>
-          <ul v-else class="la-results">
-            <li v-for="(item, index) in results" :key="item.url">
-              <a :href="withBase(item.url)" @click="onResultClick(item, index)">
-                <div class="la-title">{{ item.title }}</div>
-                <div class="la-excerpt">{{ item.excerpt }}</div>
-              </a>
-            </li>
-          </ul>
         </div>
       </div>
     </div>
@@ -447,6 +455,8 @@ onBeforeUnmount(() => {
 }
 .la-close { padding: 8px 10px; }
 .la-search-body { max-height: 60vh; overflow: auto; }
+.la-results-wrapper { display: flex; flex-direction: column; gap: 4px; }
+.la-semantic-hint { font-size: 12px; color: var(--vp-c-text-2); padding: 6px 12px 0; }
 .la-results { list-style: none; padding: 0; margin: 0; }
 .la-results li { border-bottom: 1px solid var(--vp-c-divider); }
 .la-results a { display: block; padding: 8px 12px; text-decoration: none; color: inherit; }
