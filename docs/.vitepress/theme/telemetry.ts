@@ -1,17 +1,35 @@
 let telemetryModulePromise: Promise<any> | null = null
 
-function resolveAssetPath(path: string) {
-  const base = (import.meta as any).env?.BASE_URL || '/'
+function getBase() {
+  const envBase = (import.meta as any).env?.BASE_URL
+  if (typeof envBase === 'string' && envBase.length) return envBase
+  if (typeof window !== 'undefined') {
+    const siteBase = (window as any).__VP_SITE_DATA__?.site?.base
+    if (typeof siteBase === 'string' && siteBase.length) return siteBase
+  }
+  return '/'
+}
+
+function normalizeBase(base: string) {
+  let value = base || '/'
+  if (!value.startsWith('/')) value = `/${value}`
+  if (!value.endsWith('/')) value = `${value}/`
+  return value
+}
+
+export function resolveAsset(path: string) {
   const cleaned = path.replace(/^\/+/, '')
-  if (base.endsWith('/')) return base + cleaned
-  return base + '/' + cleaned
+  const base = normalizeBase(getBase())
+  const href = base === '/' ? `/${cleaned}` : `${base}${cleaned}`
+  const origin = typeof window !== 'undefined' ? window.location.origin : 'http://127.0.0.1'
+  return new URL(href, origin)
 }
 let initialized = false
 
 async function ensureModule() {
   if (typeof window === 'undefined') return null
   if (!telemetryModulePromise) {
-    const url = resolveAssetPath('telemetry.js')
+    const url = resolveAsset('telemetry.js').href
     telemetryModulePromise = import(/* @vite-ignore */ url).catch(err => {
       console.warn('[telemetry] failed to load module', err)
       return null

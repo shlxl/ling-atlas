@@ -2,9 +2,9 @@
   "default-src": ["'self'"],
   "script-src": [
     "'self'",
-    "'sha256-__INLINE__'",
     "https://esm.sh",
     "https://cdn.jsdelivr.net",
+    "'wasm-unsafe-eval'",
     "'unsafe-inline'"
   ],
   "style-src": ["'self'", "'unsafe-inline'"],

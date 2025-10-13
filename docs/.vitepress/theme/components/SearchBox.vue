@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { onMounted, onBeforeUnmount, ref } from 'vue'
-import { trackEvent, hashQuery } from '../telemetry'
+import { trackEvent, hashQuery, resolveAsset } from '../telemetry'
 
 type LexicalResult = { url: string; title: string; excerpt: string; rank: number }
 type SemanticCandidate = { url: string; score: number; vector: number[] | null; rank: number }
@@ -25,6 +25,19 @@ const vectorPromises = new Map<string, Promise<number[]>>()
 const queryVecCache = new Map<string, number[]>()
 let searchToken = 0
 let debounceTimer = 0
+
+function normalizeResultUrl(raw: string) {
+  if (!raw) return resolveAsset('/').pathname
+  if (/^https?:\/\//i.test(raw)) return raw
+  try {
+    const normalized = raw.startsWith('/') ? raw : `/${raw}`
+    const url = resolveAsset(normalized)
+    return `${url.pathname}${url.search}${url.hash}`
+  } catch (err) {
+    console.warn('[search] normalizeResultUrl failed', err)
+    return raw
+  }
+}
 
 function open() {
   isOpen.value = true
@@ -64,8 +77,8 @@ async function ensurePagefind() {
   if (pagefindPromise) return pagefindPromise
   pagefindPromise = (async () => {
     try {
-      const modulePath = '/pagefind/pagefind.js'
-      const mod = await import(/* @vite-ignore */ modulePath)
+      const moduleUrl = resolveAsset('/pagefind/pagefind.js').href
+      const mod = await import(/* @vite-ignore */ moduleUrl)
       const instance = mod && 'default' in mod ? mod.default : mod
       if (!instance || typeof instance.search !== 'function') {
         throw new Error('Pagefind runtime missing search implementation')
