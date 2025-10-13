@@ -1,0 +1,19 @@
+{
+  "ci": {
+    "collect": {
+      "staticDistDir": "docs/.vitepress/dist",
+      "numberOfRuns": 1,
+      "chromeFlags": "--headless=new --no-sandbox --disable-dev-shm-usage --remote-debugging-address=0.0.0.0 --remote-debugging-port=9222"
+    },
+    "assert": {
+      "assertions": {
+        "categories:performance": ["error", {"minScore": 0.9}],
+        "categories:accessibility": ["error", {"minScore": 0.9}],
+        "categories:best-practices": ["error", {"minScore": 0.9}]
+      }
+    },
+    "upload": {
+      "target": "temporary-public-storage"
+    }
+  }
+}

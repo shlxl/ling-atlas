@@ -95,3 +95,13 @@ codex run audit   # 可选
 - Lighthouse 与资源体积预算的自动化体检与报表  
 
 > 原则：所有新功能都通过 `codex run <task>` 接入，保证“可脚本、可回滚、可观测”。
+
+## 性能预算与体检
+
+- 体积预算：默认总大小 ≤ 5 MB，单 JS ≤ 150 KB，单 CSS ≤ 100 KB，可通过环境变量 `BUDGET_TOTAL_MB`、`BUDGET_MAX_JS_KB`、`BUDGET_MAX_CSS_KB` 调整。
+- 运行命令：`node .codex/budget.mjs`（CI 自动执行，超限会 fail，并打印 Top 10 最大文件）。
+- Lighthouse CI：`npx lhci autorun --collect.staticDistDir=docs/.vitepress/dist --upload.target=temporary-public-storage`。
+  - 阈值：performance ≥ 90，accessibility ≥ 90，best-practices ≥ 90。
+  - 输出：CI 会显示得分与关键建议；如需调参，可修改 `.lighthouserc.json`。
+- 回滚策略：若短期无法达标，可临时提高环境变量阈值或注释相关步骤，但应尽快修复体积/性能问题。
+
