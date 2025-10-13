@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { onMounted, onBeforeUnmount, ref } from 'vue'
-import { withBase } from 'vitepress'
 
 const isOpen = ref(false)
 const query = ref('')
@@ -25,11 +24,6 @@ function close() {
 async function ensureLoaded() {
   if (pagefind) return true
   try {
-    // Pagefind runtime is served from /<base>/pagefind/ in dev/preview/production
-    // Resolve with site base to work under GitHub Pages subpath
-    const runtimePath = withBase('/pagefind/pagefind.js')
-    // @vite-ignore prevents Rollup from trying to resolve this at build-time
-    pagefind = await import(/* @vite-ignore */ (runtimePath as any))
     return true
   } catch (e) {
     error.value = '搜索运行时未准备好。请先执行：npm run build && npm run search:index'
@@ -97,7 +91,6 @@ onBeforeUnmount(() => {
             <div v-else-if="loading" class="la-loading">正在搜索...</div>
             <ul v-else class="la-results">
               <li v-for="item in results" :key="item.url">
-                <a :href="withBase(item.url)" @click="close">
                   <div class="la-title">{{ item.title }}</div>
                   <div class="la-excerpt">{{ item.excerpt }}</div>
                 </a>
