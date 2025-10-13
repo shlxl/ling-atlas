@@ -306,17 +306,16 @@ async function runSearch(input: string) {
 
   let lexical: LexicalResult[] = []
   try {
-    const hashPromise = hashQuery(q)
     lexical = await getLexicalResults(q)
     if (token !== searchToken) return
 
-    const qHash = await hashPromise
-    if (qHash) {
+    results.value = lexical.slice(0, 20).map(item => ({ url: item.url, title: item.title, excerpt: item.excerpt }))
+
+    void hashPromise.then((qHash) => {
+      if (!qHash || token !== searchToken) return
       lastQueryHash.value = qHash
       void trackEvent('search_query', { qHash, len: q.length })
-    }
-
-    results.value = lexical.slice(0, 20).map(item => ({ url: item.url, title: item.title, excerpt: item.excerpt }))
+    })
   } catch (err) {
     console.error('[search failed]', err)
     error.value = '搜索失败，请检查控制台日志'
