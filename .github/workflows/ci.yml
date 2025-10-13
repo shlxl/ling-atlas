@@ -39,32 +39,6 @@ jobs:
         run: node scripts/img-opt.mjs
       - name: 生成聚合页（pagegen）
         run: npm run gen
-      - name: 安装 Chrome 依赖
-        run: |
-          set -e
-          sudo apt-get update
-          sudo apt-get install -y \
-            libnss3 \
-            libnspr4 \
-            fonts-liberation \
-            libx11-xcb1 \
-            libxcomposite1 \
-            libxdamage1 \
-            libxrandr2 \
-            libxkbcommon0 \
-            libatk-bridge2.0-0 \
-            libatk1.0-0 \
-            libcups2 \
-            libpango-1.0-0 \
-            libpangocairo-1.0-0 \
-            libgbm1 \
-            libdrm2 \
-            libxcb-dri3-0 \
-            libxshmfence1
-          sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0 || true
-          if ! dpkg -s libasound2 >/dev/null 2>&1 && ! dpkg -s libasound2t64 >/dev/null 2>&1; then
-            sudo apt-get install -y libasound2t64 || sudo apt-get install -y libasound2
-          fi
       - name: Build semantic texts
         run: npm run embeddings:build
       - name: 构建 + 搜索索引（阻断）
@@ -73,8 +47,8 @@ jobs:
         run: node .codex/budget.mjs
       - name: Lighthouse CI
         run: |
-          LHCI_CHROME_PATH=$(node -e "process.stdout.write(require('puppeteer').executablePath())") \
-            npx lhci autorun --collect.chromeFlags="--headless=new --no-sandbox --disable-dev-shm-usage"
+          LHCI_CHROME_PATH=$(node -e "process.stdout.write(require('@sparticuz/chromium').executablePath())") \
+            npx lhci autorun --collect.chromeFlags="--headless=new --disable-dev-shm-usage --no-sandbox"
       - name: Merge telemetry data
         run: node scripts/telemetry-merge.mjs
       - name: 上传 Pages 产物
