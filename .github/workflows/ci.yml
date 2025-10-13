@@ -42,7 +42,25 @@ jobs:
       - name: 安装 Chrome 依赖
         run: |
           sudo apt-get update
-          sudo apt-get install -y libnss3 libnspr4 fonts-liberation
+          sudo apt-get install -y \
+            libnss3 \
+            libnspr4 \
+            fonts-liberation \
+            libx11-xcb1 \
+            libxcomposite1 \
+            libxdamage1 \
+            libxrandr2 \
+            libxkbcommon0 \
+            libatk-bridge2.0-0 \
+            libatk1.0-0 \
+            libcups2 \
+            libpango-1.0-0 \
+            libpangocairo-1.0-0 \
+            libgbm1 \
+            libasound2 \
+            libdrm2 \
+            libxcb-dri3-0 \
+            libxshmfence1
       - name: Build semantic texts
         run: npm run embeddings:build
       - name: 构建 + 搜索索引（阻断）
