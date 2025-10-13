@@ -16,57 +16,6 @@ const error = ref<string | null>(null)
 const lastQueryHash = ref('')
 const noResults = computed(() => !loading.value && !error.value && query.value.trim().length > 0 && results.value.length === 0)
 
-function getSiteBase() {
-  const base = withBase('/') || '/'
-  return base.endsWith('/') ? base : `${base}/`
-}
-
-function getSiteBasePrefix() {
-  const base = getSiteBase()
-  if (base === '/' || base === '') return ''
-  return base.endsWith('/') ? base.slice(0, -1) : base
-}
-
-function resolveAsset(path: string) {
-  const cleaned = path.startsWith('/') ? path.slice(1) : path
-  const siteBase = getSiteBase()
-  if (typeof window === 'undefined' || typeof window.location === 'undefined') {
-    const joined = `${siteBase}${cleaned}`.replace(/\/+/g, '/')
-    const normalized = joined.startsWith('/') ? joined : `/${joined}`
-    return {
-      href: normalized,
-      pathname: normalized
-    }
-  }
-  const baseUrl = new URL(siteBase, window.location.origin)
-  const resolved = new URL(cleaned, baseUrl)
-  return {
-    href: resolved.toString(),
-    pathname: resolved.pathname
-  }
-}
-
-function normalizeResultUrl(raw: string) {
-  if (!raw) return '/'
-  const value = raw.trim()
-  if (/^https?:\/\//i.test(value)) return value
-  const basePrefix = getSiteBasePrefix()
-  if (basePrefix && value === basePrefix) return '/'
-  if (basePrefix && value.startsWith(`${basePrefix}/`)) {
-    const sliced = value.slice(basePrefix.length)
-    return sliced.startsWith('/') ? sliced : `/${sliced}`
-  }
-  if (value.startsWith('/')) return value
-  return `/${value}`
-}
-
-function resolveHref(url: string) {
-  if (!url) return withBase('/')
-  if (/^https?:\/\//i.test(url)) return url
-  const normalized = url.startsWith('/') ? url : `/${url}`
-  return withBase(normalized)
-}
-
 let pagefind: any = null
 let semanticWorker: Worker | null = null
 const workerPending = new Map<string, { resolve: (vecs: number[][]) => void; reject: (reason: any) => void; timer: number }>()
@@ -118,26 +67,10 @@ async function ensurePagefind() {
   if (pagefindPromise) return pagefindPromise
   pagefindPromise = (async () => {
     try {
-      const runtime = resolveAsset('/pagefind/pagefind.js')
-      const basePathAsset = resolveAsset('/pagefind/')
-      const baseAsset = resolveAsset('/')
-      // @vite-ignore
-      const mod = await import(/* @vite-ignore */ (runtime.href as any))
       const instance = (mod && 'default' in mod ? mod.default : mod)
       if (!instance || typeof instance.search !== 'function') {
         throw new Error('Pagefind runtime missing search implementation')
       }
-      const pagefindOptions: Record<string, unknown> = {
-        basePath: basePathAsset.pathname,
-        baseUrl: baseAsset.pathname
-      }
-      if (typeof instance.options === 'function') {
-        await instance.options(pagefindOptions)
-      }
-      if (typeof instance.init === 'function') {
-        await instance.init()
-      }
-      pagefind = instance
       return true
     } catch (err) {
       error.value = '搜索运行时未准备好。请先执行：npm run build && npm run search:index'
@@ -367,7 +300,6 @@ async function runSearch(input: string) {
   const token = ++searchToken
   results.value = []
   error.value = null
-  lastQueryHash.value = ''
   semanticPending.value = false
   loading.value = true
 
@@ -375,38 +307,6 @@ async function runSearch(input: string) {
     loading.value = false
     return
   }
-
-  if (!(await ensurePagefind())) {
-    loading.value = false
-    return
-  }
-
-  let lexical: LexicalResult[] = []
-  try {
-    const hashPromise = hashQuery(q).catch(() => '')
-    lexical = await getLexicalResults(q)
-    if (token !== searchToken) return
-
-    results.value = lexical.slice(0, 20).map(item => ({ url: item.url, title: item.title, excerpt: item.excerpt }))
-
-    void hashPromise.then((qHash) => {
-      if (!qHash || token !== searchToken) return
-      lastQueryHash.value = qHash
-      void trackEvent('search_query', { qHash, len: q.length })
-    })
-  } catch (err) {
-    console.error('[search failed]', err)
-    error.value = '搜索失败，请检查控制台日志'
-  } finally {
-    if (token === searchToken) loading.value = false
-  }
-
-  if (token !== searchToken || semanticDisabled) return
-
-  try {
-    semanticPending.value = true
-    const semantic = await semanticSearch(q)
-    if (token !== searchToken) return
     if (!semantic.items.length) return
 
     const fused = rrfFuse(lexical, semantic.items)
@@ -482,18 +382,6 @@ onBeforeUnmount(() => {
         <div class="la-search-body">
           <div v-if="error" class="la-error">{{ error }}</div>
           <div v-else-if="loading" class="la-loading">正在搜索...</div>
-          <div v-else-if="noResults" class="la-loading">暂无匹配的结果，换个关键词试试～</div>
-          <div v-else class="la-results-wrapper">
-            <div v-if="semanticPending" class="la-semantic-hint">语义结果加载中，先为你展示基础结果…</div>
-            <ul class="la-results">
-              <li v-for="(item, index) in results" :key="item.url">
-                <a :href="resolveHref(item.url)" @click="onResultClick(item, index)">
-                  <div class="la-title">{{ item.title }}</div>
-                  <div class="la-excerpt">{{ item.excerpt }}</div>
-                </a>
-              </li>
-            </ul>
-          </div>
         </div>
       </div>
     </div>
