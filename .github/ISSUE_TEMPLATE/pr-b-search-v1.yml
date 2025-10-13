@@ -1,0 +1,37 @@
+name: "[PR-B] 搜索 v1：Pagefind + 快捷键 + 结果卡片"
+description: "实现 Pagefind 搜索、⌘K/Ctrl+K 弹窗、结果高亮与构建集成"
+title: "[PR-B] 搜索 v1：Pagefind + 快捷键 + 结果卡片"
+labels: ["type:feature", "area:search", "priority:P1", "status:ready"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **目标**
+        - 集成 Pagefind（构建期索引，运行时静态搜索）
+        - 支持快捷键 ⌘K / Ctrl+K 打开搜索框，结果卡片含标题、路径、片段高亮、更新时间
+        - 构建产物含 `pagefind/` 目录，随 Pages 发布
+        - 首屏无阻塞，Lighthouse ≥ 90
+  - type: checkboxes
+    id: changes
+    attributes:
+      label: 变更清单
+      options:
+        - label: 添加 `pagefind` 依赖与 `search:index` 脚本
+        - label: CI 在 VitePress 构建后执行 `npm run search:index`
+        - label: 新建组件 `theme/components/SearchBox.vue`
+        - label: 在 `Layout.vue` 注册 ⌘K / Ctrl+K 快捷键
+        - label: 部署中包含 `pagefind/` 索引目录
+  - type: checkboxes
+    id: acceptance
+    attributes:
+      label: 验收标准
+      options:
+        - label: 部署后可通过 ⌘K / Ctrl+K 调出搜索框
+        - label: 输入关键词 150–300ms 内出现结果
+        - label: Dead links 为 0
+        - label: 首页 Lighthouse 性能分 ≥ 90
+  - type: input
+    id: rollback
+    attributes:
+      label: 回滚策略
+      description: "若构建或索引异常，可移除 pagefind 相关脚本与 UI 组件，回退到 v0 状态"

@@ -5,7 +5,7 @@ updated: '2025-10-13'
 status: published
 category_zh: 工程笔记
 tags_zh:
-  - GHA
+  - github-actions
   - 自动化
   - 知识库
 series: Ling Atlas 起步

@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 📘 AGENTS 手册（单一真相源）
+    url: https://github.com/shlxl/ling-atlas/blob/main/AGENTS.md
+    about: 所有目标、约束、验收标准与任务队列均以此为准
+  - name: 💬 Discussions 讨论区
+    url: https://github.com/shlxl/ling-atlas/discussions
+    about: 需求澄清、提问与设计讨论优先到这里
