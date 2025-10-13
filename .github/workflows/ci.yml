@@ -1,4 +1,4 @@
-name: CI
+name: CI + Deploy
 on:
   pull_request:
     branches: [ main, master ]
@@ -6,9 +6,17 @@ on:
     branches: [ main ]
   workflow_dispatch:
 
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      BASE: /ling-atlas/
+      SITE_ORIGIN: https://shlxl.github.io/ling-atlas
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -18,7 +26,7 @@ jobs:
       - name: Node info
         run: |
           node -v
-          npm -v  
+          npm -v
       - run: npm ci
       - name: 归一标签（非阻断）
         run: npm run tags:normalize
@@ -28,3 +36,19 @@ jobs:
         run: npm run gen
       - name: 构建 + 搜索索引（阻断）
         run: npm run build:search
+      - name: 上传 Pages 产物
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs/.vitepress/dist
+
+  deploy:
+    needs: build
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
