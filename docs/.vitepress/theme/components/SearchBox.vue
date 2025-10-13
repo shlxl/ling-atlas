@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, onBeforeUnmount, ref } from 'vue'
+import { onMounted, onBeforeUnmount, ref, computed } from 'vue'
 import { withBase } from 'vitepress'
 import { trackEvent, hashQuery } from '../telemetry'
 
@@ -14,6 +14,7 @@ const loading = ref(false)
 const semanticPending = ref(false)
 const error = ref<string | null>(null)
 const lastQueryHash = ref('')
+const noResults = computed(() => !loading.value && !error.value && query.value.trim().length > 0 && results.value.length === 0)
 
 let pagefind: any = null
 let semanticWorker: Worker | null = null
@@ -27,10 +28,6 @@ const vectorPromises = new Map<string, Promise<number[]>>()
 const queryVecCache = new Map<string, number[]>()
 let searchToken = 0
 let debounceTimer = 0
-
-function normalizeBase(path: string) {
-  return withBase(path)
-}
 
 function open() {
   isOpen.value = true
@@ -63,18 +60,27 @@ function disableSemantic(reason: unknown) {
   console.warn('[semantic disabled]', reason)
 }
 
+let pagefindPromise: Promise<boolean> | null = null
+
 async function ensurePagefind() {
   if (pagefind) return true
-  try {
-    const runtimePath = normalizeBase('/pagefind/pagefind.js')
-    // @vite-ignore
-    pagefind = await import(/* @vite-ignore */ (runtimePath as any))
-    return true
-  } catch (err) {
-    error.value = '搜索运行时未准备好。请先执行：npm run build && npm run search:index'
-    console.error(err)
-    return false
-  }
+  if (pagefindPromise) return pagefindPromise
+  pagefindPromise = (async () => {
+    try {
+      const instance = (mod && 'default' in mod ? mod.default : mod)
+      if (!instance || typeof instance.search !== 'function') {
+        throw new Error('Pagefind runtime missing search implementation')
+      }
+      return true
+    } catch (err) {
+      error.value = '搜索运行时未准备好。请先执行：npm run build && npm run search:index'
+      console.error(err)
+      return false
+    } finally {
+      pagefindPromise = null
+    }
+  })()
+  return pagefindPromise
 }
 
 function handleWorkerMessage(ev: MessageEvent<any>) {
@@ -131,7 +137,8 @@ function handleWorkerMessage(ev: MessageEvent<any>) {
 async function initSemantic() {
   if (semanticWorker || semanticDisabled) return
   try {
-    const res = await fetch(normalizeBase('/embeddings-texts.json'), { cache: 'no-store' })
+    const embeddingsUrl = resolveAsset('/embeddings-texts.json').href
+    const res = await fetch(embeddingsUrl, { cache: 'no-store' })
     if (!res.ok) throw new Error(`Failed to load embeddings-texts.json (${res.status})`)
     const payload = await res.json()
     const items = Array.isArray(payload?.items) ? payload.items : []
@@ -142,7 +149,7 @@ async function initSemantic() {
     })).filter(it => it.url)
     texts.forEach(it => textMap.set(it.url, it))
 
-    const workerUrl = normalizeBase('/worker/embeddings.worker.js')
+    const workerUrl = resolveAsset('/worker/embeddings.worker.js').href
     semanticWorker = new Worker(workerUrl, { type: 'module' })
     semanticWorker.onmessage = handleWorkerMessage
     semanticWorker.onerror = (err) => disableSemantic(err?.message || err)
@@ -202,9 +209,11 @@ async function getLexicalResults(q: string): Promise<LexicalResult[]> {
   const limited = list.slice(0, 50)
   const items = await Promise.all(limited.map(async (entry: any, idx: number) => {
     const data = await entry.data()
+    const rawUrl = data.url || entry?.url || ''
+    const normalizedUrl = normalizeResultUrl(rawUrl)
     return {
-      url: data.url,
-      title: data.meta?.title || data.excerpt?.slice(0, 60) || data.url,
+      url: normalizedUrl,
+      title: data.meta?.title || data.excerpt?.slice(0, 60) || rawUrl,
       excerpt: data.excerpt || '',
       rank: idx + 1
     }
@@ -298,28 +307,6 @@ async function runSearch(input: string) {
     loading.value = false
     return
   }
-
-  if (!(await ensurePagefind())) {
-    loading.value = false
-    return
-  }
-
-  let lexical: LexicalResult[] = []
-  try {
-    results.value = lexical.slice(0, 20).map(item => ({ url: item.url, title: item.title, excerpt: item.excerpt }))
-  } catch (err) {
-    console.error('[search failed]', err)
-    error.value = '搜索失败，请检查控制台日志'
-  } finally {
-    if (token === searchToken) loading.value = false
-  }
-
-  if (token !== searchToken || semanticDisabled) return
-
-  try {
-    semanticPending.value = true
-    const semantic = await semanticSearch(q)
-    if (token !== searchToken) return
     if (!semantic.items.length) return
 
     const fused = rrfFuse(lexical, semantic.items)
