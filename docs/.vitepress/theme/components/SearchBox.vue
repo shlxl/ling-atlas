@@ -291,7 +291,6 @@ async function runSearch(input: string) {
   const token = ++searchToken
   results.value = []
   error.value = null
-  lastQueryHash.value = ''
   semanticPending.value = false
   loading.value = true
 
@@ -307,7 +306,6 @@ async function runSearch(input: string) {
 
   let lexical: LexicalResult[] = []
   try {
-    const hashPromise = hashQuery(q).catch(() => '')
     lexical = await getLexicalResults(q)
     if (token !== searchToken) return
 
