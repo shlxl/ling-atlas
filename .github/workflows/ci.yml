@@ -47,10 +47,6 @@ jobs:
         run: node .codex/budget.mjs
       - name: Lighthouse CI
         run: |
-          CHROME_BIN=$(node -e "const chromium=require('@sparticuz/chromium');Promise.resolve(chromium.executablePath()).then(p=>process.stdout.write(p)).catch(err=>{console.error(err);process.exit(1);})")
-          export LHCI_CHROME_PATH="$CHROME_BIN"
-          export CHROME_PATH="$CHROME_BIN"
-          npx lhci autorun
       - name: Merge telemetry data
         run: node scripts/telemetry-merge.mjs
       - name: 上传 Pages 产物
