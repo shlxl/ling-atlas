@@ -24,13 +24,6 @@ function close() {
 async function ensureLoaded() {
   if (pagefind) return true
   try {
-    // Pagefind runtime is served from /pagefind/ in dev/preview/production
-    // Use a runtime-computed absolute URL so bundlers don't try to resolve it
-    const runtimeUrl = typeof window !== 'undefined'
-      ? new URL('/pagefind/pagefind.js', window.location.origin).href
-      : '/pagefind/pagefind.js'
-    // @vite-ignore prevents Rollup from trying to resolve this at build-time
-    pagefind = await import(/* @vite-ignore */ (runtimeUrl as any))
     return true
   } catch (e) {
     error.value = '搜索运行时未准备好。请先执行：npm run build && npm run search:index'
@@ -98,7 +91,6 @@ onBeforeUnmount(() => {
             <div v-else-if="loading" class="la-loading">正在搜索...</div>
             <ul v-else class="la-results">
               <li v-for="item in results" :key="item.url">
-                <a :href="item.url" @click="close">
                   <div class="la-title">{{ item.title }}</div>
                   <div class="la-excerpt">{{ item.excerpt }}</div>
                 </a>
