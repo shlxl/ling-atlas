@@ -1,6 +1,5 @@
 <script setup lang="ts">
-import { onMounted, onBeforeUnmount, ref, computed } from 'vue'
-import { withBase } from 'vitepress'
+import { onMounted, onBeforeUnmount, ref } from 'vue'
 import { trackEvent, hashQuery } from '../telemetry'
 
 type LexicalResult = { url: string; title: string; excerpt: string; rank: number }
@@ -14,7 +13,6 @@ const loading = ref(false)
 const semanticPending = ref(false)
 const error = ref<string | null>(null)
 const lastQueryHash = ref('')
-const noResults = computed(() => !loading.value && !error.value && query.value.trim().length > 0 && results.value.length === 0)
 let pagefind: any = null
 let semanticWorker: Worker | null = null
 const workerPending = new Map<string, { resolve: (vecs: number[][]) => void; reject: (reason: any) => void; timer: number }>()
@@ -306,6 +304,39 @@ async function runSearch(input: string) {
     loading.value = false
     return
   }
+  const hashPromise = hashQuery(q)
+
+  if (!(await ensurePagefind())) {
+    loading.value = false
+    return
+  }
+
+  let lexical: LexicalResult[] = []
+  try {
+    lexical = await getLexicalResults(q)
+    if (token !== searchToken) return
+
+    results.value = lexical.slice(0, 20).map(item => ({ url: item.url, title: item.title, excerpt: item.excerpt }))
+
+    void hashPromise.then(qHash => {
+      if (!qHash || token !== searchToken) return
+      lastQueryHash.value = qHash
+      void trackEvent('search_query', { qHash, len: q.length })
+    })
+  } catch (err) {
+    console.error('[search failed]', err)
+    error.value = '搜索失败，请稍后再试'
+    return
+  } finally {
+    if (token === searchToken) loading.value = false
+  }
+
+  if (token !== searchToken || semanticDisabled) return
+
+  let semantic: Awaited<ReturnType<typeof semanticSearch>> | null = null
+  semanticPending.value = true
+  try {
+    semantic = await semanticSearch(q)
   } catch (err) {
     console.warn('[semantic search failed]', err)
   } finally {
