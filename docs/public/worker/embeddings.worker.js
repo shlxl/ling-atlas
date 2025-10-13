@@ -1,11 +1,61 @@
-import { pipeline } from 'https://esm.sh/@xenova/transformers@2.7.0'
+const TRANSFORMERS_URL = 'https://esm.sh/@xenova/transformers@2.7.0'
+let manifestCache = null
+
+async function loadSriManifest() {
+  if (manifestCache) return manifestCache
+  const manifestUrl = new URL('../.well-known/sri-manifest.json', import.meta.url)
+  const response = await fetch(manifestUrl, { cache: 'no-cache', credentials: 'omit' })
+  if (!response.ok) throw new Error(`Failed to load SRI manifest (${response.status})`)
+  const data = await response.json()
+  if (!Array.isArray(data)) throw new Error('SRI manifest malformed')
+  manifestCache = data
+  return manifestCache
+}
+
+async function importWithSri(url) {
+  const manifest = await loadSriManifest()
+  const entry = manifest.find(item => item?.url === url)
+  if (!entry?.integrity) {
+    throw new Error(`Missing SRI entry for ${url}`)
+  }
+  const request = new Request(url, {
+    mode: 'cors',
+    credentials: 'omit',
+    integrity: entry.integrity,
+    referrerPolicy: 'no-referrer'
+  })
+  const response = await fetch(request)
+  if (!response.ok) {
+    throw new Error(`Failed to fetch ${url} (${response.status})`)
+  }
+  const source = await response.text()
+  const blob = new Blob([source], { type: 'application/javascript' })
+  const moduleUrl = URL.createObjectURL(blob)
+  try {
+    return await import(moduleUrl)
+  } finally {
+    URL.revokeObjectURL(moduleUrl)
+  }
+}
+
+let pipelineModulePromise = null
 
 let encoderPromise = null
 const pendingCache = new Map()
 
+async function ensurePipelineModule() {
+  if (!pipelineModulePromise) {
+    pipelineModulePromise = importWithSri(TRANSFORMERS_URL)
+  }
+  return pipelineModulePromise
+}
+
 function ensureEncoder(){
   if (!encoderPromise){
-    encoderPromise = pipeline('feature-extraction', 'Xenova/gte-small', { quantized: true })
+    encoderPromise = ensurePipelineModule().then((mod) => {
+      if (!mod?.pipeline) throw new Error('Transformers pipeline unavailable')
+      return mod.pipeline('feature-extraction', 'Xenova/gte-small', { quantized: true })
+    })
   }
   return encoderPromise
 }

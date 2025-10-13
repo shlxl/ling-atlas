@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { onMounted, onBeforeUnmount, ref } from 'vue'
 import { withBase } from 'vitepress'
+import { trackEvent, hashQuery } from '../telemetry'
 
 type LexicalResult = { url: string; title: string; excerpt: string; rank: number }
 type SemanticCandidate = { url: string; score: number; vector: number[] | null; rank: number }
@@ -11,6 +12,7 @@ const query = ref('')
 const results = ref<Array<{ url: string; title: string; excerpt: string }>>([])
 const loading = ref(false)
 const error = ref<string | null>(null)
+const lastQueryHash = ref('')
 
 let pagefind: any = null
 let semanticWorker: Worker | null = null
@@ -37,6 +39,7 @@ function open() {
     el?.focus()
   })
   if (!semanticReady.value && !semanticDisabled) void initSemantic()
+  void trackEvent('search_open')
 }
 
 function close() {
@@ -294,10 +297,17 @@ async function runSearch(input: string) {
   if (!(await ensurePagefind())) return
   loading.value = true
   try {
+    const hashPromise = hashQuery(q)
     const lexicalPromise = getLexicalResults(q)
     const semanticPromise = semanticDisabled ? Promise.resolve({ items: [], queryVec: null }) : semanticSearch(q)
     const [lexical, semantic] = await Promise.all([lexicalPromise, semanticPromise])
     if (token !== searchToken) return
+
+    const qHash = await hashPromise
+    if (qHash) {
+      lastQueryHash.value = qHash
+      void trackEvent('search_query', { qHash, len: q.length })
+    }
 
     if (!semantic.items.length) {
       results.value = lexical.slice(0, 20).map(item => ({ url: item.url, title: item.title, excerpt: item.excerpt }))
@@ -330,6 +340,13 @@ function scheduleSearch() {
   debounceTimer = window.setTimeout(() => {
     void runSearch(query.value)
   }, 160)
+}
+
+function onResultClick(item: { url: string }, index: number) {
+  if (lastQueryHash.value) {
+    void trackEvent('search_click', { qHash: lastQueryHash.value, rank: index + 1, url: item.url })
+  }
+  close()
 }
 
 function onKey(e: KeyboardEvent) {
@@ -372,8 +389,8 @@ onBeforeUnmount(() => {
           <div v-if="error" class="la-error">{{ error }}</div>
           <div v-else-if="loading" class="la-loading">正在搜索...</div>
           <ul v-else class="la-results">
-            <li v-for="item in results" :key="item.url">
-              <a :href="withBase(item.url)" @click="close">
+            <li v-for="(item, index) in results" :key="item.url">
+              <a :href="withBase(item.url)" @click="onResultClick(item, index)">
                 <div class="la-title">{{ item.title }}</div>
                 <div class="la-excerpt">{{ item.excerpt }}</div>
               </a>

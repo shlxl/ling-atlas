@@ -1,0 +1,6 @@
+User-agent: *
+Disallow: /data/
+Disallow: /admin/
+Allow: /
+
+Sitemap: https://shlxl.github.io/ling-atlas/sitemap.xml

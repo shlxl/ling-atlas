@@ -31,6 +31,7 @@ npm run dev
 │  ├─ _generated/        # pagegen 输出（分类/系列/标签/归档）
 │  ├─ public/            # 静态文件（rss.xml、sitemap.xml 由脚本生成）
 │  └─ .vitepress/        # VitePress 配置与主题
+├─ security/             # CSP/SRI 模板配置
 ├─ schema/               # Frontmatter schema 与 tag 别名
 ├─ scripts/              # 生成器与校验脚本
 └─ .github/workflows/    # CI
@@ -46,6 +47,12 @@ npm run dev
 1. 打开 **Settings → Pages**，选择 **GitHub Actions**。
 2. 工作流文件在 `.github/workflows/deploy.yml`；首次 push 后会自动部署。
 3. 自定义域名建议使用子域（如 `kb.example.com`），并开启 HTTPS。
+
+## 安全与索引
+- `.well-known/security-headers.txt`：`npm run build:search` 会自动更新并同步到发布目录，同时在静态页面注入 CSP `<meta>`。
+- `.well-known/sri-manifest.json`：记录外部资源的 SRI；若 CDN 内容变更但未更新 `security/sri-allowlist.json`，CI 会直接失败。
+- `docs/public/robots.txt`：默认禁止抓取 `/data/`、`/admin/`，并指向站点 `sitemap.xml`。
+- `docs/public/sitemap.xml`：由 PageGen 生成，保持与 robots 中链接一致。
 
 ## 约定
 - 所有文章文件置于 `docs/content/**/index.md`；Frontmatter 字段遵循 `schema/frontmatter.schema.json`。

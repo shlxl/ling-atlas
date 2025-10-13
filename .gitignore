@@ -9,6 +9,7 @@ docs/.vitepress/dist/
 docs/public/rss.xml
 docs/public/sitemap.xml
 docs/public/embeddings-texts.json
+data/telemetry.tmp.json
 
 # generated pages
 docs/_generated/
