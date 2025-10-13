@@ -47,7 +47,7 @@ jobs:
         run: node .codex/budget.mjs
       - name: Lighthouse CI
         run: |
-          LHCI_CHROME_PATH=$(node -e "process.stdout.write(require('@sparticuz/chromium').executablePath())") \
+          LHCI_CHROME_PATH=$(node -e "const chromium=require('@sparticuz/chromium');Promise.resolve(chromium.executablePath()).then(p=>process.stdout.write(p)).catch(err=>{console.error(err);process.exit(1);})") \
             npx lhci autorun --collect.chromeFlags="--headless=new --disable-dev-shm-usage --no-sandbox"
       - name: Merge telemetry data
         run: node scripts/telemetry-merge.mjs
