@@ -61,6 +61,7 @@ jobs:
             libdrm2 \
             libxcb-dri3-0 \
             libxshmfence1
+          sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0 || true
           if ! dpkg -s libasound2 >/dev/null 2>&1 && ! dpkg -s libasound2t64 >/dev/null 2>&1; then
             sudo apt-get install -y libasound2t64 || sudo apt-get install -y libasound2
           fi
