@@ -106,6 +106,12 @@ codex run audit   # 可选
 - CI 环境需预装 `libnss3`, `libnspr4`, `fonts-liberation` 等依赖，以确保 headless Chrome 可正常启动。
 - 本地调试遥测：页面控制台执行 `window.__telemetry.export()` 可导出 JSON（写入 `data/telemetry.tmp.json` 后，CI 会在构建阶段自动合并）。
 
+### CI/部署节奏备忘
+
+- 当前流水线默认跳过 Lighthouse（`ci.yml` 中步骤留空），以缩短 `CI + Deploy` 耗时；待新功能稳定后再补回 `npx lhci autorun`。
+- PWA 离线缓存（`vite-plugin-pwa` / Workbox）与 AI 自演进能力（自动嵌入、摘要、Q&A 导出）与 Lighthouse 解耦，可先开发并上线，再用 Lighthouse 回归验证性能与体验。
+- 若恢复 Lighthouse，请关注运行时长与所需的 Chrome 依赖，必要时只在夜间任务或发布前手动触发。
+
 ## 内容生产力守门
 
 - Markdown Lint：`npm run md:lint`（使用 markdownlint-cli2，可提前发现标题序号、行长等问题）。
