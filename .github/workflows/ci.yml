@@ -62,8 +62,10 @@ jobs:
       - name: Generate SBOM
         run: npm run sbom
       - name: Install Lighthouse OS Dependencies
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: sudo apt-get update && sudo apt-get install -y libnspr4
       - name: Lighthouse CI
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: ./node_modules/.bin/lhci autorun --collect.chromeFlags="--no-sandbox"
       - name: Merge telemetry data
         run: node scripts/telemetry-merge.mjs
