@@ -50,7 +50,14 @@ function navFromMeta(){
     { text: '最新', link: '/_generated/archive/' + (years[0] || '') + '/' },
     { text: '分类', items: Object.keys(meta.byCategory||{}).sort().map(c=>({ text:c, link:`/_generated/categories/${slug(c)}/` })) },
     { text: '系列', items: Object.keys(meta.bySeries||{}).sort().map(s=>({ text:s, link:`/_generated/series/${s}/` })) },
-    { text: '标签', link: '/_generated/tags/' + slug(firstTag) + '/' }
+    { text: '标签', link: '/_generated/tags/' + slug(firstTag) + '/' },
+    {
+      text: 'About',
+      items: [
+        { text: '观测指标', link: '/about/metrics.html' },
+        { text: '常见问答', link: '/about/qa.html' }
+      ]
+    }
   ]
 }
 
