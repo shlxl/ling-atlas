@@ -41,6 +41,8 @@ jobs:
         run: npm run gen
       - name: Build semantic texts
         run: npm run embeddings:build
+      - name: Build knowledge chunks
+        run: node scripts/chunk-build.mjs
       - name: Generate embedding payload (占位)
         run: node scripts/embed-build.mjs
       - name: Generate summaries (soft fail)

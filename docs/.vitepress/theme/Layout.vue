@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, defineAsyncComponent, onMounted, ref } from 'vue'
 import { useRouter } from 'vitepress'
 import DefaultTheme from 'vitepress/dist/client/theme-default/without-fonts'
 import SearchBox from './components/SearchBox.vue'
@@ -9,6 +9,7 @@ import { useRegisterSW } from 'virtual:pwa-register/vue'
 const router = useRouter()
 const offlineReady = ref(false)
 const needRefresh = ref(false)
+const chatOpen = ref(false)
 
 const { updateServiceWorker } = useRegisterSW({
   immediate: true,
@@ -25,6 +26,8 @@ const bannerMessage = computed(() => {
   if (offlineReady.value) return '页面已缓存，可离线访问。'
   return ''
 })
+
+const ChatWidget = defineAsyncComponent(() => import('./components/ChatWidget.vue'))
 
 function closeBanner() {
   offlineReady.value = false
@@ -63,6 +66,10 @@ onMounted(() => {
           </div>
         </div>
       </transition>
+      <button type="button" class="chat-fab" @click="chatOpen = true">
+        知识问答
+      </button>
+      <component :is="ChatWidget" v-if="chatOpen" v-model="chatOpen" />
     </template>
   </DefaultTheme.Layout>
 </template>
@@ -122,5 +129,29 @@ onMounted(() => {
 }
 .la-search-wrapper :deep(.la-search-btn) {
   margin-right: 0.5rem;
+}
+.chat-fab {
+  position: fixed;
+  right: 1.5rem;
+  bottom: 1.5rem;
+  border: none;
+  border-radius: 999px;
+  padding: 0.75rem 1.3rem;
+  font-size: 0.95rem;
+  background: var(--vp-c-brand-1);
+  color: #fff;
+  cursor: pointer;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  z-index: 9999;
+}
+.chat-fab:hover {
+  opacity: 0.9;
+}
+
+@media (max-width: 720px) {
+  .chat-fab {
+    right: 1rem;
+    bottom: 1rem;
+  }
 }
 </style>

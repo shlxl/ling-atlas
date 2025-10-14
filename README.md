@@ -9,6 +9,7 @@
 - CI 守门（Schema 校验、构建），后续可加 Lighthouse/体积预算
 - 预留 **L1 语义检索（Transformers.js）** 与 **USearch/WASM** 接口
 - PR-I AI 自演进（占位版）：构建阶段自动生成 embeddings/summaries/Q&A JSON，前端可按需消费
+- PR-J 知识 API + Chat：导出段落级只读数据，前端提供带引用的轻量问答
 
 ## 快速开始
 ```bash
@@ -41,8 +42,9 @@ npm run dev
 ## 命令
 - `npm run gen`：生成分类/系列/标签/归档 + RSS/Sitemap
 - `npm run precheck`：Frontmatter Schema 校验（阻断）
-- `npm run build`：构建站点（前置 `gen`）
+- `npm run build`：构建站点（前置 `gen` + `knowledge:build`）
 - `npm run dev`：本地开发（前置 `gen`）
+- `npm run knowledge:build`：单独更新 `/api/knowledge.json`（段落级知识数据）
 - `npm run ai:all`：执行 AI 自演进管线（文本嵌入 / 摘要 / 问答，占位实现）
 - `npm run build`（或 `npm run pwa:build`）：内置 `vite-plugin-pwa`，生成 `sw.js`、`manifest.webmanifest`、`icons/` 等离线缓存工件
 - 离线验证：`npm run build` → `npx vitepress preview docs --host 127.0.0.1 --port 4173`，在浏览器中访问站点、打开 DevTools → Application → Service Workers，勾选 “Offline” 后刷新确认最近访问页和搜索仍能使用缓存；同时观察底部“检测到新版本/已缓存”提示条触发刷新
