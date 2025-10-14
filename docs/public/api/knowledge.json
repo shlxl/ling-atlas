@@ -1,5 +1,5 @@
 {
-  "version": "2025-10-14T04:04:20.085Z",
+  "version": "2025-10-14T05:03:54.283Z",
   "items": [
     {
       "url": "/content/from-zero-to-one/",
@@ -49,6 +49,34 @@
       "anchor": "#top",
       "chunk": "欢迎来到 Ling Atlas。这里是你的长期知识资产库：协议优先、内容为王、检索驱动。",
       "lang": "zh"
+    },
+    {
+      "url": "/en/content/automation/",
+      "title": "Automating Deployments",
+      "anchor": "#top",
+      "chunk": "Automating the content pipeline keeps Ling Atlas reliable while freeing writers from repetitive chores. This short guide summarises the current workflow and highlights the hooks you can customise.",
+      "lang": "en"
+    },
+    {
+      "url": "/en/content/automation/",
+      "title": "Automating Deployments",
+      "anchor": "#validation-first",
+      "chunk": "npm run precheck validates frontmatter against the shared schema. Markdown linting and internal link checks run inside CI;you can reproduce locally via npm run md:lint and node scripts/check-links.mjs.",
+      "lang": "en"
+    },
+    {
+      "url": "/en/content/automation/",
+      "title": "Automating Deployments",
+      "anchor": "#build-and-publish",
+      "chunk": "npm run build bundles both Chinese and English archives, updates RSS/Sitemap, and refreshes search indexes. GitHub Actions executes npm run build:search on push, so Pagefind assets and semantic embeddings are always in sync.",
+      "lang": "en"
+    },
+    {
+      "url": "/en/content/automation/",
+      "title": "Automating Deployments",
+      "anchor": "#safeguards",
+      "chunk": "Supply chain steps (npm run audit, npm run license, npm run sbom) expose dependency, licence, and SBOM data for auditing. External resources are protected by strict SRI checks—changing a CDN asset without updating the allowlist causes CI to fail. By combining these steps, the repository stays ready to publish with minimal manual intervention. Extend them with your own scripts to cover image optimisation, analytics, or custom QA tasks.",
+      "lang": "en"
     },
     {
       "url": "/en/content/hello-world/",

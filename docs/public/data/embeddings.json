@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2025-10-14T03:46:33.143Z",
+  "generatedAt": "2025-10-14T05:04:03.408Z",
   "items": [
     {
       "url": "/content/from-zero-to-one/",
@@ -12,6 +12,12 @@
       "title": "你好，知识库",
       "text": "这是第一篇示例文。实际使用时请删除本目录并导入你的内容。",
       "lang": "zh"
+    },
+    {
+      "url": "/en/content/automation/",
+      "title": "Automating Deployments",
+      "text": "A concise walkthrough on how Ling Atlas automates content validation, build, and deployment.",
+      "lang": "en"
     },
     {
       "url": "/en/content/hello-world/",

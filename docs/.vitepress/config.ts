@@ -71,8 +71,8 @@ function navFromMeta(meta: any, locale: 'zh' | 'en') {
     {
       text: t.guides,
       items: [
-        { text: t.deploy, link: '/DEPLOYMENT.html' },
-        { text: t.migration, link: '/MIGRATION.html' }
+        { text: t.deploy, link: `${prefix}/DEPLOYMENT.html` },
+        { text: t.migration, link: `${prefix}/MIGRATION.html` }
       ]
     }
   ]
