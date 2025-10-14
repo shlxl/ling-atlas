@@ -64,8 +64,8 @@ function navFromMeta(meta: any, locale: 'zh' | 'en') {
     {
       text: t.about,
       items: [
-        { text: t.metrics, link: '/about/metrics.html' },
-        { text: t.qa, link: '/about/qa.html' }
+        { text: t.metrics, link: `${prefix}/about/metrics.html` },
+        { text: t.qa, link: `${prefix}/about/qa.html` }
       ]
     },
     {
