@@ -1,7 +1,11 @@
 name: "PR-E 观测与最小遥测"
 description: "仅收集必要匿名指标（PV、搜索查询分布、点击位置），不接入商业分析；本地可查看日志，线上写入静态 JSON（汇总覆盖）"
 title: "[PR-E] 观测与最小遥测"
-labels: ["observability", "telemetry", "CI", "search-quality"]
+labels:
+  - observability
+  - telemetry
+  - CI
+  - search-quality
 body:
   - type: markdown
     attributes:
@@ -62,23 +66,23 @@ body:
   - type: checkboxes
     id: acceptance
     attributes:
-      label: ✅ 验收标准
-      description: 完成后需满足以下条件
+      label: "✅ 验收标准"
+      description: "完成后需满足以下条件"
       options:
-        - label: 不使用第三方 Cookie；不收集 IP / UA / 指纹
+        - label: "不使用第三方 Cookie；不收集 IP / UA / 指纹"
           required: true
-        - label: `telemetry.json` 能被页面读取；SearchBox 事件可在本地 console 验证
+        - label: "`telemetry.json` 能被页面读取；SearchBox 事件可在本地 console 验证"
           required: true
-        - label: CI 无新增外网依赖；合并脚本幂等且可重复执行
+        - label: "CI 无新增外网依赖；合并脚本幂等且可重复执行"
           required: true
-        - label: 线上输出为静态 `telemetry.json`（覆盖写），不影响核心功能
+        - label: "线上输出为静态 `telemetry.json`（覆盖写），不影响核心功能"
           required: true
 
   - type: textarea
     id: notes
     attributes:
-      label: 🧪 验证与日志
-      description: 说明本地验证方式（控制台导出、样例事件）、CI 合并日志片段与最终 `telemetry.json` 片段
+      label: "🧪 验证与日志"
+      description: "说明本地验证方式（控制台导出、样例事件）、CI 合并日志片段与最终 `telemetry.json` 片段"
       placeholder: |
         - 本地控制台输出示例：
           window.__telemetry_export__()
