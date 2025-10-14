@@ -57,6 +57,13 @@ function navFromMeta(){
         { text: '观测指标', link: '/about/metrics.html' },
         { text: '常见问答', link: '/about/qa.html' }
       ]
+    },
+    {
+      text: '指南',
+      items: [
+        { text: '部署指南', link: '/DEPLOYMENT.html' },
+        { text: '迁移与重写', link: '/MIGRATION.html' }
+      ]
     }
   ]
 }

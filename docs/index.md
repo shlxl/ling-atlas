@@ -12,6 +12,9 @@ hero:
     - theme: alt
       text: 全部分类
       link: /_generated/categories/工程笔记/
+    - theme: alt
+      text: 部署指南
+      link: /DEPLOYMENT.html
 features:
   - title: 知识演进
     details: 使用 Frontmatter 与自动化脚本，随时扩展或迁移

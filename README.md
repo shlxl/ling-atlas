@@ -51,6 +51,7 @@ npm run dev
 1. 打开 **Settings → Pages**，选择 **GitHub Actions**。
 2. 工作流文件在 `.github/workflows/deploy.yml`；首次 push 后会自动部署。
 3. 自定义域名建议使用子域（如 `kb.example.com`），并开启 HTTPS。
+4. 更多细节参考 [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)，迁移路径与重写策略见 [docs/MIGRATION.md](docs/MIGRATION.md)。
 
 ## 安全与索引
 - `.well-known/security-headers.txt`：`npm run build:search` 会自动更新并同步到发布目录，同时在静态页面注入 CSP `<meta>`。
