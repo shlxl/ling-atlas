@@ -8,6 +8,7 @@
 - **元数据驱动导航** + 自动 **分类/系列/标签/归档** + **RSS/Sitemap**
 - CI 守门（Schema 校验、构建），后续可加 Lighthouse/体积预算
 - 预留 **L1 语义检索（Transformers.js）** 与 **USearch/WASM** 接口
+- PR-I AI 自演进（占位版）：构建阶段自动生成 embeddings/summaries/Q&A JSON，前端可按需消费
 
 ## 快速开始
 ```bash
@@ -42,6 +43,7 @@ npm run dev
 - `npm run precheck`：Frontmatter Schema 校验（阻断）
 - `npm run build`：构建站点（前置 `gen`）
 - `npm run dev`：本地开发（前置 `gen`）
+- `npm run ai:all`：执行 AI 自演进管线（文本嵌入 / 摘要 / 问答，占位实现）
 
 ## 部署（GitHub Pages）
 1. 打开 **Settings → Pages**，选择 **GitHub Actions**。
@@ -53,6 +55,7 @@ npm run dev
 - `.well-known/sri-manifest.json`：记录外部资源的 SRI；若 CDN 内容变更但未更新 `security/sri-allowlist.json`，CI 会直接失败。
 - `docs/public/robots.txt`：默认禁止抓取 `/data/`、`/admin/`，并指向站点 `sitemap.xml`。
 - `docs/public/sitemap.xml`：由 PageGen 生成，保持与 robots 中链接一致。
+- AI 自演进产物：`docs/public/data/embeddings.json`、`summaries.json`、`qa.json`，CI/构建阶段自动刷新，失败不阻断主流程。
 
 ## 约定
 - 所有文章文件置于 `docs/content/**/index.md`；Frontmatter 字段遵循 `schema/frontmatter.schema.json`。
