@@ -66,7 +66,7 @@ jobs:
       - name: Lighthouse CI
         run: |
           node -e "require('@sparticuz/chromium').executablePath()"
-          ./node_modules/.bin/lhci autorun
+          ./node_modules/.bin/lhci autorun --collect.chromeFlags="--no-sandbox"
       - name: Merge telemetry data
         run: node scripts/telemetry-merge.mjs
       - name: 上传 Pages 产物
