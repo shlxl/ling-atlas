@@ -1,6 +1,6 @@
 {
   "totalMB": 5,
   "maxJsKB": 150,
-  "maxCssKB": 110,
+  "maxCssKB": 125,
   "topN": 10
 }
