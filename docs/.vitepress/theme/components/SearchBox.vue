@@ -429,6 +429,20 @@ onBeforeUnmount(() => {
         <div class="la-search-body">
           <div v-if="error" class="la-error">{{ error }}</div>
           <div v-else-if="loading" class="la-loading">正在搜索...</div>
+          <div v-else class="la-results-wrapper">
+            <template v-if="results.length">
+              <p v-if="semanticPending" class="la-semantic-hint">正在融合语义结果...</p>
+              <ul class="la-results">
+                <li v-for="(item, idx) in results" :key="item.url">
+                  <a :href="item.url" @click="onResultClick(item, idx)">
+                    <div class="la-title">{{ item.title }}</div>
+                    <div class="la-excerpt">{{ item.excerpt }}</div>
+                  </a>
+                </li>
+              </ul>
+            </template>
+            <p v-else class="la-empty">没有找到匹配内容，换个关键词试试？</p>
+          </div>
         </div>
       </div>
     </div>
@@ -488,4 +502,5 @@ onBeforeUnmount(() => {
 .la-title { font-weight: 600; margin: 6px 0; }
 .la-excerpt { font-size: 13px; color: var(--vp-c-text-2); margin-bottom: 10px; }
 .la-error, .la-loading { padding: 14px; }
+.la-empty { padding: 14px; font-size: 14px; color: var(--vp-c-text-2); text-align: center; }
 </style>
