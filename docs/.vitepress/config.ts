@@ -103,7 +103,9 @@ export default defineConfig({
       description: '现代化、可演进、可检索的知识库工程',
       themeConfig: {
         nav: navFromMeta(metaZh, 'zh'),
-        sidebar: 'auto'
+        sidebar: 'auto',
+        lightModeSwitchTitle: '切换到浅色模式',
+        darkModeSwitchTitle: '切换到深色模式'
       }
     },
     en: {
@@ -113,7 +115,9 @@ export default defineConfig({
       description: 'A modern, evolvable, searchable knowledge base.',
       themeConfig: {
         nav: navFromMeta(metaEn, 'en'),
-        sidebar: 'auto'
+        sidebar: 'auto',
+        lightModeSwitchTitle: 'Switch to light mode',
+        darkModeSwitchTitle: 'Switch to dark mode'
       }
     }
   },
