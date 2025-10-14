@@ -2,6 +2,10 @@
   "ci": {
     "collect": {
       "staticDistDir": "docs/.vitepress/dist",
+      "url": [
+        "/index.html",
+        "/en/index.html"
+      ],
       "numberOfRuns": 1,
       "chromePath": "/tmp/chromium"
     },
