@@ -14,51 +14,25 @@ body:
   - type: markdown
     attributes:
       value: |
-        ## 🧩 任务
+        ## 🧩 任务（见下方任务清单）
 
-        ### 1️⃣ 产物体积预算脚本
-        **文件**：`.codex/budget.mjs`  
-        **配置**：`scripts/budget.config.json`  
-        - 读取 `docs/.vitepress/dist` 目录  
-        - 计算指标：
-          - 总体积（MB）
-          - 最大 JS chunk（KB）
-          - 最大 CSS（KB）
-        - 默认阈值：
-          - 总 ≤ **5MB**
-          - JS ≤ **150KB**
-          - CSS ≤ **100KB**
-        - 阈值可通过 **环境变量** 覆盖  
-        - 超限时 `process.exit(1)`  
-        - 打印 Top 10 最大文件明细  
+  - type: checkboxes
+    id: tasks
+    attributes:
+      label: 任务清单
+      description: 请勾选已完成项（可多选）
+      options:
+        - label: 产物体积预算脚本
+        - label: 集成 Lighthouse CI
+        - label: CI 工作流
+        - label: 文档更新
 
-        ### 2️⃣ 集成 Lighthouse CI
-        - 开发依赖：`@lhci/cli`
-        - 新增配置：`.lighthouserc.json`
-        - 运行命令：
-          ```bash
-          npx lhci autorun \
-            --collect.staticDistDir=docs/.vitepress/dist \
-            --upload.target=temporary-public-storage
-          ```
-        - 检查分项：
-          - Performance ≥ 90
-          - Accessibility ≥ 90
-          - Best Practices ≥ 90  
-        - 低于阈值时 `exit(1)` 并在日志输出分数与关键建议摘要
-
-        ### 3️⃣ CI 工作流
-        在构建流程（VitePress build + Pagefind + Embeddings）完成后，依次执行：
-        ```bash
-        node .codex/budget.mjs
-        npx lhci autorun ...
-        ```
-
-        ### 4️⃣ 文档更新
-        - 在 `AGENTS.md` 增补章节 **“性能预算与体检”**
-        - 包含：
-          - 阈值说明与调参方法
-          - 失败示例与回滚策略（如何放宽阈值或暂时注释）
+  - type: textarea
+    id: details
+    attributes:
+      label: 实施说明或遇到的问题
+      description: 如有特殊说明、遇到的难点或补充信息请填写（可选）
+      placeholder: 详细描述你的处理过程、遇到的问题、解决思路等
 
   - type: markdown
     attributes:
