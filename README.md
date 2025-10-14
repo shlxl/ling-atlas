@@ -11,6 +11,7 @@
 - PR-I AI 自演进（占位版）：构建阶段自动生成 embeddings/summaries/Q&A JSON，前端可按需消费
 - PR-J 知识 API + Chat：导出段落级只读数据，前端提供带引用的轻量问答
 - PR-L 多语/i18n：`docs/content`（中文）与 `docs/content.en`（英文）双目录，构建出 `/` 与 `/en/` 路由及多语言聚合页 / RSS / Sitemap
+- PR-M（规划中）：SEO / OpenGraph 优化，使知识库更易被搜索引擎收录与展示
 - PR-K 搜索评测：离线 nDCG/MRR/Recall 守门 + 线上查询参数 variant（lex / rrf / rrf-mmr）交替曝光
 
 ## 快速开始
