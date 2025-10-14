@@ -207,7 +207,8 @@ async function writeCollections(lang, meta) {
   const prefix = lang.genPrefix ? path.join(lang.genPrefix) : ''
 
   const write = async (subdir, name, title, items) => {
-    const outDir = path.join(GEN, prefix, subdir, name)
+    const targetRoot = lang.genPrefix ? path.join(DOCS, lang.genPrefix, '_generated') : GEN
+    const outDir = path.join(targetRoot, subdir, name)
     await fs.mkdir(outDir, { recursive: true })
     const md = `---\ntitle: ${title}\n---\n\n${mdList(items, lang)}\n`
     await fs.writeFile(path.join(outDir, 'index.md'), md)
