@@ -19,17 +19,15 @@ body:
 
         ### 1) 离线评测
         - 新增标注集：`data/gold.jsonl`（一行一条样本）
-        ```json
-        {"q":"分页 怎么 做","positives":["/docs/pagination#intro","/docs/pagination#api"],"negatives":["/blog/unrelated"]}
-        ```
+          示例：
+          {"q":"分页 怎么 做","positives":["/docs/pagination#intro","/docs/pagination#api"],"negatives":["/blog/unrelated"]}
         - 新建脚本：`scripts/eval/offline.mjs`
           - 对接现有检索函数（lex/Pagefind、rrf、rrf+mmr）
           - 计算：`nDCG@10`、`MRR`、`Recall@K`（K 可配置，默认 10）
           - 输出表格到 stdout，并生成 `scripts/eval/report.json`
         - 基线守门：`scripts/eval/baseline.json`
-        ```json
-        { "nDCG@10": 0.62, "MRR": 0.58, "Recall@10": 0.75, "tolerance": 0.01 }
-        ```
+          示例：
+          { "nDCG@10": 0.62, "MRR": 0.58, "Recall@10": 0.75, "tolerance": 0.01 }
           - 结果低于基线-容差 → `process.exit(1)`
         - 环境变量：
           - `EVAL_K=10`、`EVAL_VARIANTS="lex,rrf,rrf-mmr"`、`EVAL_FAIL_ON_DROP=1`
@@ -46,31 +44,29 @@ body:
 
         ### 3) CI 集成
         - 在 build 前运行（允许阈值由 env 控制）：
-        ```bash
-        node scripts/eval/offline.mjs
-        ```
+          node scripts/eval/offline.mjs
         - 将 `scripts/eval/report.json` 作为 Artifact 上传；控制台打印关键指标与对比
         - 低于基线（考虑容差）→ CI fail
 
   - type: checkboxes
     id: acceptance
     attributes:
-      label: ✅ 验收标准
+      label: "✅ 验收标准"
       options:
-        - label: 本地运行 `node scripts/eval/offline.mjs` 能输出 nDCG@10 / MRR / Recall@K，并生成 report.json
+        - label: "本地运行 `node scripts/eval/offline.mjs` 能输出 nDCG@10 / MRR / Recall@K，并生成 report.json"
           required: true
-        - label: CI 中打印离线评测对比，并以 baseline 守门（低于阈值 fail）
+        - label: "CI 中打印离线评测对比，并以 baseline 守门（低于阈值 fail）"
           required: true
-        - label: `?variant=lex|rrf|rrf-mmr` 可切换检索逻辑；不带参数时保持默认体验
+        - label: "`?variant=lex|rrf|rrf-mmr` 可切换检索逻辑；不带参数时保持默认体验"
           required: true
-        - label: Interleaving 能记录点击偏好并通过 PR-E 遥测落库（仅存 hash 与位次，不存原文）
+        - label: "Interleaving 能记录点击偏好并通过 PR-E 遥测落库（仅存 hash 与位次，不存原文）"
           required: true
 
   - type: textarea
     id: gold-notes
     attributes:
-      label: 🧾 标注数据说明
-      description: 说明 gold.jsonl 的构建原则与覆盖范围；建议包含多样意图（导航/信息/任务）与多类别文档
+      label: "🧾 标注数据说明"
+      description: "说明 gold.jsonl 的构建原则与覆盖范围；建议包含多样意图（导航/信息/任务）与多类别文档"
       placeholder: |
         - 条目数 / 覆盖分类 / 来源
         - positives/negatives 定义与采样策略
@@ -79,8 +75,8 @@ body:
   - type: textarea
     id: interleaving-notes
     attributes:
-      label: 🔀 交替曝光设计
-      description: 描述 Team Draft 细节、位次折扣、平分/并列处理与“胜者”统计口径
+      label: "🔀 交替曝光设计"
+      description: "描述 Team Draft 细节、位次折扣、平分/并列处理与“胜者”统计口径"
       placeholder: |
         - N=10；位次折扣 1/log2(1+rank)
         - 同一 URL 合并去重策略
@@ -89,8 +85,8 @@ body:
   - type: textarea
     id: logs
     attributes:
-      label: 🧪 验证与日志
-      description: 粘贴本地/CI 指标输出与线上点击偏好聚合片段
+      label: "🧪 验证与日志"
+      description: "粘贴本地/CI 指标输出与线上点击偏好聚合片段"
       placeholder: |
         [eval] k=10 variants=lex,rrf,rrf-mmr
         [eval] nDCG@10: lex=0.59 rrf=0.66 rrf-mmr=0.69
@@ -103,11 +99,11 @@ body:
     attributes:
       value: |
         ## ⚙️ 实施提示
-        - nDCG：使用 `DCG = Σ (rel_i / log2(1+i))`，`rel_i = 1` 若命中 positives；IDCG 由理想排序求得。
-        - MRR：对每个样本取命中 positives 的第一个位次 `1/rank`；未命中记 0。
+        - nDCG：使用 DCG = Σ (rel_i / log2(1+i))，rel_i = 1 若命中 positives；IDCG 由理想排序求得。
+        - MRR：对每个样本取命中 positives 的第一个位次 1/rank；未命中记 0。
         - Recall@K：K 内命中 positives 的比例。
-        - Interleaving 推荐 **Team Draft**（交替抽取），并在点击时记录来源模型；支持 `?ab=a-vs-b`。
-        - 与 PR-E 遥测打通时，新增字段请在 `data/telemetry.json` 汇总结构中登记。
+        - Interleaving 推荐 Team Draft（交替抽取），并在点击时记录来源模型；支持 `?ab=a-vs-b`。
+        - 与 PR-E 遥测打通时，新增字段请在 data/telemetry.json 汇总结构中登记。
 
   - type: markdown
     attributes:
