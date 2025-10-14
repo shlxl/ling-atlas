@@ -44,6 +44,8 @@ npm run dev
 - `npm run build`：构建站点（前置 `gen`）
 - `npm run dev`：本地开发（前置 `gen`）
 - `npm run ai:all`：执行 AI 自演进管线（文本嵌入 / 摘要 / 问答，占位实现）
+- `npm run build`（或 `npm run pwa:build`）：内置 `vite-plugin-pwa`，生成 `sw.js`、`manifest.webmanifest`、`icons/` 等离线缓存工件
+- 离线验证：`npm run build` → `npx vitepress preview docs --host 127.0.0.1 --port 4173`，在浏览器中访问站点、打开 DevTools → Application → Service Workers，勾选 “Offline” 后刷新确认最近访问页和搜索仍能使用缓存；同时观察底部“检测到新版本/已缓存”提示条触发刷新
 
 ## 部署（GitHub Pages）
 1. 打开 **Settings → Pages**，选择 **GitHub Actions**。

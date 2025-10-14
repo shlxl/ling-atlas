@@ -1,6 +1,7 @@
 import { defineConfig } from 'vitepress'
 import cssnano from 'cssnano'
 import fs from 'node:fs'
+import { VitePWA } from 'vite-plugin-pwa'
 
 function loadCspTemplate() {
   try {
@@ -30,6 +31,9 @@ function slug(input:string){
     .toLowerCase()
 }
 
+const baseFromEnv = (process.env.BASE as string) || '/'
+const normalizedBase = baseFromEnv.endsWith('/') ? baseFromEnv : `${baseFromEnv}/`
+
 const metaPath = 'docs/_generated/meta.json'
 let meta = { byCategory:{}, bySeries:{}, byTag:{}, byYear:{}, all:[] } as any
 if (fs.existsSync(metaPath)) {
@@ -52,7 +56,7 @@ function navFromMeta(){
 
 export default defineConfig({
   // Inject base from env to support GitHub Pages subpath deployment
-  base: (process.env.BASE as string) || '/',
+  base: baseFromEnv,
   lang: 'zh-CN',
   title: 'Ling Atlas · 小凌的个人知识库',
   description: '现代化、可演进、可检索的知识库工程',
@@ -66,6 +70,66 @@ export default defineConfig({
     socialLinks: [{ icon: 'github', link: 'https://github.com/shlxl/ling-atlas' }]
   },
   vite: {
+    plugins: [
+      VitePWA({
+        registerType: 'autoUpdate',
+        base: normalizedBase,
+        workbox: {
+          globPatterns: [
+            '**/*.{js,css,html,svg,png,ico,json,txt,xml}',
+            'pagefind/**/*',
+            'worker/**/*'
+          ],
+          runtimeCaching: [
+            {
+              urlPattern: ({ url }) => url.pathname.startsWith(`${normalizedBase}pagefind/`),
+              handler: 'StaleWhileRevalidate',
+              options: {
+                cacheName: 'pagefind-cache',
+                expiration: { maxEntries: 20, maxAgeSeconds: 60 * 60 * 24 * 7 }
+              }
+            },
+            {
+              urlPattern: ({ url }) => url.pathname.endsWith('embeddings-texts.json'),
+              handler: 'StaleWhileRevalidate',
+              options: {
+                cacheName: 'embeddings-cache',
+                expiration: { maxEntries: 5, maxAgeSeconds: 60 * 60 * 24 * 3 }
+              }
+            },
+            {
+              urlPattern: ({ url }) => url.pathname.endsWith('worker/embeddings.worker.js'),
+              handler: 'CacheFirst',
+              options: {
+                cacheName: 'embeddings-worker-cache',
+                expiration: { maxEntries: 5, maxAgeSeconds: 60 * 60 * 24 * 30 }
+              }
+            }
+          ]
+        },
+        manifest: {
+          name: 'Ling Atlas · 小凌的个人知识库',
+          short_name: 'Ling Atlas',
+          start_url: normalizedBase,
+          scope: normalizedBase,
+          display: 'standalone',
+          background_color: '#1f1f24',
+          theme_color: '#1f1f24',
+          icons: [
+            {
+              src: `${normalizedBase}icons/icon-192.png`,
+              sizes: '192x192',
+              type: 'image/png'
+            },
+            {
+              src: `${normalizedBase}icons/icon-512.png`,
+              sizes: '512x512',
+              type: 'image/png'
+            }
+          ]
+        }
+      })
+    ],
     server: { fs: { allow: ['..'] } },
     build: { cssMinify: 'lightningcss' },
     css: {
