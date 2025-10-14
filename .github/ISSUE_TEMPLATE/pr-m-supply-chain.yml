@@ -1,68 +1,88 @@
 ---
-name: "PR-M 供应链加固 2.0（Issue 规范）"
-description: "以 Issue 形式规范推进供应链加固 2.0 相关任务"
-title: "[PR-M] 供应链加固 2.0（Issue）"
+name: "PR-M 供应链加固 2.0"
+description: "完善依赖与外部资源的可审计性：锁定安装、生成 SBOM、SRI 升级为对比校验；任何外部脚本/CDN 变更必须触发红灯"
+title: "[PR-M] 供应链加固 2.0（npm ci / SBOM / SRI 对比）"
 labels: ["security", "supply-chain", "ci", "compliance"]
----
 
-## 🎯 目标与约束
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## 🎯 目标与约束
+        - **锁定安装 + 审计**：强制 `npm ci`，提供依赖漏洞与 License 概览。
+        - **SBOM**：生成 CycloneDX，发布为静态文件以便审计/对外披露。
+        - **SRI 续命**：比较上次 `sri-manifest.json` 与本次计算值，若不一致则 **CI fail** 并打印 diff；所有外链必须在白名单。
+        - 不显著影响构建性能；失败时给出**明确修复建议**。
 
-- **锁定安装 + 审计**：强制 `npm ci`，提供依赖漏洞与 License 概览。
-- **SBOM**：生成 CycloneDX，发布为静态文件以便审计/对外披露。
-- **SRI 续命**：比较上次 `sri-manifest.json` 与本次计算值，若不一致则 **CI fail** 并打印 diff；所有外链必须在白名单。
-- 不显著影响构建性能；失败时给出**明确修复建议**。
+  - type: checkboxes
+    id: acceptance
+    attributes:
+      label: "✅ 验收标准"
+      options:
+        - label: "CI 使用 `npm ci`，日志中包含 `audit` 与 `license` 摘要"
+          required: true
+        - label: "生成 CycloneDX SBOM 并发布为 `/.well-known/sbom.json` 可访问"
+          required: true
+        - label: "`scripts/sri.mjs` 对比上次 `sri-manifest.json`，任意外链变更即 **CI fail** 并打印 diff"
+          required: true
+        - label: "外链资源均在白名单中并附 `integrity` + `crossorigin=\"anonymous\"`"
+          required: true
 
-## 📋 任务列表
+  - type: textarea
+    id: tasks
+    attributes:
+      label: "📋 任务列表"
+      description: "请根据下方清单逐项打勾或补充说明"
+      value: |
+        - [ ] CI 强制使用 `npm ci`
+        - [ ] 新增 npm scripts：audit、license
+        - [ ] 输出依赖漏洞与 License 摘要
+        - [ ] 生成 CycloneDX SBOM 并发布
+        - [ ] CI 日志打印 SBOM 路径+哈希
+        - [ ] SRI 校验与白名单比对
+        - [ ] CI 集成顺序规范
+        - [ ] `.well-known/*` 拷贝至 `dist/.well-known/`
 
-- [ ] CI 中强制使用 `npm ci`，拒绝隐式升级
-- [ ] 新增 npm scripts：`audit`（`npm audit --omit=dev || true`），`license`（`npx license-checker --summary`）
-- [ ] 在 PR/CI 输出依赖漏洞与 License 摘要，高危漏洞打印修复指引
-- [ ] 生成 CycloneDX SBOM 并发布到 `docs/public/.well-known/sbom.json`
-- [ ] CI 日志打印 SBOM 路径与哈希
-- [ ] `scripts/sri.mjs` 比对上次 `sri-manifest.json` 与新结果，变化则 fail 并打印 diff
-- [ ] 校验所有外链资源均在白名单 `scripts/sri.config.json` 中，且附 `integrity` 与 `crossorigin="anonymous"`
-- [ ] CI 集成顺序规范（build 后执行所有检查）
-- [ ] `.well-known/*` 拷贝至 `dist/.well-known/` 以便发布
+  - type: textarea
+    id: whitelist
+    attributes:
+      label: "🔐 外链白名单（示例）"
+      description: "列出允许的 CDN 与固定版本 URL 片段；避免使用浮动版本"
+      value: |
+        {
+          "allowed": [
+            "https://esm.sh/@xenova/transformers@0.15.1/",
+            "https://cdn.jsdelivr.net/npm/pagefind@1.1.0/"
+          ]
+        }
 
-## ✅ 验收标准
+  - type: textarea
+    id: sri-diff
+    attributes:
+      label: "🧪 SRI 对比日志（示例）"
+      description: "粘贴一次外链变更时的 CI 输出（包含差异与修复建议）"
+      value: |
+        [sri] diff:
+          MODIFIED https://esm.sh/...:
+            old: sha384-AAAA...
+            new: sha384-BBBB...
+        ❌ Fail: 外链哈希变化，请确认升级意图：
+           1) 更新 scripts/sri.config.json 固定版本
+           2) 重新运行脚本生成新 manifest
+           3) 确认 HTML/worker 注入了新的 integrity
 
-- [ ] CI 使用 `npm ci`，日志中包含 `audit` 与 `license` 摘要
-- [ ] 生成 CycloneDX SBOM 并发布为 `/.well-known/sbom.json` 可访问
-- [ ] `scripts/sri.mjs` 对比上次 `sri-manifest.json`，任意外链变更即 **CI fail** 并打印 diff
-- [ ] 外链资源均在白名单中并附 `integrity` + `crossorigin="anonymous"`
+  - type: markdown
+    attributes:
+      value: |
+        ## ⚙️ 实施提示
+        - `npm ci` 需配合 `package-lock.json` 一并提交；若 lock 改动，请在 PR 描述中解释原因。
+        - `license-checker --summary` 输出可入库到 artifact，必要时附许可证白名单策略。
+        - SBOM 作为 `.well-known/sbom.json` 对外可访问，便于第三方合规扫描。
+        - SRI 对比建议在变更时给出**修复路径提示**（固定版本、更新白名单、重新计算 SRI）。
 
-## 🔐 外链白名单（示例）
-
-```json
-{
-  "allowed": [
-    "https://esm.sh/@xenova/transformers@0.15.1/",
-    "https://cdn.jsdelivr.net/npm/pagefind@1.1.0/"
-  ]
-}
-```
-
-## 🧪 SRI 对比日志（示例）
-
-```text
-[sri] diff:
-  MODIFIED https://esm.sh/...:
-    old: sha384-AAAA...
-    new: sha384-BBBB...
-❌ Fail: 外链哈希变化，请确认升级意图：
-   1) 更新 scripts/sri.config.json 固定版本
-   2) 重新运行脚本生成新 manifest
-   3) 确认 HTML/worker 注入了新的 integrity
-```
-
-## ⚙️ 实施提示
-
-- `npm ci` 需配合 `package-lock.json` 一并提交；若 lock 改动，请在 Issue 描述中解释原因。
-- `license-checker --summary` 输出可入库到 artifact，必要时附许可证白名单策略。
-- SBOM 作为 `.well-known/sbom.json` 对外可访问，便于第三方合规扫描。
-- SRI 对比建议在变更时给出**修复路径提示**（固定版本、更新白名单、重新计算 SRI）。
-
-## 🔁 回滚策略
-
-- 临时跳过 `audit` / `SBOM` / `SRI` 步骤（CI 中注释或条件变量），不影响业务功能；
-- 但 SRI 校验关闭会降低供应链变更的可见性，应尽快恢复。
+  - type: markdown
+    attributes:
+      value: |
+        ## 🔁 回滚策略
+        - 临时跳过 `audit` / `SBOM` / `SRI` 步骤（CI 中注释或条件变量），不影响业务功能；
+        - 但 SRI 校验关闭会降低供应链变更的可见性，应尽快恢复。
