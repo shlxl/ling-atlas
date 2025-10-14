@@ -11,6 +11,7 @@
 - PR-I AI 自演进（占位版）：构建阶段自动生成 embeddings/summaries/Q&A JSON，前端可按需消费
 - PR-J 知识 API + Chat：导出段落级只读数据，前端提供带引用的轻量问答
 - PR-L 多语/i18n：`docs/content`（中文）与 `docs/content.en`（英文）双目录，构建出 `/` 与 `/en/` 路由及多语言聚合页 / RSS / Sitemap
+- PR-M 供应链加固 2.0：npm ci + Audit/License 审计、CycloneDX SBOM、SRI 哈希变更守门
 - PR-M（规划中）：SEO / OpenGraph 优化，使知识库更易被搜索引擎收录与展示
 - PR-K 搜索评测：离线 nDCG/MRR/Recall 守门 + 线上查询参数 variant（lex / rrf / rrf-mmr）交替曝光
 
@@ -47,11 +48,14 @@ npm run dev
 - `npm run gen`：生成分类/系列/标签/归档 + RSS/Sitemap
 - `npm run precheck`：Frontmatter Schema 校验（阻断）
 - `npm run build`：构建站点（前置 `gen` + `knowledge:build`），自动生成中英双语 RSS/Sitemap
+- `npm run pwa:build`：独立构建 PWA 产物（`sw.js`、`manifest.webmanifest`、`icons/`）
 - `npm run dev`：本地开发（前置 `gen`）
 - `npm run knowledge:build`：单独更新 `/api/knowledge.json`（段落级知识数据）
 - `npm run eval:offline`：基于 `data/gold.jsonl` 运行离线检索评测（nDCG/MRR/Recall），确保不低于 `scripts/eval/baseline.json`
 - `npm run ai:all`：执行 AI 自演进管线（文本嵌入 / 摘要 / 问答，占位实现）
-- `npm run build`（或 `npm run pwa:build`）：内置 `vite-plugin-pwa`，生成 `sw.js`、`manifest.webmanifest`、`icons/` 等离线缓存工件
+- `npm run audit`：运行 `npm audit --omit=dev`（不阻断，输出依赖安全告警）
+- `npm run license`：汇总第三方许可证（`license-checker --summary`）
+- `npm run sbom`：生成 CycloneDX SBOM（输出到 `docs/public/.well-known/sbom.json` 并同步 dist）
 - 离线验证：`npm run build` → `npx vitepress preview docs --host 127.0.0.1 --port 4173`，在浏览器中访问站点、打开 DevTools → Application → Service Workers，勾选 “Offline” 后刷新确认最近访问页和搜索仍能使用缓存；同时观察底部“检测到新版本/已缓存”提示条触发刷新
 
 ## 部署（GitHub Pages）
@@ -68,6 +72,7 @@ npm run dev
 - AI 自演进产物：`docs/public/data/embeddings.json`、`summaries.json`、`qa.json`，CI/构建阶段自动刷新，失败不阻断主流程。
 - 搜索评测：`data/gold.jsonl` 维护标注，`node scripts/eval/offline.mjs` 运行离线指标；线上调试可通过 `?variant=lex|rrf|rrf-mmr` 切换，与默认 `rrf-mmr` 做 Team Draft 交替曝光，点击偏好会记录匿名 hash 与位次。
 - 多语言：`docs/content` 与 `docs/content.en` 互为镜像，`npm run gen` 会复制英文章到 `docs/en/` 并产出 `/en/_generated/**`、`rss-en.xml`、`sitemap-en.xml`。导航与搜索根据路径自动切换语言，缺少对应页面时跳转到 `/en/`/`/` 首页。
+- 供应链：CI 默认 `npm ci` 安装，审计输出（`npm run audit`、`npm run license`）可追踪依赖风险；`npm run sbom` 及构建流程会生成 `docs/public/.well-known/sbom.json`，SRI 哈希变化需先更新 allowlist，否则脚本将阻断。
 
 ## 约定
 - 所有文章文件置于 `docs/content/**/index.md`；Frontmatter 字段遵循 `schema/frontmatter.schema.json`。

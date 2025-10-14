@@ -55,6 +55,12 @@ jobs:
         run: npm run build:search
       - name: Bundle budget check
         run: node .codex/budget.mjs
+      - name: npm audit (non-blocking)
+        run: npm run audit
+      - name: License summary
+        run: npm run license
+      - name: Generate SBOM
+        run: npm run sbom
       - name: Lighthouse CI
         run: |
       - name: Merge telemetry data

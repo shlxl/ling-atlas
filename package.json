@@ -23,9 +23,13 @@
     "ai:embed": "node scripts/embed-build.mjs",
     "ai:summary": "node scripts/summary.mjs",
     "ai:qa": "node scripts/qa-build.mjs",
-    "ai:all": "npm run ai:embed && (npm run ai:summary || true) && (npm run ai:qa || true)"
+    "ai:all": "npm run ai:embed && (npm run ai:summary || true) && (npm run ai:qa || true)",
+    "audit": "npm audit --omit=dev || true",
+    "license": "license-checker --summary",
+    "sbom": "node scripts/sbom.mjs"
   },
   "devDependencies": {
+    "@cyclonedx/bom": "^4.1.2",
     "@lhci/cli": "^0.15.1",
     "@sparticuz/chromium": "^141.0.0",
     "ajv": "^8.17.1",
@@ -33,6 +37,7 @@
     "fast-xml-parser": "^4.4.1",
     "globby": "^14.0.1",
     "gray-matter": "^4.0.3",
+    "license-checker": "^25.0.1",
     "lightningcss": "^1.30.2",
     "markdown-link-check": "^3.14.1",
     "markdownlint-cli2": "^0.18.1",

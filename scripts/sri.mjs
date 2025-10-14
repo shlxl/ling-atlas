@@ -68,6 +68,42 @@ async function buildManifest() {
   return manifest
 }
 
+function normalizeManifest(list) {
+  return (list || []).map(item => ({ url: item.url, integrity: item.integrity })).sort((a, b) => a.url.localeCompare(b.url))
+}
+
+function diffManifest(previous, next) {
+  const prevMap = new Map(previous.map(item => [item.url, item.integrity]))
+  const nextMap = new Map(next.map(item => [item.url, item.integrity]))
+  const changes = []
+
+  for (const [url, integrity] of nextMap.entries()) {
+    if (!prevMap.has(url)) {
+      changes.push({ type: 'added', url, integrity })
+    } else if (prevMap.get(url) !== integrity) {
+      changes.push({ type: 'changed', url, from: prevMap.get(url), to: integrity })
+    }
+  }
+
+  for (const [url, integrity] of prevMap.entries()) {
+    if (!nextMap.has(url)) {
+      changes.push({ type: 'removed', url, integrity })
+    }
+  }
+
+  return changes
+}
+
+async function loadPreviousManifest() {
+  try {
+    const raw = await fs.readFile(MANIFEST_PATH, 'utf8')
+    return JSON.parse(raw)
+  } catch (err) {
+    if (err.code === 'ENOENT') return null
+    throw err
+  }
+}
+
 async function mirrorManifest() {
   const distWellKnown = path.join(DIST, '.well-known')
   await ensureDir(distWellKnown)
@@ -77,10 +113,31 @@ async function mirrorManifest() {
 async function main() {
   await ensureDir(WELL_KNOWN)
   const manifest = await buildManifest()
+  const normalized = normalizeManifest(manifest)
+  const previousRaw = await loadPreviousManifest()
+  const previous = normalizeManifest(previousRaw || [])
+  const changes = diffManifest(previous, normalized)
+
+  if (previousRaw && changes.length && process.env.SRI_ALLOW_UPDATE !== 'true') {
+    console.error('[security] SRI manifest change detected:')
+    for (const change of changes) {
+      if (change.type === 'added') {
+        console.error(`  + ${change.url} :: ${change.integrity}`)
+      } else if (change.type === 'removed') {
+        console.error(`  - ${change.url} :: ${change.integrity}`)
+      } else {
+        console.error(`  * ${change.url}\n    from: ${change.from}\n    to:   ${change.to}`)
+      }
+    }
+    console.error('[security] SRI validation failed. Verify external resource changes and update security/sri-allowlist.json / .well-known manifest as needed.')
+    process.exitCode = 1
+    return
+  }
+
   await fs.writeFile(MANIFEST_PATH, JSON.stringify(manifest, null, 2) + '\n', 'utf8')
   await mirrorManifest()
   console.log('[security] SRI manifest entries:')
-  for (const item of manifest) {
+  for (const item of normalized) {
     console.log(`  - ${item.url} :: ${item.integrity}`)
   }
 }
