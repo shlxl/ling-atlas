@@ -8,6 +8,7 @@
     "stats:lint": "node scripts/stats-lint.mjs",
     "gen": "node scripts/pagegen.mjs",
     "knowledge:build": "node scripts/chunk-build.mjs",
+    "eval:offline": "node scripts/eval/offline.mjs",
     "build": "npm run gen && npm run knowledge:build && vitepress build docs",
     "dev": "npm run gen && vitepress dev docs",
     "md:lint": "markdownlint-cli2 'docs/**/*.md'",

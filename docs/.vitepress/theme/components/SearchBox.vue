@@ -25,6 +25,9 @@ const vectorPromises = new Map<string, Promise<number[]>>()
 const queryVecCache = new Map<string, number[]>()
 let searchToken = 0
 let debounceTimer = 0
+const allowedVariants = new Set(['lex', 'rrf', 'rrf-mmr'])
+const activeVariant = ref<'none' | 'lex' | 'rrf' | 'rrf-mmr'>('none')
+let interleaveTeams: Record<string, 'control' | 'variant'> = {}
 
 function normalizeResultUrl(raw: string) {
   if (!raw) return resolveAsset('/').pathname
@@ -37,6 +40,64 @@ function normalizeResultUrl(raw: string) {
     console.warn('[search] normalizeResultUrl failed', err)
     return raw
   }
+}
+
+function detectVariantFromLocation() {
+  if (typeof window === 'undefined') return
+  try {
+    const params = new URLSearchParams(window.location.search)
+    const tryVariant = params.get('variant')
+    if (tryVariant && allowedVariants.has(tryVariant)) {
+      activeVariant.value = tryVariant as typeof activeVariant.value
+    }
+  } catch (err) {
+    console.warn('[search] variant parse failed', err)
+  }
+}
+
+type RankedItem = { url: string; title: string; excerpt: string }
+type InterleaveEntry = { item: RankedItem; team: 'control' | 'variant' }
+
+function teamDraftInterleave(control: RankedItem[], variant: RankedItem[], seed: string, limit = 20): InterleaveEntry[] {
+  const seen = new Set<string>()
+  const result: InterleaveEntry[] = []
+  const controlQueue = control.slice()
+  const variantQueue = variant.slice()
+  const startControl = seed ? Number.parseInt(seed.slice(-2), 16) % 2 === 0 : true
+  let currentTeam: 'control' | 'variant' = startControl ? 'control' : 'variant'
+
+  const takeFromQueue = (queue: RankedItem[], team: 'control' | 'variant') => {
+    while (queue.length) {
+      const item = queue.shift()!
+      if (seen.has(item.url)) continue
+      seen.add(item.url)
+      result.push({ item, team })
+      return true
+    }
+    return false
+  }
+
+  while (result.length < limit && (controlQueue.length || variantQueue.length)) {
+    const queue = currentTeam === 'control' ? controlQueue : variantQueue
+    const took = takeFromQueue(queue, currentTeam)
+    if (!took) {
+      currentTeam = currentTeam === 'control' ? 'variant' : 'control'
+      continue
+    }
+    currentTeam = currentTeam === 'control' ? 'variant' : 'control'
+  }
+
+  // 填充剩余位置，优先控制队列再到实验队列
+  while (result.length < limit && controlQueue.length) {
+    const took = takeFromQueue(controlQueue, 'control')
+    if (!took) break
+  }
+  while (result.length < limit && variantQueue.length) {
+    const took = takeFromQueue(variantQueue, 'variant')
+    if (!took) break
+  }
+
+  return result
 }
 
 function open() {
@@ -315,6 +376,8 @@ async function runSearch(input: string) {
   error.value = null
   semanticPending.value = false
   loading.value = true
+  interleaveTeams = {}
+  let variantExpose: ((hash: string) => void) | null = null
 
   if (!q) {
     loading.value = false
@@ -328,17 +391,15 @@ async function runSearch(input: string) {
   }
 
   let lexical: LexicalResult[] = []
+  let lexicalRanked: RankedItem[] = []
   try {
     lexical = await getLexicalResults(q)
     if (token !== searchToken) return
 
-    results.value = lexical.slice(0, 20).map(item => ({ url: item.url, title: item.title, excerpt: item.excerpt }))
+    lexicalRanked = lexical.map(item => ({ url: item.url, title: item.title, excerpt: item.excerpt }))
 
-    void hashPromise.then(qHash => {
-      if (!qHash || token !== searchToken) return
-      lastQueryHash.value = qHash
-      void trackEvent('search_query', { qHash, len: q.length })
-    })
+    results.value = lexicalRanked.slice(0, 20)
+
   } catch (err) {
     console.error('[search failed]', err)
     error.value = '搜索失败，请稍后再试'
@@ -347,7 +408,12 @@ async function runSearch(input: string) {
     if (token === searchToken) loading.value = false
   }
 
-  if (token !== searchToken || semanticDisabled) return
+  if (token !== searchToken || semanticDisabled) {
+    if (activeVariant.value !== 'none' && lexicalRanked.length) {
+      interleaveTeams = Object.fromEntries(lexicalRanked.map(item => [item.url, 'control']))
+    }
+    return
+  }
 
   let semantic: Awaited<ReturnType<typeof semanticSearch>> | null = null
   semanticPending.value = true
@@ -359,20 +425,98 @@ async function runSearch(input: string) {
     if (token === searchToken) semanticPending.value = false
   }
 
-  if (!semantic || token !== searchToken || !semantic.items.length) return
+  if (token !== searchToken) return
 
-  const fused = rrfFuse(lexical, semantic.items)
-  const reranked = mmrSelect(fused, semantic.queryVec, 20)
   const lexicalMap = new Map(lexical.map(item => [item.url, item]))
-  results.value = reranked.map(item => {
-    const lex = lexicalMap.get(item.url)
-    if (lex) return { url: lex.url, title: lex.title, excerpt: lex.excerpt }
-    const fallback = textMap.get(item.url)
-    return {
-      url: item.url,
-      title: fallback?.title || item.url,
-      excerpt: (fallback?.text || '').slice(0, 160)
+  const baseLexical = lexicalRanked.length
+    ? lexicalRanked
+    : lexical.map(item => ({ url: item.url, title: item.title, excerpt: item.excerpt }))
+
+  let rrfRanked: RankedItem[] = baseLexical
+  let mmrRanked: RankedItem[] = baseLexical
+
+  if (semantic && semantic.items.length) {
+    const fused = rrfFuse(lexical, semantic.items)
+    rrfRanked = fused.map(entry => {
+      const lex = lexicalMap.get(entry.url)
+      if (lex) return { url: lex.url, title: lex.title, excerpt: lex.excerpt }
+      const fallback = textMap.get(entry.url)
+      return {
+        url: entry.url,
+        title: fallback?.title || entry.url,
+        excerpt: (fallback?.text || '').slice(0, 160)
+      }
+    })
+    const reranked = mmrSelect(fused, semantic.queryVec, 20)
+    mmrRanked = reranked.map(entry => {
+      const lex = lexicalMap.get(entry.url)
+      if (lex) return { url: lex.url, title: lex.title, excerpt: lex.excerpt }
+      const fallback = textMap.get(entry.url)
+      return {
+        url: entry.url,
+        title: fallback?.title || entry.url,
+        excerpt: (fallback?.text || '').slice(0, 160)
+      }
+    })
+  }
+
+  const controlList = semantic && semantic.items.length ? mmrRanked : baseLexical
+  let finalList = controlList
+
+  if (activeVariant.value !== 'none') {
+    const variantList =
+      activeVariant.value === 'lex'
+        ? baseLexical
+        : activeVariant.value === 'rrf'
+          ? rrfRanked
+          : mmrRanked
+
+    if (activeVariant.value === 'rrf-mmr') {
+      interleaveTeams = Object.fromEntries(controlList.map(item => [item.url, 'control']))
+      variantExpose = (hash) => {
+        void trackEvent('search_variant_expose', {
+          qHash: hash,
+          variant: activeVariant.value,
+          control: 'rrf-mmr',
+          mode: 'direct'
+        })
+      }
+    } else {
+      const seed = lastQueryHash.value || q
+      const interleaved = teamDraftInterleave(controlList, variantList, seed, 20)
+      if (interleaved.length) {
+        finalList = interleaved.map(entry => entry.item)
+        interleaveTeams = interleaved.reduce<Record<string, 'control' | 'variant'>>((acc, entry) => {
+          acc[entry.item.url] = entry.team
+          return acc
+        }, {})
+        const controlCount = interleaved.filter(entry => entry.team === 'control').length
+        const variantCount = interleaved.filter(entry => entry.team === 'variant').length
+        variantExpose = (hash) => {
+          void trackEvent('search_variant_expose', {
+            qHash: hash,
+            variant: activeVariant.value,
+            control: 'rrf-mmr',
+            mode: 'interleave',
+            controlCount,
+            variantCount
+          })
+        }
+      } else {
+        interleaveTeams = {}
+      }
     }
+  } else {
+    interleaveTeams = {}
+  }
+
+  results.value = finalList.slice(0, 20)
+
+  void hashPromise.then(qHash => {
+    if (!qHash || token !== searchToken) return
+    lastQueryHash.value = qHash
+    void trackEvent('search_query', { qHash, len: q.length })
+    if (variantExpose) variantExpose(qHash)
   })
 }
 
@@ -385,7 +529,19 @@ function scheduleSearch() {
 
 function onResultClick(item: { url: string }, index: number) {
   if (lastQueryHash.value) {
-    void trackEvent('search_click', { qHash: lastQueryHash.value, rank: index + 1, url: item.url })
+    const team = activeVariant.value !== 'none' ? interleaveTeams[item.url] ?? 'control' : 'control'
+    const payload: Record<string, any> = { qHash: lastQueryHash.value, rank: index + 1, url: item.url, team }
+    if (activeVariant.value !== 'none') payload.variant = activeVariant.value
+    void trackEvent('search_click', payload)
+    if (activeVariant.value !== 'none') {
+      void trackEvent('search_interleave_click', {
+        qHash: lastQueryHash.value,
+        variant: activeVariant.value,
+        team,
+        rank: index + 1,
+        url: item.url
+      })
+    }
   }
   close()
 }
@@ -401,6 +557,7 @@ function onKey(e: KeyboardEvent) {
 }
 
 onMounted(() => {
+  detectVariantFromLocation()
   window.addEventListener('keydown', onKey)
   void initSemantic()
 })
