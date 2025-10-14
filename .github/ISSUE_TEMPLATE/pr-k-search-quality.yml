@@ -19,18 +19,17 @@ body:
 
         ### 1) 离线评测
         - 新增标注集：`data/gold.jsonl`（一行一条样本）
-          ```json
-          {"q":"分页 怎么 做","positives":["/docs/pagination#intro","/docs/pagination#api"],"negatives":["/blog/unrelated"]}
-          ```
+        ```json
+        {"q":"分页 怎么 做","positives":["/docs/pagination#intro","/docs/pagination#api"],"negatives":["/blog/unrelated"]}
+        ```
         - 新建脚本：`scripts/eval/offline.mjs`
           - 对接现有检索函数（lex/Pagefind、rrf、rrf+mmr）
           - 计算：`nDCG@10`、`MRR`、`Recall@K`（K 可配置，默认 10）
           - 输出表格到 stdout，并生成 `scripts/eval/report.json`
         - 基线守门：`scripts/eval/baseline.json`
-          - 结构示例：
-            ```json
-            { "nDCG@10": 0.62, "MRR": 0.58, "Recall@10": 0.75, "tolerance": 0.01 }
-            ```
+        ```json
+        { "nDCG@10": 0.62, "MRR": 0.58, "Recall@10": 0.75, "tolerance": 0.01 }
+        ```
           - 结果低于基线-容差 → `process.exit(1)`
         - 环境变量：
           - `EVAL_K=10`、`EVAL_VARIANTS="lex,rrf,rrf-mmr"`、`EVAL_FAIL_ON_DROP=1`
@@ -47,9 +46,9 @@ body:
 
         ### 3) CI 集成
         - 在 build 前运行（允许阈值由 env 控制）：
-          ```bash
-          node scripts/eval/offline.mjs
-          ```
+        ```bash
+        node scripts/eval/offline.mjs
+        ```
         - 将 `scripts/eval/report.json` 作为 Artifact 上传；控制台打印关键指标与对比
         - 低于基线（考虑容差）→ CI fail
 
