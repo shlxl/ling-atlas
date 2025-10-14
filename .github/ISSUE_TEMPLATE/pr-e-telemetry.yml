@@ -1,0 +1,104 @@
+name: "PR-E 观测与最小遥测"
+description: "仅收集必要匿名指标（PV、搜索查询分布、点击位置），不接入商业分析；本地可查看日志，线上写入静态 JSON（汇总覆盖）"
+title: "[PR-E] 观测与最小遥测"
+labels: ["observability", "telemetry", "CI", "search-quality"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## 🎯 目标
+        - 不接入商业分析，仅收集必要匿名指标：页面 PV、搜索查询分布、点击位置
+        - 本地可查看日志；线上以静态 JSON（汇总覆盖）呈现
+        - 用于改进搜索质量，不收集 IP/UA/指纹/第三方 Cookie
+
+  - type: markdown
+    attributes:
+      value: |
+        ## 🧩 任务
+
+        ### 1) 事件总线（浏览器端）
+        - 新建 `docs/public/telemetry.js`，导出：`function track(eventName, payload)`
+        - 埋点：
+          - 页面加载：`"pv"` `{ path, ts }`
+          - 搜索打开：`"search_open"`
+          - 搜索查询：`"search_query"` `{ qHash, len, ts }`（前端 `sha1(q)`，不存原文）
+          - 搜索点击：`"search_click"` `{ qHash, rank, url, ts }`
+        - 对查询 `q` 做 `sha1`，仅保留长度与时间戳
+
+        ### 2) 存储（静态 JSON 追加/汇总两种策略）
+        - 本地/dev：写入 `localStorage` 并在控制台可导出
+        - 线上/CI：采用“静态汇总文件”模式，由 CI 合并，避免浏览器写回
+          - 设计 `data/telemetry.json`
+            ```json
+            {
+              "updatedAt": "ISO-8601",
+              "pv": { "total": 0, "byPath": {} },
+              "search": {
+                "queriesTop": [{ "qHash": "sha1", "count": 0, "avgLen": 0 }],
+                "clicksTop": [{ "url": "/path", "count": 0, "avgRank": 0 }]
+              }
+            }
+            ```
+          - 新建 `scripts/telemetry-merge.mjs`：
+            - 将构建期临时文件 `data/telemetry.tmp.json` 与现有 `telemetry.json` 合并
+            - 去重、聚合，Top 100 截断
+            - 幂等、无副作用；若 `tmp` 不存在则跳过
+
+        ### 3) SearchBox 集成
+        - 在打开、查询、点击时调用 `track(...)`
+        - 查询时使用 `sha1(q)` 上报；点击携带 `rank`
+
+        ### 4) CI 集成
+        - 在（VitePress build + Pagefind + Embeddings）结束后执行：
+          ```bash
+          node scripts/telemetry-merge.mjs || true
+          ```
+        - 将合并后的 `data/telemetry.json` 发布到 `dist/` 根目录（只读静态文件）
+
+        ### 5) 页面侧可视化（可选）
+        - 新增 `/about/metrics` 页面
+        - 读取 `telemetry.json`，展示最近 30 天 PV、Top 查询（仅 hash）与点击分布
+
+  - type: checkboxes
+    id: acceptance
+    attributes:
+      label: ✅ 验收标准
+      description: 完成后需满足以下条件
+      options:
+        - label: 不使用第三方 Cookie；不收集 IP / UA / 指纹
+          required: true
+        - label: `telemetry.json` 能被页面读取；SearchBox 事件可在本地 console 验证
+          required: true
+        - label: CI 无新增外网依赖；合并脚本幂等且可重复执行
+          required: true
+        - label: 线上输出为静态 `telemetry.json`（覆盖写），不影响核心功能
+          required: true
+
+  - type: textarea
+    id: notes
+    attributes:
+      label: 🧪 验证与日志
+      description: 说明本地验证方式（控制台导出、样例事件）、CI 合并日志片段与最终 `telemetry.json` 片段
+      placeholder: |
+        - 本地控制台输出示例：
+          window.__telemetry_export__()
+        - CI 合并日志关键行：
+          [telemetry-merge] merged 123 events → 58 unique
+        - telemetry.json 片段（脱敏）：
+          { "updatedAt": "...", "pv": { ... }, "search": { ... } }
+
+  - type: markdown
+    attributes:
+      value: |
+        ## 🔁 回滚策略
+        - 在 SearchBox 与入口处注释 `track(...)`
+        - CI 步骤跳过 `telemetry-merge.mjs`
+        - 不影响核心搜索与站点功能
+
+  - type: markdown
+    attributes:
+      value: |
+        ## ⚙️ 实施提示
+        - `sha1` 可用 Web Crypto：`crypto.subtle.digest('SHA-1', ...)`
+        - Top 截断：统一按 `count`/`weight` 排序后取前 100
+        - 时间字段使用 ISO 字符串，合并时按天窗口聚合更稳健（可选）

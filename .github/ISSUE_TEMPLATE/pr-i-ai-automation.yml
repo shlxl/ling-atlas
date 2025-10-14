@@ -1,0 +1,117 @@
+name: "PR-I AI 自演进"
+description: "在构建/提交阶段自动为新文档生成向量、摘要与问答对，形成可静态发布的自解释数据层（前端/外部可读）"
+title: "[PR-I] AI 自演进（Embeddings / Summaries / Q&A）"
+labels: ["ai", "automation", "content-intelligence", "build"]
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## 🎯 目标与约束
+        - 在 **构建/提交阶段**，为新文档自动生成：**向量**、**摘要**、**问答对**，形成“自解释数据层”供前端问答或外部调用。
+        - **优先本地/开源**（Transformers.js / Node pipeline）。若不可用，提供占位脚本，避免 CI 断链。
+        - 不阻塞主构建：生成步骤可配置为**软失败**（默认软失败，可通过 env 启硬失败）。
+        - 产物输出至 `docs/public/data/`，仅静态只读访问；不暴露隐私。
+
+  - type: markdown
+    attributes:
+      value: |
+        ## 🧩 任务拆解
+
+        ### 1) 自动嵌入（构建/提交阶段）
+        - 新增：`scripts/embed-build.mjs`
+        - 扫描：`docs/content/**/index.md`（跳过 `draft: true`）
+        - 读取：`title` + `excerpt/首段` → `texts[]`
+        - **方案A（优先）**：Node 本地编码器（如 `@xenova/transformers` / `onnxruntime-node`）产出向量
+        - **方案B（占位）**：仅导出文本；前端首次使用批量编码并缓存（已具备）
+        - 产物（方案A）：
+          ```json
+          { "dim": 0, "items": [ { "url": "...", "title": "...", "vec": [/* float[] */] } ] }
+          ```
+          或（方案B）：
+          ```json
+          { "items": [ { "url": "...", "title": "...", "text": "..." } ] }
+          ```
+        - 大小控制：向量文件 ≤ **15MB**
+
+        ### 2) 摘要生成
+        - 新增：`scripts/summary.mjs`
+        - 调用本地 LLM 或 Codex API（若不可用则跳过）
+        - 输出到 `docs/public/data/summaries.json`（或可选回填 `frontmatter.excerpt`）
+        - 每篇文档 1–2 句 **中文摘要**
+
+        ### 3) 问答对导出（Q&A）
+        - 新增：`scripts/qa-build.mjs`
+        - 每篇 2–5 对 QA：聚焦“这篇文章解决什么/关键术语/常见坑”
+        - 输出 `docs/public/data/qa.json`：
+          ```json
+          { "items": [ { "url": "...", "qa": [ { "q": "...", "a": "..." } ] } ] }
+          ```
+        - 失败跳过，不阻塞
+
+        ### 4) 前端最小接入（可选）
+        - 在 `SearchBox` 或 `/about/qa` 读取 `qa.json` 展示该文档常见问答；点击跳锚点
+
+        ### 5) CI 集成（软失败可配置）
+        - 构建前插入（顺序）：
+          ```bash
+          node scripts/embed-build.mjs
+          node scripts/summary.mjs || true
+          node scripts/qa-build.mjs || true
+          ```
+        - 通过环境变量控制是否**硬失败**：
+          - `AI_BUILD_STRICT=1` 时，三个步骤均需成功（不加 `|| true`）
+
+  - type: checkboxes
+    id: acceptance
+    attributes:
+      label: ✅ 验收标准
+      options:
+        - label: 新文章合入后可自动出现在 `embeddings.json`（或文本占位）/ `summaries.json` / `qa.json` 中
+          required: true
+        - label: 前端能够读取上述数据文件；不可用时不影响页面渲染
+          required: true
+        - label: 生成步骤默认不阻塞构建（软失败），但可通过 env 开启硬失败
+          required: true
+        - label: 产物位于 `docs/public/data/` 且不含隐私；向量文件总体积 ≤ 15MB
+          required: true
+
+  - type: textarea
+    id: impl
+    attributes:
+      label: 🧾 实施说明与依赖
+      description: 说明采用的模型/依赖与方案（A 或 B），以及软/硬失败的配置方式
+      placeholder: |
+        - 方案A模型：@xenova/transformers + onnxruntime-node（gte-small）
+        - 回退方案B：仅导出文本（texts）
+        - 环境变量：AI_BUILD_STRICT=0（软失败，默认）；=1（硬失败）
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: 🧪 验证与日志
+      description: 粘贴本地/CI 运行的关键输出、统计条数与文件体积
+      placeholder: |
+        [embed-build] scanned 42 docs, vectors: 42, dim: 384, size: 6.2MB
+        [summary] generated 38/42 summaries (4 skipped)
+        [qa] generated 150 QAs
+        data sizes:
+          - embeddings.json: 6.2MB
+          - summaries.json: 24KB
+          - qa.json: 58KB
+
+  - type: markdown
+    attributes:
+      value: |
+        ## 🔁 回滚策略
+        - 切换为**方案B**：仅导出文本，不生成向量/摘要/问答（保留接口一致性）
+        - 保持构建流程不变；前端继续在首次使用时懒编码（如已实现）
+
+  - type: markdown
+    attributes:
+      value: |
+        ## 📎 输出物（PR 应包含）
+        - `scripts/embed-build.mjs` / `scripts/summary.mjs` / `scripts/qa-build.mjs`
+        - `docs/public/data/embeddings.json`（或文本占位）、`summaries.json`、`qa.json`
+        - （可选）前端接入点改动（SearchBox / /about/qa）
+        - 配置与日志：生成统计、文件体积、软/硬失败开关说明

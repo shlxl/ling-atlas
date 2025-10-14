@@ -1,0 +1,111 @@
+name: "PR-F 内容生产力"
+description: "为 Ling-Atlas 增加 Markdown 质量守门、死链检查、与图片自动压缩 + WebP 转换（构建期）"
+title: "[PR-F] 内容生产力守门"
+labels: ["content", "quality", "CI", "automation"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## 🎯 目标
+        让写作更稳：在构建前统一做 **Markdown Lint → 链接检查 → 图片优化** 的质量闸门，失败即 CI fail；本地体验轻量可复现。
+
+  - type: markdown
+    attributes:
+      value: |
+        ## 🧩 任务
+
+        ### 1) Markdown Lint
+        - devDep: `markdownlint-cli2`
+        - 新增 `.markdownlint.jsonc`（建议项）：
+          ```jsonc
+          {
+            "default": true,
+            "MD001": true,              // 标题序号
+            "MD013": { "line_length": 140, "code_blocks": false }, // 行长宽松，代码块豁免
+            "MD033": false,             // 允许内联 HTML（如必要）
+            "MD041": true               // 文件需以标题开头
+          }
+          ```
+        - `package.json` 脚本：
+          ```json
+          { "scripts": { "md:lint": "markdownlint-cli2 'docs/**/*.md'" } }
+          ```
+
+        ### 2) 外链 / 内链检查
+        - devDep（其一）：`markdown-link-check` **或** 自写 Node 脚本（避免网络波动）
+        - 新建 `scripts/check-links.mjs`：
+          - 扫描 `docs/**/*.md`，提取 `[text](url)`
+          - 默认 **离线模式**：仅校验站内路径格式、对应生成页/静态文件存在性
+          - 可选 `--online`：对 `http(s)` 链接做 HEAD/GET 检查（容错重试，超时降级跳过）
+          - 发现 404 或格式错误 → `process.exit(1)`
+        - `package.json` 脚本（示例）：
+          ```json
+          { "scripts": { "links:check": "node scripts/check-links.mjs" } }
+          ```
+
+        ### 3) 图片优化（构建前）
+        - devDep: `sharp`
+        - 新建 `scripts/img-opt.mjs`：
+          - 扫描 `docs/public/images/**/*.{png,jpg,jpeg}`
+          - 生成 WebP（`quality: 82`）并比较体积；若 WebP 更小 → **替换引用**（更新 MD/页面中的后缀）
+          - 生成 2x/1x 尺寸变体（最大宽 `1600px`；1x 为自动等比缩放），保留原始文件
+          - 输出优化报告（原体积 → 新体积、节省比例）
+        - `package.json` 脚本：
+          ```json
+          { "scripts": { "img:opt": "node scripts/img-opt.mjs" } }
+          ```
+
+        ### 4) CI 集成（precheck → build 之前）
+        - 在 `build` 之前按顺序执行：
+          ```bash
+          npm run md:lint
+          node scripts/check-links.mjs
+          node scripts/img-opt.mjs
+          ```
+        - 失败即 CI fail；成功则继续 `VitePress build + Pagefind 索引 + embeddings 构建`
+
+        #### 实施提示
+        - 链接检查建议忽略 `mailto:`、`javascript:`、锚点 `#...`
+        - 对外链可配置允许列表（如官方文档站）并设置重试/超时（如 3 次 × 2s）
+        - 图片替换时注意相对路径与同名资源缓存；对 MD 中同一图片多处引用需一致替换
+        - 对大型二进制文件可添加 `.gitattributes` 开启 `filter=lfs`（如后续需要）
+
+  - type: checkboxes
+    id: acceptance
+    attributes:
+      label: ✅ 验收标准
+      options:
+        - label: 提交包含 `.markdownlint.jsonc`、`scripts/check-links.mjs`、`scripts/img-opt.mjs` 与相应 npm 脚本
+          required: true
+        - label: CI 能对坏链 / 过大或未优化图片给出明确报错并失败
+          required: true
+        - label: 本地 `npm run md:lint` 可提前发现格式问题；`links:check` 与 `img:opt` 可稳定复现
+          required: true
+        - label: 图片优化产出包含 WebP（quality 82），必要时更新 MD 引用，体积明显下降
+          required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: 🧪 验证与日志
+      description: 粘贴关键 CLI 输出（示例：节省体积、坏链列表、修复前后 diff）
+      placeholder: |
+        - markdownlint 输出片段
+        - check-links 报错样例（含文件与行号）
+        - img-opt 优化清单（原/新大小、压缩比例、替换的路径）
+
+  - type: markdown
+    attributes:
+      value: |
+        ## 🔁 回滚策略
+        - 临时跳过三步（在 CI 中注释或加条件变量）
+        - 保留已生成的 WebP 与尺寸变体但不强制替换引用
+        - 不影响核心功能（构建与搜索）
+
+  - type: markdown
+    attributes:
+      value: |
+        ## 📎 参考脚手架（可选）
+        - `scripts/check-links.mjs`：离线优先，`--online` 开关
+        - `scripts/img-opt.mjs`：只在体积更小才替换；输出 Top N 最大图片
+        - `.markdownlint.jsonc`：按需要放宽 MD013 行长；对代码块和表格豁免

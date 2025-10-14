@@ -1,0 +1,103 @@
+name: "PR-H PWA 离线缓存"
+description: "集成 PWA：可安装、可离线打开最近访问页；缓存 Pagefind 与 embeddings（只读），不改变搜索逻辑，仅增加缓存层"
+title: "[PR-H] PWA 离线缓存（可安装/离线索引）"
+labels: ["pwa", "offline", "performance", "ci"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## 🎯 目标与约束
+        - 让网站 **可安装**、**可离线打开最近访问页**；
+        - 离线时使用**上次缓存的 Pagefind 索引与 embeddings-texts.json（只读）**；
+        - 模型与索引 **懒加载**，离线仅用已缓存资源，**首屏不阻塞**；
+        - **BASE 子路径**下 PWA 可用（项目站点）；
+        - 不改变现有**搜索逻辑**，仅增加缓存层。
+
+  - type: markdown
+    attributes:
+      value: |
+        ## 🧩 任务拆解
+
+        ### 1) 集成 `vite-plugin-pwa`
+        - devDep: `vite-plugin-pwa`
+        - 修改 `docs/.vitepress/config.ts`，引入 PWA 插件并配置：
+          - **manifest**：`name` / `short_name` / `icons[]` / `start_url = BASE`
+          - **workbox**：
+            - `globPatterns` 覆盖：`**/*.{js,css,html}`, `pagefind/**`, `embeddings-texts.json`, `worker/**`
+            - `navigateFallback` 适配 BASE
+          - **caching 策略**：
+            - HTML：`NetworkFirst`
+            - 静态资源：`StaleWhileRevalidate`
+          - **runtimeCaching**（示例）：
+            - `urlPattern: /pagefind/` → `StaleWhileRevalidate`
+            - `urlPattern: /embeddings-texts\.json$/` → `StaleWhileRevalidate`
+            - `urlPattern: /worker/embeddings\.worker\.js$/` → `CacheFirst`
+          - `registerType: "autoUpdate"`（新 SW 就绪后触发更新事件）
+
+        ### 2) UI 提示：新版本可用
+        - 在主题层 `Layout.vue` 增加“有更新，点击刷新”的提示条：
+          - 监听 workbox 的 `waiting` / `activated` 状态；
+          - 提供 “刷新以更新” 按钮（调用 `WB.messageSkipWaiting()` + `window.location.reload()`）
+
+        ### 3) 构建与 CI
+        - 新增 npm 脚本：
+          ```json
+          { "scripts": { "pwa:build": "vitepress build docs" } }
+          ```
+          > 注：启用插件后常规 `build` 即会生成 PWA 工件，如无需单独脚本，可直接沿用现有 `build`。
+        - CI 保持现有构建顺序不变（与 Pagefind/embeddings 构建兼容）；
+        - 验证 `dist/` 下生成：`manifest.webmanifest`、`sw.js`、`workbox-*` 等工件，并正确包含在 BASE 路径下。
+
+        ### 4) 验收脚本（可选）
+        - 使用 Lighthouse CI 增加 PWA 检查，目标：**PWA 得分 ≥ 90**（不强制，但建议）。
+
+  - type: checkboxes
+    id: acceptance
+    attributes:
+      label: ✅ 验收标准
+      options:
+        - label: 浏览器提供“安装”入口（Add to Home Screen/Install App）
+          required: true
+        - label: 断网后可重新打开**最近访问页面**；若索引已缓存，搜索在离线下可使用缓存；未缓存时优雅降级
+          required: true
+        - label: 新版本部署后页面出现“有更新，点击刷新”提示，并可一键刷新生效
+          required: true
+        - label: BASE 子路径下 PWA 正常工作；`manifest.webmanifest`、`sw.js`、`workbox-*` 存在于 `dist/`
+          required: true
+
+  - type: textarea
+    id: config-diff
+    attributes:
+      label: 🧾 配置与缓存策略摘要
+      description: 粘贴 `docs/.vitepress/config.ts` 中 PWA 配置 diff 与 `runtimeCaching` 关键条目
+      placeholder: |
+        - manifest.start_url / scope / icons
+        - workbox.globPatterns / navigateFallback
+        - runtimeCaching（三条规则）与策略说明
+
+  - type: textarea
+    id: offline-demo
+    attributes:
+      label: 🧪 本地离线演示说明
+      description: 描述如何在 DevTools/浏览器中验证离线行为与搜索的缓存降级路径；附控制台截图/日志更佳
+      placeholder: |
+        - 打开某文档页 → 刷新 → 开启 Offline → 重载页面
+        - 搜索框：在离线前进行一次查询以缓存 Pagefind/embeddings；断网后再次查询验证
+        - 控制台：workbox 缓存命中日志
+
+  - type: markdown
+    attributes:
+      value: |
+        ## 🔁 回滚策略
+        - 注释/移除 PWA 插件配置与注册代码；
+        - 删除生成的 `sw.js` / `workbox-*` / `manifest.webmanifest`；
+        - 不影响核心功能与搜索逻辑（仅失去离线与安装能力）。
+
+  - type: markdown
+    attributes:
+      value: |
+        ## 📎 输出物（PR 应包含）
+        - `docs/.vitepress/config.ts` 中的 PWA 配置 diff（manifest、workbox、runtimeCaching、registerType）
+        - 主题 `Layout.vue` 的“新版本可用”提示实现
+        - `dist/` 中的 PWA 工件截图/列表
+        - （可选）Lighthouse CI 的 PWA 分数与关键建议片段

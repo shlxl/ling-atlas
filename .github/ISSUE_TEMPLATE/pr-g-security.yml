@@ -1,0 +1,120 @@
+name: "PR-G 安全与合规"
+description: "为站点加入 CSP、安全头与 SRI，并在 CI 中自动校验；纯静态方案且不破坏现有构建与 BASE 路径"
+title: "[PR-G] 安全与合规（CSP / SRI / security-headers）"
+labels: ["security", "ci", "automation"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## 🎯 目标
+        - 为 Ling-Atlas 提供静态安全头（CSP、Referrer、Permissions 等）与 Subresource Integrity（SRI）清单；  
+        - 在构建后自动生成并校验；若外部 CDN 变更但 SRI 未更新则 CI fail；  
+        - 纯静态实现（meta CSP 或 `.well-known` 文本/JSON），不改变现有构建与 BASE 路径逻辑；  
+        - 零破坏：功能与本地 dev/preview 不受影响。
+
+  - type: markdown
+    attributes:
+      value: |
+        ## 🧩 任务拆解
+
+        ### 1) 生成安全头（静态输出）
+        - 脚本：`scripts/generate-headers.mjs`
+        - 输出文件：`docs/public/.well-known/security-headers.txt`
+        - 包含头项（示例）：
+          ```
+          Content-Security-Policy: default-src 'self'; script-src 'self' 'sha256-__INLINE__' https://esm.sh https://cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' https:; connect-src 'self' https:; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; frame-ancestors 'none';
+          Referrer-Policy: no-referrer
+          Permissions-Policy: geolocation=(), camera=(), microphone=()
+          X-Content-Type-Options: nosniff
+          Strict-Transport-Security: max-age=31536000; includeSubDomains
+          ```
+        - 将 CSP 同步写入 `docs/.vitepress/head` 的 `<meta http-equiv="Content-Security-Policy" content="...">`（若框架约束，可仅保留 `.well-known` 并在 README 注明使用路径）
+        - 注意：`'sha256-__INLINE__'` 为占位（脚本可替换为实际 inline 脚本 hash 列表）
+
+        ### 2) SRI 计算与注入
+        - 脚本：`scripts/sri.mjs`
+        - 针对外部资源（白名单）计算 `sha384` SRI 并输出：
+          `docs/public/.well-known/sri-manifest.json`（数组对象 `{ "url": "...", "integrity": "sha384-..." }`）
+        - 自动在注入点/HTML 模板或 worker import 中附加 `integrity` 与 `crossorigin="anonymous"`（若注入不可行，则在 README 标注需手工附加位置）
+        - 若某 URL 无法计算或不在白名单，脚本报错并 `process.exit(1)`（CI 会 fail）
+        - 白名单位置：`scripts/sri.config.json`（由维护者列明允许的外部 CDN 与固定版本）
+
+        ### 3) Robots 与 Sitemap 一致性
+        - 确保存在 `docs/public/robots.txt`，屏蔽敏感或非公开路径（例如 `/data/`, `/admin/` 等）
+        - 在 README 中标注 `robots.txt` 与 `sitemap.xml` 的放置位置与用途
+
+        ### 4) CI 集成（在 build + search:index + embeddings:build 之后）
+        - 步骤（顺序）：
+          1. `node scripts/generate-headers.mjs`
+          2. `node scripts/sri.mjs`
+        - 将生成的 `.well-known/*` 拷贝到 `dist/` 根目录以供发布（Pages/反代可读取）
+        - 若 `sri.mjs` 报错或 `security-headers.txt` 缺失 → `exit(1)`（CI fail）
+
+        ### 5) 自动校验（运行时/CI 报告）
+        - 输出 CI 日志片段：
+          - 列出 SRI 清单（url + integrity）
+          - 打印 CSP 摘要（或写入 artifact）
+        - 推荐：在 CI Artifact 中保留 `.well-known/*` 与注入点示例
+
+  - type: checkboxes
+    id: acceptance
+    attributes:
+      label: ✅ 验收标准
+      options:
+        - label: Lighthouse Best Practices ≥ 95 且控制台无 CSP 违规（本地/CI 复现）
+          required: true
+        - label: 所有外链资源均在 `sri-manifest.json` 中，且使用处附带 `integrity` + `crossorigin="anonymous"`
+          required: true
+        - label: `security-headers.txt`（可通过 `/.well-known/security-headers.txt` 访问）与 `sri-manifest.json` 存在并被发布到 `dist/`
+          required: true
+        - label: CI 在外部 CDN 变更导致 SRI 不匹配时 fail；且可通过维护白名单/更新 SRI 恢复
+          required: true
+
+  - type: markdown
+    attributes:
+      value: |
+        ## ⚙️ 实施细节与约束
+        - **不改变 BASE 路径 或 现有构建逻辑。** 所有生成文件放在 `docs/public/.well-known/`，并在最终部署时复制到 `dist/.well-known/`。
+        - SRI 只对**白名单中的固定资源版本**计算（例如：`https://esm.sh/@xenova/transformers@0.XX.XX/...`）。不鼓励对浮动版本或 root CDN 索引计算 SRI（会频繁失效）。
+        - 若某外链需要动态更新（CDN 版本变更），维护者需：
+          1. 更新 `scripts/sri.config.json` 白名单（新 URL），
+          2. 重新运行 `node scripts/sri.mjs`（或在 PR 中让 CI 自动更新并通过审核）。
+        - 对于无法自动注入 SRI 的场景，`sri-manifest.json` 作为权威清单，并在 README 中标注手工注入位置（或提供小段 patch/示例）。
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: 🧪 验证与日志（建议在 Issue 中贴上）
+      description: CI 运行后请粘贴关键日志片段（SRI 列表、CSP 摘要、任何报错）
+      placeholder: |
+        [generate-headers] wrote docs/public/.well-known/security-headers.txt
+        [sri] computed 4 integrity entries:
+          - https://esm.sh/.. -> sha384-...
+        [ci] copied .well-known/* -> dist/.well-known/
+        [ci] Lighthouse best-practices: 96
+
+  - type: markdown
+    attributes:
+      value: |
+        ## 🔁 回滚策略
+        - 临时移除在 `docs/.vitepress/head` 的 meta CSP 注入（或恢复原来文件）；并在 CI 中注释掉 `node scripts/generate-headers.mjs` 与 `node scripts/sri.mjs` 步骤。
+        - 该回滚不会影响主站点功能；但会短暂降低对 CDN 变更的自动检测能力。
+
+  - type: markdown
+    attributes:
+      value: |
+        ## 📎 推荐输出物（PR 应包含）
+        - `scripts/generate-headers.mjs`（实现并注释清楚）
+        - `scripts/sri.mjs` 与 `scripts/sri.config.json`（白名单）
+        - `.well-known/security-headers.txt`（示例）
+        - `.well-known/sri-manifest.json`（示例）
+        - README 中的“安全头 & SRI”一节：指示如何手动注入、如何更新白名单、回滚步骤
+        - CI workflow 修改片段（显示在 build 后执行这两个脚本并复制 `.well-known/*` 到 dist）
+
+  - type: markdown
+    attributes:
+      value: |
+        ## 实施提示（工程师小贴士）
+        - 使用 Node 的 `crypto` 或 `fetch` + `crypto.subtle` 计算外链资源的 hash（建议下载内容后用 `crypto.createHash('sha384').update(buf).digest('base64')`）。
+        - 对于 inline scripts/styles：脚本可计算实际内联内容的 sha256 并把其加入 CSP 的 `script-src` / `style-src`（自动化注入时注意转义）。
+        - 把 `.well-known/*` 作为 CI artifact 保留，便于 post-mortem 与审计。
