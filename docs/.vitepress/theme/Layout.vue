@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import { computed, defineAsyncComponent, onMounted, ref } from 'vue'
-import { useRouter } from 'vitepress'
+import { useRouter, withBase, useData } from 'vitepress'
 import DefaultTheme from 'vitepress/dist/client/theme-default/without-fonts'
 import SearchBox from './components/SearchBox.vue'
 import { initTelemetry, resolveAsset, setupTelemetryRouterHook } from './telemetry'
 import { useRegisterSW } from 'virtual:pwa-register/vue'
 
 const router = useRouter()
+const { site } = useData()
 const offlineReady = ref(false)
 const needRefresh = ref(false)
 const chatOpen = ref(false)
@@ -78,8 +79,16 @@ function computeRelativeKey(path: string, lang: 'zh' | 'en') {
   return rest.replace(/\/$/,'')
 }
 
+function stripBase(path: string) {
+  const base = site.value?.base || '/'
+  if (base !== '/' && path.startsWith(base)) {
+    return path.slice(base.length - 1)
+  }
+  return path
+}
+
 function switchLocale() {
-  const currentPath = router.route.path
+  const currentPath = stripBase(router.route.path)
   const target = locale.value === 'zh' ? 'en' : 'zh'
   const key = computeRelativeKey(currentPath, locale.value)
   const mapEntry = key ? localeMap.value[key] : null
@@ -87,17 +96,15 @@ function switchLocale() {
 
   if (mapEntry && mapEntry[target]) {
     next = mapEntry[target]
-  } else if (target === 'en') {
-    if (currentPath.startsWith('/en/')) {
-      next = currentPath
-    } else {
-      next = `/en${currentPath}`
-    }
-  } else {
-    next = currentPath.replace(/^\/en/, '') || '/'
   }
   if (!next.startsWith('/')) next = `/${next}`
-  router.go(next)
+
+  const resolved = withBase(next)
+  if (typeof window !== 'undefined') {
+    window.location.href = resolved
+  } else {
+    router.go(next)
+  }
 }
 </script>
 
