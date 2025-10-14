@@ -112,6 +112,12 @@ codex run audit   # 可选
 - PWA 离线缓存（`vite-plugin-pwa` / Workbox）与 AI 自演进能力（自动嵌入、摘要、Q&A 导出）与 Lighthouse 解耦，可先开发并上线，再用 Lighthouse 回归验证性能与体验。
 - 若恢复 Lighthouse，请关注运行时长与所需的 Chrome 依赖，必要时只在夜间任务或发布前手动触发。
 
+### AI 自演进（PR-I）
+
+- 构建阶段新增脚本：`node scripts/embed-build.mjs`（必跑，占位文本）、`node scripts/summary.mjs || true`、`node scripts/qa-build.mjs || true`，产物输出到 `docs/public/data/`。
+- 如本地尚未接入模型，脚本会退化为文本/元信息导出，不会阻塞构建；后续可替换为 Transformers.js / onnxruntime-node 编码器。
+- 前端可按需读取 `embeddings.json`、`summaries.json`、`qa.json`（例如搜索框或专门的问答页）；缺失时不影响正常渲染。
+
 ## 内容生产力守门
 
 - Markdown Lint：`npm run md:lint`（使用 markdownlint-cli2，可提前发现标题序号、行长等问题）。

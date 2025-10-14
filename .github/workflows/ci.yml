@@ -41,6 +41,12 @@ jobs:
         run: npm run gen
       - name: Build semantic texts
         run: npm run embeddings:build
+      - name: Generate embedding payload (占位)
+        run: node scripts/embed-build.mjs
+      - name: Generate summaries (soft fail)
+        run: node scripts/summary.mjs || true
+      - name: Generate QA pairs (soft fail)
+        run: node scripts/qa-build.mjs || true
       - name: 构建 + 搜索索引（阻断）
         run: npm run build:search
       - name: Bundle budget check

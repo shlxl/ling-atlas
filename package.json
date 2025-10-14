@@ -16,7 +16,11 @@
     "search:index": "pagefind --site docs/.vitepress/dist --output-path docs/public/pagefind --force-language zh",
     "embeddings:build": "node scripts/build-embeddings.mjs",
     "dev:search": "vitepress build docs && npm run search:index && npm run embeddings:build && node -e \"import('node:fs').then(fs=>fs.cpSync('docs/public/pagefind','docs/.vitepress/dist/pagefind',{recursive:true}))\" && vitepress dev docs --host 0.0.0.0 --port 5173",
-    "preview:search": "vitepress build docs && npm run search:index && npm run embeddings:build && node -e \"import('node:fs').then(fs=>fs.cpSync('docs/public/pagefind','docs/.vitepress/dist/pagefind',{recursive:true}))\" && vitepress preview docs --host 0.0.0.0 --port 4173"
+    "preview:search": "vitepress build docs && npm run search:index && npm run embeddings:build && node -e \"import('node:fs').then(fs=>fs.cpSync('docs/public/pagefind','docs/.vitepress/dist/pagefind',{recursive:true}))\" && vitepress preview docs --host 0.0.0.0 --port 4173",
+    "ai:embed": "node scripts/embed-build.mjs",
+    "ai:summary": "node scripts/summary.mjs",
+    "ai:qa": "node scripts/qa-build.mjs",
+    "ai:all": "npm run ai:embed && (npm run ai:summary || true) && (npm run ai:qa || true)"
   },
   "devDependencies": {
     "@lhci/cli": "^0.15.1",
