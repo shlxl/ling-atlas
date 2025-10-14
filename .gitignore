@@ -20,3 +20,10 @@ docs/en/content/
 
 # OS
 .DS_Store
+
+# build artifacts
+docs/public/api/
+
+# tool context
+.codex/
+GEMINI.md

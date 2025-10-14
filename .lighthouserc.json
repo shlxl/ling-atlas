@@ -3,6 +3,7 @@
     "collect": {
       "staticDistDir": "docs/.vitepress/dist",
       "numberOfRuns": 1,
+      "chromePath": "/tmp/chromium"
     },
     "assert": {
       "assertions": {

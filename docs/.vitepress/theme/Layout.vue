@@ -14,15 +14,20 @@ const chatOpen = ref(false)
 const locale = ref<'zh' | 'en'>('zh')
 const localeMap = ref<Record<string, { zh?: string; en?: string }>>({})
 
-const { updateServiceWorker } = useRegisterSW({
-  immediate: true,
-  onOfflineReady() {
-    offlineReady.value = true
-  },
-  onNeedRefresh() {
-    needRefresh.value = true
-  }
-})
+let updateServiceWorker: (reloadPage?: boolean) => Promise<void>
+
+if (typeof window !== 'undefined') {
+  const { updateServiceWorker: pwaUpdate } = useRegisterSW({
+    immediate: true,
+    onOfflineReady() {
+      offlineReady.value = true
+    },
+    onNeedRefresh() {
+      needRefresh.value = true
+    }
+  })
+  updateServiceWorker = pwaUpdate
+}
 
 const bannerMessage = computed(() => {
   if (needRefresh.value) return '检测到新版本，点击即可更新。'
@@ -41,7 +46,7 @@ function closeBanner() {
 }
 
 function refreshNow() {
-  updateServiceWorker(true)
+  updateServiceWorker?.(true)
   closeBanner()
 }
 
