@@ -117,6 +117,7 @@ codex run audit   # 可选
 - 构建阶段新增脚本：`node scripts/embed-build.mjs`（必跑，占位文本）、`node scripts/summary.mjs || true`、`node scripts/qa-build.mjs || true`，产物输出到 `docs/public/data/`。
 - 如本地尚未接入模型，脚本会退化为文本/元信息导出，不会阻塞构建；后续可替换为 Transformers.js / onnxruntime-node 编码器。
 - 前端可按需读取 `embeddings.json`、`summaries.json`、`qa.json`（例如搜索框或专门的问答页）；缺失时不影响正常渲染。
+- 导航栏已包含 `About`（观测指标、常见问答）与 `指南`（部署指南、迁移与重写）入口，确保这些文档始终可见。
 
 ## 内容生产力守门
 
