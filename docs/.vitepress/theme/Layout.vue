@@ -45,7 +45,9 @@ onMounted(() => {
 <template>
   <DefaultTheme.Layout>
     <template #nav-bar-content-after>
-      <SearchBox />
+      <div class="la-search-wrapper">
+        <SearchBox />
+      </div>
     </template>
     <template #layout-bottom>
       <transition name="pwa-update-fade">
@@ -112,5 +114,13 @@ onMounted(() => {
 .pwa-update-fade-leave-to {
   opacity: 0;
   transform: translate(-50%, 10px);
+}
+.la-search-wrapper {
+  display: flex;
+  align-items: center;
+  margin-right: 0.75rem;
+}
+.la-search-wrapper :deep(.la-search-btn) {
+  margin-right: 0.5rem;
 }
 </style>
