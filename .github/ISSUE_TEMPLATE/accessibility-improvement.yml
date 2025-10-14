@@ -1,0 +1,35 @@
+name: "可访问性改进"
+description: "提高网站的可访问性分数"
+title: "[Accessibility] "
+labels: ["type:accessibility", "area:ux", "priority:P2"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **目标**
+        - 修复 Lighthouse 报告中指出的可访问性问题。
+        - 将 `.lighthouserc.json` 中的可访问性分数阈值恢复到 0.9 或更高。
+
+  - type: textarea
+    id: description
+    attributes:
+      label: 问题描述
+      description: "详细描述发现的可访问性问题。可以附上 Lighthouse 报告的截图或链接。"
+      placeholder: "例如：颜色对比度不足，缺少 ARIA 标签等。"
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: 解决方案
+      description: "提出建议的修复方案。"
+      placeholder: "例如：调整颜色，添加 ARIA 属性等。"
+
+  - type: checkboxes
+    id: acceptance
+    attributes:
+      label: 验收标准
+      options:
+        - label: "所有页面都通过了 Lighthouse 的可访问性检查，分数达到 0.9 或更高。"
+        - label: "`.lighthouserc.json` 中的可访问性分数阈值已更新为 0.9 或更高。"
