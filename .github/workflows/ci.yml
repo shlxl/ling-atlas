@@ -64,7 +64,9 @@ jobs:
       - name: Install Lighthouse OS Dependencies
         run: sudo apt-get update && sudo apt-get install -y libnspr4
       - name: Lighthouse CI
-        run: ./node_modules/.bin/lhci autorun
+        run: |
+          node -e "require('@sparticuz/chromium').executablePath()"
+          ./node_modules/.bin/lhci autorun
       - name: Merge telemetry data
         run: node scripts/telemetry-merge.mjs
       - name: 上传 Pages 产物
