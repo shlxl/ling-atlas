@@ -15,9 +15,20 @@ import matter from 'gray-matter'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const ROOT = path.resolve(__dirname, '..')
-const CONTENT_DIR = path.join(ROOT, 'docs', 'content')
 const OUTPUT_DIR = path.join(ROOT, 'docs', 'public', 'api')
 const OUTPUT_FILE = path.join(OUTPUT_DIR, 'knowledge.json')
+const LANG_SOURCES = [
+  {
+    code: 'zh',
+    dir: path.join(ROOT, 'docs', 'content'),
+    basePath: '/content/'
+  },
+  {
+    code: 'en',
+    dir: path.join(ROOT, 'docs', 'content.en'),
+    basePath: '/en/content/'
+  }
+]
 
 function isDraft(frontmatter) {
   const { status, draft } = frontmatter || {}
@@ -49,10 +60,10 @@ function stripMarkdown(markdown) {
     .trim()
 }
 
-function buildUrl(mdPath) {
-  const relative = path.relative(CONTENT_DIR, mdPath).replace(/\\/g, '/')
+function buildUrl(mdPath, source) {
+  const relative = path.relative(source.dir, mdPath).replace(/\\/g, '/')
   const dir = relative.replace(/\/index\.md$/, '')
-  return `/content/${dir}/`
+  return `${source.basePath}${dir}/`
 }
 
 function segmentSentences(text) {
@@ -135,32 +146,47 @@ async function ensureDir(dir) {
   await fs.mkdir(dir, { recursive: true })
 }
 
+async function exists(target) {
+  try {
+    await fs.access(target)
+    return true
+  } catch {
+    return false
+  }
+}
+
 async function buildKnowledgeItems() {
-  const files = await globby('**/index.md', { cwd: CONTENT_DIR, absolute: true })
   const items = []
 
-  for (const file of files) {
-    const raw = await fs.readFile(file, 'utf8')
-    const { data, content } = matter(raw)
-    if (isDraft(data)) continue
-    const title = String(data.title || '').trim()
-    if (!title) continue
-    const baseUrl = buildUrl(file)
-    const sections = extractSections(content)
+  for (const source of LANG_SOURCES) {
+    if (!(await exists(source.dir))) continue
+    const files = await globby('**/index.md', { cwd: source.dir, absolute: true })
 
-    for (const section of sections) {
-      const plain = stripMarkdown(section.text)
-      if (!plain) continue
-      const chunks = chunkText(plain)
-      chunks.forEach(chunk => {
-        const anchorSuffix = section.anchor || '#top'
-        items.push({
-          url: baseUrl,
-          title,
-          anchor: anchorSuffix,
-          chunk
+    for (const file of files) {
+      const raw = await fs.readFile(file, 'utf8')
+      const { data, content } = matter(raw)
+      if (isDraft(data)) continue
+      const title = String(data.title || '').trim()
+      if (!title) continue
+      const baseUrl = buildUrl(file, source)
+      const sections = extractSections(content)
+
+      for (const section of sections) {
+        const plain = stripMarkdown(section.text)
+        if (!plain) continue
+        const chunks = chunkText(plain)
+        chunks.forEach(chunk => {
+          const anchorSuffix = section.anchor || '#top'
+          const anchorValue = anchorSuffix.startsWith('#') ? anchorSuffix : `#${anchorSuffix}`
+          items.push({
+            url: baseUrl,
+            title,
+            anchor: anchorValue,
+            chunk,
+            lang: source.code
+          })
         })
-      })
+      }
     }
   }
 

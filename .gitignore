@@ -7,12 +7,16 @@ yarn.lock
 docs/.vitepress/cache/
 docs/.vitepress/dist/
 docs/public/rss.xml
+docs/public/rss-en.xml
 docs/public/sitemap.xml
+docs/public/sitemap-en.xml
 docs/public/embeddings-texts.json
+docs/public/i18n-map.json
 data/telemetry.tmp.json
 
 # generated pages
 docs/_generated/
+docs/en/content/
 
 # OS
 .DS_Store

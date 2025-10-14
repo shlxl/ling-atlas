@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import { onMounted, onBeforeUnmount, ref } from 'vue'
+import { computed, onMounted, onBeforeUnmount, ref } from 'vue'
+import { useRouter } from 'vitepress'
 import { trackEvent, hashQuery, resolveAsset } from '../telemetry'
 
 type LexicalResult = { url: string; title: string; excerpt: string; rank: number }
 type SemanticCandidate = { url: string; score: number; vector: number[] | null; rank: number }
-type TextItem = { url: string; title: string; text: string }
+type TextItem = { url: string; title: string; text: string; lang?: 'zh' | 'en' }
 
 const isOpen = ref(false)
 const query = ref('')
@@ -28,6 +29,27 @@ let debounceTimer = 0
 const allowedVariants = new Set(['lex', 'rrf', 'rrf-mmr'])
 const activeVariant = ref<'none' | 'lex' | 'rrf' | 'rrf-mmr'>('none')
 let interleaveTeams: Record<string, 'control' | 'variant'> = {}
+const currentLocale = ref<'zh' | 'en'>('zh')
+const router = useRouter()
+const SEARCH_I18N = {
+  zh: {
+    button: '搜索（Ctrl/⌘K）',
+    placeholder: '输入关键词搜索...',
+    loading: '正在搜索...',
+    semantic: '正在融合语义结果...',
+    empty: '没有找到匹配内容，换个关键词试试？',
+    error: '搜索失败，请稍后再试'
+  },
+  en: {
+    button: 'Search (Ctrl/⌘K)',
+    placeholder: 'Type keywords to search…',
+    loading: 'Searching…',
+    semantic: 'Merging semantic results…',
+    empty: 'No matches found, try another query?',
+    error: 'Search failed, please try again later.'
+  }
+} as const
+const uiText = computed(() => SEARCH_I18N[currentLocale.value])
 
 function normalizeResultUrl(raw: string) {
   if (!raw) return resolveAsset('/').pathname
@@ -55,8 +77,27 @@ function detectVariantFromLocation() {
   }
 }
 
+function updateLocaleFromPath(path: string) {
+  if (!path) return
+  currentLocale.value = path.startsWith('/en/') ? 'en' : 'zh'
+}
+
 type RankedItem = { url: string; title: string; excerpt: string }
 type InterleaveEntry = { item: RankedItem; team: 'control' | 'variant' }
+
+function splitByLocale(items: RankedItem[]) {
+  const same: RankedItem[] = []
+  const others: RankedItem[] = []
+  for (const item of items) {
+    const isEn = item.url.startsWith('/en/')
+    if ((currentLocale.value === 'en' && isEn) || (currentLocale.value === 'zh' && !isEn)) {
+      same.push(item)
+    } else {
+      others.push(item)
+    }
+  }
+  return same.length ? same.concat(others) : others
+}
 
 function teamDraftInterleave(control: RankedItem[], variant: RankedItem[], seed: string, limit = 20): InterleaveEntry[] {
   const seen = new Set<string>()
@@ -219,7 +260,8 @@ async function initSemantic() {
     texts = items.map((item: any) => ({
       url: String(item.url || ''),
       title: String(item.title || ''),
-      text: String(item.text || '')
+      text: String(item.text || ''),
+      lang: item.lang === 'en' ? 'en' : 'zh'
     })).filter(it => it.url)
     texts.forEach(it => textMap.set(it.url, it))
 
@@ -307,8 +349,10 @@ async function semanticSearch(q: string): Promise<{ items: SemanticCandidate[]; 
   }
   try {
     const queryVec = await encodeQueryVector(q)
-    const vectors = await Promise.all(texts.map(item => getVectorForItem(item)))
-    const scored = texts.map((item, idx) => ({
+    const localeTexts = texts.filter(item => (item.lang || 'zh') === currentLocale.value)
+    const pool = localeTexts.length ? localeTexts : texts
+    const vectors = await Promise.all(pool.map(item => getVectorForItem(item)))
+    const scored = pool.map((item, idx) => ({
       url: item.url,
       score: dot(queryVec, vectors[idx]),
       vector: vectors[idx],
@@ -397,12 +441,13 @@ async function runSearch(input: string) {
     if (token !== searchToken) return
 
     lexicalRanked = lexical.map(item => ({ url: item.url, title: item.title, excerpt: item.excerpt }))
+    lexicalRanked = splitByLocale(lexicalRanked)
 
     results.value = lexicalRanked.slice(0, 20)
 
   } catch (err) {
     console.error('[search failed]', err)
-    error.value = '搜索失败，请稍后再试'
+    error.value = SEARCH_I18N[currentLocale.value].error
     return
   } finally {
     if (token === searchToken) loading.value = false
@@ -430,7 +475,7 @@ async function runSearch(input: string) {
   const lexicalMap = new Map(lexical.map(item => [item.url, item]))
   const baseLexical = lexicalRanked.length
     ? lexicalRanked
-    : lexical.map(item => ({ url: item.url, title: item.title, excerpt: item.excerpt }))
+    : splitByLocale(lexical.map(item => ({ url: item.url, title: item.title, excerpt: item.excerpt })))
 
   let rrfRanked: RankedItem[] = baseLexical
   let mmrRanked: RankedItem[] = baseLexical
@@ -447,6 +492,7 @@ async function runSearch(input: string) {
         excerpt: (fallback?.text || '').slice(0, 160)
       }
     })
+    rrfRanked = splitByLocale(rrfRanked)
     const reranked = mmrSelect(fused, semantic.queryVec, 20)
     mmrRanked = reranked.map(entry => {
       const lex = lexicalMap.get(entry.url)
@@ -458,6 +504,7 @@ async function runSearch(input: string) {
         excerpt: (fallback?.text || '').slice(0, 160)
       }
     })
+    mmrRanked = splitByLocale(mmrRanked)
   }
 
   const controlList = semantic && semantic.items.length ? mmrRanked : baseLexical
@@ -478,7 +525,8 @@ async function runSearch(input: string) {
           qHash: hash,
           variant: activeVariant.value,
           control: 'rrf-mmr',
-          mode: 'direct'
+          mode: 'direct',
+          locale: currentLocale.value
         })
       }
     } else {
@@ -499,7 +547,8 @@ async function runSearch(input: string) {
             control: 'rrf-mmr',
             mode: 'interleave',
             controlCount,
-            variantCount
+            variantCount,
+            locale: currentLocale.value
           })
         }
       } else {
@@ -515,7 +564,7 @@ async function runSearch(input: string) {
   void hashPromise.then(qHash => {
     if (!qHash || token !== searchToken) return
     lastQueryHash.value = qHash
-    void trackEvent('search_query', { qHash, len: q.length })
+    void trackEvent('search_query', { qHash, len: q.length, locale: currentLocale.value })
     if (variantExpose) variantExpose(qHash)
   })
 }
@@ -530,7 +579,7 @@ function scheduleSearch() {
 function onResultClick(item: { url: string }, index: number) {
   if (lastQueryHash.value) {
     const team = activeVariant.value !== 'none' ? interleaveTeams[item.url] ?? 'control' : 'control'
-    const payload: Record<string, any> = { qHash: lastQueryHash.value, rank: index + 1, url: item.url, team }
+    const payload: Record<string, any> = { qHash: lastQueryHash.value, rank: index + 1, url: item.url, team, locale: currentLocale.value }
     if (activeVariant.value !== 'none') payload.variant = activeVariant.value
     void trackEvent('search_click', payload)
     if (activeVariant.value !== 'none') {
@@ -539,7 +588,8 @@ function onResultClick(item: { url: string }, index: number) {
         variant: activeVariant.value,
         team,
         rank: index + 1,
-        url: item.url
+        url: item.url,
+        locale: currentLocale.value
       })
     }
   }
@@ -558,6 +608,11 @@ function onKey(e: KeyboardEvent) {
 
 onMounted(() => {
   detectVariantFromLocation()
+  updateLocaleFromPath(router.route.path)
+  router.onAfterRouteChanged?.((to: string) => {
+    updateLocaleFromPath(to)
+    detectVariantFromLocation()
+  })
   window.addEventListener('keydown', onKey)
   void initSemantic()
 })
@@ -574,21 +629,21 @@ onBeforeUnmount(() => {
 <template>
   <div class="la-search">
     <button class="la-search-btn" type="button" @click="open">
-      搜索（Ctrl/⌘K）
+      {{ uiText.button }}
     </button>
 
     <div v-if="isOpen" class="la-search-overlay" @click.self="close">
       <div class="la-search-panel">
         <div class="la-search-header">
-          <input id="la-search-input" class="la-search-input" v-model="query" @input="scheduleSearch" placeholder="输入关键词搜索..." />
+          <input id="la-search-input" class="la-search-input" v-model="query" @input="scheduleSearch" :placeholder="uiText.placeholder" />
           <button class="la-close" @click="close">Esc</button>
         </div>
         <div class="la-search-body">
           <div v-if="error" class="la-error">{{ error }}</div>
-          <div v-else-if="loading" class="la-loading">正在搜索...</div>
+          <div v-else-if="loading" class="la-loading">{{ uiText.loading }}</div>
           <div v-else class="la-results-wrapper">
             <template v-if="results.length">
-              <p v-if="semanticPending" class="la-semantic-hint">正在融合语义结果...</p>
+              <p v-if="semanticPending" class="la-semantic-hint">{{ uiText.semantic }}</p>
               <ul class="la-results">
                 <li v-for="(item, idx) in results" :key="item.url">
                   <a :href="item.url" @click="onResultClick(item, idx)">
@@ -598,7 +653,7 @@ onBeforeUnmount(() => {
                 </li>
               </ul>
             </template>
-            <p v-else class="la-empty">没有找到匹配内容，换个关键词试试？</p>
+            <p v-else class="la-empty">{{ uiText.empty }}</p>
           </div>
         </div>
       </div>

@@ -37,11 +37,12 @@ async function validateInternalLink(url, filePath) {
   }
   const clean = normalized.replace(/#.+$/, '')
   if (clean === '/' || clean === '') return true
-  const mdPath = path.join(DOCS_DIR, clean)
+  const relative = clean.replace(/^\//, '')
+  const mdPath = path.join(DOCS_DIR, relative)
   if (await fileExists(mdPath + '.md')) return true
-  const generatedPath = path.join(GENERATED_DIR, clean)
+  const generatedPath = path.join(GENERATED_DIR, relative)
   if (await fileExists(generatedPath)) return true
-  const distPath = path.join(DIST_DIR, clean)
+  const distPath = path.join(DIST_DIR, relative)
   if (await fileExists(distPath)) return true
   return `${normalized} (from ${filePath}) -> target not found`
 }

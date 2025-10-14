@@ -10,6 +10,7 @@
 - 预留 **L1 语义检索（Transformers.js）** 与 **USearch/WASM** 接口
 - PR-I AI 自演进（占位版）：构建阶段自动生成 embeddings/summaries/Q&A JSON，前端可按需消费
 - PR-J 知识 API + Chat：导出段落级只读数据，前端提供带引用的轻量问答
+- PR-L 多语/i18n：`docs/content`（中文）与 `docs/content.en`（英文）双目录，构建出 `/` 与 `/en/` 路由及多语言聚合页 / RSS / Sitemap
 - PR-K 搜索评测：离线 nDCG/MRR/Recall 守门 + 线上查询参数 variant（lex / rrf / rrf-mmr）交替曝光
 
 ## 快速开始
@@ -28,7 +29,8 @@ npm run dev
 ```
 .
 ├─ docs/                 # 站点根
-│  ├─ content/           # 唯一内容源（每篇文章一个文件夹）
+│  ├─ content/           # 中文内容源（每篇文章一个文件夹）
+│  ├─ content.en/        # 英文内容源（结构镜像中文，最终映射到 /en/...）
 │  │  └─ hello-world/
 │  │     └─ index.md
 │  ├─ _generated/        # pagegen 输出（分类/系列/标签/归档）
@@ -43,7 +45,7 @@ npm run dev
 ## 命令
 - `npm run gen`：生成分类/系列/标签/归档 + RSS/Sitemap
 - `npm run precheck`：Frontmatter Schema 校验（阻断）
-- `npm run build`：构建站点（前置 `gen` + `knowledge:build`）
+- `npm run build`：构建站点（前置 `gen` + `knowledge:build`），自动生成中英双语 RSS/Sitemap
 - `npm run dev`：本地开发（前置 `gen`）
 - `npm run knowledge:build`：单独更新 `/api/knowledge.json`（段落级知识数据）
 - `npm run eval:offline`：基于 `data/gold.jsonl` 运行离线检索评测（nDCG/MRR/Recall），确保不低于 `scripts/eval/baseline.json`
@@ -64,6 +66,7 @@ npm run dev
 - `docs/public/sitemap.xml`：由 PageGen 生成，保持与 robots 中链接一致。
 - AI 自演进产物：`docs/public/data/embeddings.json`、`summaries.json`、`qa.json`，CI/构建阶段自动刷新，失败不阻断主流程。
 - 搜索评测：`data/gold.jsonl` 维护标注，`node scripts/eval/offline.mjs` 运行离线指标；线上调试可通过 `?variant=lex|rrf|rrf-mmr` 切换，与默认 `rrf-mmr` 做 Team Draft 交替曝光，点击偏好会记录匿名 hash 与位次。
+- 多语言：`docs/content` 与 `docs/content.en` 互为镜像，`npm run gen` 会复制英文章到 `docs/en/` 并产出 `/en/_generated/**`、`rss-en.xml`、`sitemap-en.xml`。导航与搜索根据路径自动切换语言，缺少对应页面时跳转到 `/en/`/`/` 首页。
 
 ## 约定
 - 所有文章文件置于 `docs/content/**/index.md`；Frontmatter 字段遵循 `schema/frontmatter.schema.json`。

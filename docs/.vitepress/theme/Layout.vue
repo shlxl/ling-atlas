@@ -3,13 +3,15 @@ import { computed, defineAsyncComponent, onMounted, ref } from 'vue'
 import { useRouter } from 'vitepress'
 import DefaultTheme from 'vitepress/dist/client/theme-default/without-fonts'
 import SearchBox from './components/SearchBox.vue'
-import { initTelemetry, setupTelemetryRouterHook } from './telemetry'
+import { initTelemetry, resolveAsset, setupTelemetryRouterHook } from './telemetry'
 import { useRegisterSW } from 'virtual:pwa-register/vue'
 
 const router = useRouter()
 const offlineReady = ref(false)
 const needRefresh = ref(false)
 const chatOpen = ref(false)
+const locale = ref<'zh' | 'en'>('zh')
+const localeMap = ref<Record<string, { zh?: string; en?: string }>>({})
 
 const { updateServiceWorker } = useRegisterSW({
   immediate: true,
@@ -29,6 +31,9 @@ const bannerMessage = computed(() => {
 
 const ChatWidget = defineAsyncComponent(() => import('./components/ChatWidget.vue'))
 
+const languageButtonLabel = computed(() => (locale.value === 'zh' ? 'EN' : '中文'))
+const chatButtonLabel = computed(() => (locale.value === 'zh' ? '知识问答' : 'Knowledge Chat'))
+
 function closeBanner() {
   offlineReady.value = false
   needRefresh.value = false
@@ -42,7 +47,58 @@ function refreshNow() {
 onMounted(() => {
   void initTelemetry()
   setupTelemetryRouterHook(router)
+  updateLocale(router.route.path)
+  void loadLocaleMap()
+  router.onAfterRouteChanged?.((to: string) => {
+    updateLocale(to)
+  })
 })
+
+async function loadLocaleMap() {
+  try {
+    const url = resolveAsset('/i18n-map.json').href
+    const res = await fetch(url, { cache: 'no-store' })
+    if (!res.ok) return
+    const payload = await res.json()
+    localeMap.value = payload || {}
+  } catch (err) {
+    console.warn('[i18n-map] failed to load', err)
+  }
+}
+
+function updateLocale(path: string) {
+  locale.value = path.startsWith('/en/') ? 'en' : 'zh'
+}
+
+function computeRelativeKey(path: string, lang: 'zh' | 'en') {
+  const cleaned = path.split(/[?#]/)[0]
+  const prefix = lang === 'en' ? '/en/content/' : '/content/'
+  if (!cleaned.startsWith(prefix)) return null
+  const rest = cleaned.slice(prefix.length)
+  return rest.replace(/\/$/,'')
+}
+
+function switchLocale() {
+  const currentPath = router.route.path
+  const target = locale.value === 'zh' ? 'en' : 'zh'
+  const key = computeRelativeKey(currentPath, locale.value)
+  const mapEntry = key ? localeMap.value[key] : null
+  let next = target === 'en' ? '/en/' : '/'
+
+  if (mapEntry && mapEntry[target]) {
+    next = mapEntry[target]
+  } else if (target === 'en') {
+    if (currentPath.startsWith('/en/')) {
+      next = currentPath
+    } else {
+      next = `/en${currentPath}`
+    }
+  } else {
+    next = currentPath.replace(/^\/en/, '') || '/'
+  }
+  if (!next.startsWith('/')) next = `/${next}`
+  router.go(next)
+}
 </script>
 
 <template>
@@ -50,6 +106,9 @@ onMounted(() => {
     <template #nav-bar-content-after>
       <div class="la-search-wrapper">
         <SearchBox />
+        <button class="la-lang-btn" type="button" @click="switchLocale">
+          {{ languageButtonLabel }}
+        </button>
       </div>
     </template>
     <template #layout-bottom>
@@ -67,7 +126,7 @@ onMounted(() => {
         </div>
       </transition>
       <button type="button" class="chat-fab" @click="chatOpen = true">
-        知识问答
+        {{ chatButtonLabel }}
       </button>
       <component :is="ChatWidget" v-if="chatOpen" v-model="chatOpen" />
     </template>
@@ -129,6 +188,18 @@ onMounted(() => {
 }
 .la-search-wrapper :deep(.la-search-btn) {
   margin-right: 0.5rem;
+}
+.la-lang-btn {
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 20px;
+  background: var(--vp-c-bg-soft);
+  color: var(--vp-c-text-1);
+  padding: 0.35rem 0.8rem;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+.la-lang-btn:hover {
+  background: var(--vp-c-bg);
 }
 .chat-fab {
   position: fixed;

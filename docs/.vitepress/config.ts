@@ -23,46 +23,56 @@ function serializeCsp(directives: Record<string, string[] | string> | null) {
     .join('; ')
 }
 
-function slug(input:string){
+function slug(input: string) {
   return input.normalize('NFKD')
-    .replace(/[\u0300-\u036f]/g,'')
-    .replace(/[^\p{Letter}\p{Number}]+/gu,'-')
-    .replace(/(^-|-$)/g,'')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^\p{Letter}\p{Number}]+/gu, '-')
+    .replace(/(^-|-$)/g, '')
     .toLowerCase()
 }
 
 const baseFromEnv = (process.env.BASE as string) || '/'
 const normalizedBase = baseFromEnv.endsWith('/') ? baseFromEnv : `${baseFromEnv}/`
 
-const metaPath = 'docs/_generated/meta.json'
-let meta = { byCategory:{}, bySeries:{}, byTag:{}, byYear:{}, all:[] } as any
-if (fs.existsSync(metaPath)) {
-  meta = JSON.parse(fs.readFileSync(metaPath,'utf8'))
-}
+const metaZh = loadMeta('docs/_generated/meta.json')
+const metaEn = loadMeta('docs/_generated/meta.en.json')
+const i18nMap = loadI18nTranslations()
 
 const cspTemplate = loadCspTemplate()
 const cspContent = serializeCsp(cspTemplate)
 
-function navFromMeta(){
+function navFromMeta(meta: any, locale: 'zh' | 'en') {
+  const t = i18nMap.nav[locale]
+  const prefix = locale === 'en' ? '/en' : ''
   const years = Object.keys(meta.byYear || {}).sort().reverse()
   const firstTag = Object.keys(meta.byTag || {})[0] || 'all'
   return [
-    { text: '最新', link: '/_generated/archive/' + (years[0] || '') + '/' },
-    { text: '分类', items: Object.keys(meta.byCategory||{}).sort().map(c=>({ text:c, link:`/_generated/categories/${slug(c)}/` })) },
-    { text: '系列', items: Object.keys(meta.bySeries||{}).sort().map(s=>({ text:s, link:`/_generated/series/${s}/` })) },
-    { text: '标签', link: '/_generated/tags/' + slug(firstTag) + '/' },
+    { text: t.latest, link: `${prefix}/_generated/archive/${years[0] || ''}/` },
     {
-      text: 'About',
+      text: t.categories,
+      items: Object.keys(meta.byCategory || {})
+        .sort()
+        .map(c => ({ text: c, link: `${prefix}/_generated/categories/${slug(c)}/` }))
+    },
+    {
+      text: t.series,
+      items: Object.keys(meta.bySeries || {})
+        .sort()
+        .map(s => ({ text: s, link: `${prefix}/_generated/series/${s}/` }))
+    },
+    { text: t.tags, link: `${prefix}/_generated/tags/${slug(firstTag)}/` },
+    {
+      text: t.about,
       items: [
-        { text: '观测指标', link: '/about/metrics.html' },
-        { text: '常见问答', link: '/about/qa.html' }
+        { text: t.metrics, link: '/about/metrics.html' },
+        { text: t.qa, link: '/about/qa.html' }
       ]
     },
     {
-      text: '指南',
+      text: t.guides,
       items: [
-        { text: '部署指南', link: '/DEPLOYMENT.html' },
-        { text: '迁移与重写', link: '/MIGRATION.html' }
+        { text: t.deploy, link: '/DEPLOYMENT.html' },
+        { text: t.migration, link: '/MIGRATION.html' }
       ]
     }
   ]
@@ -71,17 +81,41 @@ function navFromMeta(){
 export default defineConfig({
   // Inject base from env to support GitHub Pages subpath deployment
   base: baseFromEnv,
-  lang: 'zh-CN',
-  title: 'Ling Atlas · 小凌的个人知识库',
-  description: '现代化、可演进、可检索的知识库工程',
   head: [
     ['meta', { 'http-equiv': 'Content-Security-Policy', content: cspContent }],
     ['meta', { name: 'referrer', content: 'no-referrer' }]
   ],
   themeConfig: {
-    nav: navFromMeta(),
-    sidebar: 'auto',
-    socialLinks: [{ icon: 'github', link: 'https://github.com/shlxl/ling-atlas' }]
+    socialLinks: [{ icon: 'github', link: 'https://github.com/shlxl/ling-atlas' }],
+    localeLinks: {
+      text: 'Languages',
+      items: [
+        { text: '简体中文', link: normalizedBase },
+        { text: 'English', link: `${normalizedBase}en/` }
+      ]
+    }
+  },
+  locales: {
+    root: {
+      label: '简体中文',
+      lang: 'zh-CN',
+      title: 'Ling Atlas · 小凌的个人知识库',
+      description: '现代化、可演进、可检索的知识库工程',
+      themeConfig: {
+        nav: navFromMeta(metaZh, 'zh'),
+        sidebar: 'auto'
+      }
+    },
+    en: {
+      label: 'English',
+      lang: 'en-US',
+      title: 'Ling Atlas · Knowledge Atlas',
+      description: 'A modern, evolvable, searchable knowledge base.',
+      themeConfig: {
+        nav: navFromMeta(metaEn, 'en'),
+        sidebar: 'auto'
+      }
+    }
   },
   vite: {
     plugins: [
@@ -122,7 +156,7 @@ export default defineConfig({
           ]
         },
         manifest: {
-          name: 'Ling Atlas · 小凌的个人知识库',
+          name: 'Ling Atlas',
           short_name: 'Ling Atlas',
           start_url: normalizedBase,
           scope: normalizedBase,
@@ -153,3 +187,53 @@ export default defineConfig({
     }
   }
 })
+
+function loadMeta(file: string) {
+  if (fs.existsSync(file)) {
+    try {
+      return JSON.parse(fs.readFileSync(file, 'utf8'))
+    } catch (err) {
+      console.warn(`[meta] failed to parse ${file}`, err)
+    }
+  }
+  return { byCategory: {}, bySeries: {}, byTag: {}, byYear: {}, all: [] }
+}
+
+function loadI18nTranslations() {
+  try {
+    const raw = fs.readFileSync('docs/.vitepress/i18n.json', 'utf8')
+    return JSON.parse(raw)
+  } catch (err) {
+    console.warn('[i18n] failed to read docs/.vitepress/i18n.json', err)
+    return {
+      nav: {
+        zh: {
+          latest: '最新',
+          categories: '分类',
+          series: '系列',
+          tags: '标签',
+          about: 'About',
+          metrics: '观测指标',
+          qa: '常见问答',
+          guides: '指南',
+          deploy: '部署指南',
+          migration: '迁移与重写',
+          chat: '知识问答'
+        },
+        en: {
+          latest: 'Latest',
+          categories: 'Categories',
+          series: 'Series',
+          tags: 'Tags',
+          about: 'About',
+          metrics: 'Metrics',
+          qa: 'FAQ',
+          guides: 'Guides',
+          deploy: 'Deployment',
+          migration: 'Migration',
+          chat: 'Chat'
+        }
+      }
+    }
+  }
+}

@@ -1,15 +1,23 @@
 {
-  "generatedAt": "2025-10-14T02:09:38.599Z",
+  "generatedAt": "2025-10-14T03:46:33.143Z",
   "items": [
     {
       "url": "/content/from-zero-to-one/",
       "title": "从0到1：Ling Atlas 的诞生记",
-      "text": "记录 Ling Atlas 从脚手架到全自动部署的首篇实践，总结决策脉络与经验。"
+      "text": "记录 Ling Atlas 从脚手架到全自动部署的首篇实践，总结决策脉络与经验。",
+      "lang": "zh"
     },
     {
       "url": "/content/hello-world/",
       "title": "你好，知识库",
-      "text": "这是第一篇示例文。实际使用时请删除本目录并导入你的内容。"
+      "text": "这是第一篇示例文。实际使用时请删除本目录并导入你的内容。",
+      "lang": "zh"
+    },
+    {
+      "url": "/en/content/hello-world/",
+      "title": "Hello, Knowledge Base",
+      "text": "This is the first English sample entry. Replace it with your content when ready.",
+      "lang": "en"
     }
   ]
 }

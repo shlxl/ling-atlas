@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, ref, watch } from 'vue'
-import { withBase } from 'vitepress'
+import { withBase, useRouter } from 'vitepress'
 import { resolveAsset } from '../telemetry'
 
 interface KnowledgeItem {
@@ -8,6 +8,7 @@ interface KnowledgeItem {
   title: string
   anchor: string
   chunk: string
+  lang?: string
 }
 
 interface KnowledgePayload {
@@ -43,6 +44,19 @@ const textareaRef = ref<HTMLTextAreaElement | null>(null)
 const knowledge = ref<KnowledgeItem[]>([])
 const knowledgeLoaded = ref(false)
 const knowledgeFailed = ref(false)
+const locale = ref<'zh' | 'en'>('zh')
+const router = useRouter()
+
+const TEXT = {
+  zh: {
+    fallback: '暂未生成回答，以下是检索到的内容：',
+    empty: '暂未找到相关内容，可换个说法再试试。'
+  },
+  en: {
+    fallback: 'No composed answer yet. Here are the retrieved results:',
+    empty: 'No relevant results found. Try adjusting your query.'
+  }
+}
 
 let pagefindModule: any = null
 let pagefindPromise: Promise<boolean> | null = null
@@ -57,6 +71,13 @@ watch(visible, value => {
   }
 })
 
+onMounted(() => {
+  updateLocale(router.route.path)
+  router.onAfterRouteChanged?.((to: string) => {
+    updateLocale(to)
+  })
+})
+
 function close() {
   emit('update:modelValue', false)
 }
@@ -64,6 +85,11 @@ function close() {
 function formatRefLink(item: KnowledgeItem) {
   const anchor = item.anchor?.startsWith('#') ? item.anchor : `#${item.anchor || ''}`
   return withBase(`${item.url}${anchor}`)
+}
+
+function updateLocale(path: string) {
+  if (!path) return
+  locale.value = path.startsWith('/en/') ? 'en' : 'zh'
 }
 
 async function ensureKnowledge() {
@@ -80,6 +106,12 @@ async function ensureKnowledge() {
     console.warn('[chat] knowledge load failed', err)
     knowledgeFailed.value = true
   }
+}
+
+function knowledgeForLocale() {
+  if (!knowledgeLoaded.value) return []
+  const preferred = knowledge.value.filter(item => (item.lang || 'zh') === locale.value)
+  return preferred.length ? preferred : knowledge.value
 }
 
 async function ensurePagefind() {
@@ -142,11 +174,14 @@ async function fetchPagefindResults(query: string) {
       return {
         title: data.meta?.title || rawUrl,
         url: withBase(rawUrl),
+        rawUrl,
         excerpt: data.excerpt || ''
       }
     })
   )
-  return items
+  const same = items.filter(item => (locale.value === 'en' ? item.rawUrl?.startsWith('/en/') : !item.rawUrl?.startsWith('/en/')))
+  const final = (same.length ? same : items).map(({ rawUrl, ...rest }) => rest)
+  return final
 }
 
 function buildSummary(chunks: KnowledgeItem[], query: string) {
@@ -163,7 +198,8 @@ async function runQuery(query: string) {
   await ensureKnowledge()
   let topChunks: KnowledgeItem[] = []
   if (knowledgeLoaded.value) {
-    const scored = knowledge.value
+    const pool = knowledgeForLocale()
+    const scored = pool
       .map(item => ({ item, score: scoreChunk(item, query) }))
       .filter(entry => entry.score > 0)
       .sort((a, b) => b.score - a.score)
@@ -174,7 +210,7 @@ async function runQuery(query: string) {
     const fallback = await fetchPagefindResults(query)
     messages.value.push({
       role: 'assistant',
-      content: fallback.length ? '暂未生成回答，以下是检索到的内容：' : '暂未找到相关内容，可换个说法再试试。',
+      content: fallback.length ? TEXT[locale.value].fallback : TEXT[locale.value].empty,
       fallback: fallback.length ? fallback : undefined
     })
     return

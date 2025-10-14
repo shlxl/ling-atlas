@@ -13,9 +13,20 @@ import matter from 'gray-matter'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const ROOT = path.resolve(__dirname, '..')
-const CONTENT_DIR = path.join(ROOT, 'docs', 'content')
 const OUTPUT_DIR = path.join(ROOT, 'docs', 'public', 'data')
 const OUTPUT_FILE = path.join(OUTPUT_DIR, 'embeddings.json')
+const LANG_SOURCES = [
+  {
+    code: 'zh',
+    dir: path.join(ROOT, 'docs', 'content'),
+    basePath: '/content/'
+  },
+  {
+    code: 'en',
+    dir: path.join(ROOT, 'docs', 'content.en'),
+    basePath: '/en/content/'
+  }
+]
 
 function isDraft(frontmatter) {
   const { status, draft } = frontmatter || {}
@@ -46,27 +57,40 @@ function extractText(frontmatter, body) {
   return toPlainText(firstBlock)
 }
 
-function buildUrl(mdPath) {
-  const relative = path.relative(CONTENT_DIR, mdPath)
+function buildUrl(mdPath, source) {
+  const relative = path.relative(source.dir, mdPath)
   const clean = relative.replace(/\\/g, '/')
   const dir = clean.replace(/\/index\.md$/, '')
-  return `/content/${dir}/`
+  return `${source.basePath}${dir}/`
+}
+
+async function exists(target) {
+  try {
+    await fs.access(target)
+    return true
+  } catch {
+    return false
+  }
 }
 
 async function buildItems() {
-  const files = await globby('**/index.md', { cwd: CONTENT_DIR, absolute: true })
   const items = []
 
-  for (const file of files) {
-    const raw = await fs.readFile(file, 'utf8')
-    const { data, content } = matter(raw)
-    if (isDraft(data)) continue
-    const url = buildUrl(file)
-    const title = String(data.title || '').trim()
-    if (!title) continue
-    const text = extractText(data, content)
-    if (!text) continue
-    items.push({ url, title, text })
+  for (const source of LANG_SOURCES) {
+    if (!(await exists(source.dir))) continue
+    const files = await globby('**/index.md', { cwd: source.dir, absolute: true })
+
+    for (const file of files) {
+      const raw = await fs.readFile(file, 'utf8')
+      const { data, content } = matter(raw)
+      if (isDraft(data)) continue
+      const url = buildUrl(file, source)
+      const title = String(data.title || '').trim()
+      if (!title) continue
+      const text = extractText(data, content)
+      if (!text) continue
+      items.push({ url, title, text, lang: source.code })
+    }
   }
 
   return items.sort((a, b) => a.title.localeCompare(b.title, 'zh-CN'))
