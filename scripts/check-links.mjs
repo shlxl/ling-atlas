@@ -1,11 +1,11 @@
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import { globby } from 'globby'
+import { DEFAULT_LOCALE, LOCALE_REGISTRY } from './pagegen.locales.mjs'
 
 const ROOT = process.cwd()
 const DOCS_DIR = path.join(ROOT, 'docs')
 const GENERATED_DIR = path.join(ROOT, 'docs/_generated')
-const EN_GENERATED_DIR = path.join(ROOT, 'docs/en/_generated')
 const DIST_DIR = path.join(ROOT, 'docs/.vitepress/dist')
 let distReady = false
 const INTERNAL_PREFIXES = ['/', './', '../']

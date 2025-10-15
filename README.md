@@ -87,6 +87,7 @@ npm run dev
 ## FAQ
 - **可以放在根仓库吗？** 可以，但推荐独立仓库，后续可用 subtree 回挂到旧仓 `docs/`。
 - **中文标题如何转 slug？** `scripts/slug.ts` 提供简版实现，优先手写 `slug` 字段。
+- **为什么中文内容访问路径没有 `/zh/` 前缀？** 生成器把 `docs/content.zh` 视作默认语言目录，并在写聚合页时把它映射到 VitePress 根 `/`。新增语言时，请使用 `docs/content.<locale>` 命名（如 `docs/content.jp`），它们会自动映射到 `/<locale>/` 以避免与默认中文冲突。
 
 ---
 

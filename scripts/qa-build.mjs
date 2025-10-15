@@ -13,7 +13,8 @@ import matter from 'gray-matter'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const ROOT = path.resolve(__dirname, '..')
-const CONTENT_DIR = path.join(ROOT, 'docs', 'content')
+const DEFAULT_LOCALE = 'zh'
+const CONTENT_DIR = path.join(ROOT, 'docs', `content.${DEFAULT_LOCALE}`)
 const OUTPUT_DIR = path.join(ROOT, 'docs', 'public', 'data')
 const OUTPUT_FILE = path.join(OUTPUT_DIR, 'qa.json')
 

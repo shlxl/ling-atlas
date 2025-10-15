@@ -3,7 +3,27 @@ import path from 'node:path'
 import { globby } from 'globby'
 import matter from 'gray-matter'
 import { marked } from 'marked'
-import { fileURLToPath } from 'url'
+import { fileURLToPath, pathToFileURL } from 'url'
+import {
+  DEFAULT_LOCALE,
+  DOCS_DIR as DOCS,
+  GENERATED_ROOT as GEN,
+  PUBLIC_ROOT as PUB,
+  LANG_CONFIG,
+  LANGUAGES
+} from './pagegen.locales.mjs'
+
+export {
+  DEFAULT_LOCALE,
+  LOCALE_REGISTRY,
+  LANG_CONFIG,
+  LANGUAGES,
+  ROOT_DIR,
+  DOCS_DIR,
+  GENERATED_ROOT,
+  PUBLIC_ROOT,
+  getLocaleConfig
+} from './pagegen.locales.mjs'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const DOCS = path.join(__dirname, '..', 'docs')
@@ -96,23 +116,54 @@ function expandLocalePaths(localePaths) {
   return next
 }
 
+function getLocaleKeys(lang) {
+  const keys = new Set([lang.manifestLocale, ...(lang.aliasLocaleIds || [])])
+  return Array.from(keys)
+}
+
+const localeAliasMap = new Map(LOCALE_CONFIG.map(lang => [lang.manifestLocale, lang.aliasLocaleIds || []]))
+
+function expandLocalePaths(localePaths) {
+  const next = { ...(localePaths || {}) }
+  for (const [locale, targetPath] of Object.entries(localePaths || {})) {
+    const aliases = localeAliasMap.get(locale) || []
+    for (const alias of aliases) {
+      if (!alias) continue
+      if (!(alias in next) && targetPath) {
+        next[alias] = targetPath
+      }
+    }
+  }
+  return next
+}
+
+function getLocaleKeys(lang) {
+  const keys = new Set([lang.manifestLocale, ...(lang.aliasLocaleIds || [])])
+  return Array.from(keys)
+}
+
+const localeAliasMap = new Map(LOCALE_CONFIG.map(lang => [lang.manifestLocale, lang.aliasLocaleIds || []]))
+
+function expandLocalePaths(localePaths) {
+  const next = { ...(localePaths || {}) }
+  for (const [locale, targetPath] of Object.entries(localePaths || {})) {
+    const aliases = localeAliasMap.get(locale) || []
+    for (const alias of aliases) {
+      if (!alias) continue
+      if (!(alias in next) && targetPath) {
+        next[alias] = targetPath
+      }
+    }
+  }
+  return next
+}
+
 const TAXONOMY_TYPES = ['categories', 'series', 'archive']
 
-const taxonomyGroups = Object.fromEntries(
-  TAXONOMY_TYPES.map(type => [type, { groups: new Set(), slugIndex: new Map(), postIndex: new Map() }])
-)
-
-const tagGroups = new Map()
-
-const tagAlias = await loadTagAlias()
-
-function canonicalTag(tag) {
-  if (!tag) return ''
-  const direct = tagAlias[tag]
-  if (direct) return slug(direct)
-  const lowered = tag.toLowerCase?.()
-  if (lowered && tagAlias[lowered]) return slug(tagAlias[lowered])
-  return slug(tag)
+function createInitialTaxonomyGroups() {
+  return Object.fromEntries(
+    TAXONOMY_TYPES.map(type => [type, { groups: new Set(), slugIndex: new Map(), postIndex: new Map() }])
+  )
 }
 
 await syncLocaleContent()
@@ -124,10 +175,18 @@ for (const lang of LOCALE_CONFIG) {
   const posts = await collectPosts(lang)
   await fs.writeFile(lang.outMeta, JSON.stringify(posts.meta, null, 2))
 
-  await writeCollections(lang, posts.meta)
-  await genRSS(lang, posts.list)
-  await genSitemap(lang, posts.list)
-  collectI18nPairs(posts.list, lang)
+    await writeCollections(lang, posts.meta)
+    await genRSS(lang, posts.list)
+    await genSitemap(lang, posts.list)
+    collectI18nPairs(posts.list, lang)
+  }
+
+  flushTaxonomyGroups()
+  flushTagGroups()
+  await writeI18nMap()
+  await writeNavManifests()
+
+  console.log('✔ pagegen 完成')
 }
 
 flushTaxonomyGroups()
@@ -135,7 +194,12 @@ flushTagGroups()
 await writeI18nMap()
 await writeNavManifests()
 
-console.log('✔ pagegen 完成')
+if (isMain(import.meta.url)) {
+  main().catch(err => {
+    console.error(err)
+    process.exit(1)
+  })
+}
 
 function toExcerpt(md) {
   const html = marked.parse((md || '').split('\n\n')[0] || '')
@@ -153,6 +217,15 @@ function slug(input) {
     .replace(/[^\p{Letter}\p{Number}]+/gu, '-')
     .replace(/(^-|-$)/g, '')
     .toLowerCase()
+}
+
+function canonicalTag(tag) {
+  if (!tag) return ''
+  const direct = tagAlias?.[tag]
+  if (direct) return slug(direct)
+  const lowered = tag.toLowerCase?.()
+  if (lowered && tagAlias?.[lowered]) return slug(tagAlias[lowered])
+  return slug(tag)
 }
 
 async function exists(target) {
@@ -271,11 +344,8 @@ function mdList(items, lang) {
 }
 
 async function writeCollections(lang, meta) {
-  const prefix = lang.genPrefix ? path.join(lang.genPrefix) : ''
-
   const write = async (subdir, name, title, items) => {
-    const targetRoot = lang.genPrefix ? path.join(DOCS, lang.genPrefix, '_generated') : GEN
-    const outDir = path.join(targetRoot, subdir, name)
+    const outDir = path.join(lang.generatedDir, subdir, name)
     await fs.mkdir(outDir, { recursive: true })
     const md = `---\ntitle: ${title}\n---\n\n${mdList(items, lang)}\n`
     await fs.writeFile(path.join(outDir, 'index.md'), md)
@@ -307,7 +377,7 @@ async function genRSS(lang, items) {
     `<?xml version="1.0" encoding="UTF-8"?>`,
     `<rss version="2.0"><channel>`,
     `<title>${escapeXml(lang.labels.rssTitle)}</title>`,
-    `<link>${siteOrigin}${lang.code === 'en' ? '/en/' : '/'}</link>`,
+    `<link>${siteOrigin}${lang.localeRoot}</link>`,
     `<description>${escapeXml(lang.labels.rssDesc)}</description>`
   ]
 
@@ -366,17 +436,16 @@ function collectI18nPairs(list, lang) {
   }
 }
 
-function registerI18nEntry(key, localeId, pathValue) {
-  if (!key || !localeId || !pathValue) return
+function registerI18nEntry(key, localeCode, pathValue) {
+  if (!key || !localeCode || !pathValue) return
   const entry = i18nPairs.get(key) || {}
-  entry[localeId] = pathValue
+  entry[localeCode] = pathValue
   i18nPairs.set(key, entry)
 }
 
 function taxonomyPath(type, slugValue, lang) {
   if (!slugValue) return ''
-  const prefix = lang.genPrefix ? `/${lang.genPrefix}` : ''
-  return `${prefix}/_generated/${type}/${slugValue}/`
+  return `${lang.generatedPathPrefix}/${type}/${slugValue}/`
 }
 
 function registerSingleTaxonomy(type, lang, slugValue, relative) {
@@ -411,9 +480,9 @@ function registerSingleTaxonomy(type, lang, slugValue, relative) {
 function mergeTaxonomyGroups(info, target, source) {
   if (target === source) return target
 
-  for (const [localeId, value] of source.entries) {
-    if (!target.entries.has(localeId)) target.entries.set(localeId, value)
-    info.slugIndex.set(`${localeId}|${value.slug}`, target)
+  for (const [localeCode, value] of source.entries) {
+    if (!target.entries.has(localeCode)) target.entries.set(localeCode, value)
+    info.slugIndex.set(`${localeCode}|${value.slug}`, target)
   }
 
   for (const [key, group] of info.postIndex.entries()) {
@@ -424,14 +493,14 @@ function mergeTaxonomyGroups(info, target, source) {
   return target
 }
 
-function registerTagGroup(canonicalId, { localeId, slug, path }) {
-  if (!canonicalId || !localeId || !slug || !path) return
+function registerTagGroup(canonicalId, { localeCode, slug, path }) {
+  if (!canonicalId || !localeCode || !slug || !path) return
   let group = tagGroups.get(canonicalId)
   if (!group) {
     group = { entries: new Map() }
     tagGroups.set(canonicalId, group)
   }
-  group.entries.set(localeId, { slug, path })
+  group.entries.set(localeCode, { slug, path })
 }
 
 function flushTaxonomyGroups() {
