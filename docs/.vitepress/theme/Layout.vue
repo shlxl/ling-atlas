@@ -4,17 +4,18 @@ import { useRouter } from 'vitepress'
 import DefaultTheme from 'vitepress/dist/client/theme-default/without-fonts'
 import SearchBox from './components/SearchBox.vue'
 import LocaleToggleButton from './components/LocaleToggleButton.vue'
-import { initTelemetry, resolveAsset, setupTelemetryRouterHook } from './telemetry'
+import { initTelemetry, setupTelemetryRouterHook } from './telemetry'
 import { useRegisterSW } from 'virtual:pwa-register/vue'
 import { useI18nRouting } from './i18n'
+import { DEFAULT_LOCALE, LocaleCode } from './locales'
 
 const router = useRouter()
 const offlineReady = ref(false)
 const needRefresh = ref(false)
 const chatOpen = ref(false)
-const activeLocale = ref<'root' | 'en'>('root')
+const activeLocale = ref<LocaleCode>(DEFAULT_LOCALE)
 
-const { ensureLocaleMap, detectLocaleFromPath } = useI18nRouting()
+const { detectLocaleFromPath } = useI18nRouting()
 
 let updateServiceWorker: (reloadPage?: boolean) => Promise<void>
 
@@ -39,10 +40,8 @@ const bannerMessage = computed(() => {
 
 const ChatWidget = defineAsyncComponent(() => import('./components/ChatWidget.vue'))
 
-const chatLabels: Record<string, string> = { root: '知识问答', en: 'Knowledge Chat' }
-const chatButtonLabel = computed(() => chatLabels[activeLocale.value] || chatLabels.en)
-
-const enPathPrefix = resolveAsset('/en/').pathname
+const chatLabels: Record<LocaleCode, string> = { zh: '知识问答', en: 'Knowledge Chat' }
+const chatButtonLabel = computed(() => chatLabels[activeLocale.value] || chatLabels[DEFAULT_LOCALE])
 
 function normalizePath(path: string) {
   if (!path) return '/'
@@ -73,7 +72,7 @@ onMounted(() => {
 
 function updateLocale(path: string) {
   const normalized = normalizePath(path)
-  activeLocale.value = normalized.startsWith(enPathPrefix) ? 'en' : 'root'
+  activeLocale.value = detectLocaleFromPath(normalized) as LocaleCode
 }
 
 function handleRouteChange(path: string) {

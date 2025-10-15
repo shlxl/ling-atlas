@@ -48,7 +48,7 @@ export function normalizeRoutePath(path: string) {
 
 export function getFallbackPath(locale: LocaleId) {
   if (!fallbackCache[locale]) {
-    const basePath = locale === 'en' ? '/en/' : '/'
+    const basePath = routePrefix(locale)
     fallbackCache[locale] = normalizeRoutePath(resolveAsset(basePath).pathname)
   }
   return fallbackCache[locale]!

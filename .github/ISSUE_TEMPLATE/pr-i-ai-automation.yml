@@ -20,7 +20,7 @@ body:
 
         ### 1) 自动嵌入（构建/提交阶段）
         - 新增：`scripts/embed-build.mjs`
-        - 扫描：`docs/content/**/index.md`（跳过 `draft: true`）
+        - 扫描：`docs/content.zh/**/index.md`（跳过 `draft: true`）
         - 读取：`title` + `excerpt/首段` → `texts[]`
         - **方案A（优先）**：Node 本地编码器（如 `@xenova/transformers` / `onnxruntime-node`）产出向量
         - **方案B（占位）**：仅导出文本；前端首次使用批量编码并缓存（已具备）
