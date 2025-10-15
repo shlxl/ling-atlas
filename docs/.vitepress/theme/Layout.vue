@@ -72,7 +72,7 @@ onMounted(() => {
   updateLocale(router.route.path)
   void ensureLocaleMap()
   router.onAfterRouteChanged?.((to: string) => {
-    updateLocale(to)
+    handleRouteChange(to)
   })
 })
 
@@ -88,10 +88,20 @@ function switchLocale() {
   const target = list[targetIndex]
   const resolved = resolveLocaleLink(router.route.path, target, activeLocale.value)
   if (typeof window !== 'undefined') {
-    window.location.href = resolved
+    window.location.replace(target)
   } else {
     router.go(resolved)
   }
+}
+
+function switchLocale() {
+  const list = availableLocales.value
+  if (!list.length) return
+  const currentIndex = Math.max(list.indexOf(activeLocale.value), 0)
+  const targetIndex = (currentIndex + 1) % list.length
+  const target = list[targetIndex]
+  const resolved = resolveLocaleLink(router.route.path, target, activeLocale.value)
+  redirectTo(resolved)
 }
 </script>
 
