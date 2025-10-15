@@ -95,7 +95,7 @@ const LOCALE_CONFIG = [
 const i18nPairs = new Map()
 const navManifest = new Map()
 
-function getLocaleKeys(lang) {
+function manifestLocaleKeys(lang) {
   const keys = new Set([lang.manifestLocale, ...(lang.aliasLocaleIds || [])])
   return Array.from(keys)
 }
@@ -224,6 +224,22 @@ function expandLocalePaths(localePaths) {
 function getLocaleKeys(lang) {
   const keys = new Set([lang.manifestLocale, ...(lang.aliasLocaleIds || [])])
   return Array.from(keys)
+}
+
+const localeAliasMap = new Map(LOCALE_CONFIG.map(lang => [lang.manifestLocale, lang.aliasLocaleIds || []]))
+
+function expandLocalePaths(localePaths) {
+  const next = { ...(localePaths || {}) }
+  for (const [locale, targetPath] of Object.entries(localePaths || {})) {
+    const aliases = localeAliasMap.get(locale) || []
+    for (const alias of aliases) {
+      if (!alias) continue
+      if (!(alias in next) && targetPath) {
+        next[alias] = targetPath
+      }
+    }
+  }
+  return next
 }
 
 await syncLocaleContent()
@@ -471,7 +487,7 @@ function collectI18nPairs(list, lang) {
   for (const post of list) {
     if (!post.relative) continue
 
-    for (const localeKey of getLocaleKeys(lang)) {
+    for (const localeKey of manifestLocaleKeys(lang)) {
       registerI18nEntry(post.relative, localeKey, post.path)
     }
 
