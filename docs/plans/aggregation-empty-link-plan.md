@@ -16,9 +16,7 @@
 5. 将内容生产流程从“目录结构镜像”中彻底解耦，允许某种语言独占聚合页或分类，并在站点入口与 README 中给出新的多语协作规范。
 
 ## 拆解
-
 ### 语言解耦方案
-
 - `scripts/pagegen.mjs`：为每种语言独立生成导航 manifest，将聚合类型、slug 与 URL 显式写入，并仅在目标语言实际存在聚合内容时输出条目。
 - `docs/.vitepress/config.ts`：读取对应语言的 manifest，基于真实存在的聚合入口裁剪导航结构，同时保持对旧 manifest 缺失场景的兼容。
 - `docs/.vitepress/theme/composables/localeMap.ts`：解析跨语言映射时优先查询 manifest，若找不到目标聚合页则回退到该语言的聚合索引或首页。
@@ -42,7 +40,6 @@
 - 该逻辑也可以复用在搜索结果或站内跳转中：当发现 URL 指向的聚合页在当前语言缺失时，提示“暂未翻译，切换到 XX 语言”。（可作为后续增强。）
 
 ### 4. 验证与守护
-
 - 新增一个脚本（或在 `scripts/check-links.mjs` 中扩展）来验证 manifest 中的 URL 均可读取文件，CI 失败时给出详细列表，并在 README 调整后同步更新守护脚本的“多语结构”提示。
 - 本地手动跑一次 `codex run gen` + `npm run build`，确认 manifest 生效且构建通过。
 - 编写回归测试：覆盖仅存在英文内容时的导航裁剪、分类只存在于单语时的 Locale 回退，以及 manifest 缺失场景下的兜底逻辑。
