@@ -1,4 +1,4 @@
-Content-Security-Policy: default-src 'self'; script-src 'self' https://esm.sh https://cdn.jsdelivr.net 'wasm-unsafe-eval' 'sha256-DQUgNM9X0iH2019NkUxeBvnBoEoRKkHBc/I0iLqPNPA=' 'sha256-La1r0VSk0Po4KFI0duEKhmPu+u0I416JW3oONqtdf4M=' 'sha256-Vhm87vLvzhXtXzbhKiA5gHi0/Q6ShfMPKOid/6qlTGQ='; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' https:; connect-src 'self' https:; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; frame-ancestors 'none'
+Content-Security-Policy: default-src 'self'; script-src 'self' https://esm.sh https://cdn.jsdelivr.net 'wasm-unsafe-eval' 'sha256-9PEoVULlP3aq73wi2gQTX9i3aE8xqoT0h33TDBqWSII=' 'sha256-DQUgNM9X0iH2019NkUxeBvnBoEoRKkHBc/I0iLqPNPA=' 'sha256-La1r0VSk0Po4KFI0duEKhmPu+u0I416JW3oONqtdf4M='; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' https:; connect-src 'self' https:; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; frame-ancestors 'none'
 Referrer-Policy: no-referrer
 Permissions-Policy: geolocation=(), camera=(), microphone=()
 X-Content-Type-Options: nosniff
