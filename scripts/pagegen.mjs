@@ -3,7 +3,27 @@ import path from 'node:path'
 import { globby } from 'globby'
 import matter from 'gray-matter'
 import { marked } from 'marked'
-import { fileURLToPath } from 'url'
+import { fileURLToPath, pathToFileURL } from 'url'
+import {
+  DEFAULT_LOCALE,
+  DOCS_DIR as DOCS,
+  GENERATED_ROOT as GEN,
+  PUBLIC_ROOT as PUB,
+  LANG_CONFIG,
+  LANGUAGES
+} from './pagegen.locales.mjs'
+
+export {
+  DEFAULT_LOCALE,
+  LOCALE_REGISTRY,
+  LANG_CONFIG,
+  LANGUAGES,
+  ROOT_DIR,
+  DOCS_DIR,
+  GENERATED_ROOT,
+  PUBLIC_ROOT,
+  getLocaleConfig
+} from './pagegen.locales.mjs'
 
 await (async () => {
   const __dirname = path.dirname(fileURLToPath(import.meta.url))

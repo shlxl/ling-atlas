@@ -2,6 +2,15 @@ import { defineConfig, type HeadConfig } from 'vitepress'
 import cssnano from 'cssnano'
 import fs from 'node:fs'
 import { VitePWA } from 'vite-plugin-pwa'
+import {
+  DEFAULT_LOCALE,
+  LocaleCode,
+  VitepressLocaleKey,
+  manifestFileName,
+  isLocaleCode,
+  isVitepressLocaleKey,
+  vitepressKeyFromLocale
+} from './theme/locales'
 
 function loadCspTemplate() {
   try {
@@ -159,7 +168,7 @@ function navFromMeta(meta: any, manifest: NavManifest | null, locale: 'zh' | 'en
 
 function legacyNavFromMeta(meta: any, locale: 'zh' | 'en') {
   const t = i18nMap.nav[locale]
-  const prefix = locale === 'en' ? '/en' : ''
+  const prefix = locale === DEFAULT_LOCALE ? '' : `/${locale}`
   const years = Object.keys(meta.byYear || {}).sort().reverse()
   const firstTag = Object.keys(meta.byTag || {})[0] || 'all'
   return [
