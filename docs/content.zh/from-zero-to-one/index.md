@@ -34,7 +34,7 @@ excerpt: 记录 Ling Atlas 从脚手架到全自动部署的首篇实践，总�
 
 - 定义 `frontmatter.schema.json`，让每篇文章在提交前都要通过 `codex run precheck` 的 Ajv 校验。
 - 列出常用标签别名（如 GHA → github-actions），借助 `tags:normalize` 自动规整中文/英文混写问题。
-- 保留 `docs/content/hello-world` 作为示例，随后在此文档中记录真正的首篇项目故事。
+- 保留 `docs/content.zh/hello-world` 作为示例，随后在此文档中记录真正的首篇项目故事。
 
 ### 3. 打通构建与部署链路
 

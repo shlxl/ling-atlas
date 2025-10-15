@@ -19,6 +19,7 @@ docs/public/.well-known/
 # generated pages
 docs/_generated/
 docs/en/content/
+docs/content/
 
 # OS
 .DS_Store
