@@ -1,0 +1,24 @@
+{
+  "locale": "zh",
+  "categories": {
+    "工程笔记": "/_generated/categories/工程笔记/",
+    "管理与协作": "/_generated/categories/管理与协作/"
+  },
+  "series": {
+    "ling-atlas-kickoff": "/_generated/series/ling-atlas-kickoff/",
+    "kick-off": "/_generated/series/kick-off/"
+  },
+  "tags": {
+    "github-actions": "/_generated/tags/github-actions/",
+    "automation": "/_generated/tags/automation/",
+    "knowledge-base": "/_generated/tags/knowledge-base/",
+    "vector-search": "/_generated/tags/vector-search/",
+    "bm25": "/_generated/tags/bm25/",
+    "内容治理": "/_generated/tags/内容治理/",
+    "分类体系": "/_generated/tags/分类体系/",
+    "规范": "/_generated/tags/规范/"
+  },
+  "archive": {
+    "2025": "/_generated/archive/2025/"
+  }
+}
