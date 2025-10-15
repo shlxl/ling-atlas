@@ -79,3 +79,42 @@
   font-weight: 600;
   margin-bottom: 0.25rem;
 }
+
+.la-locale-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--vp-c-divider);
+  background: var(--vp-c-bg);
+  color: var(--vp-c-text-1);
+  font-size: 0.85rem;
+  font-weight: 600;
+  line-height: 1;
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+.la-locale-toggle:hover,
+.la-locale-toggle:focus-visible {
+  background: var(--vp-c-bg-soft);
+  border-color: var(--vp-c-divider-strong, var(--vp-c-divider));
+  outline: 2px solid var(--vp-c-brand-1);
+  outline-offset: 2px;
+}
+
+.dark .la-locale-toggle {
+  border-color: var(--vp-c-divider);
+}
+
+.VPNavBar .la-locale-toggle {
+  height: 32px;
+}
+
+@media (max-width: 960px) {
+  .VPNavBar .la-locale-toggle {
+    height: 36px;
+    flex-shrink: 0;
+  }
+}
