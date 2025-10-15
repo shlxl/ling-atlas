@@ -4,14 +4,18 @@ import { useRouter } from 'vitepress'
 import DefaultTheme from 'vitepress/dist/client/theme-default/without-fonts'
 import SearchBox from './components/SearchBox.vue'
 import LocaleToggleButton from './components/LocaleToggleButton.vue'
+import VPNavScreenTranslations from './components/VPNavScreenTranslations.vue'
 import { initTelemetry, resolveAsset, setupTelemetryRouterHook } from './telemetry'
 import { useRegisterSW } from 'virtual:pwa-register/vue'
+import { useI18nRouting } from './i18n'
 
 const router = useRouter()
 const offlineReady = ref(false)
 const needRefresh = ref(false)
 const chatOpen = ref(false)
 const activeLocale = ref<'root' | 'en'>('root')
+
+const { ensureLocaleMap, detectLocaleFromPath } = useI18nRouting()
 
 let updateServiceWorker: (reloadPage?: boolean) => Promise<void>
 
@@ -85,6 +89,9 @@ function handleRouteChange(path: string) {
         <LocaleToggleButton />
         <SearchBox />
       </div>
+    </template>
+    <template #nav-screen-content-after>
+      <VPNavScreenTranslations />
     </template>
     <template #layout-bottom>
       <transition name="pwa-update-fade">
