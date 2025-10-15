@@ -50,7 +50,6 @@ const normalizedBase = baseFromEnv.endsWith('/') ? baseFromEnv : `${baseFromEnv}
 const escapedBase = escapeRegex(normalizedBase)
 
 const metaZh = loadMeta('docs/_generated/meta.json')
-const metaEn = loadMeta('docs/_generated/meta.en.json')
 const i18nMap = loadI18nTranslations()
 
 const cspTemplate = loadCspTemplate()
@@ -106,6 +105,9 @@ export default defineConfig({
   ],
   themeConfig: {
     socialLinks: [{ icon: 'github', link: 'https://github.com/shlxl/ling-atlas' }],
+    // Disable the built-in locale dropdown to avoid linking to untranslated
+    // aggregate pages (404). The inline LocaleToggleButton handles switching
+    // with fallbacks to each locale's homepage instead.
     localeLinks: false
   },
   locales: {
@@ -119,18 +121,6 @@ export default defineConfig({
         sidebar: 'auto',
         lightModeSwitchTitle: '切换到浅色模式',
         darkModeSwitchTitle: '切换到深色模式'
-      }
-    },
-    en: {
-      label: 'English',
-      lang: 'en-US',
-      title: 'Ling Atlas · Knowledge Atlas',
-      description: 'A modern, evolvable, searchable knowledge base.',
-      themeConfig: {
-        nav: navFromMeta(metaEn, 'en'),
-        sidebar: 'auto',
-        lightModeSwitchTitle: 'Switch to light mode',
-        darkModeSwitchTitle: 'Switch to dark mode'
       }
     }
   },
