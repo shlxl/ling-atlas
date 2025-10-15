@@ -9,7 +9,7 @@ const GENERATED_DIR = path.join(ROOT, 'docs/_generated')
 const DIST_DIR = path.join(ROOT, 'docs/.vitepress/dist')
 let distReady = false
 const INTERNAL_PREFIXES = ['/', './', '../']
-const NAV_MANIFEST_FILES = [
+const DEFAULT_MANIFESTS = [
   { locale: 'root', file: path.join(GENERATED_DIR, 'nav.manifest.root.json') },
   { locale: 'en', file: path.join(GENERATED_DIR, 'nav.manifest.en.json') }
 ]
@@ -108,18 +108,15 @@ async function checkFile(filePath) {
 
 async function main() {
   distReady = await fileExists(path.join(DIST_DIR, 'index.html'))
-  const manifestInfos = await collectManifestInfos()
-  const excludeLocales = localeConfigs
-    .filter(cfg => !cfg.isDefault)
-    .map(cfg => `!docs/${cfg.code}/_generated/**/*`)
-  const files = await globby(['docs/**/*.md', ...excludeLocales], { cwd: ROOT })
+  const files = await globby(['docs/**/*.md', '!docs/en/_generated/**/*'], { cwd: ROOT })
   const errors = []
   for (const file of files) {
     const filePath = path.join(ROOT, file)
     const fileErrors = await checkFile(filePath)
     errors.push(...fileErrors)
   }
-  const manifestErrors = await validateNavManifests()
+  const manifestInfos = await collectManifestInfos()
+  const manifestErrors = await validateNavManifests(manifestInfos)
   errors.push(...manifestErrors)
   if (errors.length) {
     console.error('Link check failed:')
@@ -134,10 +131,10 @@ main().catch(err => {
   process.exit(1)
 })
 
-async function validateNavManifests() {
+async function validateNavManifests(manifestInfos) {
   const allowedTypes = new Set(['categories', 'series', 'tags', 'archive'])
   const errors = []
-  for (const manifestInfo of NAV_MANIFEST_FILES) {
+  for (const manifestInfo of manifestInfos) {
     const payload = await readManifest(manifestInfo.file)
     if (!payload) continue
     for (const [type, entries] of Object.entries(payload)) {
@@ -161,4 +158,34 @@ async function readManifest(filePath) {
   } catch {
     return null
   }
+}
+
+async function collectManifestInfos() {
+  const patterns = [
+    'docs/_generated/nav.manifest.*.json',
+    'docs/public/nav.manifest.*.json'
+  ]
+  const matches = await globby(patterns, { cwd: ROOT, absolute: true })
+  const byLocale = new Map()
+
+  for (const absolutePath of matches) {
+    const locale = extractLocaleFromManifest(absolutePath)
+    if (!byLocale.has(locale)) {
+      byLocale.set(locale, { locale, file: absolutePath })
+    }
+  }
+
+  for (const manifest of DEFAULT_MANIFESTS) {
+    if (!byLocale.has(manifest.locale)) {
+      byLocale.set(manifest.locale, manifest)
+    }
+  }
+
+  return Array.from(byLocale.values())
+}
+
+function extractLocaleFromManifest(filePath) {
+  const match = /nav\.manifest\.([^.]+)\.json$/i.exec(filePath)
+  if (match && match[1]) return match[1]
+  return 'root'
 }
