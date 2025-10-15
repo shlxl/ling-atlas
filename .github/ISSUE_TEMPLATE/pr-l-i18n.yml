@@ -8,7 +8,7 @@ body:
     attributes:
       value: |
         ## 🎯 目标与约束
-        - **中文保持原结构**；英文内容放 `docs/content.en/**`，对应路由前缀 **`/en/`**。
+        - **中文保持默认目录 `docs/content.zh/**`**；英文内容放 `docs/content.en/**`，对应路由前缀 **`/en/`**。
         - **纯静态实现**；不改变中文现有 URL。
         - Pagefind 为 zh / en **分别建索引**；语义检索沿用 **同一模型 gte-small**，但优先返回同语结果。
         - 站点导航提供**语言切换**，可在同 slug 间互跳；若缺失对应英文，退回英文首页。
@@ -20,7 +20,7 @@ body:
 
         ### 1) 目录与生成
         - 扩展 `pagegen.mjs`：
-          - 同时遍历 `docs/content/**` 与 `docs/content.en/**`
+          - 同时遍历 `docs/content.zh/**` 与 `docs/content.en/**`
           - 产出 `/en/` 的聚合页（分类/归档/标签页）
           - 生成多语 sitemap：
             - `docs/public/sitemap.xml`（zh）
@@ -68,10 +68,10 @@ body:
     id: structure
     attributes:
       label: 🧾 目录与路由设计
-      description: 粘贴 `content` / `content.en` 的示例层级与 slug 对应关系；说明聚合页与 sitemap 产出位置
+      description: 粘贴 `content.zh` / `content.en` 的示例层级与 slug 对应关系；说明聚合页与 sitemap 产出位置
       placeholder: |
         docs/
-          content/{cat}/{post}/index.md
+          content.zh/{cat}/{post}/index.md
           content.en/{cat-en}/{post-en}/index.md
         /en/{cat-en}/{post-en}/
 
