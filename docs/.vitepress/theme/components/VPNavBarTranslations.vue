@@ -6,7 +6,8 @@ import VPMenuLink from 'vitepress/dist/client/theme-default/components/VPMenuLin
 import { useI18nRouting } from '../i18nRouting'
 
 const router = useRouter()
-const { site, theme } = useData()
+const data = useData()
+const theme = data.theme
 const { availableLocales, resolveLocaleLink, detectLocaleFromPath, ensureLocaleMap } = useI18nRouting()
 
 onMounted(() => {
@@ -15,12 +16,12 @@ onMounted(() => {
 
 const currentLocale = computed(() => detectLocaleFromPath(router.route.path))
 
-const currentLabel = computed(() => site.value?.locales?.[currentLocale.value]?.label || '')
+const currentLabel = computed(() => data.site.value?.locales?.[currentLocale.value]?.label || '')
 
 const localeLinks = computed(() => {
   const list = availableLocales.value.filter(id => id !== currentLocale.value)
   return list.map(id => ({
-    text: site.value?.locales?.[id]?.label || id,
+    text: data.site.value?.locales?.[id]?.label || id,
     link: resolveLocaleLink(router.route.path, id, currentLocale.value)
   }))
 })
@@ -44,21 +45,6 @@ const localeLinks = computed(() => {
 
 <style scoped>
 .VPNavBarTranslations {
-  display: none;
-}
-
-@media (min-width: 1280px) {
-  .VPNavBarTranslations {
-    display: flex;
-    align-items: center;
-  }
-}
-
-.title {
-  padding: 0 24px 0 12px;
-  line-height: 32px;
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--vp-c-text-1);
+  display: none !important;
 }
 </style>

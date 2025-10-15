@@ -8,7 +8,7 @@ import { useRegisterSW } from 'virtual:pwa-register/vue'
 import { useI18nRouting } from './i18nRouting'
 
 const router = useRouter()
-const { site } = useData()
+const data = useData()
 const offlineReady = ref(false)
 const needRefresh = ref(false)
 const chatOpen = ref(false)
@@ -50,7 +50,7 @@ const nextLocaleId = computed(() => {
 const languageButtonLabel = computed(() => {
   const target = nextLocaleId.value
   if (!target) return ''
-  return site.value?.locales?.[target]?.label || target
+  return data.site.value?.locales?.[target]?.label || target
 })
 
 const chatLabels: Record<string, string> = { root: '知识问答', en: 'Knowledge Chat' }
@@ -80,26 +80,21 @@ function updateLocale(path: string) {
   activeLocale.value = detectLocaleFromPath(path)
 }
 
-function switchLocale() {
-  const list = availableLocales.value
-  if (!list.length) return
-  const currentIndex = Math.max(list.indexOf(activeLocale.value), 0)
-  const targetIndex = (currentIndex + 1) % list.length
-  const target = list[targetIndex]
-  const resolved = resolveLocaleLink(router.route.path, target, activeLocale.value)
+function redirectTo(path: string) {
   if (typeof window !== 'undefined') {
-    window.location.replace(target)
+    window.location.assign(path)
   } else {
-    router.go(resolved)
+    router.go(path)
   }
 }
 
-function switchLocale() {
-  const list = availableLocales.value
-  if (!list.length) return
-  const currentIndex = Math.max(list.indexOf(activeLocale.value), 0)
-  const targetIndex = (currentIndex + 1) % list.length
-  const target = list[targetIndex]
+function handleRouteChange(path: string) {
+  updateLocale(path)
+}
+
+function handleLocaleSwitch() {
+  const target = nextLocaleId.value
+  if (!target) return
   const resolved = resolveLocaleLink(router.route.path, target, activeLocale.value)
   redirectTo(resolved)
 }
@@ -198,9 +193,13 @@ function switchLocale() {
   border-radius: 20px;
   background: var(--vp-c-bg-soft);
   color: var(--vp-c-text-1);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   padding: 0.35rem 0.8rem;
   font-size: 0.85rem;
   cursor: pointer;
+  white-space: nowrap;
 }
 .la-lang-btn:hover {
   background: var(--vp-c-bg);
