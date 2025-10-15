@@ -155,8 +155,14 @@ async function exists(target) {
 
 async function syncLocalizedContent() {
   for (const lang of LANGUAGES) {
-    if (lang.isDefault) continue
     if (!(await exists(lang.contentDir))) continue
+    if (lang.isDefault) {
+      const target = path.join(DOCS, 'content')
+      if (target === lang.contentDir) continue
+      await fs.rm(target, { recursive: true, force: true })
+      await fs.cp(lang.contentDir, target, { recursive: true })
+      continue
+    }
     const localeRoot = path.join(DOCS, lang.code)
     const target = path.join(localeRoot, 'content')
     await fs.mkdir(localeRoot, { recursive: true })
