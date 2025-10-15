@@ -6,9 +6,12 @@ import {
   LocaleCode,
   LOCALE_CODES,
   NON_DEFAULT_LOCALES,
+  VitepressLocaleKey,
   isLocaleCode,
+  isVitepressLocaleKey,
   manifestFileName,
-  routePrefix
+  routePrefix,
+  vitepressKeyFromLocale
 } from '../locales'
 
 export type LocaleId = LocaleCode
@@ -19,6 +22,7 @@ type AggregateType = 'categories' | 'series' | 'tags' | 'archive'
 
 type NavManifest = {
   locale: LocaleId
+  vitepressLocaleKey: VitepressLocaleKey
   categories: Record<string, string>
   series: Record<string, string>
   tags: Record<string, string>
@@ -210,8 +214,11 @@ async function loadNavManifests() {
 function normalizeManifest(payload: Partial<NavManifest> | null | undefined, fallbackLocale: LocaleId): NavManifest {
   const rawLocale = typeof payload?.locale === 'string' ? payload.locale : null
   const locale = rawLocale && isLocaleCode(rawLocale) ? (rawLocale as LocaleId) : fallbackLocale
+  const rawKey = typeof payload?.vitepressLocaleKey === 'string' ? payload.vitepressLocaleKey : null
+  const vitepressLocaleKey = rawKey && isVitepressLocaleKey(rawKey) ? rawKey : vitepressKeyFromLocale(locale)
   return {
     locale,
+    vitepressLocaleKey,
     categories: payload?.categories ?? {},
     series: payload?.series ?? {},
     tags: payload?.tags ?? {},
