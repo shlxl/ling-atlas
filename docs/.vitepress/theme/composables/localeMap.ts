@@ -16,11 +16,6 @@ let loadPromise: Promise<void> | null = null
 
 const fallbackCache: Partial<Record<LocaleId, string>> = {}
 
-function ensureLeadingSlash(path: string) {
-  if (!path) return '/'
-  return path.startsWith('/') ? path : `/${path}`
-}
-
 function ensureTrailingSlash(path: string) {
   if (!path) return '/'
   if (path.endsWith('/')) return path
@@ -32,23 +27,13 @@ export function normalizeRoutePath(path: string) {
   if (!path) return getFallbackPath('root')
   const [pathname] = path.split(/[?#]/)
   if (!pathname) return getFallbackPath('root')
-  const base = getFallbackPath('root')
-  const baseWithoutSlash = base.endsWith('/') ? base.slice(0, -1) : base
-  const normalizedPath = ensureTrailingSlash(ensureLeadingSlash(pathname))
-  if (base === '/' || normalizedPath.startsWith(base)) {
-    return ensureTrailingSlash(normalizedPath)
-  }
-  const trimmed = normalizedPath.startsWith('/') ? normalizedPath.slice(1) : normalizedPath
-  const prefixed = ensureLeadingSlash(`${baseWithoutSlash}/${trimmed}`)
-  return ensureTrailingSlash(prefixed)
+  return ensureTrailingSlash(pathname.startsWith('/') ? pathname : `/${pathname}`)
 }
 
 export function getFallbackPath(locale: LocaleId) {
   if (!fallbackCache[locale]) {
-    const basePath = locale === 'en' ? 'en/' : '/'
-    const resolved = resolveAsset(basePath).pathname
-    const normalized = ensureTrailingSlash(ensureLeadingSlash(resolved))
-    fallbackCache[locale] = normalized
+    const basePath = locale === 'en' ? '/en/' : '/'
+    fallbackCache[locale] = normalizeRoutePath(resolveAsset(basePath).pathname)
   }
   return fallbackCache[locale]!
 }
@@ -107,23 +92,6 @@ function resolveTargetPath(path: string, targetLocale: LocaleId) {
   return entry?.[targetLocale] ?? getFallbackPath(targetLocale)
 }
 
-export async function ensureLocaleMap() {
-  if (typeof window === 'undefined') return
-  await loadLocaleMap()
-}
-
-export function useI18nRouting() {
-  return {
-    ensureLocaleMap,
-    detectLocaleFromPath
-  }
-}
-
-declare global {
-  // eslint-disable-next-line no-var
-  var useI18nRouting: typeof useI18nRouting | undefined
-}
-
 export function useLocaleToggle() {
   const router = useRouter()
   const currentPath = computed(() => normalizeRoutePath(router.route.path))
@@ -132,7 +100,7 @@ export function useLocaleToggle() {
   const destination = ref(resolveTargetPath(currentPath.value, targetLocale.value))
 
   onMounted(() => {
-    void ensureLocaleMap()
+    void loadLocaleMap()
   })
 
   watchEffect(() => {
@@ -140,7 +108,9 @@ export function useLocaleToggle() {
   })
 
   async function goToTarget() {
-    await ensureLocaleMap()
+    if (typeof window !== 'undefined') {
+      await loadLocaleMap()
+    }
     const target = normalizeRoutePath(destination.value)
     if (!target || target === currentPath.value) return
     router.go(target)
@@ -152,8 +122,4 @@ export function useLocaleToggle() {
     destination,
     goToTarget
   }
-}
-
-if (typeof globalThis !== 'undefined' && !globalThis.useI18nRouting) {
-  globalThis.useI18nRouting = useI18nRouting
 }
