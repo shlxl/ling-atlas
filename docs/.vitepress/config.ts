@@ -104,7 +104,11 @@ export default defineConfig({
     ['meta', { name: 'referrer', content: 'no-referrer' }]
   ],
   themeConfig: {
-    socialLinks: [{ icon: 'github', link: 'https://github.com/shlxl/ling-atlas' }]
+    socialLinks: [{ icon: 'github', link: 'https://github.com/shlxl/ling-atlas' }],
+    // Disable the built-in locale dropdown to avoid linking to untranslated
+    // aggregate pages (404). The inline LocaleToggleButton handles switching
+    // with fallbacks to each locale's homepage instead.
+    localeLinks: false
   },
   locales: {
     root: {
