@@ -3,18 +3,14 @@ import { computed, defineAsyncComponent, onMounted, ref } from 'vue'
 import { useRouter } from 'vitepress'
 import DefaultTheme from 'vitepress/dist/client/theme-default/without-fonts'
 import SearchBox from './components/SearchBox.vue'
-import LocaleToggleButton from './components/LocaleToggleButton.vue'
 import { initTelemetry, setupTelemetryRouterHook } from './telemetry'
 import { useRegisterSW } from 'virtual:pwa-register/vue'
-import { useI18nRouting } from './i18nRouting'
 
 const router = useRouter()
 const offlineReady = ref(false)
 const needRefresh = ref(false)
 const chatOpen = ref(false)
-const activeLocale = ref('root')
-
-const { ensureLocaleMap, detectLocaleFromPath } = useI18nRouting()
+const activeLocale = ref<'root' | 'en'>('root')
 
 let updateServiceWorker: (reloadPage?: boolean) => Promise<void>
 
@@ -56,14 +52,17 @@ onMounted(() => {
   void initTelemetry()
   setupTelemetryRouterHook(router)
   updateLocale(router.route.path)
-  void ensureLocaleMap()
   router.onAfterRouteChanged?.((to: string) => {
     handleRouteChange(to)
   })
 })
 
 function updateLocale(path: string) {
-  activeLocale.value = detectLocaleFromPath(path)
+  if (!path) {
+    activeLocale.value = 'root'
+    return
+  }
+  activeLocale.value = path.startsWith('/en/') ? 'en' : 'root'
 }
 
 function handleRouteChange(path: string) {
@@ -76,7 +75,6 @@ function handleRouteChange(path: string) {
     <template #nav-bar-content-after>
       <div class="la-search-wrapper">
         <SearchBox />
-        <LocaleToggleButton />
       </div>
     </template>
     <template #layout-bottom>
