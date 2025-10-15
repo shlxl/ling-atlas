@@ -5,14 +5,11 @@ import { globby } from 'globby'
 const ROOT = process.cwd()
 const DOCS_DIR = path.join(ROOT, 'docs')
 const GENERATED_DIR = path.join(ROOT, 'docs/_generated')
-const EN_GENERATED_DIR = path.join(ROOT, 'docs/en/_generated')
 const DIST_DIR = path.join(ROOT, 'docs/.vitepress/dist')
 let distReady = false
 const INTERNAL_PREFIXES = ['/', './', '../']
-const NAV_MANIFEST_FILES = [
-  { locale: 'root', file: path.join(GENERATED_DIR, 'nav.manifest.root.json') },
-  { locale: 'en', file: path.join(GENERATED_DIR, 'nav.manifest.en.json') }
-]
+const DEFAULT_LOCALE = 'zh'
+let localeConfigs = []
 
 function isInternalLink(url) {
   return INTERNAL_PREFIXES.some(prefix => url.startsWith(prefix)) && !url.startsWith('http')
@@ -33,9 +30,13 @@ function normalizeInternal(url) {
 }
 
 function stripLocalePrefix(url) {
-  if (url.startsWith('/en/')) return { relative: url.slice(4), locale: 'en' }
-  if (url.startsWith('/')) return { relative: url.slice(1), locale: 'zh' }
-  return { relative: url.replace(/^\/+/, ''), locale: 'zh' }
+  for (const config of localeConfigs) {
+    if (config.isDefault) continue
+    const prefix = `${config.routePrefix}/`
+    if (url.startsWith(prefix)) return { relative: url.slice(prefix.length), locale: config.code }
+  }
+  if (url.startsWith('/')) return { relative: url.slice(1), locale: DEFAULT_LOCALE }
+  return { relative: url.replace(/^\/+/, ''), locale: DEFAULT_LOCALE }
 }
 
 async function validateInternalLink(url, filePath) {
@@ -51,9 +52,9 @@ async function validateInternalLink(url, filePath) {
   const clean = normalized.replace(/#.+$/, '')
   if (clean === '/' || clean === '') return true
   const { relative, locale } = stripLocalePrefix(clean)
+  const localeConfig = localeConfigs.find(cfg => cfg.code === locale)
 
-  const searchRoots = [DOCS_DIR, GENERATED_DIR]
-  if (locale === 'en') searchRoots.push(path.join(DOCS_DIR, 'en'), EN_GENERATED_DIR)
+  const searchRoots = [DOCS_DIR, GENERATED_DIR, ...(localeConfig?.extraSearchRoots ?? [])]
 
   for (const root of searchRoots) {
     const mdPath = path.join(root, relative)
@@ -87,14 +88,19 @@ async function checkFile(filePath) {
 
 async function main() {
   distReady = await fileExists(DIST_DIR)
-  const files = await globby(['docs/**/*.md', '!docs/en/_generated/**/*'], { cwd: ROOT })
+  const manifestInfos = await collectManifestInfos()
+  localeConfigs = buildLocaleConfigs(manifestInfos)
+  const excludeLocales = localeConfigs
+    .filter(cfg => !cfg.isDefault)
+    .map(cfg => `!docs/${cfg.code}/_generated/**/*`)
+  const files = await globby(['docs/**/*.md', ...excludeLocales], { cwd: ROOT })
   const errors = []
   for (const file of files) {
     const filePath = path.join(ROOT, file)
     const fileErrors = await checkFile(filePath)
     errors.push(...fileErrors)
   }
-  const manifestErrors = await validateNavManifests()
+  const manifestErrors = await validateNavManifests(manifestInfos)
   errors.push(...manifestErrors)
   if (errors.length) {
     console.error('Link check failed:')
@@ -109,10 +115,36 @@ main().catch(err => {
   process.exit(1)
 })
 
-async function validateNavManifests() {
+async function collectManifestInfos() {
+  const files = await globby('nav.manifest.*.json', { cwd: GENERATED_DIR })
+  const infos = files.map(file => ({
+    locale: file.replace(/^nav\.manifest\./, '').replace(/\.json$/, ''),
+    file: path.join(GENERATED_DIR, file)
+  }))
+  if (!infos.some(info => info.locale === DEFAULT_LOCALE)) {
+    infos.push({ locale: DEFAULT_LOCALE, file: path.join(GENERATED_DIR, `nav.manifest.${DEFAULT_LOCALE}.json`) })
+  }
+  return infos
+}
+
+function buildLocaleConfigs(manifestInfos) {
+  const locales = new Set([DEFAULT_LOCALE])
+  for (const info of manifestInfos) locales.add(info.locale)
+  return [...locales].map(locale => ({
+    code: locale,
+    isDefault: locale === DEFAULT_LOCALE,
+    routePrefix: locale === DEFAULT_LOCALE ? '' : `/${locale}`,
+    extraSearchRoots: locale === DEFAULT_LOCALE ? [] : [
+      path.join(DOCS_DIR, locale),
+      path.join(DOCS_DIR, locale, '_generated')
+    ]
+  }))
+}
+
+async function validateNavManifests(manifestInfos) {
   const allowedTypes = new Set(['categories', 'series', 'tags', 'archive'])
   const errors = []
-  for (const manifestInfo of NAV_MANIFEST_FILES) {
+  for (const manifestInfo of manifestInfos) {
     const payload = await readManifest(manifestInfo.file)
     if (!payload) continue
     for (const [type, entries] of Object.entries(payload)) {

@@ -1,11 +1,17 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useLocaleToggle } from '../composables/localeMap'
+import { LocaleCode } from '../locales'
 
-const { currentLocale, destination, goToTarget, hasMapping } = useLocaleToggle()
+const { targetLocale, destination, goToTarget, hasMapping } = useLocaleToggle()
 
-const buttonText = computed(() => (currentLocale.value === 'en' ? '中文' : 'EN'))
-const ariaLabel = computed(() => (currentLocale.value === 'en' ? '切换到中文内容' : 'Switch to English content'))
+const localeLabels: Record<LocaleCode, { button: string; aria: string }> = {
+  zh: { button: '中文', aria: '切换到中文内容' },
+  en: { button: 'EN', aria: 'Switch to English content' }
+}
+
+const buttonText = computed(() => localeLabels[targetLocale.value]?.button ?? 'EN')
+const ariaLabel = computed(() => localeLabels[targetLocale.value]?.aria ?? 'Switch language')
 
 function handleToggle() {
   if (!hasMapping.value) return
