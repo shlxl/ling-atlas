@@ -11,7 +11,6 @@ type Lookup = Record<string, LocaleEntry>
 
 const router = useRouter()
 const lookup = ref<Lookup>({})
-let loadPromise: Promise<void> | null = null
 
 const fallbackPaths: Record<LocaleId, string> = {
   root: normalizePath(resolveAsset('/').pathname),
@@ -44,47 +43,37 @@ function normalizePath(input: string) {
 
 async function loadLocaleMap() {
   if (typeof window === 'undefined') return
-  if (Object.keys(lookup.value).length) return
-  if (loadPromise) return loadPromise
-  loadPromise = (async () => {
-    try {
-      const url = resolveAsset('i18n-map.json').href
-      const response = await fetch(url, { cache: 'no-store' })
-      if (!response.ok) throw new Error(`Failed to load i18n map: ${response.status}`)
-      const raw = (await response.json()) as Record<string, RawLocaleEntry>
-      const next: Lookup = {}
+  try {
+    const url = resolveAsset('i18n-map.json').href
+    const response = await fetch(url, { cache: 'no-store' })
+    if (!response.ok) throw new Error(`Failed to load i18n map: ${response.status}`)
+    const raw = (await response.json()) as Record<string, RawLocaleEntry>
+    const next: Lookup = {}
 
-      for (const entry of Object.values(raw || {})) {
-        if (!entry || typeof entry !== 'object') continue
-        const normalizedEntry: LocaleEntry = {}
+    for (const entry of Object.values(raw || {})) {
+      if (!entry || typeof entry !== 'object') continue
+      const normalizedEntry: LocaleEntry = {}
 
-        for (const [localeId, rawPath] of Object.entries(entry)) {
-          if (typeof rawPath !== 'string' || !rawPath) continue
-          const normalizedLocale = localeId === 'en' ? 'en' : localeId === 'root' ? 'root' : null
-          if (!normalizedLocale) continue
-          const resolved = normalizePath(resolveAsset(rawPath).pathname)
-          normalizedEntry[normalizedLocale] = resolved
-        }
-
-        const values = Object.values(normalizedEntry)
-        if (!values.length) continue
-
-        for (const pathValue of values) {
-          if (!pathValue) continue
-          next[pathValue] = normalizedEntry
-        }
+      for (const [localeId, rawPath] of Object.entries(entry)) {
+        if (typeof rawPath !== 'string' || !rawPath) continue
+        const normalizedLocale = localeId === 'en' ? 'en' : localeId === 'root' ? 'root' : null
+        if (!normalizedLocale) continue
+        const resolved = normalizePath(resolveAsset(rawPath).pathname)
+        normalizedEntry[normalizedLocale] = resolved
       }
 
-      lookup.value = next
-    } catch (err) {
-      console.warn('[locale-toggle] failed to load locale map', err)
-    }
-  })()
+      const values = Object.values(normalizedEntry)
+      if (!values.length) continue
 
-  try {
-    await loadPromise
-  } finally {
-    loadPromise = null
+      for (const pathValue of values) {
+        if (!pathValue) continue
+        next[pathValue] = normalizedEntry
+      }
+    }
+
+    lookup.value = next
+  } catch (err) {
+    console.warn('[locale-toggle] failed to load locale map', err)
   }
 }
 
@@ -100,7 +89,7 @@ function toggleLocale() {
   if (!destination) return
   const normalizedDestination = normalizePath(destination)
   if (normalizedDestination === currentPath.value) return
-  router.go(normalizedDestination)
+  router.go(destination)
 }
 </script>
 
