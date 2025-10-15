@@ -2,6 +2,7 @@
 import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import { withBase, useRouter } from 'vitepress'
 import { resolveAsset } from '../telemetry'
+import { detectLocaleFromPath, normalizeRoutePath } from '../composables/localeMap'
 
 interface KnowledgeItem {
   url: string
@@ -89,7 +90,8 @@ function formatRefLink(item: KnowledgeItem) {
 
 function updateLocale(path: string) {
   if (!path) return
-  locale.value = path.startsWith('/en/') ? 'en' : 'zh'
+  const detected = detectLocaleFromPath(path) === 'en' ? 'en' : 'zh'
+  locale.value = detected
 }
 
 async function ensureKnowledge() {
@@ -179,7 +181,11 @@ async function fetchPagefindResults(query: string) {
       }
     })
   )
-  const same = items.filter(item => (locale.value === 'en' ? item.rawUrl?.startsWith('/en/') : !item.rawUrl?.startsWith('/en/')))
+  const same = items.filter(item => {
+    const normalized = normalizeRoutePath(item.rawUrl || item.url || '')
+    const detected = detectLocaleFromPath(normalized)
+    return locale.value === 'en' ? detected === 'en' : detected !== 'en'
+  })
   const final = (same.length ? same : items).map(({ rawUrl, ...rest }) => rest)
   return final
 }

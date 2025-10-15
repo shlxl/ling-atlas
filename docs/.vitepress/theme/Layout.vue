@@ -6,6 +6,7 @@ import SearchBox from './components/SearchBox.vue'
 import LocaleToggleButton from './components/LocaleToggleButton.vue'
 import { initTelemetry, resolveAsset, setupTelemetryRouterHook } from './telemetry'
 import { useRegisterSW } from 'virtual:pwa-register/vue'
+import { useI18nRouting } from './i18n'
 
 const router = useRouter()
 const offlineReady = ref(false)
@@ -87,6 +88,9 @@ function handleRouteChange(path: string) {
         <LocaleToggleButton />
         <SearchBox />
       </div>
+    </template>
+    <template #nav-screen-content-after>
+      <VPNavScreenTranslations />
     </template>
     <template #layout-bottom>
       <transition name="pwa-update-fade">
