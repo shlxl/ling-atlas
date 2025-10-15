@@ -22,6 +22,8 @@
   "K8s": "kubernetes",
   "CF Workers": "cloudflare-workers",
   "GHA": "github-actions",
+  "自动化": "automation",
+  "知识库": "knowledge-base",
   "前端性能": "lighthouse",
   "隐私扫描": "pii-scan",
   "零信任": "zero-trust",
