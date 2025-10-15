@@ -1,6 +1,7 @@
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import { globby } from 'globby'
+import { DEFAULT_LOCALE, LOCALE_REGISTRY } from './pagegen.locales.mjs'
 
 const ROOT = process.cwd()
 const DOCS_DIR = path.join(ROOT, 'docs')
