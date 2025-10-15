@@ -49,7 +49,7 @@ const nextLocaleId = computed(() => {
 const languageButtonLabel = computed(() => {
   const target = nextLocaleId.value
   if (!target) return ''
-  return site.value?.locales?.[target]?.label || target
+  return data.site.value?.locales?.[target]?.label || target
 })
 
 const chatLabels: Record<string, string> = { root: '知识问答', en: 'Knowledge Chat' }

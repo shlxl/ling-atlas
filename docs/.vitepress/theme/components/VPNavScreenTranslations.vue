@@ -5,7 +5,7 @@ import VPLink from 'vitepress/dist/client/theme-default/components/VPLink.vue'
 import { useI18nRouting } from '../i18nRouting'
 
 const router = useRouter()
-const { site } = useData()
+const data = useData()
 const { availableLocales, resolveLocaleLink, detectLocaleFromPath, ensureLocaleMap } = useI18nRouting()
 
 const isOpen = ref(false)
@@ -15,14 +15,14 @@ onMounted(() => {
 })
 
 const currentLocale = computed(() => detectLocaleFromPath(router.route.path))
-const currentLabel = computed(() => site.value?.locales?.[currentLocale.value]?.label || '')
+const currentLabel = computed(() => data.site.value?.locales?.[currentLocale.value]?.label || '')
 
 const localeLinks = computed(() =>
   availableLocales.value
     .filter(id => id !== currentLocale.value)
     .map(id => ({
       id,
-      text: site.value?.locales?.[id]?.label || id,
+      text: data.site.value?.locales?.[id]?.label || id,
       link: resolveLocaleLink(router.route.path, id, currentLocale.value)
     }))
 )
