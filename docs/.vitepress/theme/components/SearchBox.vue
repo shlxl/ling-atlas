@@ -32,8 +32,8 @@ const activeVariant = ref<'none' | 'lex' | 'rrf' | 'rrf-mmr'>('none')
 let interleaveTeams: Record<string, 'control' | 'variant'> = {}
 const currentLocale = ref<'zh' | 'en'>('zh')
 const router = useRouter()
-const rootPathPrefix = getFallbackPath('root')
-const enPathPrefix = getFallbackPath('en')
+const rootPathPrefix = resolveAsset('/').pathname
+const enPathPrefix = resolveAsset('/en/').pathname
 const SEARCH_I18N = {
   zh: {
     button: '搜索（Ctrl/⌘K）',
@@ -80,9 +80,17 @@ function detectVariantFromLocation() {
   }
 }
 
+function normalizePath(path: string) {
+  if (!path) return rootPathPrefix
+  const [pathname] = path.split(/[?#]/)
+  if (!pathname) return rootPathPrefix
+  return pathname
+}
+
 function updateLocaleFromPath(path: string) {
   if (!path) return
-  currentLocale.value = detectLocaleFromPath(path) === 'en' ? 'en' : 'zh'
+  const normalized = normalizePath(path)
+  currentLocale.value = normalized.startsWith(enPathPrefix) ? 'en' : 'zh'
 }
 
 type RankedItem = { url: string; title: string; excerpt: string }
