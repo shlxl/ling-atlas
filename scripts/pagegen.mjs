@@ -67,6 +67,7 @@ const LANG_CONFIG = [
 ]
 
 const i18nPairs = new Map()
+const navManifest = new Map()
 
 const TAXONOMY_TYPES = ['categories', 'series', 'archive']
 
@@ -92,6 +93,7 @@ await syncEnglishContent()
 const siteOrigin = process.env.SITE_ORIGIN || 'https://example.com'
 
 for (const lang of LANG_CONFIG) {
+  ensureNavManifest(lang.localeId)
   const posts = await collectPosts(lang)
   await fs.writeFile(lang.outMeta, JSON.stringify(posts.meta, null, 2))
 
@@ -104,6 +106,7 @@ for (const lang of LANG_CONFIG) {
 flushTaxonomyGroups()
 flushTagGroups()
 await writeI18nMap()
+await writeNavManifests()
 
 console.log('✔ pagegen 完成')
 
@@ -241,14 +244,24 @@ async function writeCollections(lang, meta) {
     await fs.writeFile(path.join(outDir, 'index.md'), md)
   }
 
-  for (const [category, items] of Object.entries(meta.byCategory))
-    await write('categories', slug(category), lang.labels.category(category), items)
-  for (const [series, items] of Object.entries(meta.bySeries))
+  for (const [category, items] of Object.entries(meta.byCategory)) {
+    const categorySlug = slug(category)
+    await write('categories', categorySlug, lang.labels.category(category), items)
+    registerNavEntry('categories', lang, categorySlug)
+  }
+  for (const [series, items] of Object.entries(meta.bySeries)) {
     await write('series', series, lang.labels.series(series), items)
-  for (const [tag, items] of Object.entries(meta.byTag))
-    await write('tags', slug(tag), lang.labels.tag(tag), items)
-  for (const [year, items] of Object.entries(meta.byYear))
+    registerNavEntry('series', lang, series)
+  }
+  for (const [tag, items] of Object.entries(meta.byTag)) {
+    const tagSlug = slug(tag)
+    await write('tags', tagSlug, lang.labels.tag(tag), items)
+    registerNavEntry('tags', lang, tagSlug)
+  }
+  for (const [year, items] of Object.entries(meta.byYear)) {
     await write('archive', year, lang.labels.archive(year), items)
+    registerNavEntry('archive', lang, year)
+  }
 }
 
 async function genRSS(lang, items) {
@@ -414,9 +427,10 @@ function registerI18nGroupEntry(key, localePaths) {
 }
 
 async function writeI18nMap() {
-  if (!i18nPairs.size) return
   const out = {}
   for (const [key, value] of i18nPairs.entries()) {
+    const locales = Object.keys(value || {})
+    if (locales.length < 2) continue
     out[key] = value
   }
   await fs.writeFile(path.join(PUB, 'i18n-map.json'), JSON.stringify(out, null, 2))
@@ -428,5 +442,45 @@ async function loadTagAlias() {
     return JSON.parse(raw)
   } catch {
     return {}
+  }
+}
+
+function ensureNavManifest(localeId) {
+  if (navManifest.has(localeId)) return navManifest.get(localeId)
+  const manifest = {
+    locale: localeId,
+    categories: new Map(),
+    series: new Map(),
+    tags: new Map(),
+    archive: new Map()
+  }
+  navManifest.set(localeId, manifest)
+  return manifest
+}
+
+function registerNavEntry(type, lang, slugValue) {
+  if (!slugValue) return
+  const manifest = ensureNavManifest(lang.localeId)
+  const target = taxonomyPath(type, slugValue, lang)
+  if (!target) return
+  if (!manifest[type] || !(manifest[type] instanceof Map)) return
+  manifest[type].set(slugValue, target)
+}
+
+async function writeNavManifests() {
+  for (const lang of LANG_CONFIG) {
+    const manifest = ensureNavManifest(lang.localeId)
+    const serialize = map => Object.fromEntries(map.entries())
+    const payload = {
+      locale: lang.localeId,
+      categories: serialize(manifest.categories),
+      series: serialize(manifest.series),
+      tags: serialize(manifest.tags),
+      archive: serialize(manifest.archive)
+    }
+    const json = `${JSON.stringify(payload, null, 2)}\n`
+    const file = `nav.manifest.${lang.localeId}.json`
+    await fs.writeFile(path.join(GEN, file), json)
+    await fs.writeFile(path.join(PUB, file), json)
   }
 }
