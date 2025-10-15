@@ -44,21 +44,6 @@ const localeLinks = computed(() => {
 
 <style scoped>
 .VPNavBarTranslations {
-  display: none;
-}
-
-@media (min-width: 1280px) {
-  .VPNavBarTranslations {
-    display: flex;
-    align-items: center;
-  }
-}
-
-.title {
-  padding: 0 24px 0 12px;
-  line-height: 32px;
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--vp-c-text-1);
+  display: none !important;
 }
 </style>
