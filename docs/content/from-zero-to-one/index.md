@@ -6,8 +6,8 @@ status: published
 category_zh: 工程笔记
 tags_zh:
   - github-actions
-  - 自动化
-  - 知识库
+  - automation
+  - knowledge-base
 series: Ling Atlas 起步
 series_slug: ling-atlas-kickoff
 slug: from-zero-to-one

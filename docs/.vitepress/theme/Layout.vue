@@ -1,13 +1,11 @@
 <script setup lang="ts">
 import { computed, defineAsyncComponent, onMounted, ref } from 'vue'
-import { useRouter } from 'vitepress'
+import { useRouter, useData } from 'vitepress'
 import DefaultTheme from 'vitepress/dist/client/theme-default/without-fonts'
 import SearchBox from './components/SearchBox.vue'
-import LocaleToggleButton from './components/LocaleToggleButton.vue'
 import { initTelemetry, setupTelemetryRouterHook } from './telemetry'
 import { useRegisterSW } from 'virtual:pwa-register/vue'
 import { useI18nRouting } from './i18nRouting'
-import { redirectTo } from './navigation'
 
 const router = useRouter()
 const offlineReady = ref(false)
@@ -15,7 +13,7 @@ const needRefresh = ref(false)
 const chatOpen = ref(false)
 const activeLocale = ref('root')
 
-const { ensureLocaleMap, detectLocaleFromPath, homeLinkForLocale } = useI18nRouting()
+const { ensureLocaleMap, availableLocales, detectLocaleFromPath, resolveLocaleLink } = useI18nRouting()
 
 let updateServiceWorker: (reloadPage?: boolean) => Promise<void>
 
@@ -40,6 +38,20 @@ const bannerMessage = computed(() => {
 
 const ChatWidget = defineAsyncComponent(() => import('./components/ChatWidget.vue'))
 
+const nextLocaleId = computed(() => {
+  const list = availableLocales.value
+  if (!list.length) return ''
+  const currentIndex = Math.max(list.indexOf(activeLocale.value), 0)
+  const nextIndex = (currentIndex + 1) % list.length
+  return list[nextIndex]
+})
+
+const languageButtonLabel = computed(() => {
+  const target = nextLocaleId.value
+  if (!target) return ''
+  return site.value?.locales?.[target]?.label || target
+})
+
 const chatLabels: Record<string, string> = { root: '知识问答', en: 'Knowledge Chat' }
 const chatButtonLabel = computed(() => chatLabels[activeLocale.value] || chatLabels.en)
 
@@ -56,7 +68,7 @@ function refreshNow() {
 onMounted(() => {
   void initTelemetry()
   setupTelemetryRouterHook(router)
-  handleRouteChange(router.route.path)
+  updateLocale(router.route.path)
   void ensureLocaleMap()
   router.onAfterRouteChanged?.((to: string) => {
     handleRouteChange(to)
@@ -67,28 +79,28 @@ function updateLocale(path: string) {
   activeLocale.value = detectLocaleFromPath(path)
 }
 
-function handleRouteChange(path: string) {
-  updateLocale(path)
-  guardNotFound(path)
+function switchLocale() {
+  const list = availableLocales.value
+  if (!list.length) return
+  const currentIndex = Math.max(list.indexOf(activeLocale.value), 0)
+  const targetIndex = (currentIndex + 1) % list.length
+  const target = list[targetIndex]
+  const resolved = resolveLocaleLink(router.route.path, target, activeLocale.value)
+  if (typeof window !== 'undefined') {
+    window.location.replace(target)
+  } else {
+    router.go(resolved)
+  }
 }
 
-function guardNotFound(path: string) {
-  const pageData = router.route.data as { isNotFound?: boolean } | undefined
-  if (!pageData?.isNotFound) return
-  const localeId = detectLocaleFromPath(path)
-  const homeTarget = homeLinkForLocale(localeId)
-  if (!homeTarget) return
-  if (normalizeForCompare(path) === normalizeForCompare(homeTarget)) return
-  goTo(homeTarget)
-}
-
-function normalizeForCompare(value: string | undefined | null) {
-  if (!value) return ''
-  return value.replace(/[?#].*$/, '').replace(/\/index\.html$/, '/')
-}
-
-function goTo(target: string) {
-  redirectTo(router, target)
+function switchLocale() {
+  const list = availableLocales.value
+  if (!list.length) return
+  const currentIndex = Math.max(list.indexOf(activeLocale.value), 0)
+  const targetIndex = (currentIndex + 1) % list.length
+  const target = list[targetIndex]
+  const resolved = resolveLocaleLink(router.route.path, target, activeLocale.value)
+  redirectTo(resolved)
 }
 </script>
 
@@ -97,7 +109,9 @@ function goTo(target: string) {
     <template #nav-bar-content-after>
       <div class="la-search-wrapper">
         <SearchBox />
-        <LocaleToggleButton />
+        <button class="la-lang-btn" type="button" @click="handleLocaleSwitch">
+          {{ languageButtonLabel }}
+        </button>
       </div>
     </template>
     <template #layout-bottom>

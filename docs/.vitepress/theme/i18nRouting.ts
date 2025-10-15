@@ -12,21 +12,9 @@ function normalizePath(path: string) {
   return cleaned.replace(/\/index\.html$/, '/')
 }
 
-function isExternalLink(value: string) {
-  return /^[a-zA-Z][a-zA-Z\d+.-]*:/.test(value) || value.startsWith('//')
-}
-
 function ensureLeadingSlash(value: string) {
-  if (!value) return '/'
-  if (isExternalLink(value)) return value
   if (!value.startsWith('/')) return `/${value}`
   return value
-}
-
-function formatLocaleLink(value: string) {
-  if (!value) return value
-  if (isExternalLink(value)) return value
-  return withBase(ensureLeadingSlash(value))
 }
 
 export function useI18nRouting() {
@@ -93,7 +81,7 @@ export function useI18nRouting() {
     }
     if (segments[0] === '_generated') {
       const type = segments[1]
-      const slug = segments.slice(2).join('/')
+      const slug = segments[2]
       if (type && slug) {
         return `${type}/${decodeURIComponent(slug)}`
       }
@@ -111,11 +99,7 @@ export function useI18nRouting() {
     const key = computeMapKey(currentPath, currentLocaleId)
     const mapEntry = key ? localeMapState.value[key] : undefined
     const target = mapEntry?.[targetLocaleId] || defaultLocaleLink(targetLocaleId)
-    return formatLocaleLink(target)
-  }
-
-  function homeLinkForLocale(localeId: string) {
-    return formatLocaleLink(defaultLocaleLink(localeId))
+    return withBase(ensureLeadingSlash(target))
   }
 
   return {
@@ -125,7 +109,6 @@ export function useI18nRouting() {
     detectLocaleFromPath,
     computeMapKey,
     resolveLocaleLink,
-    homeLinkForLocale,
     stripBase,
     defaultLocaleLink
   }
