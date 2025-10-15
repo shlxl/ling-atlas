@@ -1,4 +1,4 @@
-import { defineConfig } from 'vitepress'
+import { defineConfig, type HeadConfig } from 'vitepress'
 import cssnano from 'cssnano'
 import fs from 'node:fs'
 import { VitePWA } from 'vite-plugin-pwa'
@@ -51,16 +51,113 @@ const escapedBase = escapeRegex(normalizedBase)
 
 const metaZh = loadMeta('docs/_generated/meta.json')
 const metaEn = loadMeta('docs/_generated/meta.en.json')
+const manifestZh = loadNavManifest('zh')
+const manifestEn = loadNavManifest('en')
 const i18nMap = loadI18nTranslations()
 
 const cspTemplate = loadCspTemplate()
-const cspContent = serializeCsp(cspTemplate)
+const cspContent = cspTemplate ? serializeCsp(cspTemplate) : null
+const head: HeadConfig[] = [
+  ['meta', { name: 'referrer', content: 'no-referrer' }]
+]
+
+if (cspContent) {
+  head.unshift(['meta', { 'http-equiv': 'Content-Security-Policy', content: cspContent }])
+}
 const navigationAllowlist = [new RegExp(`^${escapedBase}`)]
 const pagefindPattern = new RegExp(`^${escapedBase}pagefind/`)
 const embeddingsJsonPattern = /embeddings-texts\.json$/
 const embeddingsWorkerPattern = /worker\/embeddings\.worker\.js$/
 
-function navFromMeta(meta: any, locale: 'zh' | 'en') {
+type NavManifest = {
+  locale: 'zh' | 'en'
+  categories: Record<string, string>
+  series: Record<string, string>
+  tags: Record<string, string>
+  archive: Record<string, string>
+}
+
+function navFromMeta(meta: any, manifest: NavManifest | null, locale: 'zh' | 'en') {
+  if (!manifest) return legacyNavFromMeta(meta, locale)
+
+  const t = i18nMap.nav[locale]
+  const prefix = manifest.locale === 'en' ? '/en' : ''
+  const collator = new Intl.Collator(locale === 'en' ? 'en' : 'zh-CN')
+
+  const archiveYears = Object.keys(meta.byYear || {}).sort((a, b) => b.localeCompare(a))
+  const availableArchive = archiveYears.find(year => manifest.archive?.[year])
+  const archiveFallback = Object.values(manifest.archive || {})[0]
+
+  const categories = (Object.keys(meta.byCategory || {}) as string[])
+    .map(name => {
+      const slugValue = slug(name)
+      const link = manifest.categories?.[slugValue]
+      if (!link) return null
+      return { text: name, link }
+    })
+    .filter(Boolean)
+    .sort((a, b) => a!.text.localeCompare(b!.text, locale === 'en' ? 'en' : 'zh-CN')) as { text: string; link: string }[]
+
+  const series = Object.entries(meta.bySeries || {})
+    .map(([slugValue, items]) => {
+      const link = manifest.series?.[slugValue]
+      if (!link) return null
+      const label = Array.isArray(items) && items[0]?.series ? items[0].series : slugValue
+      return { text: label, link }
+    })
+    .filter(Boolean)
+    .sort((a, b) => a!.text.localeCompare(b!.text, locale === 'en' ? 'en' : 'zh-CN')) as { text: string; link: string }[]
+
+  const tags = Object.keys(meta.byTag || {})
+    .map(tag => {
+      const slugValue = slug(tag)
+      const link = manifest.tags?.[slugValue]
+      if (!link) return null
+      return { tag, slugValue, link }
+    })
+    .filter(Boolean)
+    .sort((a, b) => collator.compare(a!.tag, b!.tag)) as { tag: string; slugValue: string; link: string }[]
+
+  const nav = [] as any[]
+
+  if (availableArchive && manifest.archive?.[availableArchive]) {
+    nav.push({ text: t.latest, link: manifest.archive[availableArchive] })
+  } else if (archiveFallback) {
+    nav.push({ text: t.latest, link: archiveFallback })
+  }
+
+  if (categories.length) {
+    nav.push({ text: t.categories, items: categories })
+  }
+
+  if (series.length) {
+    nav.push({ text: t.series, items: series })
+  }
+
+  if (tags.length) {
+    nav.push({ text: t.tags, link: tags[0]!.link })
+  }
+
+  nav.push({
+    text: t.about,
+    items: [
+      { text: t.metrics, link: `${prefix}/about/metrics.html` },
+      { text: t.qa, link: `${prefix}/about/qa.html` }
+    ]
+  })
+
+  nav.push({
+    text: t.guides,
+    items: [
+      { text: t.deploy, link: `${prefix}/DEPLOYMENT.html` },
+      { text: t.migration, link: `${prefix}/MIGRATION.html` }
+    ]
+  })
+
+  return nav
+}
+
+function legacyNavFromMeta(meta: any, locale: 'zh' | 'en') {
   const t = i18nMap.nav[locale]
   const prefix = locale === 'en' ? '/en' : ''
   const years = Object.keys(meta.byYear || {}).sort().reverse()
@@ -97,13 +194,48 @@ function navFromMeta(meta: any, locale: 'zh' | 'en') {
   ]
 }
 
+function loadNavManifest(localeId: 'zh' | 'en'): NavManifest | null {
+  const candidates = [`docs/_generated/nav.manifest.${localeId}.json`]
+  if (localeId === 'zh') {
+    candidates.push('docs/_generated/nav.manifest.root.json')
+  }
+
+  let lastError: unknown = null
+
+  for (const file of candidates) {
+    try {
+      const raw = fs.readFileSync(file, 'utf8')
+      const parsed = JSON.parse(raw) as Partial<NavManifest> & { locale?: string }
+      const detectedLocale = parsed.locale === 'en' ? 'en' : 'zh'
+      return {
+        locale: detectedLocale,
+        categories: parsed.categories ?? {},
+        series: parsed.series ?? {},
+        tags: parsed.tags ?? {},
+        archive: parsed.archive ?? {}
+      }
+    } catch (error) {
+      lastError = error
+    }
+  }
+
+  if (lastError && process.env.NODE_ENV !== 'production') {
+    console.warn(
+      `[config] failed to load nav manifest for ${localeId} (candidates: ${candidates.join(', ')}):`,
+      lastError
+    )
+  }
+
+  return null
+}
+
 export default defineConfig({
   // Inject base from env to support GitHub Pages subpath deployment
   base: baseFromEnv,
-  head: [
-    ['meta', { 'http-equiv': 'Content-Security-Policy', content: cspContent }],
-    ['meta', { name: 'referrer', content: 'no-referrer' }]
-  ],
+  rewrites: {
+    'content/:path*': 'content.zh/:path*/index.md'
+  },
+  head,
   themeConfig: {
     socialLinks: [{ icon: 'github', link: 'https://github.com/shlxl/ling-atlas' }],
     // Disable the built-in locale dropdown to avoid linking to untranslated
@@ -118,7 +250,7 @@ export default defineConfig({
       title: 'Ling Atlas · 小凌的个人知识库',
       description: '现代化、可演进、可检索的知识库工程',
       themeConfig: {
-        nav: navFromMeta(metaZh, 'zh'),
+        nav: navFromMeta(metaZh, manifestZh, 'zh'),
         sidebar: 'auto',
         lightModeSwitchTitle: '切换到浅色模式',
         darkModeSwitchTitle: '切换到深色模式'
@@ -130,7 +262,7 @@ export default defineConfig({
       title: 'Ling Atlas · Personal Knowledge Base',
       description: 'A modern, evolvable, and searchable knowledge base project',
       themeConfig: {
-        nav: navFromMeta(metaEn, 'en'),
+        nav: navFromMeta(metaEn, manifestEn, 'en'),
         sidebar: 'auto',
         lightModeSwitchTitle: 'Switch to light mode',
         darkModeSwitchTitle: 'Switch to dark mode'
