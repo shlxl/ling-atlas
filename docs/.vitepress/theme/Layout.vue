@@ -14,7 +14,7 @@ const needRefresh = ref(false)
 const chatOpen = ref(false)
 const activeLocale = ref('root')
 
-const { ensureLocaleMap, availableLocales, detectLocaleFromPath, resolveLocaleLink, homeLinkForLocale } = useI18nRouting()
+const { ensureLocaleMap, availableLocales, detectLocaleFromPath, resolveLocaleLink } = useI18nRouting()
 
 let updateServiceWorker: (reloadPage?: boolean) => Promise<void>
 
@@ -69,7 +69,7 @@ function refreshNow() {
 onMounted(() => {
   void initTelemetry()
   setupTelemetryRouterHook(router)
-  handleRouteChange(router.route.path)
+  updateLocale(router.route.path)
   void ensureLocaleMap()
   router.onAfterRouteChanged?.((to: string) => {
     handleRouteChange(to)
@@ -80,31 +80,17 @@ function updateLocale(path: string) {
   activeLocale.value = detectLocaleFromPath(path)
 }
 
-function handleRouteChange(path: string) {
-  updateLocale(path)
-  guardNotFound(path)
-}
-
-function guardNotFound(path: string) {
-  const pageData = router.route.data as { isNotFound?: boolean } | undefined
-  if (!pageData?.isNotFound) return
-  const localeId = detectLocaleFromPath(path)
-  const homeTarget = homeLinkForLocale(localeId)
-  if (!homeTarget) return
-  if (normalizeForCompare(path) === normalizeForCompare(homeTarget)) return
-  redirectTo(homeTarget)
-}
-
-function normalizeForCompare(value: string | undefined | null) {
-  if (!value) return ''
-  return value.replace(/[?#].*$/, '').replace(/\/index\.html$/, '/')
-}
-
-function redirectTo(target: string) {
+function switchLocale() {
+  const list = availableLocales.value
+  if (!list.length) return
+  const currentIndex = Math.max(list.indexOf(activeLocale.value), 0)
+  const targetIndex = (currentIndex + 1) % list.length
+  const target = list[targetIndex]
+  const resolved = resolveLocaleLink(router.route.path, target, activeLocale.value)
   if (typeof window !== 'undefined') {
     window.location.replace(target)
   } else {
-    router.go(target)
+    router.go(resolved)
   }
 }
 
