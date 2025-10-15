@@ -1,0 +1,18 @@
+{
+  "locale": "en",
+  "categories": {
+    "engineering-notes": "/en/_generated/categories/engineering-notes/"
+  },
+  "series": {
+    "knowledge-ops": "/en/_generated/series/knowledge-ops/",
+    "getting-started": "/en/_generated/series/getting-started/"
+  },
+  "tags": {
+    "automation": "/en/_generated/tags/automation/",
+    "workflow": "/en/_generated/tags/workflow/",
+    "knowledge-base": "/en/_generated/tags/knowledge-base/"
+  },
+  "archive": {
+    "2025": "/en/_generated/archive/2025/"
+  }
+}
