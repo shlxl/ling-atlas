@@ -1,64 +1,7 @@
-<script lang="ts" setup>
-import { computed, onMounted } from 'vue'
-import { useRouter, useData } from 'vitepress'
-import VPFlyout from 'vitepress/dist/client/theme-default/components/VPFlyout.vue'
-import VPMenuLink from 'vitepress/dist/client/theme-default/components/VPMenuLink.vue'
-import { useI18nRouting } from '../i18nRouting'
-
-const router = useRouter()
-const { site, theme } = useData()
-const { availableLocales, resolveLocaleLink, detectLocaleFromPath, ensureLocaleMap } = useI18nRouting()
-
-onMounted(() => {
-  void ensureLocaleMap()
-})
-
-const currentLocale = computed(() => detectLocaleFromPath(router.route.path))
-
-const currentLabel = computed(() => site.value?.locales?.[currentLocale.value]?.label || '')
-
-const localeLinks = computed(() => {
-  const list = availableLocales.value.filter(id => id !== currentLocale.value)
-  return list.map(id => ({
-    text: site.value?.locales?.[id]?.label || id,
-    link: resolveLocaleLink(router.route.path, id, currentLocale.value)
-  }))
-})
+<script setup lang="ts">
+// Language dropdown disabled to avoid broken locale routes.
 </script>
 
 <template>
-  <VPFlyout
-    v-if="localeLinks.length && currentLabel"
-    class="VPNavBarTranslations"
-    icon="vpi-languages"
-    :label="theme.langMenuLabel || 'Change language'"
-  >
-    <div class="items">
-      <p class="title">{{ currentLabel }}</p>
-      <template v-for="locale in localeLinks" :key="locale.link">
-        <VPMenuLink :item="locale" />
-      </template>
-    </div>
-  </VPFlyout>
+  <span v-if="false" class="VPNavBarTranslations" />
 </template>
-
-<style scoped>
-.VPNavBarTranslations {
-  display: none;
-}
-
-@media (min-width: 1280px) {
-  .VPNavBarTranslations {
-    display: flex;
-    align-items: center;
-  }
-}
-
-.title {
-  padding: 0 24px 0 12px;
-  line-height: 32px;
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--vp-c-text-1);
-}
-</style>
