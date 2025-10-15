@@ -1,5 +1,6 @@
 {
   "locale": "en",
+  "vitepressLocaleKey": "en",
   "categories": {
     "engineering-notes": "/en/_generated/categories/engineering-notes/"
   },
