@@ -1,18 +1,20 @@
 <script setup lang="ts">
 import { computed, defineAsyncComponent, onMounted, ref } from 'vue'
-import { useRouter, withBase, useData } from 'vitepress'
+import { useRouter, useData } from 'vitepress'
 import DefaultTheme from 'vitepress/dist/client/theme-default/without-fonts'
 import SearchBox from './components/SearchBox.vue'
-import { initTelemetry, resolveAsset, setupTelemetryRouterHook } from './telemetry'
+import { initTelemetry, setupTelemetryRouterHook } from './telemetry'
 import { useRegisterSW } from 'virtual:pwa-register/vue'
+import { useI18nRouting } from './i18nRouting'
 
 const router = useRouter()
 const { site } = useData()
 const offlineReady = ref(false)
 const needRefresh = ref(false)
 const chatOpen = ref(false)
-const locale = ref<'zh' | 'en'>('zh')
-const localeMap = ref<Record<string, { zh?: string; en?: string }>>({})
+const activeLocale = ref('root')
+
+const { ensureLocaleMap, availableLocales, detectLocaleFromPath, resolveLocaleLink, homeLinkForLocale } = useI18nRouting()
 
 let updateServiceWorker: (reloadPage?: boolean) => Promise<void>
 
@@ -37,8 +39,22 @@ const bannerMessage = computed(() => {
 
 const ChatWidget = defineAsyncComponent(() => import('./components/ChatWidget.vue'))
 
-const languageButtonLabel = computed(() => (locale.value === 'zh' ? 'EN' : '中文'))
-const chatButtonLabel = computed(() => (locale.value === 'zh' ? '知识问答' : 'Knowledge Chat'))
+const nextLocaleId = computed(() => {
+  const list = availableLocales.value
+  if (!list.length) return ''
+  const currentIndex = Math.max(list.indexOf(activeLocale.value), 0)
+  const nextIndex = (currentIndex + 1) % list.length
+  return list[nextIndex]
+})
+
+const languageButtonLabel = computed(() => {
+  const target = nextLocaleId.value
+  if (!target) return ''
+  return site.value?.locales?.[target]?.label || target
+})
+
+const chatLabels: Record<string, string> = { root: '知识问答', en: 'Knowledge Chat' }
+const chatButtonLabel = computed(() => chatLabels[activeLocale.value] || chatLabels.en)
 
 function closeBanner() {
   offlineReady.value = false
@@ -53,63 +69,53 @@ function refreshNow() {
 onMounted(() => {
   void initTelemetry()
   setupTelemetryRouterHook(router)
-  updateLocale(router.route.path)
-  void loadLocaleMap()
+  handleRouteChange(router.route.path)
+  void ensureLocaleMap()
   router.onAfterRouteChanged?.((to: string) => {
-    updateLocale(to)
+    handleRouteChange(to)
   })
 })
 
-async function loadLocaleMap() {
-  try {
-    const url = resolveAsset('/i18n-map.json').href
-    const res = await fetch(url, { cache: 'no-store' })
-    if (!res.ok) return
-    const payload = await res.json()
-    localeMap.value = payload || {}
-  } catch (err) {
-    console.warn('[i18n-map] failed to load', err)
-  }
-}
-
 function updateLocale(path: string) {
-  locale.value = path.startsWith('/en/') ? 'en' : 'zh'
+  activeLocale.value = detectLocaleFromPath(path)
 }
 
-function computeRelativeKey(path: string, lang: 'zh' | 'en') {
-  const cleaned = path.split(/[?#]/)[0]
-  const prefix = lang === 'en' ? '/en/content/' : '/content/'
-  if (!cleaned.startsWith(prefix)) return null
-  const rest = cleaned.slice(prefix.length)
-  return rest.replace(/\/$/,'')
+function handleRouteChange(path: string) {
+  updateLocale(path)
+  guardNotFound(path)
 }
 
-function stripBase(path: string) {
-  const base = site.value?.base || '/'
-  if (base !== '/' && path.startsWith(base)) {
-    return path.slice(base.length - 1)
-  }
-  return path
+function guardNotFound(path: string) {
+  const pageData = router.route.data as { isNotFound?: boolean } | undefined
+  if (!pageData?.isNotFound) return
+  const localeId = detectLocaleFromPath(path)
+  const homeTarget = homeLinkForLocale(localeId)
+  if (!homeTarget) return
+  if (normalizeForCompare(path) === normalizeForCompare(homeTarget)) return
+  redirectTo(homeTarget)
 }
 
-function switchLocale() {
-  const currentPath = stripBase(router.route.path)
-  const target = locale.value === 'zh' ? 'en' : 'zh'
-  const key = computeRelativeKey(currentPath, locale.value)
-  const mapEntry = key ? localeMap.value[key] : null
-  let next = target === 'en' ? '/en/' : '/'
+function normalizeForCompare(value: string | undefined | null) {
+  if (!value) return ''
+  return value.replace(/[?#].*$/, '').replace(/\/index\.html$/, '/')
+}
 
-  if (mapEntry && mapEntry[target]) {
-    next = mapEntry[target]
-  }
-  if (!next.startsWith('/')) next = `/${next}`
-
-  const resolved = withBase(next)
+function redirectTo(target: string) {
   if (typeof window !== 'undefined') {
-    window.location.href = resolved
+    window.location.replace(target)
   } else {
-    router.go(next)
+    router.go(target)
   }
+}
+
+function handleLocaleSwitch() {
+  const list = availableLocales.value
+  if (!list.length) return
+  const currentIndex = Math.max(list.indexOf(activeLocale.value), 0)
+  const targetIndex = (currentIndex + 1) % list.length
+  const target = list[targetIndex]
+  const resolved = resolveLocaleLink(router.route.path, target, activeLocale.value)
+  redirectTo(resolved)
 }
 </script>
 
@@ -118,7 +124,7 @@ function switchLocale() {
     <template #nav-bar-content-after>
       <div class="la-search-wrapper">
         <SearchBox />
-        <button class="la-lang-btn" type="button" @click="switchLocale">
+        <button class="la-lang-btn" type="button" @click="handleLocaleSwitch">
           {{ languageButtonLabel }}
         </button>
       </div>
