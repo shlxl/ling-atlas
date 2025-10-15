@@ -9,6 +9,10 @@ const EN_GENERATED_DIR = path.join(ROOT, 'docs/en/_generated')
 const DIST_DIR = path.join(ROOT, 'docs/.vitepress/dist')
 let distReady = false
 const INTERNAL_PREFIXES = ['/', './', '../']
+const DEFAULT_MANIFESTS = [
+  { locale: 'root', file: path.join(GENERATED_DIR, 'nav.manifest.root.json') },
+  { locale: 'en', file: path.join(GENERATED_DIR, 'nav.manifest.en.json') }
+]
 
 function isInternalLink(url) {
   return INTERNAL_PREFIXES.some(prefix => url.startsWith(prefix)) && !url.startsWith('http')
@@ -82,7 +86,7 @@ async function checkFile(filePath) {
 }
 
 async function main() {
-  distReady = await fileExists(DIST_DIR)
+  distReady = await fileExists(path.join(DIST_DIR, 'index.html'))
   const files = await globby(['docs/**/*.md', '!docs/en/_generated/**/*'], { cwd: ROOT })
   const errors = []
   for (const file of files) {
@@ -90,6 +94,9 @@ async function main() {
     const fileErrors = await checkFile(filePath)
     errors.push(...fileErrors)
   }
+  const manifestInfos = await collectManifestInfos()
+  const manifestErrors = await validateNavManifests(manifestInfos)
+  errors.push(...manifestErrors)
   if (errors.length) {
     console.error('Link check failed:')
     errors.forEach(err => console.error(' -', err))
@@ -102,3 +109,62 @@ main().catch(err => {
   console.error('Link check script failed:', err)
   process.exit(1)
 })
+
+async function validateNavManifests(manifestInfos) {
+  const allowedTypes = new Set(['categories', 'series', 'tags', 'archive'])
+  const errors = []
+  for (const manifestInfo of manifestInfos) {
+    const payload = await readManifest(manifestInfo.file)
+    if (!payload) continue
+    for (const [type, entries] of Object.entries(payload)) {
+      if (!allowedTypes.has(type)) continue
+      if (typeof entries !== 'object' || !entries) continue
+      for (const [slug, targetPath] of Object.entries(entries)) {
+        if (typeof targetPath !== 'string' || !targetPath) continue
+        const context = `nav.manifest.${manifestInfo.locale}.json [${type}:${slug}]`
+        const result = await validateInternalLink(targetPath, context)
+        if (result !== true) errors.push(result)
+      }
+    }
+  }
+  return errors
+}
+
+async function readManifest(filePath) {
+  try {
+    const raw = await fs.readFile(filePath, 'utf8')
+    return JSON.parse(raw)
+  } catch {
+    return null
+  }
+}
+
+async function collectManifestInfos() {
+  const patterns = [
+    'docs/_generated/nav.manifest.*.json',
+    'docs/public/nav.manifest.*.json'
+  ]
+  const matches = await globby(patterns, { cwd: ROOT, absolute: true })
+  const byLocale = new Map()
+
+  for (const absolutePath of matches) {
+    const locale = extractLocaleFromManifest(absolutePath)
+    if (!byLocale.has(locale)) {
+      byLocale.set(locale, { locale, file: absolutePath })
+    }
+  }
+
+  for (const manifest of DEFAULT_MANIFESTS) {
+    if (!byLocale.has(manifest.locale)) {
+      byLocale.set(manifest.locale, manifest)
+    }
+  }
+
+  return Array.from(byLocale.values())
+}
+
+function extractLocaleFromManifest(filePath) {
+  const match = /nav\.manifest\.([^.]+)\.json$/i.exec(filePath)
+  if (match && match[1]) return match[1]
+  return 'root'
+}
