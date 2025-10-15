@@ -3,6 +3,8 @@ import { computed, defineAsyncComponent, onMounted, ref } from 'vue'
 import { useRouter } from 'vitepress'
 import DefaultTheme from 'vitepress/dist/client/theme-default/without-fonts'
 import SearchBox from './components/SearchBox.vue'
+import LocaleToggleButton from './components/LocaleToggleButton.vue'
+import { detectLocaleFromPath } from './composables/localeMap'
 import { initTelemetry, setupTelemetryRouterHook } from './telemetry'
 import { useRegisterSW } from 'virtual:pwa-register/vue'
 
@@ -11,8 +13,6 @@ const offlineReady = ref(false)
 const needRefresh = ref(false)
 const chatOpen = ref(false)
 const activeLocale = ref<'root' | 'en'>('root')
-
-const { ensureLocaleMap, detectLocaleFromPath } = useI18nRouting()
 
 let updateServiceWorker: (reloadPage?: boolean) => Promise<void>
 
@@ -60,11 +60,7 @@ onMounted(() => {
 })
 
 function updateLocale(path: string) {
-  if (!path) {
-    activeLocale.value = 'root'
-    return
-  }
-  activeLocale.value = path.startsWith('/en/') ? 'en' : 'root'
+  activeLocale.value = detectLocaleFromPath(path)
 }
 
 function handleRouteChange(path: string) {
@@ -76,6 +72,7 @@ function handleRouteChange(path: string) {
   <DefaultTheme.Layout>
     <template #nav-bar-content-after>
       <div class="la-search-wrapper">
+        <LocaleToggleButton />
         <SearchBox />
       </div>
     </template>
@@ -152,10 +149,8 @@ function handleRouteChange(path: string) {
 .la-search-wrapper {
   display: flex;
   align-items: center;
+  gap: 0.5rem;
   margin-right: 0.75rem;
-}
-.la-search-wrapper :deep(.la-search-btn) {
-  margin-right: 0.5rem;
 }
 .chat-fab {
   position: fixed;

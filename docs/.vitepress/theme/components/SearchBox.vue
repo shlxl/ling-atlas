@@ -2,6 +2,7 @@
 import { computed, onMounted, onBeforeUnmount, ref } from 'vue'
 import { useRouter } from 'vitepress'
 import { trackEvent, hashQuery, resolveAsset } from '../telemetry'
+import { detectLocaleFromPath, getFallbackPath, normalizeRoutePath } from '../composables/localeMap'
 
 type LexicalResult = { url: string; title: string; excerpt: string; rank: number }
 type SemanticCandidate = { url: string; score: number; vector: number[] | null; rank: number }
@@ -31,6 +32,8 @@ const activeVariant = ref<'none' | 'lex' | 'rrf' | 'rrf-mmr'>('none')
 let interleaveTeams: Record<string, 'control' | 'variant'> = {}
 const currentLocale = ref<'zh' | 'en'>('zh')
 const router = useRouter()
+const rootPathPrefix = getFallbackPath('root')
+const enPathPrefix = getFallbackPath('en')
 const SEARCH_I18N = {
   zh: {
     button: '搜索（Ctrl/⌘K）',
@@ -52,7 +55,7 @@ const SEARCH_I18N = {
 const uiText = computed(() => SEARCH_I18N[currentLocale.value])
 
 function normalizeResultUrl(raw: string) {
-  if (!raw) return resolveAsset('/').pathname
+  if (!raw) return rootPathPrefix
   if (/^https?:\/\//i.test(raw)) return raw
   try {
     const normalized = raw.startsWith('/') ? raw : `/${raw}`
@@ -79,7 +82,7 @@ function detectVariantFromLocation() {
 
 function updateLocaleFromPath(path: string) {
   if (!path) return
-  currentLocale.value = path.startsWith('/en/') ? 'en' : 'zh'
+  currentLocale.value = detectLocaleFromPath(path) === 'en' ? 'en' : 'zh'
 }
 
 type RankedItem = { url: string; title: string; excerpt: string }
@@ -89,7 +92,7 @@ function splitByLocale(items: RankedItem[]) {
   const same: RankedItem[] = []
   const others: RankedItem[] = []
   for (const item of items) {
-    const isEn = item.url.startsWith('/en/')
+    const isEn = isEnglishUrl(item.url)
     if ((currentLocale.value === 'en' && isEn) || (currentLocale.value === 'zh' && !isEn)) {
       same.push(item)
     } else {
@@ -97,6 +100,17 @@ function splitByLocale(items: RankedItem[]) {
     }
   }
   return same.length ? same.concat(others) : others
+}
+
+function isEnglishUrl(url: string) {
+  if (!url || /^https?:\/\//i.test(url)) return false
+  try {
+    const normalized = normalizeRoutePath(url)
+    return normalized.startsWith(enPathPrefix)
+  } catch (err) {
+    console.warn('[search] english detection failed', err)
+    return false
+  }
 }
 
 function teamDraftInterleave(control: RankedItem[], variant: RankedItem[], seed: string, limit = 20): InterleaveEntry[] {
