@@ -54,37 +54,12 @@ async function ensureDataFileExists() {
   }
 }
 
-async function hasBuiltHtml(dir) {
-  const stack = [dir]
-  while (stack.length) {
-    const current = stack.pop()
-    let entries
-    try {
-      entries = await fs.readdir(current, { withFileTypes: true })
-    } catch (err) {
-      if (err.code === 'ENOENT') return false
-      throw err
-    }
-    for (const entry of entries) {
-      if (entry.isFile() && entry.name.endsWith('.html')) return true
-      if (entry.isDirectory()) stack.push(path.join(current, entry.name))
-    }
-  }
-  return false
-}
-
 async function writeOutputs(data) {
   const payload = JSON.stringify(data, null, 2)
   await fs.mkdir(path.dirname(PUBLIC_PATH), { recursive: true })
   await fs.writeFile(PUBLIC_PATH, payload, 'utf8')
-
-  const distRoot = path.dirname(DIST_PATH)
-  if (await hasBuiltHtml(distRoot)) {
-    await fs.mkdir(path.dirname(DIST_PATH), { recursive: true })
-    await fs.writeFile(DIST_PATH, payload, 'utf8')
-  } else {
-    console.warn('[telemetry] skipped dist telemetry export: no built HTML detected yet')
-  }
+  await fs.mkdir(path.dirname(DIST_PATH), { recursive: true })
+  await fs.writeFile(DIST_PATH, payload, 'utf8')
 }
 
 function updateDerivedSections(state) {
