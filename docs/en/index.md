@@ -14,4 +14,6 @@ hero:
       link: /en/_generated/categories/engineering-notes/
 ---
 
-Welcome to the English portal of Ling Atlas. Populate docs/content.en/** with your articles to expand this space.
+Welcome to the English portal of Ling Atlas.
+
+Add your articles under `docs/content.en/**` to expand this space over time.
