@@ -15,7 +15,18 @@ function loadCspTemplate() {
 
 function serializeCsp(directives: Record<string, string[] | string> | null) {
   if (!directives) return ''
-  return Object.entries(directives)
+  const unsupported = new Set(['frame-ancestors'])
+  const entries = Object.entries(directives)
+  const filtered = entries.filter(([name]) => !unsupported.has(name))
+  if (filtered.length !== entries.length) {
+    const removed = entries
+      .filter(([name]) => unsupported.has(name))
+      .map(([name]) => name)
+    console.warn(
+      `[security] dropped CSP directives not supported via <meta>: ${removed.join(', ')}. Configure them via HTTP headers instead.`
+    )
+  }
+  return filtered
     .map(([name, values]) => {
       const parts = Array.isArray(values) ? values : [values]
       return `${name} ${parts.join(' ')}`
@@ -31,8 +42,12 @@ function slug(input: string) {
     .toLowerCase()
 }
 
+function escapeRegex(input: string) {
+  return input.replace(/[.*+?^${}()|[\]\\]/g, '\$&')
+}
 const baseFromEnv = (process.env.BASE as string) || '/'
 const normalizedBase = baseFromEnv.endsWith('/') ? baseFromEnv : `${baseFromEnv}/`
+const escapedBase = escapeRegex(normalizedBase)
 
 const metaZh = loadMeta('docs/_generated/meta.json')
 const metaEn = loadMeta('docs/_generated/meta.en.json')
@@ -40,6 +55,10 @@ const i18nMap = loadI18nTranslations()
 
 const cspTemplate = loadCspTemplate()
 const cspContent = serializeCsp(cspTemplate)
+const navigationAllowlist = [new RegExp(`^${escapedBase}`)]
+const pagefindPattern = new RegExp(`^${escapedBase}pagefind/`)
+const embeddingsJsonPattern = /embeddings-texts\.json$/
+const embeddingsWorkerPattern = /worker\/embeddings\.worker\.js$/
 
 function navFromMeta(meta: any, locale: 'zh' | 'en') {
   const t = i18nMap.nav[locale]
@@ -87,13 +106,7 @@ export default defineConfig({
   ],
   themeConfig: {
     socialLinks: [{ icon: 'github', link: 'https://github.com/shlxl/ling-atlas' }],
-    localeLinks: {
-      text: 'Languages',
-      items: [
-        { text: '简体中文', link: normalizedBase },
-        { text: 'English', link: `${normalizedBase}en/` }
-      ]
-    }
+    localeLinks: false
   },
   locales: {
     root: {
@@ -132,9 +145,11 @@ export default defineConfig({
             'pagefind/**/*',
             'worker/**/*'
           ],
+          navigateFallback: 'index.html',
+          navigateFallbackAllowlist: navigationAllowlist,
           runtimeCaching: [
             {
-              urlPattern: ({ url }) => url.pathname.startsWith(`${normalizedBase}pagefind/`),
+              urlPattern: pagefindPattern,
               handler: 'StaleWhileRevalidate',
               options: {
                 cacheName: 'pagefind-cache',
@@ -142,7 +157,7 @@ export default defineConfig({
               }
             },
             {
-              urlPattern: ({ url }) => url.pathname.endsWith('embeddings-texts.json'),
+              urlPattern: embeddingsJsonPattern,
               handler: 'StaleWhileRevalidate',
               options: {
                 cacheName: 'embeddings-cache',
@@ -150,7 +165,7 @@ export default defineConfig({
               }
             },
             {
-              urlPattern: ({ url }) => url.pathname.endsWith('worker/embeddings.worker.js'),
+              urlPattern: embeddingsWorkerPattern,
               handler: 'CacheFirst',
               options: {
                 cacheName: 'embeddings-worker-cache',

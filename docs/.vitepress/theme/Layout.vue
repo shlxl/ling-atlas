@@ -12,7 +12,7 @@ const router = useRouter()
 const offlineReady = ref(false)
 const needRefresh = ref(false)
 const chatOpen = ref(false)
-const activeLocale = ref('root')
+const activeLocale = ref<'root' | 'en'>('root')
 
 const { ensureLocaleMap, detectLocaleFromPath } = useI18nRouting()
 
