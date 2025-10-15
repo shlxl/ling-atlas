@@ -63,7 +63,7 @@ excerpt: 全量保留 TAXONOMY.md 的规范内容，方便在站点内直接查�
 
 ## 3. URL 与目录结构
 
-- 每篇中文文章的物理位置固定：`docs/content.zh/<slug-or-custom>/index.md`。
+- 每篇文章的物理位置固定：`docs/content.<locale>/<slug-or-custom>/index.md`（默认中文位于 `docs/content.zh/**`）。
 - 页面访问路径（VitePress）默认：`/content/<slug-or-custom>/`（项目站点会自动加 `base` 前缀）。
 - 可选美化为 `/blog/<YYYY>/<slug>/`：需在 PageGen 中生成对应路径并配置 rewrites。
 

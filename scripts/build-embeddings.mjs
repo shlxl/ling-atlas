@@ -3,22 +3,15 @@ import fsSync from 'node:fs'
 import path from 'node:path'
 import { globby } from 'globby'
 import matter from 'gray-matter'
+import { LOCALE_REGISTRY } from './pagegen.locales.mjs'
 
 const ROOT = process.cwd()
 const OUT_PATH = path.join(ROOT, 'docs', 'public', 'embeddings-texts.json')
-const DEFAULT_LOCALE = 'zh'
-const LANG_SOURCES = [
-  {
-    code: DEFAULT_LOCALE,
-    dir: path.join(ROOT, 'docs', `content.${DEFAULT_LOCALE}`),
-    basePath: '/content/'
-  },
-  {
-    code: 'en',
-    dir: path.join(ROOT, 'docs', 'content.en'),
-    basePath: '/en/content/'
-  }
-]
+const LANG_SOURCES = LOCALE_REGISTRY.map(locale => ({
+  code: locale.code,
+  dir: locale.contentDir,
+  basePath: locale.basePath
+}))
 
 function toExcerpt(md){
   const paragraphs = (md || '').split(/\n\s*\n/)

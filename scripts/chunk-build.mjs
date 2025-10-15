@@ -2,7 +2,7 @@
 
 /**
  * 构建期知识分段导出
- * - 扫描 docs/content.<locale>/ 下各 index.md（默认 zh）
+ * - 扫描 docs/content.<locale>/ 下各 index.md
  * - 每段 300~500 中文字符（依据句号/换行切分）
  * - 输出 docs/public/api/knowledge.json，供前端检索/问答引用
  */
@@ -12,24 +12,39 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { globby } from 'globby'
 import matter from 'gray-matter'
+import { LOCALE_REGISTRY } from './pagegen.locales.mjs'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const ROOT = path.resolve(__dirname, '..')
 const OUTPUT_DIR = path.join(ROOT, 'docs', 'public', 'api')
 const OUTPUT_FILE = path.join(OUTPUT_DIR, 'knowledge.json')
+const DOCS_DIR = path.join(ROOT, 'docs')
 const DEFAULT_LOCALE = 'zh'
-const LANG_SOURCES = [
-  {
+const detectedLocaleDirs = await globby('content.*', {
+  cwd: DOCS_DIR,
+  onlyDirectories: true
+})
+
+const LANG_SOURCES = detectedLocaleDirs
+  .map(dirName => {
+    const locale = dirName.slice('content.'.length)
+    if (!locale) return null
+    return {
+      code: locale,
+      dir: path.join(DOCS_DIR, dirName),
+      basePath: locale === DEFAULT_LOCALE ? '/content/' : `/${locale}/content/`
+    }
+  })
+  .filter(Boolean)
+  .sort((a, b) => (a.code === DEFAULT_LOCALE ? -1 : b.code === DEFAULT_LOCALE ? 1 : a.code.localeCompare(b.code)))
+
+if (!LANG_SOURCES.some(source => source.code === DEFAULT_LOCALE)) {
+  LANG_SOURCES.unshift({
     code: DEFAULT_LOCALE,
-    dir: path.join(ROOT, 'docs', `content.${DEFAULT_LOCALE}`),
+    dir: path.join(DOCS_DIR, `content.${DEFAULT_LOCALE}`),
     basePath: '/content/'
-  },
-  {
-    code: 'en',
-    dir: path.join(ROOT, 'docs', 'content.en'),
-    basePath: '/en/content/'
-  }
-]
+  })
+}
 
 function isDraft(frontmatter) {
   const { status, draft } = frontmatter || {}

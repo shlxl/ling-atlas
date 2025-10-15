@@ -1,4 +1,4 @@
-import { defineConfig } from 'vitepress'
+import { defineConfig, type HeadConfig } from 'vitepress'
 import cssnano from 'cssnano'
 import fs from 'node:fs'
 import { VitePWA } from 'vite-plugin-pwa'
@@ -58,39 +58,39 @@ const baseFromEnv = (process.env.BASE as string) || '/'
 const normalizedBase = baseFromEnv.endsWith('/') ? baseFromEnv : `${baseFromEnv}/`
 const escapedBase = escapeRegex(normalizedBase)
 
-function metaFilePath(locale: LocaleCode) {
-  return locale === DEFAULT_LOCALE ? 'docs/_generated/meta.json' : `docs/_generated/meta.${locale}.json`
-}
-
-const metaZh = loadMeta(metaFilePath('zh'))
-const metaEn = loadMeta(metaFilePath('en'))
+const metaZh = loadMeta('docs/_generated/meta.json')
+const metaEn = loadMeta('docs/_generated/meta.en.json')
 const manifestZh = loadNavManifest('zh')
 const manifestEn = loadNavManifest('en')
 const i18nMap = loadI18nTranslations()
 
 const cspTemplate = loadCspTemplate()
-const cspContent = serializeCsp(cspTemplate)
+const cspContent = cspTemplate ? serializeCsp(cspTemplate) : null
+const head: HeadConfig[] = [
+  ['meta', { name: 'referrer', content: 'no-referrer' }]
+]
+
+if (cspContent) {
+  head.unshift(['meta', { 'http-equiv': 'Content-Security-Policy', content: cspContent }])
+}
 const navigationAllowlist = [new RegExp(`^${escapedBase}`)]
 const pagefindPattern = new RegExp(`^${escapedBase}pagefind/`)
 const embeddingsJsonPattern = /embeddings-texts\.json$/
 const embeddingsWorkerPattern = /worker\/embeddings\.worker\.js$/
 
 type NavManifest = {
-  locale: LocaleCode
-  vitepressLocaleKey?: VitepressLocaleKey
+  locale: 'zh' | 'en'
   categories: Record<string, string>
   series: Record<string, string>
   tags: Record<string, string>
   archive: Record<string, string>
 }
 
-function navFromMeta(meta: any, manifest: NavManifest | null, locale: LocaleCode) {
+function navFromMeta(meta: any, manifest: NavManifest | null, locale: 'zh' | 'en') {
   if (!manifest) return legacyNavFromMeta(meta, locale)
 
   const t = i18nMap.nav[locale]
-  const manifestLocale = manifest.locale ?? locale
-  const vitepressLocaleKey = manifest.vitepressLocaleKey ?? vitepressKeyFromLocale(manifestLocale)
-  const prefix = vitepressLocaleKey === 'root' ? '' : `/${manifestLocale}`
+  const prefix = manifest.locale === 'en' ? '/en' : ''
   const collator = new Intl.Collator(locale === 'en' ? 'en' : 'zh-CN')
 
   const archiveYears = Object.keys(meta.byYear || {}).sort((a, b) => b.localeCompare(a))
@@ -166,7 +166,7 @@ function navFromMeta(meta: any, manifest: NavManifest | null, locale: LocaleCode
   return nav
 }
 
-function legacyNavFromMeta(meta: any, locale: LocaleCode) {
+function legacyNavFromMeta(meta: any, locale: 'zh' | 'en') {
   const t = i18nMap.nav[locale]
   const prefix = locale === DEFAULT_LOCALE ? '' : `/${locale}`
   const years = Object.keys(meta.byYear || {}).sort().reverse()
@@ -203,44 +203,48 @@ function legacyNavFromMeta(meta: any, locale: LocaleCode) {
   ]
 }
 
-function loadNavManifest(locale: LocaleCode): NavManifest | null {
-  const filename = locale === DEFAULT_LOCALE ? 'nav.manifest.zh.json' : manifestFileName(locale)
-  const file = `docs/_generated/${filename}`
-  try {
-    const raw = fs.readFileSync(file, 'utf8')
-    const parsed = JSON.parse(raw) as Partial<NavManifest> & {
-      locale?: string
-      vitepressLocaleKey?: string
-    }
-    const resolvedLocale = isLocaleCode(parsed.locale) ? parsed.locale : locale
-    const resolvedVitepressKey = isVitepressLocaleKey(parsed.vitepressLocaleKey)
-      ? parsed.vitepressLocaleKey
-      : resolvedLocale === DEFAULT_LOCALE
-        ? 'root'
-        : vitepressKeyFromLocale(resolvedLocale)
-    return {
-      locale: resolvedLocale,
-      vitepressLocaleKey: resolvedVitepressKey,
-      categories: parsed.categories ?? {},
-      series: parsed.series ?? {},
-      tags: parsed.tags ?? {},
-      archive: parsed.archive ?? {}
-    }
-  } catch (error) {
-    if (process.env.NODE_ENV !== 'production') {
-      console.warn(`[config] failed to load ${file}:`, error)
-    }
-    return null
+function loadNavManifest(localeId: 'zh' | 'en'): NavManifest | null {
+  const candidates = [`docs/_generated/nav.manifest.${localeId}.json`]
+  if (localeId === 'zh') {
+    candidates.push('docs/_generated/nav.manifest.root.json')
   }
+
+  let lastError: unknown = null
+
+  for (const file of candidates) {
+    try {
+      const raw = fs.readFileSync(file, 'utf8')
+      const parsed = JSON.parse(raw) as Partial<NavManifest> & { locale?: string }
+      const detectedLocale = parsed.locale === 'en' ? 'en' : 'zh'
+      return {
+        locale: detectedLocale,
+        categories: parsed.categories ?? {},
+        series: parsed.series ?? {},
+        tags: parsed.tags ?? {},
+        archive: parsed.archive ?? {}
+      }
+    } catch (error) {
+      lastError = error
+    }
+  }
+
+  if (lastError && process.env.NODE_ENV !== 'production') {
+    console.warn(
+      `[config] failed to load nav manifest for ${localeId} (candidates: ${candidates.join(', ')}):`,
+      lastError
+    )
+  }
+
+  return null
 }
 
 export default defineConfig({
   // Inject base from env to support GitHub Pages subpath deployment
   base: baseFromEnv,
-  head: [
-    ['meta', { 'http-equiv': 'Content-Security-Policy', content: cspContent }],
-    ['meta', { name: 'referrer', content: 'no-referrer' }]
-  ],
+  rewrites: {
+    'content/:path*': 'content.zh/:path*/index.md'
+  },
+  head,
   themeConfig: {
     socialLinks: [{ icon: 'github', link: 'https://github.com/shlxl/ling-atlas' }],
     // Disable the built-in locale dropdown to avoid linking to untranslated
