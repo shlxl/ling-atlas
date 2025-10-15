@@ -15,18 +15,33 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const ROOT = path.resolve(__dirname, '..')
 const OUTPUT_DIR = path.join(ROOT, 'docs', 'public', 'data')
 const OUTPUT_FILE = path.join(OUTPUT_DIR, 'embeddings.json')
-const LANG_SOURCES = [
-  {
-    code: 'zh',
-    dir: path.join(ROOT, 'docs', 'content'),
+const DOCS_DIR = path.join(ROOT, 'docs')
+const DEFAULT_LOCALE = 'zh'
+const detectedLocaleDirs = await globby('content.*', {
+  cwd: DOCS_DIR,
+  onlyDirectories: true
+})
+
+const LANG_SOURCES = detectedLocaleDirs
+  .map(dirName => {
+    const locale = dirName.slice('content.'.length)
+    if (!locale) return null
+    return {
+      code: locale,
+      dir: path.join(DOCS_DIR, dirName),
+      basePath: locale === DEFAULT_LOCALE ? '/content/' : `/${locale}/content/`
+    }
+  })
+  .filter(Boolean)
+  .sort((a, b) => (a.code === DEFAULT_LOCALE ? -1 : b.code === DEFAULT_LOCALE ? 1 : a.code.localeCompare(b.code)))
+
+if (!LANG_SOURCES.some(source => source.code === DEFAULT_LOCALE)) {
+  LANG_SOURCES.unshift({
+    code: DEFAULT_LOCALE,
+    dir: path.join(DOCS_DIR, `content.${DEFAULT_LOCALE}`),
     basePath: '/content/'
-  },
-  {
-    code: 'en',
-    dir: path.join(ROOT, 'docs', 'content.en'),
-    basePath: '/en/content/'
-  }
-]
+  })
+}
 
 function isDraft(frontmatter) {
   const { status, draft } = frontmatter || {}

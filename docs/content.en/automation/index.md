@@ -2,10 +2,10 @@
 title: Automating Deployments
 date: '2025-10-15'
 status: published
-category: Engineering Notes
-tags:
-  - automation
-  - workflow
+category_zh: 工程笔记
+tags_zh:
+  - 自动化
+  - 工作流
 series: Knowledge Ops
 series_slug: knowledge-ops
 slug: automation-playbook
