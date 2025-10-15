@@ -1,4 +1,4 @@
-import { defineConfig } from 'vitepress'
+import { defineConfig, type HeadConfig } from 'vitepress'
 import cssnano from 'cssnano'
 import fs from 'node:fs'
 import { VitePWA } from 'vite-plugin-pwa'
@@ -65,7 +65,14 @@ const manifestEn = loadNavManifest('en')
 const i18nMap = loadI18nTranslations()
 
 const cspTemplate = loadCspTemplate()
-const cspContent = serializeCsp(cspTemplate)
+const cspContent = cspTemplate ? serializeCsp(cspTemplate) : null
+const head: HeadConfig[] = [
+  ['meta', { name: 'referrer', content: 'no-referrer' }]
+]
+
+if (cspContent) {
+  head.unshift(['meta', { 'http-equiv': 'Content-Security-Policy', content: cspContent }])
+}
 const navigationAllowlist = [new RegExp(`^${escapedBase}`)]
 const pagefindPattern = new RegExp(`^${escapedBase}pagefind/`)
 const embeddingsJsonPattern = /embeddings-texts\.json$/
@@ -237,10 +244,7 @@ export default defineConfig({
   rewrites: {
     'content/:path*': 'content.zh/:path*/index.md'
   },
-  head: [
-    ['meta', { 'http-equiv': 'Content-Security-Policy', content: cspContent }],
-    ['meta', { name: 'referrer', content: 'no-referrer' }]
-  ],
+  head,
   themeConfig: {
     socialLinks: [{ icon: 'github', link: 'https://github.com/shlxl/ling-atlas' }],
     // Disable the built-in locale dropdown to avoid linking to untranslated

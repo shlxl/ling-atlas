@@ -26,12 +26,12 @@ export {
 } from './pagegen.locales.mjs'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
-const DOCS = path.join(__dirname, '..', 'docs')
-const GEN = path.join(DOCS, '_generated')
-const PUB = path.join(DOCS, 'public')
+const DOCS_DIR = path.join(__dirname, '..', 'docs')
+const GENERATED_DIR = path.join(DOCS_DIR, '_generated')
+const PUBLIC_DIR = path.join(DOCS_DIR, 'public')
 
-await fs.mkdir(GEN, { recursive: true })
-await fs.mkdir(PUB, { recursive: true })
+await fs.mkdir(GENERATED_DIR, { recursive: true })
+await fs.mkdir(PUBLIC_DIR, { recursive: true })
 
 const LOCALE_CONFIG = [
   {
@@ -40,8 +40,8 @@ const LOCALE_CONFIG = [
     vitepressLocaleId: 'root',
     manifestLocale: 'zh',
     aliasLocaleIds: ['root'],
-    contentDir: path.join(DOCS, 'content.zh'),
-    outMeta: path.join(GEN, 'meta.json'),
+    contentDir: path.join(DOCS_DIR, 'content.zh'),
+    outMeta: path.join(GENERATED_DIR, 'meta.json'),
     basePath: '/content/',
     genPrefix: '',
     rssFile: 'rss.xml',
@@ -68,8 +68,8 @@ const LOCALE_CONFIG = [
     vitepressLocaleId: 'en',
     manifestLocale: 'en',
     aliasLocaleIds: [],
-    contentDir: path.join(DOCS, 'content.en'),
-    outMeta: path.join(GEN, 'meta.en.json'),
+    contentDir: path.join(DOCS_DIR, 'content.en'),
+    outMeta: path.join(GENERATED_DIR, 'meta.en.json'),
     basePath: '/en/content/',
     genPrefix: 'en',
     rssFile: 'rss-en.xml',
@@ -94,6 +94,27 @@ const LOCALE_CONFIG = [
 
 const i18nPairs = new Map()
 const navManifest = new Map()
+
+function getLocaleKeys(lang) {
+  const keys = new Set([lang.manifestLocale, ...(lang.aliasLocaleIds || [])])
+  return Array.from(keys)
+}
+
+const localeAliasMap = new Map(LOCALE_CONFIG.map(lang => [lang.manifestLocale, lang.aliasLocaleIds || []]))
+
+function expandLocalePaths(localePaths) {
+  const next = { ...(localePaths || {}) }
+  for (const [locale, targetPath] of Object.entries(localePaths || {})) {
+    const aliases = localeAliasMap.get(locale) || []
+    for (const alias of aliases) {
+      if (!alias) continue
+      if (!(alias in next) && targetPath) {
+        next[alias] = targetPath
+      }
+    }
+  }
+  return next
+}
 
 function getLocaleKeys(lang) {
   const keys = new Set([lang.manifestLocale, ...(lang.aliasLocaleIds || [])])
@@ -280,14 +301,14 @@ async function syncLocaleContent() {
   for (const lang of LOCALE_CONFIG) {
     if (!(await exists(lang.contentDir))) continue
     if (lang.isDefault) {
-      const target = path.join(DOCS, 'content')
+      const target = path.join(DOCS_DIR, 'content')
       await fs.rm(target, { recursive: true, force: true })
       await fs.mkdir(target, { recursive: true })
       await fs.cp(lang.contentDir, target, { recursive: true })
       continue
     }
 
-    const targetRoot = path.join(DOCS, lang.code)
+    const targetRoot = path.join(DOCS_DIR, lang.code)
     const target = path.join(targetRoot, 'content')
     await fs.mkdir(targetRoot, { recursive: true })
     await fs.rm(target, { recursive: true, force: true })
@@ -384,7 +405,8 @@ function mdList(items, lang) {
 
 async function writeCollections(lang, meta) {
   const write = async (subdir, name, title, items) => {
-    const outDir = path.join(lang.generatedDir, subdir, name)
+    const targetRoot = lang.genPrefix ? path.join(DOCS_DIR, lang.genPrefix, '_generated') : GENERATED_DIR
+    const outDir = path.join(targetRoot, subdir, name)
     await fs.mkdir(outDir, { recursive: true })
     const md = `---\ntitle: ${title}\n---\n\n${mdList(items, lang)}\n`
     await fs.writeFile(path.join(outDir, 'index.md'), md)
@@ -429,7 +451,7 @@ async function genRSS(lang, items) {
     )
   }
   feed.push(`</channel></rss>`)
-  await fs.writeFile(path.join(PUB, lang.rssFile), feed.join(''))
+  await fs.writeFile(path.join(PUBLIC_DIR, lang.rssFile), feed.join(''))
 }
 
 async function genSitemap(lang, items) {
@@ -438,7 +460,7 @@ async function genSitemap(lang, items) {
     .map(post => `<url><loc>${siteOrigin}${post.path}</loc><lastmod>${post.updated || post.date}</lastmod></url>`)
     .join('')
   const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${urls}</urlset>`
-  await fs.writeFile(path.join(PUB, lang.sitemapFile), xml)
+  await fs.writeFile(path.join(PUBLIC_DIR, lang.sitemapFile), xml)
 }
 
 function escapeXml(s) {
@@ -581,7 +603,7 @@ async function writeI18nMap() {
     if (locales.length < 2) continue
     out[key] = value
   }
-  await fs.writeFile(path.join(PUB, 'i18n-map.json'), JSON.stringify(out, null, 2))
+  await fs.writeFile(path.join(PUBLIC_DIR, 'i18n-map.json'), JSON.stringify(out, null, 2))
 }
 
 async function loadTagAlias() {
@@ -628,7 +650,7 @@ async function writeNavManifests() {
     }
     const json = `${JSON.stringify(payload, null, 2)}\n`
     const file = `nav.manifest.${lang.manifestLocale}.json`
-    await fs.writeFile(path.join(GEN, file), json)
-    await fs.writeFile(path.join(PUB, file), json)
+    await fs.writeFile(path.join(GENERATED_DIR, file), json)
+    await fs.writeFile(path.join(PUBLIC_DIR, file), json)
   }
 }
