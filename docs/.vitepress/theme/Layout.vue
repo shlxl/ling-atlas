@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { computed, defineAsyncComponent, onMounted, ref } from 'vue'
-import { useRouter, useData } from 'vitepress'
+import { useRouter } from 'vitepress'
 import DefaultTheme from 'vitepress/dist/client/theme-default/without-fonts'
 import SearchBox from './components/SearchBox.vue'
+import LocaleToggleButton from './components/LocaleToggleButton.vue'
 import { initTelemetry, setupTelemetryRouterHook } from './telemetry'
 import { useRegisterSW } from 'virtual:pwa-register/vue'
 import { useI18nRouting } from './i18nRouting'
@@ -13,7 +14,7 @@ const needRefresh = ref(false)
 const chatOpen = ref(false)
 const activeLocale = ref('root')
 
-const { ensureLocaleMap, availableLocales, detectLocaleFromPath, resolveLocaleLink } = useI18nRouting()
+const { ensureLocaleMap, detectLocaleFromPath } = useI18nRouting()
 
 let updateServiceWorker: (reloadPage?: boolean) => Promise<void>
 
@@ -37,20 +38,6 @@ const bannerMessage = computed(() => {
 })
 
 const ChatWidget = defineAsyncComponent(() => import('./components/ChatWidget.vue'))
-
-const nextLocaleId = computed(() => {
-  const list = availableLocales.value
-  if (!list.length) return ''
-  const currentIndex = Math.max(list.indexOf(activeLocale.value), 0)
-  const nextIndex = (currentIndex + 1) % list.length
-  return list[nextIndex]
-})
-
-const languageButtonLabel = computed(() => {
-  const target = nextLocaleId.value
-  if (!target) return ''
-  return site.value?.locales?.[target]?.label || target
-})
 
 const chatLabels: Record<string, string> = { root: '知识问答', en: 'Knowledge Chat' }
 const chatButtonLabel = computed(() => chatLabels[activeLocale.value] || chatLabels.en)
@@ -79,28 +66,8 @@ function updateLocale(path: string) {
   activeLocale.value = detectLocaleFromPath(path)
 }
 
-function switchLocale() {
-  const list = availableLocales.value
-  if (!list.length) return
-  const currentIndex = Math.max(list.indexOf(activeLocale.value), 0)
-  const targetIndex = (currentIndex + 1) % list.length
-  const target = list[targetIndex]
-  const resolved = resolveLocaleLink(router.route.path, target, activeLocale.value)
-  if (typeof window !== 'undefined') {
-    window.location.replace(target)
-  } else {
-    router.go(resolved)
-  }
-}
-
-function switchLocale() {
-  const list = availableLocales.value
-  if (!list.length) return
-  const currentIndex = Math.max(list.indexOf(activeLocale.value), 0)
-  const targetIndex = (currentIndex + 1) % list.length
-  const target = list[targetIndex]
-  const resolved = resolveLocaleLink(router.route.path, target, activeLocale.value)
-  redirectTo(resolved)
+function handleRouteChange(path: string) {
+  updateLocale(path)
 }
 </script>
 
@@ -109,9 +76,7 @@ function switchLocale() {
     <template #nav-bar-content-after>
       <div class="la-search-wrapper">
         <SearchBox />
-        <button class="la-lang-btn" type="button" @click="handleLocaleSwitch">
-          {{ languageButtonLabel }}
-        </button>
+        <LocaleToggleButton />
       </div>
     </template>
     <template #layout-bottom>
