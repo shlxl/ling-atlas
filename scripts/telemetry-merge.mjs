@@ -5,6 +5,7 @@ const ROOT = process.cwd()
 const TMP_PATH = path.join(ROOT, 'data', 'telemetry.tmp.json')
 const DATA_PATH = path.join(ROOT, 'data', 'telemetry.json')
 const DIST_PATH = path.join(ROOT, 'docs/.vitepress/dist/telemetry.json')
+const PUBLIC_PATH = path.join(ROOT, 'docs/public/telemetry.json')
 const TOP_LIMIT = 100
 
 function defaultState() {
@@ -53,6 +54,39 @@ async function ensureDataFileExists() {
   }
 }
 
+async function hasBuiltHtml(dir) {
+  const stack = [dir]
+  while (stack.length) {
+    const current = stack.pop()
+    let entries
+    try {
+      entries = await fs.readdir(current, { withFileTypes: true })
+    } catch (err) {
+      if (err.code === 'ENOENT') return false
+      throw err
+    }
+    for (const entry of entries) {
+      if (entry.isFile() && entry.name.endsWith('.html')) return true
+      if (entry.isDirectory()) stack.push(path.join(current, entry.name))
+    }
+  }
+  return false
+}
+
+async function writeOutputs(data) {
+  const payload = JSON.stringify(data, null, 2)
+  await fs.mkdir(path.dirname(PUBLIC_PATH), { recursive: true })
+  await fs.writeFile(PUBLIC_PATH, payload, 'utf8')
+
+  const distRoot = path.dirname(DIST_PATH)
+  if (await hasBuiltHtml(distRoot)) {
+    await fs.mkdir(path.dirname(DIST_PATH), { recursive: true })
+    await fs.writeFile(DIST_PATH, payload, 'utf8')
+  } else {
+    console.warn('[telemetry] skipped dist telemetry export: no built HTML detected yet')
+  }
+}
+
 function updateDerivedSections(state) {
   const pathsEntries = Object.entries(state._internal.paths)
     .sort((a, b) => b[1] - a[1])
@@ -92,8 +126,7 @@ async function main(){
   } catch {
     // no tmp file, just ensure dist output exists
     updateDerivedSections(state)
-    await fs.mkdir(path.dirname(DIST_PATH), { recursive: true })
-    await fs.writeFile(DIST_PATH, JSON.stringify(sanitizeForPublic(state), null, 2), 'utf8')
+    await writeOutputs(sanitizeForPublic(state))
     return
   }
 
@@ -121,11 +154,10 @@ async function main(){
   updateDerivedSections(state)
 
   await fs.writeFile(DATA_PATH, JSON.stringify(state, null, 2), 'utf8')
-  await fs.mkdir(path.dirname(DIST_PATH), { recursive: true })
-  await fs.writeFile(DIST_PATH, JSON.stringify(sanitizeForPublic(state), null, 2), 'utf8')
+  await writeOutputs(sanitizeForPublic(state))
 
   await fs.unlink(TMP_PATH).catch(() => {})
-  console.log('[telemetry] merged telemetry.tmp.json into telemetry.json')
+  console.log('[telemetry] published telemetry snapshot')
 }
 
 main().catch(err => {
