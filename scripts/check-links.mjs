@@ -1,7 +1,7 @@
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import { globby } from 'globby'
-import { DEFAULT_LOCALE, LOCALE_REGISTRY } from './pagegen.locales.mjs'
+import matter from 'gray-matter'
 
 const ROOT = process.cwd()
 const DOCS_DIR = path.join(ROOT, 'docs')
@@ -34,6 +34,7 @@ const LOCALE_SEARCH_ROOTS = new Map([
 ])
 
 let localePrefixes = [...FALLBACK_LOCALE_PREFIXES, { locale: ROOT_LOCALE, prefix: '/' }]
+const CONTENT_CACHE = new Map()
 const DEFAULT_MANIFESTS = [
   {
     locale: 'zh',
@@ -124,6 +125,14 @@ async function validateInternalLink(url, filePath) {
     const mdBase = path.join(combo.base, combo.rel)
     if (await fileExists(mdBase + '.md')) return true
     if (await fileExists(path.join(mdBase, 'index.md'))) return true
+  }
+
+  const generatedMatch = normalizedRelative.match(/^_generated\/([^/]+)\/([^/]+)\/?$/)
+  if (generatedMatch) {
+    const [, type, rawSlug] = generatedMatch
+    const slugValue = decodeURIComponent(rawSlug)
+    const backed = await hasBackingContent(locale, type, slugValue)
+    if (backed) return true
   }
 
   const candidateDist = path.join(DIST_DIR, clean)
@@ -271,4 +280,129 @@ function deriveLocalePrefixes(manifestInfos) {
   return Array.from(seen.entries())
     .flatMap(([locale, prefixes]) => Array.from(prefixes).map(prefix => ({ locale, prefix })))
     .sort((a, b) => (b.prefix?.length || 0) - (a.prefix?.length || 0))
+}
+
+const LOCALE_CONTENT_FIELDS = {
+  zh: {
+    category: ['category_zh', 'category'],
+    tags: ['tags_zh', 'tags'],
+    series: ['series'],
+    seriesSlug: ['series_slug'],
+    contentDir: path.join(DOCS_DIR, 'content.zh')
+  },
+  en: {
+    category: ['category_en', 'category'],
+    tags: ['tags_en', 'tags'],
+    series: ['series_en', 'series'],
+    seriesSlug: ['series_slug_en', 'series_slug', 'series_en', 'series'],
+    contentDir: path.join(DOCS_DIR, 'content.en')
+  }
+}
+
+function slug(input) {
+  return String(input || '')
+    .normalize('NFKD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^\p{Letter}\p{Number}]+/gu, '-')
+    .replace(/(^-|-$)/g, '')
+    .toLowerCase()
+}
+
+function pickField(names, data) {
+  if (!names) return undefined
+  const list = Array.isArray(names) ? names : [names]
+  for (const key of list) {
+    if (key in data && data[key] != null) return data[key]
+  }
+  return undefined
+}
+
+function toArray(input) {
+  if (Array.isArray(input)) return input
+  if (typeof input === 'string') {
+    return input
+      .split(/[,，]/)
+      .map(item => item.trim())
+      .filter(Boolean)
+  }
+  return []
+}
+
+async function hasBackingContent(locale, type, slugValue) {
+  if (!locale || !type || !slugValue) return false
+  const index = await getContentIndex(locale)
+  if (!index) return false
+
+  const normalizedSlug = slug(slugValue)
+  switch (type) {
+    case 'categories':
+      return index.categories.has(normalizedSlug)
+    case 'series':
+      return index.series.has(normalizedSlug)
+    case 'tags':
+      return index.tags.has(normalizedSlug)
+    case 'archive':
+      return index.archive.has(slugValue)
+    default:
+      return false
+  }
+}
+
+async function getContentIndex(locale) {
+  if (CONTENT_CACHE.has(locale)) return CONTENT_CACHE.get(locale)
+  const fields = LOCALE_CONTENT_FIELDS[locale]
+  if (!fields) {
+    CONTENT_CACHE.set(locale, null)
+    return null
+  }
+
+  const { contentDir } = fields
+  if (!(await fileExists(contentDir))) {
+    CONTENT_CACHE.set(locale, {
+      categories: new Set(),
+      series: new Set(),
+      tags: new Set(),
+      archive: new Set()
+    })
+    return CONTENT_CACHE.get(locale)
+  }
+
+  const files = await globby('**/index.md', { cwd: contentDir })
+  const index = {
+    categories: new Set(),
+    series: new Set(),
+    tags: new Set(),
+    archive: new Set()
+  }
+
+  for (const relative of files) {
+    const filePath = path.join(contentDir, relative)
+    const raw = await fs.readFile(filePath, 'utf8')
+    const { data } = matter(raw)
+
+    const categoryValue = pickField(fields.category, data) || 'Uncategorized'
+    if (categoryValue) {
+      index.categories.add(slug(categoryValue))
+    }
+
+    const seriesValue = pickField(fields.series, data)
+    if (seriesValue) {
+      const seriesSlug = slug(pickField(fields.seriesSlug, data) || seriesValue)
+      if (seriesSlug) index.series.add(seriesSlug)
+    }
+
+    const tagsValue = toArray(pickField(fields.tags, data))
+    for (const tag of tagsValue) {
+      const tagSlug = slug(tag)
+      if (tagSlug) index.tags.add(tagSlug)
+    }
+
+    const updated = data.updated || data.date
+    if (typeof updated === 'string' && updated.length >= 4) {
+      index.archive.add(updated.slice(0, 4))
+    }
+  }
+
+  CONTENT_CACHE.set(locale, index)
+  return index
 }
