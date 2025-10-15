@@ -9,6 +9,12 @@ const GENERATED_DIR = path.join(ROOT, 'docs/_generated')
 const DIST_DIR = path.join(ROOT, 'docs/.vitepress/dist')
 let distReady = false
 const INTERNAL_PREFIXES = ['/', './', '../']
+const DEFAULT_LOCALE = 'zh'
+const FALLBACK_LOCALE_PREFIXES = [
+  { locale: 'en', prefix: '/en/' }
+]
+
+let localePrefixes = [...FALLBACK_LOCALE_PREFIXES, { locale: DEFAULT_LOCALE, prefix: '/' }]
 const DEFAULT_MANIFESTS = [
   {
     locale: 'zh',
@@ -42,16 +48,20 @@ function normalizeInternal(url) {
 }
 
 function stripLocalePrefix(url) {
-  const normalized = url.startsWith('/') ? url : `/${url.replace(/^\/+/, '')}`
-  for (const entry of localePrefixes) {
-    if (normalized === entry.prefix.slice(0, -1)) {
-      return { relative: '', locale: entry.locale }
+  for (const { locale, prefix } of localePrefixes) {
+    if (!prefix) continue
+    const sliceIndex = prefix === '/' ? 1 : prefix.length
+    if (prefix === '/') {
+      if (!url.startsWith('/')) continue
+      return { relative: url.slice(sliceIndex), locale }
     }
-    if (normalized.startsWith(entry.prefix)) {
-      return { relative: normalized.slice(entry.prefix.length), locale: entry.locale }
+    if (url.startsWith(prefix)) {
+      return { relative: url.slice(sliceIndex), locale }
     }
   }
-  return { relative: normalized.replace(/^\//, ''), locale: DEFAULT_LOCALE }
+
+  if (url.startsWith('/')) return { relative: url.slice(1), locale: DEFAULT_LOCALE }
+  return { relative: url.replace(/^\/+/, ''), locale: DEFAULT_LOCALE }
 }
 
 async function validateInternalLink(url, filePath) {
@@ -118,6 +128,9 @@ async function checkFile(filePath) {
 
 async function main() {
   distReady = await fileExists(path.join(DIST_DIR, 'index.html'))
+  const manifestInfos = await collectManifestInfos()
+  localePrefixes = deriveLocalePrefixes(manifestInfos)
+
   const files = await globby(['docs/**/*.md', '!docs/en/_generated/**/*'], { cwd: ROOT })
   const errors = []
   for (const file of files) {
@@ -125,7 +138,6 @@ async function main() {
     const fileErrors = await checkFile(filePath)
     errors.push(...fileErrors)
   }
-  const manifestInfos = await collectManifestInfos()
   const manifestErrors = await validateNavManifests(manifestInfos)
   errors.push(...manifestErrors)
   if (errors.length) {
@@ -204,4 +216,35 @@ function extractLocaleFromManifest(filePath) {
     return match[1] === 'root' ? 'zh' : match[1]
   }
   return 'zh'
+}
+
+function deriveLocalePrefixes(manifestInfos) {
+  const seen = new Map()
+
+  for (const entry of FALLBACK_LOCALE_PREFIXES) {
+    if (!entry?.locale || !entry?.prefix) continue
+    const set = seen.get(entry.locale) ?? new Set()
+    set.add(entry.prefix)
+    seen.set(entry.locale, set)
+  }
+
+  for (const info of manifestInfos) {
+    if (!info?.locale) continue
+    const locale = info.locale
+    const set = seen.get(locale) ?? new Set()
+    if (locale === DEFAULT_LOCALE) {
+      set.add('/')
+    } else {
+      set.add(`/${locale}/`)
+    }
+    seen.set(locale, set)
+  }
+
+  if (!seen.has(DEFAULT_LOCALE)) {
+    seen.set(DEFAULT_LOCALE, new Set(['/']))
+  }
+
+  return Array.from(seen.entries())
+    .flatMap(([locale, prefixes]) => Array.from(prefixes).map(prefix => ({ locale, prefix })))
+    .sort((a, b) => (b.prefix?.length || 0) - (a.prefix?.length || 0))
 }
