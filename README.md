@@ -66,12 +66,18 @@ npm run dev
 
 ## 安全与索引
 - `.well-known/security-headers.txt`：`npm run build:search` 会自动更新并同步到发布目录，同时在静态页面注入 CSP `<meta>`。
+- CSP `<meta>` 会跳过 `frame-ancestors` 指令（浏览器限制），构建时会输出警告，部署到生产环境时请通过服务器响应头追加该指令。
 - `.well-known/sri-manifest.json`：记录外部资源的 SRI；若 CDN 内容变更但未更新 `security/sri-allowlist.json`，CI 会直接失败。
 - `docs/public/robots.txt`：默认禁止抓取 `/data/`、`/admin/`，并指向站点 `sitemap.xml`。
 - `docs/public/sitemap.xml`：由 PageGen 生成，保持与 robots 中链接一致。
 - AI 自演进产物：`docs/public/data/embeddings.json`、`summaries.json`、`qa.json`，CI/构建阶段自动刷新，失败不阻断主流程。
 - 搜索评测：`data/gold.jsonl` 维护标注，`node scripts/eval/offline.mjs` 运行离线指标；线上调试可通过 `?variant=lex|rrf|rrf-mmr` 切换，与默认 `rrf-mmr` 做 Team Draft 交替曝光，点击偏好会记录匿名 hash 与位次。
 - 多语言：`docs/content` 与 `docs/content.en` 互为镜像，`npm run gen` 会复制英文章到 `docs/en/` 并产出 `/en/_generated/**`、`rss-en.xml`、`sitemap-en.xml`。导航与搜索根据路径自动切换语言，缺少对应页面时跳转到 `/en/`/`/` 首页。
+  - 导航栏中有两类语言切换：
+    1. **VitePress 默认下拉菜单**（`localeLinks`），负责跳转到当前页面的另一语言版本，但只在两侧都有对等文章时才安全；因此配置中默认关闭该下拉，以免聚合页落到缺失的 slug 导致 404。
+    2. **自定义按钮**（`LocaleToggleButton.vue`），与亮/暗色主题开关类似，读取 `docs/public/i18n-map.json` 并在缺少映射时回退到各语言首页，确保始终可用。
+  - 两者共享同一份语言配置，但逻辑完全独立；保留按钮、关闭下拉即可避免依赖关系导致的 404 问题。
+- `scripts/postbuild-pwa.mjs` 会在 `npm run build` 结束后补全 Workbox 预缓存的 HTML 列表，确保 Service Worker 导航回退不会再触发 `non-precached-url` 错误。
 - 供应链：CI 默认 `npm ci` 安装，审计输出（`npm run audit`、`npm run license`）可追踪依赖风险；`npm run sbom` 及构建流程会生成 `docs/public/.well-known/sbom.json`，SRI 哈希变化需先更新 allowlist，否则脚本将阻断。
 
 ## 约定
