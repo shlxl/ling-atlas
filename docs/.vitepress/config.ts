@@ -2,6 +2,15 @@ import { defineConfig } from 'vitepress'
 import cssnano from 'cssnano'
 import fs from 'node:fs'
 import { VitePWA } from 'vite-plugin-pwa'
+import {
+  DEFAULT_LOCALE,
+  LocaleCode,
+  VitepressLocaleKey,
+  manifestFileName,
+  isLocaleCode,
+  isVitepressLocaleKey,
+  vitepressKeyFromLocale
+} from './theme/locales'
 
 function loadCspTemplate() {
   try {
@@ -49,9 +58,13 @@ const baseFromEnv = (process.env.BASE as string) || '/'
 const normalizedBase = baseFromEnv.endsWith('/') ? baseFromEnv : `${baseFromEnv}/`
 const escapedBase = escapeRegex(normalizedBase)
 
-const metaZh = loadMeta('docs/_generated/meta.json')
-const metaEn = loadMeta('docs/_generated/meta.en.json')
-const manifestZh = loadNavManifest('root')
+function metaFilePath(locale: LocaleCode) {
+  return locale === DEFAULT_LOCALE ? 'docs/_generated/meta.json' : `docs/_generated/meta.${locale}.json`
+}
+
+const metaZh = loadMeta(metaFilePath('zh'))
+const metaEn = loadMeta(metaFilePath('en'))
+const manifestZh = loadNavManifest('zh')
 const manifestEn = loadNavManifest('en')
 const i18nMap = loadI18nTranslations()
 
@@ -63,18 +76,21 @@ const embeddingsJsonPattern = /embeddings-texts\.json$/
 const embeddingsWorkerPattern = /worker\/embeddings\.worker\.js$/
 
 type NavManifest = {
-  locale: 'root' | 'en'
+  locale: LocaleCode
+  vitepressLocaleKey?: VitepressLocaleKey
   categories: Record<string, string>
   series: Record<string, string>
   tags: Record<string, string>
   archive: Record<string, string>
 }
 
-function navFromMeta(meta: any, manifest: NavManifest | null, locale: 'zh' | 'en') {
+function navFromMeta(meta: any, manifest: NavManifest | null, locale: LocaleCode) {
   if (!manifest) return legacyNavFromMeta(meta, locale)
 
   const t = i18nMap.nav[locale]
-  const prefix = manifest.locale === 'en' ? '/en' : ''
+  const manifestLocale = manifest.locale ?? locale
+  const vitepressLocaleKey = manifest.vitepressLocaleKey ?? vitepressKeyFromLocale(manifestLocale)
+  const prefix = vitepressLocaleKey === 'root' ? '' : `/${manifestLocale}`
   const collator = new Intl.Collator(locale === 'en' ? 'en' : 'zh-CN')
 
   const archiveYears = Object.keys(meta.byYear || {}).sort((a, b) => b.localeCompare(a))
@@ -150,9 +166,9 @@ function navFromMeta(meta: any, manifest: NavManifest | null, locale: 'zh' | 'en
   return nav
 }
 
-function legacyNavFromMeta(meta: any, locale: 'zh' | 'en') {
+function legacyNavFromMeta(meta: any, locale: LocaleCode) {
   const t = i18nMap.nav[locale]
-  const prefix = locale === 'en' ? '/en' : ''
+  const prefix = locale === DEFAULT_LOCALE ? '' : `/${locale}`
   const years = Object.keys(meta.byYear || {}).sort().reverse()
   const firstTag = Object.keys(meta.byTag || {})[0] || 'all'
   return [
@@ -187,14 +203,24 @@ function legacyNavFromMeta(meta: any, locale: 'zh' | 'en') {
   ]
 }
 
-function loadNavManifest(localeId: 'root' | 'en'): NavManifest | null {
-  const file = `docs/_generated/nav.manifest.${localeId}.json`
+function loadNavManifest(locale: LocaleCode): NavManifest | null {
+  const filename = locale === DEFAULT_LOCALE ? 'nav.manifest.zh.json' : manifestFileName(locale)
+  const file = `docs/_generated/${filename}`
   try {
     const raw = fs.readFileSync(file, 'utf8')
-    const parsed = JSON.parse(raw) as Partial<NavManifest> & { locale?: string }
-    const targetLocale = parsed.locale === 'en' ? 'en' : localeId
+    const parsed = JSON.parse(raw) as Partial<NavManifest> & {
+      locale?: string
+      vitepressLocaleKey?: string
+    }
+    const resolvedLocale = isLocaleCode(parsed.locale) ? parsed.locale : locale
+    const resolvedVitepressKey = isVitepressLocaleKey(parsed.vitepressLocaleKey)
+      ? parsed.vitepressLocaleKey
+      : resolvedLocale === DEFAULT_LOCALE
+        ? 'root'
+        : vitepressKeyFromLocale(resolvedLocale)
     return {
-      locale: targetLocale,
+      locale: resolvedLocale,
+      vitepressLocaleKey: resolvedVitepressKey,
       categories: parsed.categories ?? {},
       series: parsed.series ?? {},
       tags: parsed.tags ?? {},

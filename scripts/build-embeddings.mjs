@@ -6,10 +6,11 @@ import matter from 'gray-matter'
 
 const ROOT = process.cwd()
 const OUT_PATH = path.join(ROOT, 'docs', 'public', 'embeddings-texts.json')
+const DEFAULT_LOCALE = 'zh'
 const LANG_SOURCES = [
   {
-    code: 'zh',
-    dir: path.join(ROOT, 'docs', 'content'),
+    code: DEFAULT_LOCALE,
+    dir: path.join(ROOT, 'docs', `content.${DEFAULT_LOCALE}`),
     basePath: '/content/'
   },
   {

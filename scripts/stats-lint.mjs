@@ -2,7 +2,8 @@ import fs from 'node:fs/promises'
 import { globby } from 'globby'
 import matter from 'gray-matter'
 
-const files = await globby('docs/content/**/index.md')
+const DEFAULT_LOCALE = 'zh'
+const files = await globby(`docs/content.${DEFAULT_LOCALE}/**/index.md`)
 const cat = new Map(), tag = new Map()
 
 for (const f of files) {
