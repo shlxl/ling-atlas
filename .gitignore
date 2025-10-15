@@ -13,6 +13,8 @@ docs/public/sitemap-en.xml
 docs/public/embeddings-texts.json
 docs/public/i18n-map.json
 data/telemetry.tmp.json
+docs/public/pagefind/
+docs/public/.well-known/
 
 # generated pages
 docs/_generated/

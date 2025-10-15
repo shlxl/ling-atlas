@@ -50,6 +50,7 @@ const normalizedBase = baseFromEnv.endsWith('/') ? baseFromEnv : `${baseFromEnv}
 const escapedBase = escapeRegex(normalizedBase)
 
 const metaZh = loadMeta('docs/_generated/meta.json')
+const metaEn = loadMeta('docs/_generated/meta.en.json')
 const i18nMap = loadI18nTranslations()
 
 const cspTemplate = loadCspTemplate()
@@ -121,6 +122,18 @@ export default defineConfig({
         sidebar: 'auto',
         lightModeSwitchTitle: '切换到浅色模式',
         darkModeSwitchTitle: '切换到深色模式'
+      }
+    },
+    en: {
+      label: 'English',
+      lang: 'en-US',
+      title: 'Ling Atlas · Personal Knowledge Base',
+      description: 'A modern, evolvable, and searchable knowledge base project',
+      themeConfig: {
+        nav: navFromMeta(metaEn, 'en'),
+        sidebar: 'auto',
+        lightModeSwitchTitle: 'Switch to light mode',
+        darkModeSwitchTitle: 'Switch to dark mode'
       }
     }
   },

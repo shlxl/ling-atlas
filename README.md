@@ -72,7 +72,7 @@ npm run dev
 - `docs/public/sitemap.xml`：由 PageGen 生成，保持与 robots 中链接一致。
 - AI 自演进产物：`docs/public/data/embeddings.json`、`summaries.json`、`qa.json`，CI/构建阶段自动刷新，失败不阻断主流程。
 - 搜索评测：`data/gold.jsonl` 维护标注，`node scripts/eval/offline.mjs` 运行离线指标；线上调试可通过 `?variant=lex|rrf|rrf-mmr` 切换，与默认 `rrf-mmr` 做 Team Draft 交替曝光，点击偏好会记录匿名 hash 与位次。
-- 多语言：`docs/content` 与 `docs/content.en` 互为镜像，`npm run gen` 会复制英文章到 `docs/en/` 并产出 `/en/_generated/**`、`rss-en.xml`、`sitemap-en.xml`。导航与搜索根据路径自动切换语言，缺少对应页面时跳转到 `/en/`/`/` 首页。
+- 多语言：`docs/content` 与 `docs/content.en` 互为镜像，`npm run gen` 会复制英文章到 `docs/en/` 并产出 `/en/_generated/**`、`rss-en.xml`、`sitemap-en.xml`。导航与搜索根据路径自动切换语言，并通过分离中英文元数据确保了导航菜单（如分类、系列）只显示当前语言下存在内容的页面。缺少对应页面时则通过 404 页面回退到 /en/`/` 首页。
   - 导航栏中有两类语言切换：
     1. **VitePress 默认下拉菜单**（`localeLinks`），负责跳转到当前页面的另一语言版本，但只在两侧都有对等文章时才安全；因此配置中默认关闭该下拉，以免聚合页落到缺失的 slug 导致 404。
     2. **自定义按钮**（`LocaleToggleButton.vue`），与亮/暗色主题开关类似，读取 `docs/public/i18n-map.json` 并在缺少映射时回退到各语言首页，确保始终可用。
