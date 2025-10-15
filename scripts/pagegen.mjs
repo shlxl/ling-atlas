@@ -13,11 +13,14 @@ const PUB = path.join(DOCS, 'public')
 await fs.mkdir(GEN, { recursive: true })
 await fs.mkdir(PUB, { recursive: true })
 
-const LANG_CONFIG = [
+const LOCALE_CONFIG = [
   {
     code: 'zh',
-    localeId: 'root',
-    contentDir: path.join(DOCS, 'content'),
+    isDefault: true,
+    vitepressLocaleId: 'root',
+    manifestLocale: 'zh',
+    aliasLocaleIds: ['root'],
+    contentDir: path.join(DOCS, 'content.zh'),
     outMeta: path.join(GEN, 'meta.json'),
     basePath: '/content/',
     genPrefix: '',
@@ -41,7 +44,10 @@ const LANG_CONFIG = [
   },
   {
     code: 'en',
-    localeId: 'en',
+    isDefault: false,
+    vitepressLocaleId: 'en',
+    manifestLocale: 'en',
+    aliasLocaleIds: [],
     contentDir: path.join(DOCS, 'content.en'),
     outMeta: path.join(GEN, 'meta.en.json'),
     basePath: '/en/content/',
@@ -67,6 +73,28 @@ const LANG_CONFIG = [
 ]
 
 const i18nPairs = new Map()
+const navManifest = new Map()
+
+function getLocaleKeys(lang) {
+  const keys = new Set([lang.manifestLocale, ...(lang.aliasLocaleIds || [])])
+  return Array.from(keys)
+}
+
+const localeAliasMap = new Map(LOCALE_CONFIG.map(lang => [lang.manifestLocale, lang.aliasLocaleIds || []]))
+
+function expandLocalePaths(localePaths) {
+  const next = { ...(localePaths || {}) }
+  for (const [locale, targetPath] of Object.entries(localePaths || {})) {
+    const aliases = localeAliasMap.get(locale) || []
+    for (const alias of aliases) {
+      if (!alias) continue
+      if (!(alias in next) && targetPath) {
+        next[alias] = targetPath
+      }
+    }
+  }
+  return next
+}
 
 const TAXONOMY_TYPES = ['categories', 'series', 'archive']
 
@@ -87,11 +115,12 @@ function canonicalTag(tag) {
   return slug(tag)
 }
 
-await syncEnglishContent()
+await syncLocaleContent()
 
 const siteOrigin = process.env.SITE_ORIGIN || 'https://example.com'
 
-for (const lang of LANG_CONFIG) {
+for (const lang of LOCALE_CONFIG) {
+  ensureNavManifest(lang.manifestLocale)
   const posts = await collectPosts(lang)
   await fs.writeFile(lang.outMeta, JSON.stringify(posts.meta, null, 2))
 
@@ -104,6 +133,7 @@ for (const lang of LANG_CONFIG) {
 flushTaxonomyGroups()
 flushTagGroups()
 await writeI18nMap()
+await writeNavManifests()
 
 console.log('✔ pagegen 完成')
 
@@ -134,13 +164,23 @@ async function exists(target) {
   }
 }
 
-async function syncEnglishContent() {
-  const source = path.join(DOCS, 'content.en')
-  if (!(await exists(source))) return
-  const target = path.join(DOCS, 'en', 'content')
-  await fs.mkdir(path.join(DOCS, 'en'), { recursive: true })
-  await fs.rm(target, { recursive: true, force: true })
-  await fs.cp(source, target, { recursive: true })
+async function syncLocaleContent() {
+  for (const lang of LOCALE_CONFIG) {
+    if (!(await exists(lang.contentDir))) continue
+    if (lang.isDefault) {
+      const target = path.join(DOCS, 'content')
+      await fs.rm(target, { recursive: true, force: true })
+      await fs.mkdir(target, { recursive: true })
+      await fs.cp(lang.contentDir, target, { recursive: true })
+      continue
+    }
+
+    const targetRoot = path.join(DOCS, lang.code)
+    const target = path.join(targetRoot, 'content')
+    await fs.mkdir(targetRoot, { recursive: true })
+    await fs.rm(target, { recursive: true, force: true })
+    await fs.cp(lang.contentDir, target, { recursive: true })
+  }
 }
 
 async function collectPosts(lang) {
@@ -241,14 +281,24 @@ async function writeCollections(lang, meta) {
     await fs.writeFile(path.join(outDir, 'index.md'), md)
   }
 
-  for (const [category, items] of Object.entries(meta.byCategory))
-    await write('categories', slug(category), lang.labels.category(category), items)
-  for (const [series, items] of Object.entries(meta.bySeries))
+  for (const [category, items] of Object.entries(meta.byCategory)) {
+    const categorySlug = slug(category)
+    await write('categories', categorySlug, lang.labels.category(category), items)
+    registerNavEntry('categories', lang, categorySlug)
+  }
+  for (const [series, items] of Object.entries(meta.bySeries)) {
     await write('series', series, lang.labels.series(series), items)
-  for (const [tag, items] of Object.entries(meta.byTag))
-    await write('tags', slug(tag), lang.labels.tag(tag), items)
-  for (const [year, items] of Object.entries(meta.byYear))
+    registerNavEntry('series', lang, series)
+  }
+  for (const [tag, items] of Object.entries(meta.byTag)) {
+    const tagSlug = slug(tag)
+    await write('tags', tagSlug, lang.labels.tag(tag), items)
+    registerNavEntry('tags', lang, tagSlug)
+  }
+  for (const [year, items] of Object.entries(meta.byYear)) {
     await write('archive', year, lang.labels.archive(year), items)
+    registerNavEntry('archive', lang, year)
+  }
 }
 
 async function genRSS(lang, items) {
@@ -290,7 +340,9 @@ function collectI18nPairs(list, lang) {
   for (const post of list) {
     if (!post.relative) continue
 
-    registerI18nEntry(post.relative, lang.localeId, post.path)
+    for (const localeKey of getLocaleKeys(lang)) {
+      registerI18nEntry(post.relative, localeKey, post.path)
+    }
 
     if (post.category_slug)
       registerSingleTaxonomy('categories', lang, post.category_slug, post.relative)
@@ -306,7 +358,7 @@ function collectI18nPairs(list, lang) {
       if (!tagSlug) continue
       const canonical = canonicalTag(tag)
       registerTagGroup(canonical, {
-        localeId: lang.localeId,
+        localeId: lang.manifestLocale,
         slug: tagSlug,
         path: taxonomyPath('tags', tagSlug, lang)
       })
@@ -332,7 +384,7 @@ function registerSingleTaxonomy(type, lang, slugValue, relative) {
   const info = taxonomyGroups[type]
   if (!info) return
 
-  const slugKey = `${lang.localeId}|${slugValue}`
+  const slugKey = `${lang.manifestLocale}|${slugValue}`
   let group = info.slugIndex.get(slugKey)
   if (!group) {
     group = { entries: new Map() }
@@ -340,7 +392,7 @@ function registerSingleTaxonomy(type, lang, slugValue, relative) {
     info.slugIndex.set(slugKey, group)
   }
 
-  group.entries.set(lang.localeId, {
+  group.entries.set(lang.manifestLocale, {
     slug: slugValue,
     path: taxonomyPath(type, slugValue, lang)
   })
@@ -406,17 +458,19 @@ function flushTagGroups() {
 
 function registerI18nGroupEntry(key, localePaths) {
   if (!key) return
+  const expanded = expandLocalePaths(localePaths)
   const existing = i18nPairs.get(key) || {}
-  for (const [loc, pathValue] of Object.entries(localePaths)) {
+  for (const [loc, pathValue] of Object.entries(expanded)) {
     if (pathValue) existing[loc] = pathValue
   }
   i18nPairs.set(key, existing)
 }
 
 async function writeI18nMap() {
-  if (!i18nPairs.size) return
   const out = {}
   for (const [key, value] of i18nPairs.entries()) {
+    const locales = Object.keys(value || {})
+    if (locales.length < 2) continue
     out[key] = value
   }
   await fs.writeFile(path.join(PUB, 'i18n-map.json'), JSON.stringify(out, null, 2))
@@ -428,5 +482,45 @@ async function loadTagAlias() {
     return JSON.parse(raw)
   } catch {
     return {}
+  }
+}
+
+function ensureNavManifest(localeId) {
+  if (navManifest.has(localeId)) return navManifest.get(localeId)
+  const manifest = {
+    locale: localeId,
+    categories: new Map(),
+    series: new Map(),
+    tags: new Map(),
+    archive: new Map()
+  }
+  navManifest.set(localeId, manifest)
+  return manifest
+}
+
+function registerNavEntry(type, lang, slugValue) {
+  if (!slugValue) return
+  const manifest = ensureNavManifest(lang.manifestLocale)
+  const target = taxonomyPath(type, slugValue, lang)
+  if (!target) return
+  if (!manifest[type] || !(manifest[type] instanceof Map)) return
+  manifest[type].set(slugValue, target)
+}
+
+async function writeNavManifests() {
+  for (const lang of LOCALE_CONFIG) {
+    const manifest = ensureNavManifest(lang.manifestLocale)
+    const serialize = map => Object.fromEntries(map.entries())
+    const payload = {
+      locale: lang.manifestLocale,
+      categories: serialize(manifest.categories),
+      series: serialize(manifest.series),
+      tags: serialize(manifest.tags),
+      archive: serialize(manifest.archive)
+    }
+    const json = `${JSON.stringify(payload, null, 2)}\n`
+    const file = `nav.manifest.${lang.manifestLocale}.json`
+    await fs.writeFile(path.join(GEN, file), json)
+    await fs.writeFile(path.join(PUB, file), json)
   }
 }
