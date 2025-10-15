@@ -92,18 +92,6 @@ async function validateInternalLink(url, filePath) {
     if (await fileExists(path.join(mdBase, 'index.md'))) return true
   }
 
-  if (localeConfig?.contentRoots?.length) {
-    const segments = relative.split('/').filter(Boolean)
-    if (segments[0] === 'content') {
-      const remainder = segments.slice(1).join('/')
-      for (const contentRoot of localeConfig.contentRoots) {
-        const base = remainder ? path.join(contentRoot, remainder) : contentRoot
-        if (await fileExists(base + '.md')) return true
-        if (await fileExists(path.join(base, 'index.md'))) return true
-      }
-    }
-  }
-
   const candidateDist = path.join(DIST_DIR, clean)
   if (distReady) {
     if (await fileExists(candidateDist)) return true

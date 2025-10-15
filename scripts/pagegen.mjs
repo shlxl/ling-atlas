@@ -116,6 +116,27 @@ function expandLocalePaths(localePaths) {
   return next
 }
 
+function getLocaleKeys(lang) {
+  const keys = new Set([lang.manifestLocale, ...(lang.aliasLocaleIds || [])])
+  return Array.from(keys)
+}
+
+const localeAliasMap = new Map(LOCALE_CONFIG.map(lang => [lang.manifestLocale, lang.aliasLocaleIds || []]))
+
+function expandLocalePaths(localePaths) {
+  const next = { ...(localePaths || {}) }
+  for (const [locale, targetPath] of Object.entries(localePaths || {})) {
+    const aliases = localeAliasMap.get(locale) || []
+    for (const alias of aliases) {
+      if (!alias) continue
+      if (!(alias in next) && targetPath) {
+        next[alias] = targetPath
+      }
+    }
+  }
+  return next
+}
+
 const TAXONOMY_TYPES = ['categories', 'series', 'archive']
 
 function createInitialTaxonomyGroups() {
@@ -124,19 +145,9 @@ function createInitialTaxonomyGroups() {
   )
 }
 
-let taxonomyGroups = createInitialTaxonomyGroups()
-let tagGroups = new Map()
-
-const siteOrigin = process.env.SITE_ORIGIN || 'https://example.com'
-
-async function main() {
-  await fs.mkdir(GEN, { recursive: true })
-  await fs.mkdir(PUB, { recursive: true })
-
 await syncLocaleContent()
 
-  tagAlias = await loadTagAlias()
-  await syncLocalizedContent()
+const siteOrigin = process.env.SITE_ORIGIN || 'https://example.com'
 
 for (const lang of LOCALE_CONFIG) {
   ensureNavManifest(lang.manifestLocale)
