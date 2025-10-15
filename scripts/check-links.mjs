@@ -9,6 +9,10 @@ const EN_GENERATED_DIR = path.join(ROOT, 'docs/en/_generated')
 const DIST_DIR = path.join(ROOT, 'docs/.vitepress/dist')
 let distReady = false
 const INTERNAL_PREFIXES = ['/', './', '../']
+const NAV_MANIFEST_FILES = [
+  { locale: 'root', file: path.join(GENERATED_DIR, 'nav.manifest.root.json') },
+  { locale: 'en', file: path.join(GENERATED_DIR, 'nav.manifest.en.json') }
+]
 
 function isInternalLink(url) {
   return INTERNAL_PREFIXES.some(prefix => url.startsWith(prefix)) && !url.startsWith('http')
@@ -90,6 +94,8 @@ async function main() {
     const fileErrors = await checkFile(filePath)
     errors.push(...fileErrors)
   }
+  const manifestErrors = await validateNavManifests()
+  errors.push(...manifestErrors)
   if (errors.length) {
     console.error('Link check failed:')
     errors.forEach(err => console.error(' -', err))
@@ -102,3 +108,32 @@ main().catch(err => {
   console.error('Link check script failed:', err)
   process.exit(1)
 })
+
+async function validateNavManifests() {
+  const allowedTypes = new Set(['categories', 'series', 'tags', 'archive'])
+  const errors = []
+  for (const manifestInfo of NAV_MANIFEST_FILES) {
+    const payload = await readManifest(manifestInfo.file)
+    if (!payload) continue
+    for (const [type, entries] of Object.entries(payload)) {
+      if (!allowedTypes.has(type)) continue
+      if (typeof entries !== 'object' || !entries) continue
+      for (const [slug, targetPath] of Object.entries(entries)) {
+        if (typeof targetPath !== 'string' || !targetPath) continue
+        const context = `nav.manifest.${manifestInfo.locale}.json [${type}:${slug}]`
+        const result = await validateInternalLink(targetPath, context)
+        if (result !== true) errors.push(result)
+      }
+    }
+  }
+  return errors
+}
+
+async function readManifest(filePath) {
+  try {
+    const raw = await fs.readFile(filePath, 'utf8')
+    return JSON.parse(raw)
+  } catch {
+    return null
+  }
+}
