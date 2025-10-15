@@ -8,7 +8,6 @@ import { useRegisterSW } from 'virtual:pwa-register/vue'
 import { useI18nRouting } from './i18nRouting'
 
 const router = useRouter()
-const { site } = useData()
 const offlineReady = ref(false)
 const needRefresh = ref(false)
 const chatOpen = ref(false)
@@ -187,22 +186,6 @@ function handleLocaleSwitch() {
 }
 .la-search-wrapper :deep(.la-search-btn) {
   margin-right: 0.5rem;
-}
-.la-lang-btn {
-  border: 1px solid var(--vp-c-divider);
-  border-radius: 20px;
-  background: var(--vp-c-bg-soft);
-  color: var(--vp-c-text-1);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0.35rem 0.8rem;
-  font-size: 0.85rem;
-  cursor: pointer;
-  white-space: nowrap;
-}
-.la-lang-btn:hover {
-  background: var(--vp-c-bg);
 }
 .chat-fab {
   position: fixed;
