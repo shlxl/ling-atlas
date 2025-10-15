@@ -35,7 +35,6 @@
 - 当全部分类或系列均缺失时，折叠该下拉菜单（或隐藏整个条目），以免展示空的分组。
 
 ### 3. Locale Toggle / 路由兜底
-
 - 扩展 `docs/.vitepress/theme/composables/localeMap.ts` 与 `LocaleToggleButton.vue`，在解析目标路径时先检查 manifest 中是否存在对应 slug；若不存在则降级到语言首页或聚合主入口。
 - 该逻辑也可以复用在搜索结果或站内跳转中：当发现 URL 指向的聚合页在当前语言缺失时，提示“暂未翻译，切换到 XX 语言”。（可作为后续增强。）
 
