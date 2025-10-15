@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { useLocaleToggle } from '../composables/localeMap'
+import { getFallbackPath, useLocaleToggle } from '../composables/localeMap'
 import { LocaleCode } from '../locales'
 
 const { targetLocale, destination, goToTarget, hasMapping } = useLocaleToggle()
@@ -12,6 +12,7 @@ const localeLabels: Record<LocaleCode, { button: string; aria: string }> = {
 
 const buttonText = computed(() => localeLabels[targetLocale.value]?.button ?? 'EN')
 const ariaLabel = computed(() => localeLabels[targetLocale.value]?.aria ?? 'Switch language')
+const targetHref = computed(() => destination.value || getFallbackPath(targetLocale.value))
 
 function handleToggle() {
   if (!hasMapping.value) return
@@ -25,7 +26,7 @@ function handleToggle() {
     class="la-locale-toggle"
     type="button"
     :aria-label="ariaLabel"
-    :data-target="destination"
+    :data-target="targetHref"
     @click="handleToggle"
   >
     <span class="la-locale-toggle__label">{{ buttonText }}</span>
