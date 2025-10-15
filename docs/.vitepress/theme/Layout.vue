@@ -110,7 +110,7 @@ function switchLocale() {
     <template #nav-bar-content-after>
       <div class="la-search-wrapper">
         <SearchBox />
-        <button class="la-lang-btn" type="button" @click="switchLocale">
+        <button class="la-lang-btn" type="button" @click="handleLocaleSwitch">
           {{ languageButtonLabel }}
         </button>
       </div>
