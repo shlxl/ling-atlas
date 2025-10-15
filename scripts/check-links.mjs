@@ -62,6 +62,18 @@ async function validateInternalLink(url, filePath) {
     if (await fileExists(path.join(mdPath, 'index.md'))) return true
   }
 
+  if (localeConfig?.contentRoots?.length) {
+    const segments = relative.split('/').filter(Boolean)
+    if (segments[0] === 'content') {
+      const remainder = segments.slice(1).join('/')
+      for (const contentRoot of localeConfig.contentRoots) {
+        const base = remainder ? path.join(contentRoot, remainder) : contentRoot
+        if (await fileExists(base + '.md')) return true
+        if (await fileExists(path.join(base, 'index.md'))) return true
+      }
+    }
+  }
+
   const candidateDist = path.join(DIST_DIR, clean)
   if (distReady) {
     if (await fileExists(candidateDist)) return true
@@ -87,7 +99,7 @@ async function checkFile(filePath) {
 }
 
 async function main() {
-  distReady = await fileExists(DIST_DIR)
+  distReady = await fileExists(path.join(DIST_DIR, 'index.html'))
   const manifestInfos = await collectManifestInfos()
   localeConfigs = buildLocaleConfigs(manifestInfos)
   const excludeLocales = localeConfigs
@@ -137,8 +149,21 @@ function buildLocaleConfigs(manifestInfos) {
     extraSearchRoots: locale === DEFAULT_LOCALE ? [] : [
       path.join(DOCS_DIR, locale),
       path.join(DOCS_DIR, locale, '_generated')
-    ]
+    ],
+    contentRoots: buildContentRoots(locale)
   }))
+}
+
+function buildContentRoots(locale) {
+  const roots = []
+  if (locale === DEFAULT_LOCALE) {
+    roots.push(path.join(DOCS_DIR, 'content'))
+    roots.push(path.join(DOCS_DIR, `content.${locale}`))
+  } else {
+    roots.push(path.join(DOCS_DIR, locale, 'content'))
+    roots.push(path.join(DOCS_DIR, `content.${locale}`))
+  }
+  return roots
 }
 
 async function validateNavManifests(manifestInfos) {
