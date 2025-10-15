@@ -10,7 +10,7 @@
 - 预留 **L1 语义检索（Transformers.js）** 与 **USearch/WASM** 接口
 - PR-I AI 自演进（占位版）：构建阶段自动生成 embeddings/summaries/Q&A JSON，前端可按需消费
 - PR-J 知识 API + Chat：导出段落级只读数据，前端提供带引用的轻量问答
-- PR-L 多语/i18n：`docs/content.zh`（默认中文）与 `docs/content.en`（英文）独立演进，构建出 `/` 与 `/en/` 路由、按语言裁剪的聚合页 / RSS / Sitemap，并输出 `nav.manifest.<locale>.json` 供前端加载
+- PR-L 多语/i18n：`docs/content`（中文）与 `docs/content.en`（英文）独立演进，构建出 `/` 与 `/en/` 路由、按语言裁剪的聚合页 / RSS / Sitemap，并输出 `nav.manifest.<locale>.json` 供前端加载
 - PR-M 供应链加固 2.0：npm ci + Audit/License 审计、CycloneDX SBOM、SRI 哈希变更守门
 - PR-M（规划中）：SEO / OpenGraph 优化，使知识库更易被搜索引擎收录与展示
 - PR-K 搜索评测：离线 nDCG/MRR/Recall 守门 + 线上查询参数 variant（lex / rrf / rrf-mmr）交替曝光
@@ -31,7 +31,7 @@ npm run dev
 ```
 .
 ├─ docs/                 # 站点根
-│  ├─ content.zh/        # 中文内容源（默认 locale，对应站点 / 路由，每篇文章一个文件夹）
+│  ├─ content/           # 中文内容源（每篇文章一个文件夹）
 │  ├─ content.en/        # 英文内容源（可与中文解耦，最终映射到 /en/...）
 │  │  └─ hello-world/
 │  │     └─ index.md
@@ -72,7 +72,7 @@ npm run dev
 - `docs/public/sitemap.xml`：由 PageGen 生成，保持与 robots 中链接一致。
 - AI 自演进产物：`docs/public/data/embeddings.json`、`summaries.json`、`qa.json`，CI/构建阶段自动刷新，失败不阻断主流程。
 - 搜索评测：`data/gold.jsonl` 维护标注，`node scripts/eval/offline.mjs` 运行离线指标；线上调试可通过 `?variant=lex|rrf|rrf-mmr` 切换，与默认 `rrf-mmr` 做 Team Draft 交替曝光，点击偏好会记录匿名 hash 与位次。
-- 多语言：`npm run gen` 会复制英文文章到 `docs/en/`，并产出 `/en/_generated/**`、`rss-en.xml`、`sitemap-en.xml` 与 `docs/_generated/nav.manifest.<locale>.json`。生成器始终把 `docs/content.zh/**/*` 视作默认语言并映射到 `/`（VitePress 根）；其他语言遵循 `content.<locale>` 目录并映射为 `/<locale>/`（如英文的 `/en/`）。导航根据 manifest 裁剪分类/系列/标签/归档，仅展示目标语言真实存在的聚合入口；缺少映射时回退到语言首页或 manifest 中的首个聚合页，避免空链。
+- 多语言：`npm run gen` 会复制英文文章到 `docs/en/`，并产出 `/en/_generated/**`、`rss-en.xml`、`sitemap-en.xml` 与 `docs/_generated/nav.manifest.<locale>.json`。导航根据 manifest 裁剪分类/系列/标签/归档，仅展示目标语言真实存在的聚合入口；缺少映射时回退到语言首页或 manifest 中的首个聚合页，避免空链。
   - 导航栏中有两类语言切换：
     1. **VitePress 默认下拉菜单**（`localeLinks`），负责跳转到当前页面的另一语言版本，但只在两侧都有对等文章时才安全；因此配置中默认关闭该下拉，以免聚合页落到缺失的 slug 导致 404。
     2. **自定义按钮**（`LocaleToggleButton.vue`），与亮/暗色主题开关类似，读取 `docs/public/i18n-map.json` 与 `nav.manifest.<locale>.json`；仅当目标语言存在对应 slug 或可用聚合页时展示，缺少映射则直接回退到语言首页。

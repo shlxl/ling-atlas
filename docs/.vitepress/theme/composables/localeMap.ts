@@ -22,7 +22,6 @@ type AggregateType = 'categories' | 'series' | 'tags' | 'archive'
 
 type NavManifest = {
   locale: LocaleId
-  vitepressLocaleKey: VitepressLocaleKey
   categories: Record<string, string>
   series: Record<string, string>
   tags: Record<string, string>
@@ -152,10 +151,7 @@ export function useLocaleToggle() {
   const router = useRouter()
   const currentPath = computed(() => normalizeRoutePath(router.route.path))
   const currentLocale = computed<LocaleId>(() => detectLocaleFromPath(currentPath.value))
-  const targetLocale = computed<LocaleId>(() => {
-    const candidates = (LOCALE_CODES as LocaleId[]).filter(code => code !== currentLocale.value)
-    return candidates[0] ?? currentLocale.value
-  })
+  const targetLocale = computed<LocaleId>(() => (currentLocale.value === 'en' ? 'root' : 'en'))
   const resolution = ref<TargetResolution>({
     path: getFallbackPath(targetLocale.value),
     hasMapping: currentPath.value === getFallbackPath(currentLocale.value),
@@ -191,19 +187,19 @@ export function useLocaleToggle() {
 }
 
 async function loadNavManifests() {
-  const locales = LOCALE_CODES as LocaleId[]
+  const locales: LocaleId[] = ['root', 'en']
   const manifests: Partial<Record<LocaleId, NavManifest>> = {}
 
   await Promise.all(
     locales.map(async locale => {
       try {
-        const url = resolveAsset(manifestFileName(locale)).href
+        const url = resolveAsset(`nav.manifest.${locale}.json`).href
         const res = await fetch(url, { cache: 'no-store' })
         if (!res.ok) return
         const payload = (await res.json()) as Partial<NavManifest>
         manifests[locale] = normalizeManifest(payload, locale)
       } catch (error) {
-        console.warn(`[locale-map] failed to load ${manifestFileName(locale)}`, error)
+        console.warn(`[locale-map] failed to load nav.manifest.${locale}.json`, error)
       }
     })
   )
@@ -212,13 +208,9 @@ async function loadNavManifests() {
 }
 
 function normalizeManifest(payload: Partial<NavManifest> | null | undefined, fallbackLocale: LocaleId): NavManifest {
-  const rawLocale = typeof payload?.locale === 'string' ? payload.locale : null
-  const locale = rawLocale && isLocaleCode(rawLocale) ? (rawLocale as LocaleId) : fallbackLocale
-  const rawKey = typeof payload?.vitepressLocaleKey === 'string' ? payload.vitepressLocaleKey : null
-  const vitepressLocaleKey = rawKey && isVitepressLocaleKey(rawKey) ? rawKey : vitepressKeyFromLocale(locale)
+  const locale = payload?.locale === 'en' ? 'en' : fallbackLocale
   return {
     locale,
-    vitepressLocaleKey,
     categories: payload?.categories ?? {},
     series: payload?.series ?? {},
     tags: payload?.tags ?? {},
@@ -230,8 +222,7 @@ function parseAggregatePath(path: string): { type: AggregateType; slug: string }
   const normalized = normalizeRoutePath(path)
   const segments = normalized.split('/').filter(Boolean)
   if (!segments.length) return null
-  const firstSegment = segments[0]
-  const hasLocale = firstSegment ? (NON_DEFAULT_LOCALES as string[]).includes(firstSegment) : false
+  const hasLocale = segments[0] === 'en'
   const offset = hasLocale ? 1 : 0
   if (segments[offset] !== '_generated') return null
   const type = segments[offset + 1] as AggregateType | undefined

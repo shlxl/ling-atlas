@@ -58,13 +58,9 @@ const baseFromEnv = (process.env.BASE as string) || '/'
 const normalizedBase = baseFromEnv.endsWith('/') ? baseFromEnv : `${baseFromEnv}/`
 const escapedBase = escapeRegex(normalizedBase)
 
-function metaFilePath(locale: LocaleCode) {
-  return locale === DEFAULT_LOCALE ? 'docs/_generated/meta.json' : `docs/_generated/meta.${locale}.json`
-}
-
-const metaZh = loadMeta(metaFilePath('zh'))
-const metaEn = loadMeta(metaFilePath('en'))
-const manifestZh = loadNavManifest('zh')
+const metaZh = loadMeta('docs/_generated/meta.json')
+const metaEn = loadMeta('docs/_generated/meta.en.json')
+const manifestZh = loadNavManifest('root')
 const manifestEn = loadNavManifest('en')
 const i18nMap = loadI18nTranslations()
 
@@ -76,17 +72,94 @@ const embeddingsJsonPattern = /embeddings-texts\.json$/
 const embeddingsWorkerPattern = /worker\/embeddings\.worker\.js$/
 
 type NavManifest = {
-  locale: LocaleCode
-  vitepressLocaleKey?: VitepressLocaleKey
+  locale: 'root' | 'en'
   categories: Record<string, string>
   series: Record<string, string>
   tags: Record<string, string>
   archive: Record<string, string>
 }
 
-function navFromMeta(meta: any, manifest: NavManifest | null, locale: LocaleCode) {
+function navFromMeta(meta: any, manifest: NavManifest | null, locale: 'zh' | 'en') {
   if (!manifest) return legacyNavFromMeta(meta, locale)
 
+  const t = i18nMap.nav[locale]
+  const prefix = manifest.locale === 'en' ? '/en' : ''
+  const collator = new Intl.Collator(locale === 'en' ? 'en' : 'zh-CN')
+
+  const archiveYears = Object.keys(meta.byYear || {}).sort((a, b) => b.localeCompare(a))
+  const availableArchive = archiveYears.find(year => manifest.archive?.[year])
+  const archiveFallback = Object.values(manifest.archive || {})[0]
+
+  const categories = (Object.keys(meta.byCategory || {}) as string[])
+    .map(name => {
+      const slugValue = slug(name)
+      const link = manifest.categories?.[slugValue]
+      if (!link) return null
+      return { text: name, link }
+    })
+    .filter(Boolean)
+    .sort((a, b) => a!.text.localeCompare(b!.text, locale === 'en' ? 'en' : 'zh-CN')) as { text: string; link: string }[]
+
+  const series = Object.entries(meta.bySeries || {})
+    .map(([slugValue, items]) => {
+      const link = manifest.series?.[slugValue]
+      if (!link) return null
+      const label = Array.isArray(items) && items[0]?.series ? items[0].series : slugValue
+      return { text: label, link }
+    })
+    .filter(Boolean)
+    .sort((a, b) => a!.text.localeCompare(b!.text, locale === 'en' ? 'en' : 'zh-CN')) as { text: string; link: string }[]
+
+  const tags = Object.keys(meta.byTag || {})
+    .map(tag => {
+      const slugValue = slug(tag)
+      const link = manifest.tags?.[slugValue]
+      if (!link) return null
+      return { tag, slugValue, link }
+    })
+    .filter(Boolean)
+    .sort((a, b) => collator.compare(a!.tag, b!.tag)) as { tag: string; slugValue: string; link: string }[]
+
+  const nav = [] as any[]
+
+  if (availableArchive && manifest.archive?.[availableArchive]) {
+    nav.push({ text: t.latest, link: manifest.archive[availableArchive] })
+  } else if (archiveFallback) {
+    nav.push({ text: t.latest, link: archiveFallback })
+  }
+
+  if (categories.length) {
+    nav.push({ text: t.categories, items: categories })
+  }
+
+  if (series.length) {
+    nav.push({ text: t.series, items: series })
+  }
+
+  if (tags.length) {
+    nav.push({ text: t.tags, link: tags[0]!.link })
+  }
+
+  nav.push({
+    text: t.about,
+    items: [
+      { text: t.metrics, link: `${prefix}/about/metrics.html` },
+      { text: t.qa, link: `${prefix}/about/qa.html` }
+    ]
+  })
+
+  nav.push({
+    text: t.guides,
+    items: [
+      { text: t.deploy, link: `${prefix}/DEPLOYMENT.html` },
+      { text: t.migration, link: `${prefix}/MIGRATION.html` }
+    ]
+  })
+
+  return nav
+}
+
+function legacyNavFromMeta(meta: any, locale: 'zh' | 'en') {
   const t = i18nMap.nav[locale]
   const manifestLocale = manifest.locale ?? locale
   const vitepressLocaleKey = manifest.vitepressLocaleKey ?? vitepressKeyFromLocale(manifestLocale)
@@ -203,24 +276,14 @@ function legacyNavFromMeta(meta: any, locale: LocaleCode) {
   ]
 }
 
-function loadNavManifest(locale: LocaleCode): NavManifest | null {
-  const filename = locale === DEFAULT_LOCALE ? 'nav.manifest.zh.json' : manifestFileName(locale)
-  const file = `docs/_generated/${filename}`
+function loadNavManifest(localeId: 'root' | 'en'): NavManifest | null {
+  const file = `docs/_generated/nav.manifest.${localeId}.json`
   try {
     const raw = fs.readFileSync(file, 'utf8')
-    const parsed = JSON.parse(raw) as Partial<NavManifest> & {
-      locale?: string
-      vitepressLocaleKey?: string
-    }
-    const resolvedLocale = isLocaleCode(parsed.locale) ? parsed.locale : locale
-    const resolvedVitepressKey = isVitepressLocaleKey(parsed.vitepressLocaleKey)
-      ? parsed.vitepressLocaleKey
-      : resolvedLocale === DEFAULT_LOCALE
-        ? 'root'
-        : vitepressKeyFromLocale(resolvedLocale)
+    const parsed = JSON.parse(raw) as Partial<NavManifest> & { locale?: string }
+    const targetLocale = parsed.locale === 'en' ? 'en' : localeId
     return {
-      locale: resolvedLocale,
-      vitepressLocaleKey: resolvedVitepressKey,
+      locale: targetLocale,
       categories: parsed.categories ?? {},
       series: parsed.series ?? {},
       tags: parsed.tags ?? {},

@@ -9,21 +9,10 @@ const GENERATED_DIR = path.join(ROOT, 'docs/_generated')
 const DIST_DIR = path.join(ROOT, 'docs/.vitepress/dist')
 let distReady = false
 const INTERNAL_PREFIXES = ['/', './', '../']
-const localeConfigs = LOCALE_REGISTRY
-const localeMap = new Map(localeConfigs.map(locale => [locale.code, locale]))
-const localePrefixes = localeConfigs
-  .filter(locale => !locale.isDefault && locale.routePrefix)
-  .map(locale => ({
-    locale: locale.code,
-    prefix: ensureTrailingSlash(locale.routePrefix)
-  }))
-  .sort((a, b) => b.prefix.length - a.prefix.length)
-
-function ensureTrailingSlash(prefix) {
-  if (!prefix) return '/'
-  const withLeading = prefix.startsWith('/') ? prefix : `/${prefix}`
-  return withLeading.endsWith('/') ? withLeading : `${withLeading}/`
-}
+const NAV_MANIFEST_FILES = [
+  { locale: 'root', file: path.join(GENERATED_DIR, 'nav.manifest.root.json') },
+  { locale: 'en', file: path.join(GENERATED_DIR, 'nav.manifest.en.json') }
+]
 
 function isInternalLink(url) {
   return INTERNAL_PREFIXES.some(prefix => url.startsWith(prefix)) && !url.startsWith('http')
@@ -130,7 +119,7 @@ async function main() {
     const fileErrors = await checkFile(filePath)
     errors.push(...fileErrors)
   }
-  const manifestErrors = await validateNavManifests(manifestInfos)
+  const manifestErrors = await validateNavManifests()
   errors.push(...manifestErrors)
   if (errors.length) {
     console.error('Link check failed:')
@@ -145,17 +134,10 @@ main().catch(err => {
   process.exit(1)
 })
 
-async function collectManifestInfos() {
-  return localeConfigs.map(locale => ({
-    locale: locale.code,
-    file: path.join(GENERATED_DIR, locale.navManifestFile)
-  }))
-}
-
-async function validateNavManifests(manifestInfos) {
+async function validateNavManifests() {
   const allowedTypes = new Set(['categories', 'series', 'tags', 'archive'])
   const errors = []
-  for (const manifestInfo of manifestInfos) {
+  for (const manifestInfo of NAV_MANIFEST_FILES) {
     const payload = await readManifest(manifestInfo.file)
     if (!payload) continue
     for (const [type, entries] of Object.entries(payload)) {

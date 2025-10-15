@@ -14,4 +14,6 @@ hero:
       link: /en/_generated/categories/engineering-notes/
 ---
 
-Welcome to the English portal of Ling Atlas. Populate `docs/content.en/**/*` with your articles, while the default Chinese catalog now lives under `docs/content.zh/**/*` and continues to render from the `/` root. New locales should follow the `docs/content.<locale>/**/*` convention so the generator can map them to their own `/<locale>/` roots automatically.
+Welcome to the English portal of Ling Atlas.
+
+Add your articles under `docs/content.en/**` to expand this space over time.

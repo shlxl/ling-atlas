@@ -5,7 +5,7 @@
 - 站点的导航栏目由 `docs/.vitepress/config.ts` 中的 `navFromMeta` 函数按语言生成，但当前逻辑默认所有聚合页（分类、系列、标签、归档）都会存在，因此直接拼出链接。【F:docs/.vitepress/config.ts†L63-L82】
 - 聚合页的静态内容和 i18n 映射在 `scripts/pagegen.mjs` 内一次性生成。该脚本仅在对应目录下确有文章时才写出聚合页文件，也只有在存在文章的情况下才会写入 i18n 对应关系。【F:scripts/pagegen.mjs†L189-L252】【F:scripts/pagegen.mjs†L289-L347】
 - 当语言切换到目标语言后，如果某个聚合页并不存在（例如英文侧缺失该分类），导航仍会展示对应入口，最终落到 404；即使 Locale Toggle 会 fallback 到该语言首页，用户仍可能通过导航点到空链。
-- README 现已强调以 `docs/content.zh`（默认中文，对应站点 `/` 根）与 `docs/content.en`（英文，对应 `/en/`）分离维护内容，允许不同语言各自演进，但历史脚本仍假定双语镜像结构，需要逐步调整。
+- README 仍沿用早期的“`docs/content` 与 `docs/content.en` 结构镜像”约定，使得 pagegen、导航与内容生产默认两种语言完全同步；这种假设与当前内容的实际状态相违背，也阻碍了只在英文侧增设聚合页或分类的需求。
 
 ## 目标
 

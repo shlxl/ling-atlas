@@ -27,9 +27,8 @@ export {
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
-let tagAlias = {}
-let i18nPairs = new Map()
-let navManifest = new Map()
+const i18nPairs = new Map()
+const navManifest = new Map()
 
 const TAXONOMY_TYPES = ['categories', 'series', 'archive']
 
@@ -56,10 +55,10 @@ async function main() {
   tagAlias = await loadTagAlias()
   await syncLocalizedContent()
 
-  for (const lang of LANGUAGES) {
-    ensureNavManifest(lang.code)
-    const posts = await collectPosts(lang)
-    await fs.writeFile(lang.outMeta, JSON.stringify(posts.meta, null, 2))
+for (const lang of LANG_CONFIG) {
+  ensureNavManifest(lang.localeId)
+  const posts = await collectPosts(lang)
+  await fs.writeFile(lang.outMeta, JSON.stringify(posts.meta, null, 2))
 
     await writeCollections(lang, posts.meta)
     await genRSS(lang, posts.list)
@@ -75,15 +74,10 @@ async function main() {
   console.log('✔ pagegen 完成')
 }
 
-function isMain(moduleUrl) {
-  const entry = process.argv[1]
-  if (!entry) return false
-  try {
-    return moduleUrl === pathToFileURL(path.resolve(entry)).href
-  } catch {
-    return false
-  }
-}
+flushTaxonomyGroups()
+flushTagGroups()
+await writeI18nMap()
+await writeNavManifests()
 
 if (isMain(import.meta.url)) {
   main().catch(err => {
@@ -441,22 +435,22 @@ async function loadTagAlias() {
   }
 }
 
-function ensureNavManifest(localeCode) {
-  if (navManifest.has(localeCode)) return navManifest.get(localeCode)
+function ensureNavManifest(localeId) {
+  if (navManifest.has(localeId)) return navManifest.get(localeId)
   const manifest = {
-    locale: localeCode,
+    locale: localeId,
     categories: new Map(),
     series: new Map(),
     tags: new Map(),
     archive: new Map()
   }
-  navManifest.set(localeCode, manifest)
+  navManifest.set(localeId, manifest)
   return manifest
 }
 
 function registerNavEntry(type, lang, slugValue) {
   if (!slugValue) return
-  const manifest = ensureNavManifest(lang.code)
+  const manifest = ensureNavManifest(lang.localeId)
   const target = taxonomyPath(type, slugValue, lang)
   if (!target) return
   if (!manifest[type] || !(manifest[type] instanceof Map)) return
@@ -464,32 +458,19 @@ function registerNavEntry(type, lang, slugValue) {
 }
 
 async function writeNavManifests() {
-  await cleanupLegacyNavManifests()
-  for (const lang of LANGUAGES) {
-    const manifest = ensureNavManifest(lang.code)
+  for (const lang of LANG_CONFIG) {
+    const manifest = ensureNavManifest(lang.localeId)
     const serialize = map => Object.fromEntries(map.entries())
     const payload = {
-      locale: lang.code,
-      vitepressLocaleKey: lang.vitepressLocaleKey,
+      locale: lang.localeId,
       categories: serialize(manifest.categories),
       series: serialize(manifest.series),
       tags: serialize(manifest.tags),
       archive: serialize(manifest.archive)
     }
     const json = `${JSON.stringify(payload, null, 2)}\n`
-    const file = lang.navManifestFile
+    const file = `nav.manifest.${lang.localeId}.json`
     await fs.writeFile(path.join(GEN, file), json)
     await fs.writeFile(path.join(PUB, file), json)
-  }
-}
-
-async function cleanupLegacyNavManifests() {
-  const legacyFiles = ['nav.manifest.root.json']
-  for (const dir of [GEN, PUB]) {
-    for (const file of legacyFiles) {
-      try {
-        await fs.rm(path.join(dir, file), { force: true })
-      } catch {}
-    }
   }
 }
