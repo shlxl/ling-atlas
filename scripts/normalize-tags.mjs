@@ -3,7 +3,8 @@ import { globby } from 'globby'
 import matter from 'gray-matter'
 
 const alias = JSON.parse(await fs.readFile('schema/tag-alias.json', 'utf8'))
-const files = await globby('docs/content/**/index.md')
+const DEFAULT_LOCALE = 'zh'
+const files = await globby(`docs/content.${DEFAULT_LOCALE}/**/index.md`)
 
 let changed = 0
 for (const f of files) {

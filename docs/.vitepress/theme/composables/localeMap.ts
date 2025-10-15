@@ -1,8 +1,20 @@
 import { computed, onMounted, ref, watchEffect } from 'vue'
 import { useRouter } from 'vitepress'
 import { resolveAsset } from '../telemetry'
+import {
+  DEFAULT_LOCALE,
+  LocaleCode,
+  LOCALE_CODES,
+  NON_DEFAULT_LOCALES,
+  VitepressLocaleKey,
+  isLocaleCode,
+  isVitepressLocaleKey,
+  manifestFileName,
+  routePrefix,
+  vitepressKeyFromLocale
+} from '../locales'
 
-export type LocaleId = 'root' | 'en'
+export type LocaleId = LocaleCode
 type RawLocaleEntry = Partial<Record<string, string>>
 type LocaleEntry = Partial<Record<LocaleId, string>>
 type Lookup = Record<string, LocaleEntry>
@@ -40,15 +52,15 @@ function ensureTrailingSlash(path: string) {
 }
 
 export function normalizeRoutePath(path: string) {
-  if (!path) return getFallbackPath('root')
+  if (!path) return getFallbackPath(DEFAULT_LOCALE)
   const [pathname] = path.split(/[?#]/)
-  if (!pathname) return getFallbackPath('root')
+  if (!pathname) return getFallbackPath(DEFAULT_LOCALE)
   return ensureTrailingSlash(pathname.startsWith('/') ? pathname : `/${pathname}`)
 }
 
 export function getFallbackPath(locale: LocaleId) {
   if (!fallbackCache[locale]) {
-    const basePath = locale === 'en' ? '/en/' : '/'
+    const basePath = routePrefix(locale)
     fallbackCache[locale] = normalizeRoutePath(resolveAsset(basePath).pathname)
   }
   return fallbackCache[locale]!
@@ -56,8 +68,11 @@ export function getFallbackPath(locale: LocaleId) {
 
 export function detectLocaleFromPath(path: string): LocaleId {
   const normalized = normalizeRoutePath(path)
-  const enPrefix = getFallbackPath('en')
-  return normalized.startsWith(enPrefix) ? 'en' : 'root'
+  for (const locale of NON_DEFAULT_LOCALES as LocaleId[]) {
+    const prefix = getFallbackPath(locale)
+    if (normalized.startsWith(prefix)) return locale
+  }
+  return DEFAULT_LOCALE
 }
 
 async function loadLocaleMap() {
@@ -76,7 +91,7 @@ async function loadLocaleMap() {
         const normalizedEntry: LocaleEntry = {}
         for (const [localeKey, rawPath] of Object.entries(entry)) {
           if (typeof rawPath !== 'string' || !rawPath) continue
-          const normalizedLocale = localeKey === 'en' ? 'en' : localeKey === 'root' ? 'root' : null
+          const normalizedLocale = isLocaleCode(localeKey) ? (localeKey as LocaleId) : null
           if (!normalizedLocale) continue
           const resolved = normalizeRoutePath(resolveAsset(rawPath).pathname)
           normalizedEntry[normalizedLocale] = resolved

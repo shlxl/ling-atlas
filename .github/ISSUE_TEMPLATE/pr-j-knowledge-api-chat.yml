@@ -20,7 +20,7 @@ body:
 
         ### 1) 构建期切段与导出
         - 新增脚本：`scripts/chunk-build.mjs`
-        - 扫描：`docs/content/**/index.md`
+        - 扫描：`docs/content.zh/**/index.md`
         - 切段规则：**300–500 中文字符/段**，尽量 **保句边界**（以 `。！？；\n` 等断句，超长继续切）
         - 字段：`{ url, title, anchor, chunk }`（`anchor` 来自标题或自动生成）
         - 输出：`docs/public/api/knowledge.json`

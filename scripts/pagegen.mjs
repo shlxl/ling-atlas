@@ -3,104 +3,75 @@ import path from 'node:path'
 import { globby } from 'globby'
 import matter from 'gray-matter'
 import { marked } from 'marked'
-import { fileURLToPath } from 'url'
+import { fileURLToPath, pathToFileURL } from 'url'
+import {
+  DEFAULT_LOCALE,
+  DOCS_DIR as DOCS,
+  GENERATED_ROOT as GEN,
+  PUBLIC_ROOT as PUB,
+  LANG_CONFIG,
+  LANGUAGES
+} from './pagegen.locales.mjs'
+
+export {
+  DEFAULT_LOCALE,
+  LOCALE_REGISTRY,
+  LANG_CONFIG,
+  LANGUAGES,
+  ROOT_DIR,
+  DOCS_DIR,
+  GENERATED_ROOT,
+  PUBLIC_ROOT,
+  getLocaleConfig
+} from './pagegen.locales.mjs'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
-const DOCS = path.join(__dirname, '..', 'docs')
-const GEN = path.join(DOCS, '_generated')
-const PUB = path.join(DOCS, 'public')
-
-await fs.mkdir(GEN, { recursive: true })
-await fs.mkdir(PUB, { recursive: true })
-
-const LANG_CONFIG = [
-  {
-    code: 'zh',
-    localeId: 'root',
-    contentDir: path.join(DOCS, 'content'),
-    outMeta: path.join(GEN, 'meta.json'),
-    basePath: '/content/',
-    genPrefix: '',
-    rssFile: 'rss.xml',
-    sitemapFile: 'sitemap.xml',
-    labels: {
-      category: (value) => `分类 · ${value}`,
-      series: (value) => `连载 · ${value}`,
-      tag: (value) => `标签 · ${value}`,
-      archive: (value) => `归档 · ${value}`,
-      rssTitle: 'Ling Atlas',
-      rssDesc: '最新更新'
-    },
-    contentFields: {
-      category: ['category_zh', 'category'],
-      tags: ['tags_zh', 'tags'],
-      series: ['series'],
-      seriesSlug: ['series_slug'],
-      status: ['status']
-    }
-  },
-  {
-    code: 'en',
-    localeId: 'en',
-    contentDir: path.join(DOCS, 'content.en'),
-    outMeta: path.join(GEN, 'meta.en.json'),
-    basePath: '/en/content/',
-    genPrefix: 'en',
-    rssFile: 'rss-en.xml',
-    sitemapFile: 'sitemap-en.xml',
-    labels: {
-      category: (value) => `Category · ${value}`,
-      series: (value) => `Series · ${value}`,
-      tag: (value) => `Tag · ${value}`,
-      archive: (value) => `Archive · ${value}`,
-      rssTitle: 'Ling Atlas (EN)',
-      rssDesc: 'Latest updates'
-    },
-    contentFields: {
-      category: ['category_en', 'category'],
-      tags: ['tags_en', 'tags'],
-      series: ['series_en', 'series'],
-      seriesSlug: ['series_slug_en', 'series_slug', 'series_en', 'series'],
-      status: ['status']
-    }
-  }
-]
 
 const i18nPairs = new Map()
 const navManifest = new Map()
 
 const TAXONOMY_TYPES = ['categories', 'series', 'archive']
 
-const taxonomyGroups = Object.fromEntries(
-  TAXONOMY_TYPES.map(type => [type, { groups: new Set(), slugIndex: new Map(), postIndex: new Map() }])
-)
-
-const tagGroups = new Map()
-
-const tagAlias = await loadTagAlias()
-
-function canonicalTag(tag) {
-  if (!tag) return ''
-  const direct = tagAlias[tag]
-  if (direct) return slug(direct)
-  const lowered = tag.toLowerCase?.()
-  if (lowered && tagAlias[lowered]) return slug(tagAlias[lowered])
-  return slug(tag)
+function createInitialTaxonomyGroups() {
+  return Object.fromEntries(
+    TAXONOMY_TYPES.map(type => [type, { groups: new Set(), slugIndex: new Map(), postIndex: new Map() }])
+  )
 }
 
-await syncEnglishContent()
+let taxonomyGroups = createInitialTaxonomyGroups()
+let tagGroups = new Map()
 
 const siteOrigin = process.env.SITE_ORIGIN || 'https://example.com'
+
+async function main() {
+  await fs.mkdir(GEN, { recursive: true })
+  await fs.mkdir(PUB, { recursive: true })
+
+  i18nPairs = new Map()
+  navManifest = new Map()
+  taxonomyGroups = createInitialTaxonomyGroups()
+  tagGroups = new Map()
+
+  tagAlias = await loadTagAlias()
+  await syncLocalizedContent()
 
 for (const lang of LANG_CONFIG) {
   ensureNavManifest(lang.localeId)
   const posts = await collectPosts(lang)
   await fs.writeFile(lang.outMeta, JSON.stringify(posts.meta, null, 2))
 
-  await writeCollections(lang, posts.meta)
-  await genRSS(lang, posts.list)
-  await genSitemap(lang, posts.list)
-  collectI18nPairs(posts.list, lang)
+    await writeCollections(lang, posts.meta)
+    await genRSS(lang, posts.list)
+    await genSitemap(lang, posts.list)
+    collectI18nPairs(posts.list, lang)
+  }
+
+  flushTaxonomyGroups()
+  flushTagGroups()
+  await writeI18nMap()
+  await writeNavManifests()
+
+  console.log('✔ pagegen 完成')
 }
 
 flushTaxonomyGroups()
@@ -108,7 +79,12 @@ flushTagGroups()
 await writeI18nMap()
 await writeNavManifests()
 
-console.log('✔ pagegen 完成')
+if (isMain(import.meta.url)) {
+  main().catch(err => {
+    console.error(err)
+    process.exit(1)
+  })
+}
 
 function toExcerpt(md) {
   const html = marked.parse((md || '').split('\n\n')[0] || '')
@@ -128,6 +104,15 @@ function slug(input) {
     .toLowerCase()
 }
 
+function canonicalTag(tag) {
+  if (!tag) return ''
+  const direct = tagAlias?.[tag]
+  if (direct) return slug(direct)
+  const lowered = tag.toLowerCase?.()
+  if (lowered && tagAlias?.[lowered]) return slug(tagAlias[lowered])
+  return slug(tag)
+}
+
 async function exists(target) {
   try {
     await fs.access(target)
@@ -137,13 +122,22 @@ async function exists(target) {
   }
 }
 
-async function syncEnglishContent() {
-  const source = path.join(DOCS, 'content.en')
-  if (!(await exists(source))) return
-  const target = path.join(DOCS, 'en', 'content')
-  await fs.mkdir(path.join(DOCS, 'en'), { recursive: true })
-  await fs.rm(target, { recursive: true, force: true })
-  await fs.cp(source, target, { recursive: true })
+async function syncLocalizedContent() {
+  for (const lang of LANGUAGES) {
+    if (!(await exists(lang.contentDir))) continue
+    if (lang.isDefault) {
+      const target = path.join(DOCS, 'content')
+      if (target === lang.contentDir) continue
+      await fs.rm(target, { recursive: true, force: true })
+      await fs.cp(lang.contentDir, target, { recursive: true })
+      continue
+    }
+    const localeRoot = path.join(DOCS, lang.code)
+    const target = path.join(localeRoot, 'content')
+    await fs.mkdir(localeRoot, { recursive: true })
+    await fs.rm(target, { recursive: true, force: true })
+    await fs.cp(lang.contentDir, target, { recursive: true })
+  }
 }
 
 async function collectPosts(lang) {
@@ -234,11 +228,8 @@ function mdList(items, lang) {
 }
 
 async function writeCollections(lang, meta) {
-  const prefix = lang.genPrefix ? path.join(lang.genPrefix) : ''
-
   const write = async (subdir, name, title, items) => {
-    const targetRoot = lang.genPrefix ? path.join(DOCS, lang.genPrefix, '_generated') : GEN
-    const outDir = path.join(targetRoot, subdir, name)
+    const outDir = path.join(lang.generatedDir, subdir, name)
     await fs.mkdir(outDir, { recursive: true })
     const md = `---\ntitle: ${title}\n---\n\n${mdList(items, lang)}\n`
     await fs.writeFile(path.join(outDir, 'index.md'), md)
@@ -270,7 +261,7 @@ async function genRSS(lang, items) {
     `<?xml version="1.0" encoding="UTF-8"?>`,
     `<rss version="2.0"><channel>`,
     `<title>${escapeXml(lang.labels.rssTitle)}</title>`,
-    `<link>${siteOrigin}${lang.code === 'en' ? '/en/' : '/'}</link>`,
+    `<link>${siteOrigin}${lang.localeRoot}</link>`,
     `<description>${escapeXml(lang.labels.rssDesc)}</description>`
   ]
 
@@ -303,7 +294,7 @@ function collectI18nPairs(list, lang) {
   for (const post of list) {
     if (!post.relative) continue
 
-    registerI18nEntry(post.relative, lang.localeId, post.path)
+    registerI18nEntry(post.relative, lang.code, post.path)
 
     if (post.category_slug)
       registerSingleTaxonomy('categories', lang, post.category_slug, post.relative)
@@ -319,7 +310,7 @@ function collectI18nPairs(list, lang) {
       if (!tagSlug) continue
       const canonical = canonicalTag(tag)
       registerTagGroup(canonical, {
-        localeId: lang.localeId,
+        localeCode: lang.code,
         slug: tagSlug,
         path: taxonomyPath('tags', tagSlug, lang)
       })
@@ -327,17 +318,16 @@ function collectI18nPairs(list, lang) {
   }
 }
 
-function registerI18nEntry(key, localeId, pathValue) {
-  if (!key || !localeId || !pathValue) return
+function registerI18nEntry(key, localeCode, pathValue) {
+  if (!key || !localeCode || !pathValue) return
   const entry = i18nPairs.get(key) || {}
-  entry[localeId] = pathValue
+  entry[localeCode] = pathValue
   i18nPairs.set(key, entry)
 }
 
 function taxonomyPath(type, slugValue, lang) {
   if (!slugValue) return ''
-  const prefix = lang.genPrefix ? `/${lang.genPrefix}` : ''
-  return `${prefix}/_generated/${type}/${slugValue}/`
+  return `${lang.generatedPathPrefix}/${type}/${slugValue}/`
 }
 
 function registerSingleTaxonomy(type, lang, slugValue, relative) {
@@ -345,7 +335,7 @@ function registerSingleTaxonomy(type, lang, slugValue, relative) {
   const info = taxonomyGroups[type]
   if (!info) return
 
-  const slugKey = `${lang.localeId}|${slugValue}`
+  const slugKey = `${lang.code}|${slugValue}`
   let group = info.slugIndex.get(slugKey)
   if (!group) {
     group = { entries: new Map() }
@@ -353,7 +343,7 @@ function registerSingleTaxonomy(type, lang, slugValue, relative) {
     info.slugIndex.set(slugKey, group)
   }
 
-  group.entries.set(lang.localeId, {
+  group.entries.set(lang.code, {
     slug: slugValue,
     path: taxonomyPath(type, slugValue, lang)
   })
@@ -372,9 +362,9 @@ function registerSingleTaxonomy(type, lang, slugValue, relative) {
 function mergeTaxonomyGroups(info, target, source) {
   if (target === source) return target
 
-  for (const [localeId, value] of source.entries) {
-    if (!target.entries.has(localeId)) target.entries.set(localeId, value)
-    info.slugIndex.set(`${localeId}|${value.slug}`, target)
+  for (const [localeCode, value] of source.entries) {
+    if (!target.entries.has(localeCode)) target.entries.set(localeCode, value)
+    info.slugIndex.set(`${localeCode}|${value.slug}`, target)
   }
 
   for (const [key, group] of info.postIndex.entries()) {
@@ -385,14 +375,14 @@ function mergeTaxonomyGroups(info, target, source) {
   return target
 }
 
-function registerTagGroup(canonicalId, { localeId, slug, path }) {
-  if (!canonicalId || !localeId || !slug || !path) return
+function registerTagGroup(canonicalId, { localeCode, slug, path }) {
+  if (!canonicalId || !localeCode || !slug || !path) return
   let group = tagGroups.get(canonicalId)
   if (!group) {
     group = { entries: new Map() }
     tagGroups.set(canonicalId, group)
   }
-  group.entries.set(localeId, { slug, path })
+  group.entries.set(localeCode, { slug, path })
 }
 
 function flushTaxonomyGroups() {
