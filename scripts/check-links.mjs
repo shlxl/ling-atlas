@@ -14,6 +14,25 @@ const FALLBACK_LOCALE_PREFIXES = [
   { locale: 'en', prefix: '/en/' }
 ]
 
+const LOCALE_SEARCH_ROOTS = new Map([
+  [
+    'zh',
+    {
+      docDirs: [DOCS_DIR],
+      generatedDirs: [path.join(DOCS_DIR, '_generated')],
+      contentDirs: [path.join(DOCS_DIR, 'content.zh')]
+    }
+  ],
+  [
+    'en',
+    {
+      docDirs: [path.join(DOCS_DIR, 'en')],
+      generatedDirs: [path.join(DOCS_DIR, 'en/_generated')],
+      contentDirs: [path.join(DOCS_DIR, 'content.en')]
+    }
+  ]
+])
+
 let localePrefixes = [...FALLBACK_LOCALE_PREFIXES, { locale: ROOT_LOCALE, prefix: '/' }]
 const DEFAULT_MANIFESTS = [
   {
@@ -80,19 +99,24 @@ async function validateInternalLink(url, filePath) {
   const normalizedRelative = relative.replace(/^\/+/, '').replace(/\\/g, '/').replace(/\/+$/, '')
   const contentRelative = normalizedRelative.replace(/^content\//, '')
 
-  const searchCombos = [
-    { base: DOCS_DIR, rel: normalizedRelative },
-    { base: GENERATED_DIR, rel: normalizedRelative }
-  ]
+  const searchCombos = [{ base: DOCS_DIR, rel: normalizedRelative }]
 
-  if (locale === 'zh') {
-    searchCombos.push({ base: path.join(DOCS_DIR, 'content.zh'), rel: contentRelative })
-  }
-
-  if (locale === 'en') {
-    searchCombos.push({ base: path.join(DOCS_DIR, 'en'), rel: normalizedRelative })
-    searchCombos.push({ base: EN_GENERATED_DIR, rel: normalizedRelative })
-    searchCombos.push({ base: path.join(DOCS_DIR, 'content.en'), rel: contentRelative })
+  const localeRoots = LOCALE_SEARCH_ROOTS.get(locale)
+  if (localeRoots) {
+    for (const docDir of localeRoots.docDirs ?? []) {
+      searchCombos.push({ base: docDir, rel: normalizedRelative })
+    }
+    if (contentRelative) {
+      for (const contentDir of localeRoots.contentDirs ?? []) {
+        searchCombos.push({ base: contentDir, rel: contentRelative })
+      }
+    }
+    if (normalizedRelative.startsWith('_generated/')) {
+      const generatedRelative = normalizedRelative.replace(/^_generated\/?/, '')
+      for (const generatedDir of localeRoots.generatedDirs ?? []) {
+        searchCombos.push({ base: generatedDir, rel: generatedRelative })
+      }
+    }
   }
 
   for (const combo of searchCombos) {
