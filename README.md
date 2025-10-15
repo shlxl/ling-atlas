@@ -10,7 +10,7 @@
 - 预留 **L1 语义检索（Transformers.js）** 与 **USearch/WASM** 接口
 - PR-I AI 自演进（占位版）：构建阶段自动生成 embeddings/summaries/Q&A JSON，前端可按需消费
 - PR-J 知识 API + Chat：导出段落级只读数据，前端提供带引用的轻量问答
-- PR-L 多语/i18n：`docs/content`（中文）与 `docs/content.en`（英文）独立演进，构建出 `/` 与 `/en/` 路由、按语言裁剪的聚合页 / RSS / Sitemap，并输出 `nav.manifest.<locale>.json` 供前端加载
+- PR-L 多语/i18n：`docs/content.zh`（默认中文）与 `docs/content.en`（英文）独立演进，构建出 `/` 与 `/en/` 路由、按语言裁剪的聚合页 / RSS / Sitemap，并输出 `nav.manifest.<locale>.json` 供前端加载
 - PR-M 供应链加固 2.0：npm ci + Audit/License 审计、CycloneDX SBOM、SRI 哈希变更守门
 - PR-M（规划中）：SEO / OpenGraph 优化，使知识库更易被搜索引擎收录与展示
 - PR-K 搜索评测：离线 nDCG/MRR/Recall 守门 + 线上查询参数 variant（lex / rrf / rrf-mmr）交替曝光
@@ -31,7 +31,7 @@ npm run dev
 ```
 .
 ├─ docs/                 # 站点根
-│  ├─ content/           # 中文内容源（每篇文章一个文件夹）
+│  ├─ content.zh/        # 中文内容源（默认 locale，每篇文章一个文件夹）
 │  ├─ content.en/        # 英文内容源（可与中文解耦，最终映射到 /en/...）
 │  │  └─ hello-world/
 │  │     └─ index.md
@@ -81,7 +81,8 @@ npm run dev
 - 供应链：CI 默认 `npm ci` 安装，审计输出（`npm run audit`、`npm run license`）可追踪依赖风险；`npm run sbom` 及构建流程会生成 `docs/public/.well-known/sbom.json`，SRI 哈希变化需先更新 allowlist，否则脚本将阻断。
 
 ## 约定
-- 所有文章文件置于 `docs/content/**/index.md`；Frontmatter 字段遵循 `schema/frontmatter.schema.json`。
+- 所有中文文章文件置于 `docs/content.zh/**/index.md`（`zh` 仍为默认语言）；Frontmatter 字段遵循 `schema/frontmatter.schema.json`。
+- 其他语言遵循 `docs/content.<locale>/**/index.md` 命名，例如 `docs/content.en/**`。
 - `status: draft` 的文章不会进入聚合页与 RSS/Sitemap。
 
 ## FAQ

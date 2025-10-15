@@ -15,10 +15,11 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const ROOT = path.resolve(__dirname, '..')
 const OUTPUT_DIR = path.join(ROOT, 'docs', 'public', 'data')
 const OUTPUT_FILE = path.join(OUTPUT_DIR, 'embeddings.json')
+const DEFAULT_LOCALE = 'zh'
 const LANG_SOURCES = [
   {
-    code: 'zh',
-    dir: path.join(ROOT, 'docs', 'content'),
+    code: DEFAULT_LOCALE,
+    dir: path.join(ROOT, 'docs', `content.${DEFAULT_LOCALE}`),
     basePath: '/content/'
   },
   {

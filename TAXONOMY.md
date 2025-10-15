@@ -44,7 +44,8 @@
 ---
 
 ## 3. URL 与目录结构
-- 每篇文章的物理位置固定：`docs/content/<slug-or-custom>/index.md`。  
+- 每篇中文文章的物理位置固定：`docs/content.zh/<slug-or-custom>/index.md`（`zh` 仍为默认语言目录）。
+- 其他语言遵循 `docs/content.<locale>/<slug-or-custom>/index.md` 命名约定（如英文位于 `docs/content.en/`）。
 - 页面访问路径（VitePress）默认：`/content/<slug-or-custom>/`（项目站点会自动加 `base` 前缀）。
 - 可选美化为 `/blog/<YYYY>/<slug>/`：需在 PageGen 中生成对应路径并配置 rewrites。
 

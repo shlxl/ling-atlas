@@ -2,7 +2,7 @@
 
 /**
  * 构建期知识分段导出
- * - 扫描 docs/content/ 下各 index.md
+ * - 扫描 docs/content.<locale>/ 下各 index.md（默认 zh）
  * - 每段 300~500 中文字符（依据句号/换行切分）
  * - 输出 docs/public/api/knowledge.json，供前端检索/问答引用
  */
@@ -17,10 +17,11 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const ROOT = path.resolve(__dirname, '..')
 const OUTPUT_DIR = path.join(ROOT, 'docs', 'public', 'api')
 const OUTPUT_FILE = path.join(OUTPUT_DIR, 'knowledge.json')
+const DEFAULT_LOCALE = 'zh'
 const LANG_SOURCES = [
   {
-    code: 'zh',
-    dir: path.join(ROOT, 'docs', 'content'),
+    code: DEFAULT_LOCALE,
+    dir: path.join(ROOT, 'docs', `content.${DEFAULT_LOCALE}`),
     basePath: '/content/'
   },
   {
