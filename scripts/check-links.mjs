@@ -133,10 +133,39 @@ async function collectManifestInfos() {
     locale: file.replace(/^nav\.manifest\./, '').replace(/\.json$/, ''),
     file: path.join(GENERATED_DIR, file)
   }))
-  if (!infos.some(info => info.locale === DEFAULT_LOCALE)) {
-    infos.push({ locale: DEFAULT_LOCALE, file: path.join(GENERATED_DIR, `nav.manifest.${DEFAULT_LOCALE}.json`) })
+
+  const hintedLocales = await discoverLocalesFromDocs()
+  hintedLocales.add(DEFAULT_LOCALE)
+
+  for (const locale of hintedLocales) {
+    if (!infos.some(info => info.locale === locale)) {
+      infos.push({ locale, file: path.join(GENERATED_DIR, `nav.manifest.${locale}.json`) })
+    }
   }
+
   return infos
+}
+
+async function discoverLocalesFromDocs() {
+  const locales = new Set()
+  const entries = await fs.readdir(DOCS_DIR, { withFileTypes: true })
+  const localeDirPattern = /^[a-z]{2}(?:-[a-z0-9]+)*$/i
+
+  for (const entry of entries) {
+    if (!entry.isDirectory()) continue
+
+    if (entry.name.startsWith('content.')) {
+      const locale = entry.name.slice('content.'.length)
+      if (locale) locales.add(locale)
+      continue
+    }
+
+    if (localeDirPattern.test(entry.name)) {
+      locales.add(entry.name)
+    }
+  }
+
+  return locales
 }
 
 function buildLocaleConfigs(manifestInfos) {
