@@ -3,128 +3,94 @@ import path from 'node:path'
 import { globby } from 'globby'
 import matter from 'gray-matter'
 import { marked } from 'marked'
-import { fileURLToPath } from 'url'
+import { fileURLToPath, pathToFileURL } from 'url'
+import {
+  DEFAULT_LOCALE,
+  DOCS_DIR as DOCS,
+  GENERATED_ROOT as GEN,
+  PUBLIC_ROOT as PUB,
+  LANG_CONFIG,
+  LANGUAGES
+} from './pagegen.locales.mjs'
+
+export {
+  DEFAULT_LOCALE,
+  LOCALE_REGISTRY,
+  LANG_CONFIG,
+  LANGUAGES,
+  ROOT_DIR,
+  DOCS_DIR,
+  GENERATED_ROOT,
+  PUBLIC_ROOT,
+  getLocaleConfig
+} from './pagegen.locales.mjs'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
-const DOCS = path.join(__dirname, '..', 'docs')
-const DEFAULT_LOCALE = 'zh'
-const GEN = path.join(DOCS, '_generated')
-const PUB = path.join(DOCS, 'public')
 
-await fs.mkdir(GEN, { recursive: true })
-await fs.mkdir(PUB, { recursive: true })
-
-const LANG_CONFIG = Object.fromEntries(
-  Object.entries({
-    zh: {
-      isDefault: true,
-      vitepressLocaleKey: 'root',
-      rssFile: 'rss.xml',
-      sitemapFile: 'sitemap.xml',
-      labels: {
-        category: (value) => `分类 · ${value}`,
-        series: (value) => `连载 · ${value}`,
-        tag: (value) => `标签 · ${value}`,
-        archive: (value) => `归档 · ${value}`,
-        rssTitle: 'Ling Atlas',
-        rssDesc: '最新更新'
-      },
-      contentFields: {
-        category: ['category_zh', 'category'],
-        tags: ['tags_zh', 'tags'],
-        series: ['series'],
-        seriesSlug: ['series_slug'],
-        status: ['status']
-      }
-    },
-    en: {
-      isDefault: false,
-      vitepressLocaleKey: 'en',
-      rssFile: 'rss-en.xml',
-      sitemapFile: 'sitemap-en.xml',
-      labels: {
-        category: (value) => `Category · ${value}`,
-        series: (value) => `Series · ${value}`,
-        tag: (value) => `Tag · ${value}`,
-        archive: (value) => `Archive · ${value}`,
-        rssTitle: 'Ling Atlas (EN)',
-        rssDesc: 'Latest updates'
-      },
-      contentFields: {
-        category: ['category_en', 'category'],
-        tags: ['tags_en', 'tags'],
-        series: ['series_en', 'series'],
-        seriesSlug: ['series_slug_en', 'series_slug', 'series_en', 'series'],
-        status: ['status']
-      }
-    }
-  }).map(([code, config]) => {
-    const isDefault = config.isDefault ?? code === DEFAULT_LOCALE
-    const routePrefix = isDefault ? '' : `/${code}`
-    const generatedDir = isDefault ? GEN : path.join(DOCS, code, '_generated')
-    return [
-      code,
-      {
-        code,
-        ...config,
-        isDefault,
-        contentDir: path.join(DOCS, `content.${code}`),
-        outMeta: path.join(GEN, isDefault ? 'meta.json' : `meta.${code}.json`),
-        generatedDir,
-        generatedPathPrefix: `${routePrefix}/_generated`,
-        basePath: `${routePrefix}/content/`,
-        localeRoot: routePrefix ? `${routePrefix}/` : '/',
-        navManifestFile: `nav.manifest.${code}.json`
-      }
-    ]
-  })
-)
-
-const LANGUAGES = Object.values(LANG_CONFIG)
-
-const i18nPairs = new Map()
-const navManifest = new Map()
+let tagAlias = {}
+let i18nPairs = new Map()
+let navManifest = new Map()
 
 const TAXONOMY_TYPES = ['categories', 'series', 'archive']
 
-const taxonomyGroups = Object.fromEntries(
-  TAXONOMY_TYPES.map(type => [type, { groups: new Set(), slugIndex: new Map(), postIndex: new Map() }])
-)
-
-const tagGroups = new Map()
-
-const tagAlias = await loadTagAlias()
-
-function canonicalTag(tag) {
-  if (!tag) return ''
-  const direct = tagAlias[tag]
-  if (direct) return slug(direct)
-  const lowered = tag.toLowerCase?.()
-  if (lowered && tagAlias[lowered]) return slug(tagAlias[lowered])
-  return slug(tag)
+function createInitialTaxonomyGroups() {
+  return Object.fromEntries(
+    TAXONOMY_TYPES.map(type => [type, { groups: new Set(), slugIndex: new Map(), postIndex: new Map() }])
+  )
 }
 
-await syncLocalizedContent()
+let taxonomyGroups = createInitialTaxonomyGroups()
+let tagGroups = new Map()
 
 const siteOrigin = process.env.SITE_ORIGIN || 'https://example.com'
 
-for (const lang of LANGUAGES) {
-  ensureNavManifest(lang.code)
-  const posts = await collectPosts(lang)
-  await fs.writeFile(lang.outMeta, JSON.stringify(posts.meta, null, 2))
+async function main() {
+  await fs.mkdir(GEN, { recursive: true })
+  await fs.mkdir(PUB, { recursive: true })
 
-  await writeCollections(lang, posts.meta)
-  await genRSS(lang, posts.list)
-  await genSitemap(lang, posts.list)
-  collectI18nPairs(posts.list, lang)
+  i18nPairs = new Map()
+  navManifest = new Map()
+  taxonomyGroups = createInitialTaxonomyGroups()
+  tagGroups = new Map()
+
+  tagAlias = await loadTagAlias()
+  await syncLocalizedContent()
+
+  for (const lang of LANGUAGES) {
+    ensureNavManifest(lang.code)
+    const posts = await collectPosts(lang)
+    await fs.writeFile(lang.outMeta, JSON.stringify(posts.meta, null, 2))
+
+    await writeCollections(lang, posts.meta)
+    await genRSS(lang, posts.list)
+    await genSitemap(lang, posts.list)
+    collectI18nPairs(posts.list, lang)
+  }
+
+  flushTaxonomyGroups()
+  flushTagGroups()
+  await writeI18nMap()
+  await writeNavManifests()
+
+  console.log('✔ pagegen 完成')
 }
 
-flushTaxonomyGroups()
-flushTagGroups()
-await writeI18nMap()
-await writeNavManifests()
+function isMain(moduleUrl) {
+  const entry = process.argv[1]
+  if (!entry) return false
+  try {
+    return moduleUrl === pathToFileURL(path.resolve(entry)).href
+  } catch {
+    return false
+  }
+}
 
-console.log('✔ pagegen 完成')
+if (isMain(import.meta.url)) {
+  main().catch(err => {
+    console.error(err)
+    process.exit(1)
+  })
+}
 
 function toExcerpt(md) {
   const html = marked.parse((md || '').split('\n\n')[0] || '')
@@ -142,6 +108,15 @@ function slug(input) {
     .replace(/[^\p{Letter}\p{Number}]+/gu, '-')
     .replace(/(^-|-$)/g, '')
     .toLowerCase()
+}
+
+function canonicalTag(tag) {
+  if (!tag) return ''
+  const direct = tagAlias?.[tag]
+  if (direct) return slug(direct)
+  const lowered = tag.toLowerCase?.()
+  if (lowered && tagAlias?.[lowered]) return slug(tagAlias[lowered])
+  return slug(tag)
 }
 
 async function exists(target) {

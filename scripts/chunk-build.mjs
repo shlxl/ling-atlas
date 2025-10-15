@@ -12,24 +12,17 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { globby } from 'globby'
 import matter from 'gray-matter'
+import { LOCALE_REGISTRY } from './pagegen.locales.mjs'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const ROOT = path.resolve(__dirname, '..')
 const OUTPUT_DIR = path.join(ROOT, 'docs', 'public', 'api')
 const OUTPUT_FILE = path.join(OUTPUT_DIR, 'knowledge.json')
-const DEFAULT_LOCALE = 'zh'
-const LANG_SOURCES = [
-  {
-    code: DEFAULT_LOCALE,
-    dir: path.join(ROOT, 'docs', `content.${DEFAULT_LOCALE}`),
-    basePath: '/content/'
-  },
-  {
-    code: 'en',
-    dir: path.join(ROOT, 'docs', 'content.en'),
-    basePath: '/en/content/'
-  }
-]
+const LANG_SOURCES = LOCALE_REGISTRY.map(locale => ({
+  code: locale.code,
+  dir: locale.contentDir,
+  basePath: locale.basePath
+}))
 
 function isDraft(frontmatter) {
   const { status, draft } = frontmatter || {}

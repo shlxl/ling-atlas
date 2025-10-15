@@ -1,6 +1,7 @@
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import { globby } from 'globby'
+import { DEFAULT_LOCALE, LOCALE_REGISTRY } from './pagegen.locales.mjs'
 
 const ROOT = process.cwd()
 const DOCS_DIR = path.join(ROOT, 'docs')
@@ -8,8 +9,21 @@ const GENERATED_DIR = path.join(ROOT, 'docs/_generated')
 const DIST_DIR = path.join(ROOT, 'docs/.vitepress/dist')
 let distReady = false
 const INTERNAL_PREFIXES = ['/', './', '../']
-const DEFAULT_LOCALE = 'zh'
-let localeConfigs = []
+const localeConfigs = LOCALE_REGISTRY
+const localeMap = new Map(localeConfigs.map(locale => [locale.code, locale]))
+const localePrefixes = localeConfigs
+  .filter(locale => !locale.isDefault && locale.routePrefix)
+  .map(locale => ({
+    locale: locale.code,
+    prefix: ensureTrailingSlash(locale.routePrefix)
+  }))
+  .sort((a, b) => b.prefix.length - a.prefix.length)
+
+function ensureTrailingSlash(prefix) {
+  if (!prefix) return '/'
+  const withLeading = prefix.startsWith('/') ? prefix : `/${prefix}`
+  return withLeading.endsWith('/') ? withLeading : `${withLeading}/`
+}
 
 function isInternalLink(url) {
   return INTERNAL_PREFIXES.some(prefix => url.startsWith(prefix)) && !url.startsWith('http')
@@ -30,13 +44,16 @@ function normalizeInternal(url) {
 }
 
 function stripLocalePrefix(url) {
-  for (const config of localeConfigs) {
-    if (config.isDefault) continue
-    const prefix = `${config.routePrefix}/`
-    if (url.startsWith(prefix)) return { relative: url.slice(prefix.length), locale: config.code }
+  const normalized = url.startsWith('/') ? url : `/${url.replace(/^\/+/, '')}`
+  for (const entry of localePrefixes) {
+    if (normalized === entry.prefix.slice(0, -1)) {
+      return { relative: '', locale: entry.locale }
+    }
+    if (normalized.startsWith(entry.prefix)) {
+      return { relative: normalized.slice(entry.prefix.length), locale: entry.locale }
+    }
   }
-  if (url.startsWith('/')) return { relative: url.slice(1), locale: DEFAULT_LOCALE }
-  return { relative: url.replace(/^\/+/, ''), locale: DEFAULT_LOCALE }
+  return { relative: normalized.replace(/^\//, ''), locale: DEFAULT_LOCALE }
 }
 
 async function validateInternalLink(url, filePath) {
@@ -52,9 +69,11 @@ async function validateInternalLink(url, filePath) {
   const clean = normalized.replace(/#.+$/, '')
   if (clean === '/' || clean === '') return true
   const { relative, locale } = stripLocalePrefix(clean)
-  const localeConfig = localeConfigs.find(cfg => cfg.code === locale)
+  const localeConfig = localeMap.get(locale) || localeMap.get(DEFAULT_LOCALE)
 
-  const searchRoots = [DOCS_DIR, GENERATED_DIR, ...(localeConfig?.extraSearchRoots ?? [])]
+  const searchRoots = localeConfig?.searchRoots?.length
+    ? localeConfig.searchRoots
+    : [DOCS_DIR, GENERATED_DIR]
 
   for (const root of searchRoots) {
     const mdPath = path.join(root, relative)
@@ -101,7 +120,6 @@ async function checkFile(filePath) {
 async function main() {
   distReady = await fileExists(path.join(DIST_DIR, 'index.html'))
   const manifestInfos = await collectManifestInfos()
-  localeConfigs = buildLocaleConfigs(manifestInfos)
   const excludeLocales = localeConfigs
     .filter(cfg => !cfg.isDefault)
     .map(cfg => `!docs/${cfg.code}/_generated/**/*`)
@@ -128,71 +146,10 @@ main().catch(err => {
 })
 
 async function collectManifestInfos() {
-  const files = await globby('nav.manifest.*.json', { cwd: GENERATED_DIR })
-  const infos = files.map(file => ({
-    locale: file.replace(/^nav\.manifest\./, '').replace(/\.json$/, ''),
-    file: path.join(GENERATED_DIR, file)
+  return localeConfigs.map(locale => ({
+    locale: locale.code,
+    file: path.join(GENERATED_DIR, locale.navManifestFile)
   }))
-
-  const hintedLocales = await discoverLocalesFromDocs()
-  hintedLocales.add(DEFAULT_LOCALE)
-
-  for (const locale of hintedLocales) {
-    if (!infos.some(info => info.locale === locale)) {
-      infos.push({ locale, file: path.join(GENERATED_DIR, `nav.manifest.${locale}.json`) })
-    }
-  }
-
-  return infos
-}
-
-async function discoverLocalesFromDocs() {
-  const locales = new Set()
-  const entries = await fs.readdir(DOCS_DIR, { withFileTypes: true })
-  const localeDirPattern = /^[a-z]{2}(?:-[a-z0-9]+)*$/i
-
-  for (const entry of entries) {
-    if (!entry.isDirectory()) continue
-
-    if (entry.name.startsWith('content.')) {
-      const locale = entry.name.slice('content.'.length)
-      if (locale) locales.add(locale)
-      continue
-    }
-
-    if (localeDirPattern.test(entry.name)) {
-      locales.add(entry.name)
-    }
-  }
-
-  return locales
-}
-
-function buildLocaleConfigs(manifestInfos) {
-  const locales = new Set([DEFAULT_LOCALE])
-  for (const info of manifestInfos) locales.add(info.locale)
-  return [...locales].map(locale => ({
-    code: locale,
-    isDefault: locale === DEFAULT_LOCALE,
-    routePrefix: locale === DEFAULT_LOCALE ? '' : `/${locale}`,
-    extraSearchRoots: locale === DEFAULT_LOCALE ? [] : [
-      path.join(DOCS_DIR, locale),
-      path.join(DOCS_DIR, locale, '_generated')
-    ],
-    contentRoots: buildContentRoots(locale)
-  }))
-}
-
-function buildContentRoots(locale) {
-  const roots = []
-  if (locale === DEFAULT_LOCALE) {
-    roots.push(path.join(DOCS_DIR, 'content'))
-    roots.push(path.join(DOCS_DIR, `content.${locale}`))
-  } else {
-    roots.push(path.join(DOCS_DIR, locale, 'content'))
-    roots.push(path.join(DOCS_DIR, `content.${locale}`))
-  }
-  return roots
 }
 
 async function validateNavManifests(manifestInfos) {
