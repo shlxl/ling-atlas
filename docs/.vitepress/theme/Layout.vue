@@ -3,7 +3,8 @@ import { computed, defineAsyncComponent, onMounted, ref } from 'vue'
 import { useRouter } from 'vitepress'
 import DefaultTheme from 'vitepress/dist/client/theme-default/without-fonts'
 import SearchBox from './components/SearchBox.vue'
-import { initTelemetry, setupTelemetryRouterHook } from './telemetry'
+import LocaleToggleButton from './components/LocaleToggleButton.vue'
+import { initTelemetry, resolveAsset, setupTelemetryRouterHook } from './telemetry'
 import { useRegisterSW } from 'virtual:pwa-register/vue'
 
 const router = useRouter()
@@ -40,6 +41,16 @@ const ChatWidget = defineAsyncComponent(() => import('./components/ChatWidget.vu
 const chatLabels: Record<string, string> = { root: '知识问答', en: 'Knowledge Chat' }
 const chatButtonLabel = computed(() => chatLabels[activeLocale.value] || chatLabels.en)
 
+const enPathPrefix = resolveAsset('/en/').pathname
+
+function normalizePath(path: string) {
+  if (!path) return '/'
+  const [pathname] = path.split(/[?#]/)
+  if (!pathname) return '/'
+  if (pathname.endsWith('/') || pathname.endsWith('.html')) return pathname
+  return `${pathname}/`
+}
+
 function closeBanner() {
   offlineReady.value = false
   needRefresh.value = false
@@ -60,11 +71,8 @@ onMounted(() => {
 })
 
 function updateLocale(path: string) {
-  if (!path) {
-    activeLocale.value = 'root'
-    return
-  }
-  activeLocale.value = path.startsWith('/en/') ? 'en' : 'root'
+  const normalized = normalizePath(path)
+  activeLocale.value = normalized.startsWith(enPathPrefix) ? 'en' : 'root'
 }
 
 function handleRouteChange(path: string) {
@@ -76,6 +84,7 @@ function handleRouteChange(path: string) {
   <DefaultTheme.Layout>
     <template #nav-bar-content-after>
       <div class="la-search-wrapper">
+        <LocaleToggleButton />
         <SearchBox />
       </div>
     </template>
@@ -152,10 +161,8 @@ function handleRouteChange(path: string) {
 .la-search-wrapper {
   display: flex;
   align-items: center;
+  gap: 0.5rem;
   margin-right: 0.75rem;
-}
-.la-search-wrapper :deep(.la-search-btn) {
-  margin-right: 0.5rem;
 }
 .chat-fab {
   position: fixed;
