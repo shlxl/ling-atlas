@@ -1,11 +1,11 @@
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import { globby } from 'globby'
+import { DEFAULT_LOCALE, LOCALE_REGISTRY } from './pagegen.locales.mjs'
 
 const ROOT = process.cwd()
 const DOCS_DIR = path.join(ROOT, 'docs')
 const GENERATED_DIR = path.join(ROOT, 'docs/_generated')
-const EN_GENERATED_DIR = path.join(ROOT, 'docs/en/_generated')
 const DIST_DIR = path.join(ROOT, 'docs/.vitepress/dist')
 let distReady = false
 const INTERNAL_PREFIXES = ['/', './', '../']
@@ -42,9 +42,16 @@ function normalizeInternal(url) {
 }
 
 function stripLocalePrefix(url) {
-  if (url.startsWith('/en/')) return { relative: url.slice(4), locale: 'en' }
-  if (url.startsWith('/')) return { relative: url.slice(1), locale: 'zh' }
-  return { relative: url.replace(/^\/+/, ''), locale: 'zh' }
+  const normalized = url.startsWith('/') ? url : `/${url.replace(/^\/+/, '')}`
+  for (const entry of localePrefixes) {
+    if (normalized === entry.prefix.slice(0, -1)) {
+      return { relative: '', locale: entry.locale }
+    }
+    if (normalized.startsWith(entry.prefix)) {
+      return { relative: normalized.slice(entry.prefix.length), locale: entry.locale }
+    }
+  }
+  return { relative: normalized.replace(/^\//, ''), locale: DEFAULT_LOCALE }
 }
 
 async function validateInternalLink(url, filePath) {

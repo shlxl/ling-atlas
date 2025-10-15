@@ -48,7 +48,7 @@ export function normalizeRoutePath(path: string) {
 
 export function getFallbackPath(locale: LocaleId) {
   if (!fallbackCache[locale]) {
-    const basePath = locale === 'en' ? '/en/' : '/'
+    const basePath = routePrefix(locale)
     fallbackCache[locale] = normalizeRoutePath(resolveAsset(basePath).pathname)
   }
   return fallbackCache[locale]!
@@ -225,6 +225,50 @@ function normalizeManifest(payload: Partial<NavManifest> | null | undefined, fal
     tags: payload?.tags ?? {},
     archive: payload?.archive ?? {}
   }
+}
+
+function parseAggregatePath(path: string): { type: AggregateType; slug: string } | null {
+  const normalized = normalizeRoutePath(path)
+  const segments = normalized.split('/').filter(Boolean)
+  if (!segments.length) return null
+  const hasLocale = segments[0] === 'en'
+  const offset = hasLocale ? 1 : 0
+  if (segments[offset] !== '_generated') return null
+  const type = segments[offset + 1] as AggregateType | undefined
+  const slug = segments[offset + 2]
+  if (!type || !slug) return null
+  if (!['categories', 'series', 'tags', 'archive'].includes(type)) return null
+  return { type, slug }
+}
+
+function getFirstManifestPath(manifest: NavManifest, type: AggregateType) {
+  const entries = manifest[type]
+  if (!entries) return null
+  const first = Object.values(entries)[0]
+  if (!first) return null
+  return normalizeRoutePath(resolveAsset(first).pathname)
+}
+
+function parseAggregatePath(path: string): { type: AggregateType; slug: string } | null {
+  const normalized = normalizeRoutePath(path)
+  const segments = normalized.split('/').filter(Boolean)
+  if (!segments.length) return null
+  const hasLocale = segments[0] === 'en'
+  const offset = hasLocale ? 1 : 0
+  if (segments[offset] !== '_generated') return null
+  const type = segments[offset + 1] as AggregateType | undefined
+  const slug = segments[offset + 2]
+  if (!type || !slug) return null
+  if (!['categories', 'series', 'tags', 'archive'].includes(type)) return null
+  return { type, slug }
+}
+
+function getFirstManifestPath(manifest: NavManifest, type: AggregateType) {
+  const entries = manifest[type]
+  if (!entries) return null
+  const first = Object.values(entries)[0]
+  if (!first) return null
+  return normalizeRoutePath(resolveAsset(first).pathname)
 }
 
 function parseAggregatePath(path: string): { type: AggregateType; slug: string } | null {

@@ -1,28 +1,13 @@
-import { useData } from 'vitepress'
+import { DEFAULT_LOCALE, LocaleCode, NON_DEFAULT_LOCALES, routePrefix } from './locales'
 
 export function useI18nRouting() {
-  const { site } = useData()
-
-  function detectLocaleFromPath(path: string) {
-    if (path.startsWith('/en/')) {
-      return 'en'
+  function detectLocaleFromPath(path: string): LocaleCode {
+    const normalized = path.startsWith('/') ? path : `/${path}`
+    for (const locale of NON_DEFAULT_LOCALES as LocaleCode[]) {
+      if (normalized.startsWith(routePrefix(locale))) return locale
     }
-    return 'root'
+    return DEFAULT_LOCALE
   }
 
-  function ensureLocaleMap() {
-    const localeMap: Record<string, string> = {}
-    const zhPages = new Set(site.value.pages.filter(p => !p.startsWith('en/')).map(p => p.replace(/index\.md$/, '').replace(/\.md$/, '.html')))
-    const enPages = new Set(site.value.pages.filter(p => p.startsWith('en/')).map(p => p.replace('en/', '').replace(/index\.md$/, '').replace(/\.md$/, '.html')))
-
-    for (const page of zhPages) {
-      if (enPages.has(page)) {
-        localeMap[page] = `/en${page}`
-        localeMap[`/en${page}`] = page
-      }
-    }
-    return localeMap
-  }
-
-  return { detectLocaleFromPath, ensureLocaleMap }
+  return { detectLocaleFromPath }
 }
