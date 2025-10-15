@@ -9,12 +9,12 @@ const GENERATED_DIR = path.join(ROOT, 'docs/_generated')
 const DIST_DIR = path.join(ROOT, 'docs/.vitepress/dist')
 let distReady = false
 const INTERNAL_PREFIXES = ['/', './', '../']
-const DEFAULT_LOCALE = 'zh'
+const ROOT_LOCALE = 'zh'
 const FALLBACK_LOCALE_PREFIXES = [
   { locale: 'en', prefix: '/en/' }
 ]
 
-let localePrefixes = [...FALLBACK_LOCALE_PREFIXES, { locale: DEFAULT_LOCALE, prefix: '/' }]
+let localePrefixes = [...FALLBACK_LOCALE_PREFIXES, { locale: ROOT_LOCALE, prefix: '/' }]
 const DEFAULT_MANIFESTS = [
   {
     locale: 'zh',
@@ -60,8 +60,8 @@ function stripLocalePrefix(url) {
     }
   }
 
-  if (url.startsWith('/')) return { relative: url.slice(1), locale: DEFAULT_LOCALE }
-  return { relative: url.replace(/^\/+/, ''), locale: DEFAULT_LOCALE }
+  if (url.startsWith('/')) return { relative: url.slice(1), locale: ROOT_LOCALE }
+  return { relative: url.replace(/^\/+/, ''), locale: ROOT_LOCALE }
 }
 
 async function validateInternalLink(url, filePath) {
@@ -232,7 +232,7 @@ function deriveLocalePrefixes(manifestInfos) {
     if (!info?.locale) continue
     const locale = info.locale
     const set = seen.get(locale) ?? new Set()
-    if (locale === DEFAULT_LOCALE) {
+    if (locale === ROOT_LOCALE) {
       set.add('/')
     } else {
       set.add(`/${locale}/`)
@@ -240,8 +240,8 @@ function deriveLocalePrefixes(manifestInfos) {
     seen.set(locale, set)
   }
 
-  if (!seen.has(DEFAULT_LOCALE)) {
-    seen.set(DEFAULT_LOCALE, new Set(['/']))
+  if (!seen.has(ROOT_LOCALE)) {
+    seen.set(ROOT_LOCALE, new Set(['/']))
   }
 
   return Array.from(seen.entries())

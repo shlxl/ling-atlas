@@ -158,12 +158,9 @@ function expandLocalePaths(localePaths) {
   return next
 }
 
-const TAXONOMY_TYPES = ['categories', 'series', 'archive']
-
-function createInitialTaxonomyGroups() {
-  return Object.fromEntries(
-    TAXONOMY_TYPES.map(type => [type, { groups: new Set(), slugIndex: new Map(), postIndex: new Map() }])
-  )
+function getLocaleKeys(lang) {
+  const keys = new Set([lang.manifestLocale, ...(lang.aliasLocaleIds || [])])
+  return Array.from(keys)
 }
 
 await syncLocaleContent()
