@@ -60,7 +60,7 @@ const escapedBase = escapeRegex(normalizedBase)
 
 const metaZh = loadMeta('docs/_generated/meta.json')
 const metaEn = loadMeta('docs/_generated/meta.en.json')
-const manifestZh = loadNavManifest('root')
+const manifestZh = loadNavManifest('zh')
 const manifestEn = loadNavManifest('en')
 const i18nMap = loadI18nTranslations()
 
@@ -72,7 +72,7 @@ const embeddingsJsonPattern = /embeddings-texts\.json$/
 const embeddingsWorkerPattern = /worker\/embeddings\.worker\.js$/
 
 type NavManifest = {
-  locale: 'root' | 'en'
+  locale: 'zh' | 'en'
   categories: Record<string, string>
   series: Record<string, string>
   tags: Record<string, string>
@@ -196,30 +196,47 @@ function legacyNavFromMeta(meta: any, locale: 'zh' | 'en') {
   ]
 }
 
-function loadNavManifest(localeId: 'root' | 'en'): NavManifest | null {
-  const file = `docs/_generated/nav.manifest.${localeId}.json`
-  try {
-    const raw = fs.readFileSync(file, 'utf8')
-    const parsed = JSON.parse(raw) as Partial<NavManifest> & { locale?: string }
-    const targetLocale = parsed.locale === 'en' ? 'en' : localeId
-    return {
-      locale: targetLocale,
-      categories: parsed.categories ?? {},
-      series: parsed.series ?? {},
-      tags: parsed.tags ?? {},
-      archive: parsed.archive ?? {}
-    }
-  } catch (error) {
-    if (process.env.NODE_ENV !== 'production') {
-      console.warn(`[config] failed to load ${file}:`, error)
-    }
-    return null
+function loadNavManifest(localeId: 'zh' | 'en'): NavManifest | null {
+  const candidates = [`docs/_generated/nav.manifest.${localeId}.json`]
+  if (localeId === 'zh') {
+    candidates.push('docs/_generated/nav.manifest.root.json')
   }
+
+  let lastError: unknown = null
+
+  for (const file of candidates) {
+    try {
+      const raw = fs.readFileSync(file, 'utf8')
+      const parsed = JSON.parse(raw) as Partial<NavManifest> & { locale?: string }
+      const detectedLocale = parsed.locale === 'en' ? 'en' : 'zh'
+      return {
+        locale: detectedLocale,
+        categories: parsed.categories ?? {},
+        series: parsed.series ?? {},
+        tags: parsed.tags ?? {},
+        archive: parsed.archive ?? {}
+      }
+    } catch (error) {
+      lastError = error
+    }
+  }
+
+  if (lastError && process.env.NODE_ENV !== 'production') {
+    console.warn(
+      `[config] failed to load nav manifest for ${localeId} (candidates: ${candidates.join(', ')}):`,
+      lastError
+    )
+  }
+
+  return null
 }
 
 export default defineConfig({
   // Inject base from env to support GitHub Pages subpath deployment
   base: baseFromEnv,
+  rewrites: {
+    'content/:path*': 'content.zh/:path*/index.md'
+  },
   head: [
     ['meta', { 'http-equiv': 'Content-Security-Policy', content: cspContent }],
     ['meta', { name: 'referrer', content: 'no-referrer' }]

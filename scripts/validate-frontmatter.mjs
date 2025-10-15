@@ -22,8 +22,7 @@ function toYMD(v) {
   return v
 }
 
-const DEFAULT_LOCALE = 'zh'
-const files = await globby(`docs/content.${DEFAULT_LOCALE}/**/index.md`)
+const files = await globby('docs/content.*/**/index.md')
 let failed = 0
 for (const f of files) {
   const src = await fs.readFile(f, 'utf8')

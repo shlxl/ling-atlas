@@ -26,9 +26,95 @@ export {
 } from './pagegen.locales.mjs'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
+const DOCS = path.join(__dirname, '..', 'docs')
+const GEN = path.join(DOCS, '_generated')
+const PUB = path.join(DOCS, 'public')
+
+await fs.mkdir(GEN, { recursive: true })
+await fs.mkdir(PUB, { recursive: true })
+
+const LOCALE_CONFIG = [
+  {
+    code: 'zh',
+    isDefault: true,
+    vitepressLocaleId: 'root',
+    manifestLocale: 'zh',
+    aliasLocaleIds: ['root'],
+    contentDir: path.join(DOCS, 'content.zh'),
+    outMeta: path.join(GEN, 'meta.json'),
+    basePath: '/content/',
+    genPrefix: '',
+    rssFile: 'rss.xml',
+    sitemapFile: 'sitemap.xml',
+    labels: {
+      category: (value) => `分类 · ${value}`,
+      series: (value) => `连载 · ${value}`,
+      tag: (value) => `标签 · ${value}`,
+      archive: (value) => `归档 · ${value}`,
+      rssTitle: 'Ling Atlas',
+      rssDesc: '最新更新'
+    },
+    contentFields: {
+      category: ['category_zh', 'category'],
+      tags: ['tags_zh', 'tags'],
+      series: ['series'],
+      seriesSlug: ['series_slug'],
+      status: ['status']
+    }
+  },
+  {
+    code: 'en',
+    isDefault: false,
+    vitepressLocaleId: 'en',
+    manifestLocale: 'en',
+    aliasLocaleIds: [],
+    contentDir: path.join(DOCS, 'content.en'),
+    outMeta: path.join(GEN, 'meta.en.json'),
+    basePath: '/en/content/',
+    genPrefix: 'en',
+    rssFile: 'rss-en.xml',
+    sitemapFile: 'sitemap-en.xml',
+    labels: {
+      category: (value) => `Category · ${value}`,
+      series: (value) => `Series · ${value}`,
+      tag: (value) => `Tag · ${value}`,
+      archive: (value) => `Archive · ${value}`,
+      rssTitle: 'Ling Atlas (EN)',
+      rssDesc: 'Latest updates'
+    },
+    contentFields: {
+      category: ['category_en', 'category'],
+      tags: ['tags_en', 'tags'],
+      series: ['series_en', 'series'],
+      seriesSlug: ['series_slug_en', 'series_slug', 'series_en', 'series'],
+      status: ['status']
+    }
+  }
+]
 
 const i18nPairs = new Map()
 const navManifest = new Map()
+
+function getLocaleKeys(lang) {
+  const keys = new Set([lang.manifestLocale, ...(lang.aliasLocaleIds || [])])
+  return Array.from(keys)
+}
+
+const localeAliasMap = new Map(LOCALE_CONFIG.map(lang => [lang.manifestLocale, lang.aliasLocaleIds || []]))
+
+function expandLocalePaths(localePaths) {
+  const next = { ...(localePaths || {}) }
+  for (const [locale, targetPath] of Object.entries(localePaths || {})) {
+    const aliases = localeAliasMap.get(locale) || []
+    for (const alias of aliases) {
+      if (!alias) continue
+      if (!(alias in next) && targetPath) {
+        next[alias] = targetPath
+      }
+    }
+  }
+  return next
+}
 
 const TAXONOMY_TYPES = ['categories', 'series', 'archive']
 
@@ -47,16 +133,13 @@ async function main() {
   await fs.mkdir(GEN, { recursive: true })
   await fs.mkdir(PUB, { recursive: true })
 
-  i18nPairs = new Map()
-  navManifest = new Map()
-  taxonomyGroups = createInitialTaxonomyGroups()
-  tagGroups = new Map()
+await syncLocaleContent()
 
   tagAlias = await loadTagAlias()
   await syncLocalizedContent()
 
-for (const lang of LANG_CONFIG) {
-  ensureNavManifest(lang.localeId)
+for (const lang of LOCALE_CONFIG) {
+  ensureNavManifest(lang.manifestLocale)
   const posts = await collectPosts(lang)
   await fs.writeFile(lang.outMeta, JSON.stringify(posts.meta, null, 2))
 
@@ -122,19 +205,20 @@ async function exists(target) {
   }
 }
 
-async function syncLocalizedContent() {
-  for (const lang of LANGUAGES) {
+async function syncLocaleContent() {
+  for (const lang of LOCALE_CONFIG) {
     if (!(await exists(lang.contentDir))) continue
     if (lang.isDefault) {
       const target = path.join(DOCS, 'content')
-      if (target === lang.contentDir) continue
       await fs.rm(target, { recursive: true, force: true })
+      await fs.mkdir(target, { recursive: true })
       await fs.cp(lang.contentDir, target, { recursive: true })
       continue
     }
-    const localeRoot = path.join(DOCS, lang.code)
-    const target = path.join(localeRoot, 'content')
-    await fs.mkdir(localeRoot, { recursive: true })
+
+    const targetRoot = path.join(DOCS, lang.code)
+    const target = path.join(targetRoot, 'content')
+    await fs.mkdir(targetRoot, { recursive: true })
     await fs.rm(target, { recursive: true, force: true })
     await fs.cp(lang.contentDir, target, { recursive: true })
   }
@@ -294,7 +378,9 @@ function collectI18nPairs(list, lang) {
   for (const post of list) {
     if (!post.relative) continue
 
-    registerI18nEntry(post.relative, lang.code, post.path)
+    for (const localeKey of getLocaleKeys(lang)) {
+      registerI18nEntry(post.relative, localeKey, post.path)
+    }
 
     if (post.category_slug)
       registerSingleTaxonomy('categories', lang, post.category_slug, post.relative)
@@ -310,7 +396,7 @@ function collectI18nPairs(list, lang) {
       if (!tagSlug) continue
       const canonical = canonicalTag(tag)
       registerTagGroup(canonical, {
-        localeCode: lang.code,
+        localeId: lang.manifestLocale,
         slug: tagSlug,
         path: taxonomyPath('tags', tagSlug, lang)
       })
@@ -335,7 +421,7 @@ function registerSingleTaxonomy(type, lang, slugValue, relative) {
   const info = taxonomyGroups[type]
   if (!info) return
 
-  const slugKey = `${lang.code}|${slugValue}`
+  const slugKey = `${lang.manifestLocale}|${slugValue}`
   let group = info.slugIndex.get(slugKey)
   if (!group) {
     group = { entries: new Map() }
@@ -343,7 +429,7 @@ function registerSingleTaxonomy(type, lang, slugValue, relative) {
     info.slugIndex.set(slugKey, group)
   }
 
-  group.entries.set(lang.code, {
+  group.entries.set(lang.manifestLocale, {
     slug: slugValue,
     path: taxonomyPath(type, slugValue, lang)
   })
@@ -409,8 +495,9 @@ function flushTagGroups() {
 
 function registerI18nGroupEntry(key, localePaths) {
   if (!key) return
+  const expanded = expandLocalePaths(localePaths)
   const existing = i18nPairs.get(key) || {}
-  for (const [loc, pathValue] of Object.entries(localePaths)) {
+  for (const [loc, pathValue] of Object.entries(expanded)) {
     if (pathValue) existing[loc] = pathValue
   }
   i18nPairs.set(key, existing)
@@ -450,7 +537,7 @@ function ensureNavManifest(localeId) {
 
 function registerNavEntry(type, lang, slugValue) {
   if (!slugValue) return
-  const manifest = ensureNavManifest(lang.localeId)
+  const manifest = ensureNavManifest(lang.manifestLocale)
   const target = taxonomyPath(type, slugValue, lang)
   if (!target) return
   if (!manifest[type] || !(manifest[type] instanceof Map)) return
@@ -458,18 +545,18 @@ function registerNavEntry(type, lang, slugValue) {
 }
 
 async function writeNavManifests() {
-  for (const lang of LANG_CONFIG) {
-    const manifest = ensureNavManifest(lang.localeId)
+  for (const lang of LOCALE_CONFIG) {
+    const manifest = ensureNavManifest(lang.manifestLocale)
     const serialize = map => Object.fromEntries(map.entries())
     const payload = {
-      locale: lang.localeId,
+      locale: lang.manifestLocale,
       categories: serialize(manifest.categories),
       series: serialize(manifest.series),
       tags: serialize(manifest.tags),
       archive: serialize(manifest.archive)
     }
     const json = `${JSON.stringify(payload, null, 2)}\n`
-    const file = `nav.manifest.${lang.localeId}.json`
+    const file = `nav.manifest.${lang.manifestLocale}.json`
     await fs.writeFile(path.join(GEN, file), json)
     await fs.writeFile(path.join(PUB, file), json)
   }

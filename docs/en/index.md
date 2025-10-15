@@ -16,4 +16,4 @@ hero:
 
 Welcome to the English portal of Ling Atlas.
 
-Add your articles under `docs/content.en/**` to expand this space over time.
+Add your articles under `docs/content.en/**` to expand this space over time; Chinese originals live in `docs/content.zh/**` and power the default locale at `/`.
