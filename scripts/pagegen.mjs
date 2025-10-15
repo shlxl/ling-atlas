@@ -7,6 +7,7 @@ import { fileURLToPath } from 'url'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const DOCS = path.join(__dirname, '..', 'docs')
+const DEFAULT_LOCALE = 'zh'
 const GEN = path.join(DOCS, '_generated')
 const PUB = path.join(DOCS, 'public')
 
@@ -15,9 +16,9 @@ await fs.mkdir(PUB, { recursive: true })
 
 const LANG_CONFIG = [
   {
-    code: 'zh',
+    code: DEFAULT_LOCALE,
     localeId: 'root',
-    contentDir: path.join(DOCS, 'content'),
+    contentDir: path.join(DOCS, `content.${DEFAULT_LOCALE}`),
     outMeta: path.join(GEN, 'meta.json'),
     basePath: '/content/',
     genPrefix: '',
