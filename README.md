@@ -81,12 +81,14 @@ npm run dev
 - 供应链：CI 默认 `npm ci` 安装，审计输出（`npm run audit`、`npm run license`）可追踪依赖风险；`npm run sbom` 及构建流程会生成 `docs/public/.well-known/sbom.json`，SRI 哈希变化需先更新 allowlist，否则脚本将阻断。
 
 ## 约定
-- 所有文章文件置于 `docs/content/**/index.md`；Frontmatter 字段遵循 `schema/frontmatter.schema.json`。
+- 所有中文文章文件置于 `docs/content.zh/**/index.md`（默认语言 `zh` 映射到 `/` 根路由）；Frontmatter 字段遵循 `schema/frontmatter.schema.json`。
+- 其他语言遵循 `docs/content.<locale>/**/index.md` 命名，例如 `docs/content.en/**`（最终访问路径为 `/en/...`）。
 - `status: draft` 的文章不会进入聚合页与 RSS/Sitemap。
 
 ## FAQ
 - **可以放在根仓库吗？** 可以，但推荐独立仓库，后续可用 subtree 回挂到旧仓 `docs/`。
 - **中文标题如何转 slug？** `scripts/slug.ts` 提供简版实现，优先手写 `slug` 字段。
+- **为什么中文内容访问路径没有 `/zh/` 前缀？** 生成器把 `docs/content.zh` 视作默认语言目录，并在写聚合页时把它映射到 VitePress 根 `/`。新增语言时，请使用 `docs/content.<locale>` 命名（如 `docs/content.jp`），它们会自动映射到 `/<locale>/` 以避免与默认中文冲突。
 
 ---
 
