@@ -10,11 +10,21 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { globby } from 'globby'
 import matter from 'gray-matter'
+import { LOCALE_REGISTRY, getPreferredLocale } from './pagegen.locales.mjs'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const ROOT = path.resolve(__dirname, '..')
-const DEFAULT_LOCALE = 'zh'
-const CONTENT_DIR = path.join(ROOT, 'docs', `content.${DEFAULT_LOCALE}`)
+const preferredLocale = getPreferredLocale()
+const preferredLocaleConfig =
+  LOCALE_REGISTRY.find(locale => locale.code === preferredLocale) || LOCALE_REGISTRY[0]
+
+if (!preferredLocaleConfig) {
+  console.warn('[qa-build] no locale configuration available, skipping generation')
+  process.exit(0)
+}
+
+const CONTENT_DIR = preferredLocaleConfig.contentDir
+const BASE_PATH = preferredLocaleConfig.basePath
 const OUTPUT_DIR = path.join(ROOT, 'docs', 'public', 'data')
 const OUTPUT_FILE = path.join(OUTPUT_DIR, 'qa.json')
 
@@ -49,7 +59,7 @@ function getFirstParagraph(content) {
 function buildUrl(mdPath) {
   const relative = path.relative(CONTENT_DIR, mdPath).replace(/\\/g, '/')
   const dir = relative.replace(/\/index\.md$/, '')
-  return `/content/${dir}/`
+  return dir ? `${BASE_PATH}${dir}/` : BASE_PATH
 }
 
 function buildQA(frontmatter, content) {

@@ -1,12 +1,17 @@
-import { DEFAULT_LOCALE, LocaleCode, NON_DEFAULT_LOCALES, routePrefix } from './locales'
+import { getFallbackLocale, LocaleCode, SUPPORTED_LOCALES, routePrefix } from './locales'
 
 export function useI18nRouting() {
   function detectLocaleFromPath(path: string): LocaleCode {
     const normalized = path.startsWith('/') ? path : `/${path}`
-    for (const locale of NON_DEFAULT_LOCALES as LocaleCode[]) {
-      if (normalized.startsWith(routePrefix(locale))) return locale
+    const ordered = [...SUPPORTED_LOCALES]
+      .map(locale => ({ code: locale.code, prefix: routePrefix(locale.code as LocaleCode) }))
+      .sort((a, b) => b.prefix.length - a.prefix.length)
+
+    for (const { code, prefix } of ordered) {
+      if (normalized.startsWith(prefix)) return code as LocaleCode
     }
-    return DEFAULT_LOCALE
+
+    return getFallbackLocale()
   }
 
   return { detectLocaleFromPath }
