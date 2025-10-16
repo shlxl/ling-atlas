@@ -44,8 +44,8 @@
 ---
 
 ## 3. URL 与目录结构
-- 每篇文章的物理位置固定：`docs/content.<locale>/<slug-or-custom>/index.md`（例如默认中文位于 `docs/content.zh/**`）。
-- 页面访问路径（VitePress）默认：`/content/<slug-or-custom>/`（项目站点会自动加 `base` 前缀）。
+- 每篇文章的物理位置固定：`docs/<locale>/content/<slug-or-custom>/index.md`（例如默认中文位于 `docs/zh/content/**`）。
+- 页面访问路径（VitePress）默认：`/<locale>/content/<slug-or-custom>/`（例如默认中文位于 `/zh/content/**`，项目站点会自动加 `base` 前缀）。
 - 可选美化为 `/blog/<YYYY>/<slug>/`：需在 PageGen 中生成对应路径并配置 rewrites。
 
 > 生成器以文章目录名为 URL 片段；若存在 frontmatter 的 `slug`，优先使用 `slug`。

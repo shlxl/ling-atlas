@@ -36,6 +36,18 @@ await (async () => {
 
   const LOCALE_CONFIG = LANGUAGES
 
+  for (const lang of LOCALE_CONFIG) {
+    if (lang.generatedDir) {
+      await fs.mkdir(lang.generatedDir, { recursive: true })
+    }
+    if (lang.outMeta) {
+      await fs.mkdir(path.dirname(lang.outMeta), { recursive: true })
+    }
+    if (lang.navManifestPath) {
+      await fs.mkdir(path.dirname(lang.navManifestPath), { recursive: true })
+    }
+  }
+
   const preferredLocaleCode = getPreferredLocale()
   const i18nPairs = new Map()
   const navManifest = new Map()
@@ -134,7 +146,10 @@ await (async () => {
   async function syncLocaleContent() {
     for (const lang of LOCALE_CONFIG) {
       if (!(await exists(lang.contentDir))) continue
-      const target = lang.localizedContentDir
+      if (!lang.localizedContentDir) continue
+      const source = path.resolve(lang.contentDir)
+      const target = path.resolve(lang.localizedContentDir)
+      if (source === target) continue
       await fs.mkdir(path.dirname(target), { recursive: true })
       await fs.rm(target, { recursive: true, force: true })
       await fs.mkdir(target, { recursive: true })
@@ -478,6 +493,7 @@ await (async () => {
       const json = `${JSON.stringify(payload, null, 2)}\n`
       const file = lang.navManifestFile || `nav.manifest.${lang.manifestLocale}.json`
       const generatedTarget = lang.navManifestPath || path.join(GENERATED_DIR, file)
+      await fs.mkdir(path.dirname(generatedTarget), { recursive: true })
       await fs.writeFile(generatedTarget, json)
       await fs.writeFile(path.join(PUBLIC_DIR, file), json)
     }
