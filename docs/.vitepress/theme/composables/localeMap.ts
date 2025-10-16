@@ -154,40 +154,39 @@ function resolveTargetPath(path: string, currentLocale: LocaleCode, targetLocale
   return { path: getFallbackPath(targetLocale), hasMapping: false, reason: 'home' }
 }
 
+type LocaleDestination = TargetResolution & { normalized: string }
+
+type DestinationIndex = Partial<Record<LocaleCode, LocaleDestination>>
+
 export function useLocaleToggle() {
   const router = useRouter()
-  const orderedLocales = SUPPORTED_LOCALES.map(locale => locale.code as LocaleCode)
+  const availableLocales = computed(() => SUPPORTED_LOCALES.map(locale => locale.code as LocaleCode))
   const currentPath = computed(() => normalizeRoutePath(router.route.path))
   const currentLocale = computed<LocaleCode>(() => detectLocaleFromPath(currentPath.value))
-  const targetLocale = computed<LocaleCode>(() => {
-    if (orderedLocales.length === 0) return getFallbackLocale()
-    if (orderedLocales.length === 1) return orderedLocales[0]
-    const index = orderedLocales.indexOf(currentLocale.value)
-    if (index === -1) return orderedLocales[0]
-    return orderedLocales[(index + 1) % orderedLocales.length]
-  })
-  const resolution = ref<TargetResolution>({
-    path: getFallbackPath(targetLocale.value),
-    hasMapping: currentPath.value === getFallbackPath(currentLocale.value),
-    reason: 'home'
-  })
-
-  const normalizedDestination = computed(() => normalizeRoutePath(resolution.value.path))
+  const destinations = ref<DestinationIndex>({})
 
   onMounted(() => {
     void loadLocaleMap()
   })
 
   watchEffect(() => {
-    resolution.value = resolveTargetPath(currentPath.value, currentLocale.value, targetLocale.value)
+    const next: DestinationIndex = {}
+    for (const locale of availableLocales.value) {
+      const resolution = resolveTargetPath(currentPath.value, currentLocale.value, locale)
+      next[locale] = {
+        ...resolution,
+        normalized: normalizeRoutePath(resolution.path)
+      }
+    }
+    destinations.value = next
   })
 
-  async function goToTarget() {
+  async function goToLocale(locale: LocaleCode) {
+    if (!locale) return
     if (typeof window !== 'undefined') {
       await loadLocaleMap()
     }
-    const next = resolveTargetPath(currentPath.value, currentLocale.value, targetLocale.value)
-    resolution.value = next
+    const next = resolveTargetPath(currentPath.value, currentLocale.value, locale)
     const target = normalizeRoutePath(next.path)
     if (!target || target === currentPath.value) return
     router.go(target)
@@ -195,11 +194,10 @@ export function useLocaleToggle() {
 
   return {
     currentLocale,
-    targetLocale,
-    destination: normalizedDestination,
-    goToTarget,
-    hasMapping: computed(() => resolution.value.hasMapping),
-    canNavigate: computed(() => normalizedDestination.value !== currentPath.value)
+    currentPath,
+    availableLocales,
+    destinations: computed(() => destinations.value),
+    goToLocale
   }
 }
 

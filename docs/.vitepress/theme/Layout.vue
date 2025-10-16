@@ -7,13 +7,15 @@ import LocaleToggleButton from './components/LocaleToggleButton.vue'
 import { initTelemetry, setupTelemetryRouterHook } from './telemetry'
 import { useRegisterSW } from 'virtual:pwa-register/vue'
 import { useI18nRouting } from './i18n'
-import { getFallbackLocale, LocaleCode } from './locales'
+import { getFallbackLocale, LocaleCode, SUPPORTED_LOCALES, routePrefix } from './locales'
+import { usePreferredLocale } from './composables/preferredLocale'
 
 const router = useRouter()
 const offlineReady = ref(false)
 const needRefresh = ref(false)
 const chatOpen = ref(false)
 const activeLocale = ref<LocaleCode>(getFallbackLocale())
+const { preferredLocale, rememberLocale, refreshPreferredLocale } = usePreferredLocale()
 
 const { detectLocaleFromPath } = useI18nRouting()
 
@@ -64,7 +66,23 @@ function refreshNow() {
 onMounted(() => {
   void initTelemetry()
   setupTelemetryRouterHook(router)
-  updateLocale(router.route.path)
+  refreshPreferredLocale()
+  const initialPath = normalizePath(router.route.path)
+  let redirected = false
+  if (!hasLocalePrefix(initialPath)) {
+    const targetLocale = preferredLocale.value
+    const targetPath = routePrefix(targetLocale)
+    if (initialPath !== targetPath) {
+      redirected = true
+      activeLocale.value = targetLocale
+      rememberLocale(targetLocale)
+      router.go(targetPath)
+    }
+  }
+  if (!redirected) {
+    updateLocale(initialPath)
+    rememberLocale(activeLocale.value)
+  }
   router.onAfterRouteChanged?.((to: string) => {
     handleRouteChange(to)
   })
@@ -77,6 +95,12 @@ function updateLocale(path: string) {
 
 function handleRouteChange(path: string) {
   updateLocale(path)
+  rememberLocale(activeLocale.value)
+}
+
+function hasLocalePrefix(path: string) {
+  const normalized = normalizePath(path)
+  return SUPPORTED_LOCALES.some(locale => normalized.startsWith(routePrefix(locale.code as LocaleCode)))
 }
 </script>
 
