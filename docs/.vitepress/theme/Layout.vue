@@ -106,9 +106,13 @@ function hasLocalePrefix(path: string) {
 <template>
   <DefaultTheme.Layout>
     <template #nav-bar-content-after>
-      <div class="la-search-wrapper">
-        <LocaleToggleButton />
-        <SearchBox />
+      <div class="la-nav-actions">
+        <div class="la-nav-actions__search VPNavBarSearch">
+          <SearchBox />
+        </div>
+        <div class="la-nav-actions__locale">
+          <LocaleToggleButton />
+        </div>
       </div>
     </template>
     <template #nav-screen-content-after>
@@ -186,16 +190,60 @@ function hasLocalePrefix(path: string) {
   opacity: 0;
   transform: translate(-50%, 10px);
 }
-.la-search-wrapper {
+.la-nav-actions {
   display: flex;
   align-items: center;
+  justify-content: flex-end;
   gap: 0.5rem;
-  margin-right: 0.75rem;
+  min-width: 0;
+}
+
+.la-nav-actions__search,
+.la-nav-actions__locale {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.la-nav-actions__search {
+  justify-content: flex-end;
+  flex: 0 1 auto;
+}
+
+.la-nav-actions__locale {
+  justify-content: flex-end;
+  flex: 0 0 auto;
+}
+
+.la-nav-actions :deep(.la-search) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
 }
 
 .la-nav-screen__locale {
   border-top: 1px solid var(--vp-c-divider);
   padding: 1rem 1.5rem 0;
+  display: flex;
+  justify-content: flex-end;
+}
+
+@media (max-width: 767px) {
+  .la-nav-actions {
+    flex: 1 1 auto;
+  }
+
+  .la-nav-actions__search {
+    flex: 1 1 auto;
+  }
+
+  .la-nav-actions__locale {
+    flex: 0 0 auto;
+  }
+
+  .la-nav-screen__locale {
+    padding: 0.75rem 1.25rem 0;
+  }
 }
 
 :deep(.VPNavBarTranslations),
@@ -205,11 +253,7 @@ function hasLocalePrefix(path: string) {
 
 .la-nav-screen__locale :deep(.la-locale-toggle) {
   width: 100%;
-  justify-content: space-between;
-}
-
-.la-nav-screen__locale :deep(.la-locale-toggle__select) {
-  width: 100%;
+  justify-content: flex-end;
 }
 .chat-fab {
   position: fixed;
