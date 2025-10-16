@@ -144,6 +144,8 @@ export function useLocaleToggle() {
     reason: 'home'
   })
 
+  const normalizedDestination = computed(() => normalizeRoutePath(resolution.value.path))
+
   onMounted(() => {
     void loadLocaleMap()
   })
@@ -166,9 +168,10 @@ export function useLocaleToggle() {
   return {
     currentLocale,
     targetLocale,
-    destination: computed(() => resolution.value.path),
+    destination: normalizedDestination,
     goToTarget,
-    hasMapping: computed(() => resolution.value.hasMapping)
+    hasMapping: computed(() => resolution.value.hasMapping),
+    canNavigate: computed(() => normalizedDestination.value !== currentPath.value)
   }
 }
 
