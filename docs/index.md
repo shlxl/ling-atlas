@@ -54,7 +54,7 @@ onMounted(() => {
 })
 </script>
 
-# Choose your language
+## Choose your language
 
 Select the language you would like to read **Ling Atlas** in. You can also bookmark your favourite locale for quick access next time.
 
