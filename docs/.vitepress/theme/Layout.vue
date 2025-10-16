@@ -7,7 +7,7 @@ import LocaleToggleButton from './components/LocaleToggleButton.vue'
 import { initTelemetry, setupTelemetryRouterHook } from './telemetry'
 import { useRegisterSW } from 'virtual:pwa-register/vue'
 import { useI18nRouting } from './i18n'
-import { getFallbackLocale, LocaleCode, SUPPORTED_LOCALES, routePrefix } from './locales'
+import { getFallbackLocale, LocaleCode, SUPPORTED_LOCALES, normalizeLocalePath, routePrefix } from './locales'
 import { usePreferredLocale } from './composables/preferredLocale'
 
 const router = useRouter()
@@ -46,11 +46,10 @@ const chatLabels: Record<LocaleCode, string> = { zh: '知识问答', en: 'Knowle
 const chatButtonLabel = computed(() => chatLabels[activeLocale.value] || chatLabels[getFallbackLocale()])
 
 function normalizePath(path: string) {
-  if (!path) return '/'
+  if (!path) return routePrefix(getFallbackLocale())
   const [pathname] = path.split(/[?#]/)
-  if (!pathname) return '/'
-  if (pathname.endsWith('/') || pathname.endsWith('.html')) return pathname
-  return `${pathname}/`
+  if (!pathname) return routePrefix(getFallbackLocale())
+  return normalizeLocalePath(pathname)
 }
 
 function closeBanner() {
