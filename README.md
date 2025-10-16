@@ -10,7 +10,7 @@
 - 预留 **L1 语义检索（Transformers.js）** 与 **USearch/WASM** 接口
 - PR-I AI 自演进（占位版）：构建阶段自动生成 embeddings/summaries/Q&A JSON，前端可按需消费
 - PR-J 知识 API + Chat：导出段落级只读数据，前端提供带引用的轻量问答
-- PR-L 多语/i18n：`docs/content.zh`（默认中文）与 `docs/content.en`（英文）独立演进，构建出 `/` 与 `/en/` 路由、按语言裁剪的聚合页 / RSS / Sitemap，并输出 `nav.manifest.<locale>.json` 供前端加载
+- PR-L 多语/i18n：`docs/zh/content`（默认中文）与 `docs/en/content`（英文）独立演进，构建出 `/zh/` 与 `/en/` 路由、按语言裁剪的聚合页 / RSS / Sitemap，并输出 `nav.manifest.<locale>.json` 供前端加载
 - PR-M 供应链加固 2.0：npm ci + Audit/License 审计、CycloneDX SBOM、SRI 哈希变更守门
 - PR-M（规划中）：SEO / OpenGraph 优化，使知识库更易被搜索引擎收录与展示
 - PR-K 搜索评测：离线 nDCG/MRR/Recall 守门 + 线上查询参数 variant（lex / rrf / rrf-mmr）交替曝光
@@ -31,11 +31,12 @@ npm run dev
 ```
 .
 ├─ docs/                 # 站点根
-│  ├─ content.zh/        # 中文内容源（默认语言，每篇文章一个文件夹）
-│  ├─ content.en/        # 英文内容源（可与中文解耦，最终映射到 /en/...）
-│  │  └─ hello-world/
-│  │     └─ index.md
-│  ├─ _generated/        # pagegen 输出（分类/系列/标签/归档）
+│  ├─ zh/                # 中文站点（首页、聚合页、内容源）
+│  │  ├─ content/        # 中文内容源（每篇文章一个文件夹）
+│  │  └─ _generated/     # pagegen 输出（分类/系列/标签/归档）
+│  ├─ en/                # 英文站点（入口、聚合页、内容源）
+│  │  ├─ content/        # 英文内容源
+│  │  └─ _generated/     # 英文聚合页
 │  ├─ public/            # 静态文件（rss.xml、sitemap.xml 由脚本生成）
 │  └─ .vitepress/        # VitePress 配置与主题
 ├─ security/             # CSP/SRI 模板配置
@@ -62,7 +63,7 @@ npm run dev
 1. 打开 **Settings → Pages**，选择 **GitHub Actions**。
 2. 工作流文件在 `.github/workflows/deploy.yml`；首次 push 后会自动部署。
 3. 自定义域名建议使用子域（如 `kb.example.com`），并开启 HTTPS。
-4. 更多细节参考 [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)，迁移路径与重写策略见 [docs/MIGRATION.md](docs/MIGRATION.md)。
+4. 更多细节参考 [docs/zh/DEPLOYMENT.md](docs/zh/DEPLOYMENT.md)，迁移路径与重写策略见 [docs/zh/MIGRATION.md](docs/zh/MIGRATION.md)。
 
 ## 安全与索引
 - `.well-known/security-headers.txt`：`npm run build:search` 会自动更新并同步到发布目录，同时在静态页面注入 CSP `<meta>`。
@@ -72,7 +73,7 @@ npm run dev
 - `docs/public/sitemap.xml`：由 PageGen 生成，保持与 robots 中链接一致。
 - AI 自演进产物：`docs/public/data/embeddings.json`、`summaries.json`、`qa.json`，CI/构建阶段自动刷新，失败不阻断主流程。
 - 搜索评测：`data/gold.jsonl` 维护标注，`node scripts/eval/offline.mjs` 运行离线指标；线上调试可通过 `?variant=lex|rrf|rrf-mmr` 切换，与默认 `rrf-mmr` 做 Team Draft 交替曝光，点击偏好会记录匿名 hash 与位次。
-- 多语言：`npm run gen` 会复制英文文章到 `docs/en/`，同时保留中文原稿在 `docs/content.zh/`，并产出 `/en/_generated/**`、`rss-en.xml`、`sitemap-en.xml` 与 `docs/_generated/nav.manifest.<locale>.json`。导航根据 manifest 裁剪分类/系列/标签/归档，仅展示目标语言真实存在的聚合入口；缺少映射时回退到语言首页或 manifest 中的首个聚合页，避免空链。
+- 多语言：`npm run gen` 会同步各语言内容到 `docs/<locale>/content`，并产出 `/<locale>/_generated/**`、按语言划分的 RSS/Sitemap 与 `docs/<locale>/_generated/nav.manifest.<locale>.json`。导航根据 manifest 裁剪分类/系列/标签/归档，仅展示目标语言真实存在的聚合入口；缺少映射时回退到语言首页或 manifest 中的首个聚合页，避免空链。
   - 导航栏中有两类语言切换：
     1. **VitePress 默认下拉菜单**（`localeLinks`），负责跳转到当前页面的另一语言版本，但只在两侧都有对等文章时才安全；因此配置中默认关闭该下拉，以免聚合页落到缺失的 slug 导致 404。
     2. **自定义按钮**（`LocaleToggleButton.vue`），与亮/暗色主题开关类似，读取 `docs/public/i18n-map.json` 与 `nav.manifest.<locale>.json`；仅当目标语言存在对应 slug 或可用聚合页时展示，缺少映射则直接回退到语言首页。
@@ -81,13 +82,13 @@ npm run dev
 - 供应链：CI 默认 `npm ci` 安装，审计输出（`npm run audit`、`npm run license`）可追踪依赖风险；`npm run sbom` 及构建流程会生成 `docs/public/.well-known/sbom.json`，SRI 哈希变化需先更新 allowlist，否则脚本将阻断。
 
 ## 约定
-- 所有文章文件置于 `docs/content.<locale>/**/index.md`（例如 `docs/content.zh/**/index.md`）；Frontmatter 字段遵循 `schema/frontmatter.schema.json`。
+- 所有文章文件置于 `docs/<locale>/content/**/index.md`（例如 `docs/zh/content/**/index.md`）；Frontmatter 字段遵循 `schema/frontmatter.schema.json`。
 - `status: draft` 的文章不会进入聚合页与 RSS/Sitemap。
 
 ## FAQ
 - **可以放在根仓库吗？** 可以，但推荐独立仓库，后续可用 subtree 回挂到旧仓 `docs/`。
 - **中文标题如何转 slug？** `scripts/slug.ts` 提供简版实现，优先手写 `slug` 字段。
-- **为什么中文内容访问路径没有 `/zh/` 前缀？** 生成器把 `docs/content.zh` 视作默认语言目录，并在写聚合页时把它映射到 VitePress 根 `/`。新增语言时，请使用 `docs/content.<locale>` 命名（如 `docs/content.jp`），它们会自动映射到 `/<locale>/` 以避免与默认中文冲突。
+- **如何自定义默认语言？** 生成器默认以 `docs/zh/content` 作为首选语言，输出 `/zh/` 路由；如需调整，可在 `scripts/pagegen.locales.mjs` 中修改 `preferred`、`basePath` 与内容目录配置，并为新的默认语言补齐 `docs/<locale>/` 站点结构。
 
 ---
 

@@ -7,13 +7,13 @@ import LocaleToggleButton from './components/LocaleToggleButton.vue'
 import { initTelemetry, setupTelemetryRouterHook } from './telemetry'
 import { useRegisterSW } from 'virtual:pwa-register/vue'
 import { useI18nRouting } from './i18n'
-import { DEFAULT_LOCALE, LocaleCode } from './locales'
+import { getFallbackLocale, LocaleCode } from './locales'
 
 const router = useRouter()
 const offlineReady = ref(false)
 const needRefresh = ref(false)
 const chatOpen = ref(false)
-const activeLocale = ref<LocaleCode>(DEFAULT_LOCALE)
+const activeLocale = ref<LocaleCode>(getFallbackLocale())
 
 const { detectLocaleFromPath } = useI18nRouting()
 
@@ -41,7 +41,7 @@ const bannerMessage = computed(() => {
 const ChatWidget = defineAsyncComponent(() => import('./components/ChatWidget.vue'))
 
 const chatLabels: Record<LocaleCode, string> = { zh: '知识问答', en: 'Knowledge Chat' }
-const chatButtonLabel = computed(() => chatLabels[activeLocale.value] || chatLabels[DEFAULT_LOCALE])
+const chatButtonLabel = computed(() => chatLabels[activeLocale.value] || chatLabels[getFallbackLocale()])
 
 function normalizePath(path: string) {
   if (!path) return '/'

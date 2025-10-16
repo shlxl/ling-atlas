@@ -5,16 +5,15 @@ import matter from 'gray-matter'
 import { marked } from 'marked'
 import { fileURLToPath, pathToFileURL } from 'url'
 import {
-  DEFAULT_LOCALE,
   DOCS_DIR as DOCS,
   GENERATED_ROOT as GEN,
   PUBLIC_ROOT as PUB,
   LANG_CONFIG,
-  LANGUAGES
+  LANGUAGES,
+  getPreferredLocale
 } from './pagegen.locales.mjs'
 
 export {
-  DEFAULT_LOCALE,
   LOCALE_REGISTRY,
   LANG_CONFIG,
   LANGUAGES,
@@ -22,7 +21,8 @@ export {
   DOCS_DIR,
   GENERATED_ROOT,
   PUBLIC_ROOT,
-  getLocaleConfig
+  getLocaleConfig,
+  getPreferredLocale
 } from './pagegen.locales.mjs'
 
 await (async () => {
@@ -34,65 +34,21 @@ await (async () => {
   await fs.mkdir(GENERATED_DIR, { recursive: true })
   await fs.mkdir(PUBLIC_DIR, { recursive: true })
 
-  const LOCALE_CONFIG = [
-    {
-      code: 'zh',
-      isDefault: true,
-      vitepressLocaleId: 'root',
-      manifestLocale: 'zh',
-      aliasLocaleIds: ['root'],
-      contentDir: path.join(DOCS_DIR, 'content.zh'),
-      outMeta: path.join(GENERATED_DIR, 'meta.json'),
-      basePath: '/content/',
-      genPrefix: '',
-      rssFile: 'rss.xml',
-      sitemapFile: 'sitemap.xml',
-      labels: {
-        category: (value) => `分类 · ${value}`,
-        series: (value) => `连载 · ${value}`,
-        tag: (value) => `标签 · ${value}`,
-        archive: (value) => `归档 · ${value}`,
-        rssTitle: 'Ling Atlas',
-        rssDesc: '最新更新'
-      },
-      contentFields: {
-        category: ['category_zh', 'category'],
-        tags: ['tags_zh', 'tags'],
-        series: ['series'],
-        seriesSlug: ['series_slug'],
-        status: ['status']
-      }
-    },
-    {
-      code: 'en',
-      isDefault: false,
-      vitepressLocaleId: 'en',
-      manifestLocale: 'en',
-      aliasLocaleIds: [],
-      contentDir: path.join(DOCS_DIR, 'content.en'),
-      outMeta: path.join(GENERATED_DIR, 'meta.en.json'),
-      basePath: '/en/content/',
-      genPrefix: 'en',
-      rssFile: 'rss-en.xml',
-      sitemapFile: 'sitemap-en.xml',
-      labels: {
-        category: (value) => `Category · ${value}`,
-        series: (value) => `Series · ${value}`,
-        tag: (value) => `Tag · ${value}`,
-        archive: (value) => `Archive · ${value}`,
-        rssTitle: 'Ling Atlas (EN)',
-        rssDesc: 'Latest updates'
-      },
-      contentFields: {
-        category: ['category_en', 'category'],
-        tags: ['tags_en', 'tags'],
-        series: ['series_en', 'series'],
-        seriesSlug: ['series_slug_en', 'series_slug', 'series_en', 'series'],
-        status: ['status']
-      }
-    }
-  ]
+  const LOCALE_CONFIG = LANGUAGES
 
+  for (const lang of LOCALE_CONFIG) {
+    if (lang.generatedDir) {
+      await fs.mkdir(lang.generatedDir, { recursive: true })
+    }
+    if (lang.outMeta) {
+      await fs.mkdir(path.dirname(lang.outMeta), { recursive: true })
+    }
+    if (lang.navManifestPath) {
+      await fs.mkdir(path.dirname(lang.navManifestPath), { recursive: true })
+    }
+  }
+
+  const preferredLocaleCode = getPreferredLocale()
   const i18nPairs = new Map()
   const navManifest = new Map()
 
@@ -190,18 +146,13 @@ await (async () => {
   async function syncLocaleContent() {
     for (const lang of LOCALE_CONFIG) {
       if (!(await exists(lang.contentDir))) continue
-      if (lang.isDefault) {
-        const target = path.join(DOCS_DIR, 'content')
-        await fs.rm(target, { recursive: true, force: true })
-        await fs.mkdir(target, { recursive: true })
-        await fs.cp(lang.contentDir, target, { recursive: true })
-        continue
-      }
-
-      const targetRoot = path.join(DOCS_DIR, lang.code)
-      const target = path.join(targetRoot, 'content')
-      await fs.mkdir(targetRoot, { recursive: true })
+      if (!lang.localizedContentDir) continue
+      const source = path.resolve(lang.contentDir)
+      const target = path.resolve(lang.localizedContentDir)
+      if (source === target) continue
+      await fs.mkdir(path.dirname(target), { recursive: true })
       await fs.rm(target, { recursive: true, force: true })
+      await fs.mkdir(target, { recursive: true })
       await fs.cp(lang.contentDir, target, { recursive: true })
     }
   }
@@ -294,11 +245,8 @@ await (async () => {
   }
 
   async function writeCollections(lang, meta) {
-    const prefix = lang.genPrefix ? path.join(lang.genPrefix) : ''
-
     const write = async (subdir, name, title, items) => {
-      const targetRoot = lang.genPrefix ? path.join(DOCS_DIR, lang.genPrefix, '_generated') : GENERATED_DIR
-      const outDir = path.join(targetRoot, subdir, name)
+      const outDir = path.join(lang.generatedDir, subdir, name)
       await fs.mkdir(outDir, { recursive: true })
       const md = `---\ntitle: ${title}\n---\n\n${mdList(items, lang)}\n`
       await fs.writeFile(path.join(outDir, 'index.md'), md)
@@ -326,11 +274,12 @@ await (async () => {
 
   async function genRSS(lang, items) {
     if (!items.length) return
+    const homePath = lang.code === preferredLocaleCode ? '/' : lang.localeRoot
     const feed = [
       `<?xml version="1.0" encoding="UTF-8"?>`,
       `<rss version="2.0"><channel>`,
       `<title>${escapeXml(lang.labels.rssTitle)}</title>`,
-      `<link>${siteOrigin}${lang.code === 'en' ? '/en/' : '/'}</link>`,
+      `<link>${siteOrigin}${homePath}</link>`,
       `<description>${escapeXml(lang.labels.rssDesc)}</description>`
     ]
 
@@ -398,8 +347,8 @@ await (async () => {
 
   function taxonomyPath(type, slugValue, lang) {
     if (!slugValue) return ''
-    const prefix = lang.genPrefix ? `/${lang.genPrefix}` : ''
-    return `${prefix}/_generated/${type}/${slugValue}/`
+    const base = lang.localeRoot === '/' ? '' : lang.localeRoot.replace(/\/$/, '')
+    return `${base}/_generated/${type}/${slugValue}/`
   }
 
   function registerSingleTaxonomy(type, lang, slugValue, relative) {
@@ -542,8 +491,10 @@ await (async () => {
         archive: serialize(manifest.archive)
       }
       const json = `${JSON.stringify(payload, null, 2)}\n`
-      const file = `nav.manifest.${lang.manifestLocale}.json`
-      await fs.writeFile(path.join(GENERATED_DIR, file), json)
+      const file = lang.navManifestFile || `nav.manifest.${lang.manifestLocale}.json`
+      const generatedTarget = lang.navManifestPath || path.join(GENERATED_DIR, file)
+      await fs.mkdir(path.dirname(generatedTarget), { recursive: true })
+      await fs.writeFile(generatedTarget, json)
       await fs.writeFile(path.join(PUBLIC_DIR, file), json)
     }
   }

@@ -54,7 +54,7 @@ category_zh: RAG实战
 3. `codex run gen`：根据分类、标签、连载信息生成聚合页、RSS、Sitemap。
 4. `codex run publish`：整合校验、生成、构建与推送，形成可追溯的提交记录。
 
-只有这样，PageGen 才能在 `docs/_generated` 下产出最新的分类、标签与归档页面。
+只有这样，PageGen 才能在 `docs/<locale>/_generated` 下产出最新的分类、标签与归档页面。
 
 ## 规范使用中的常见坑
 

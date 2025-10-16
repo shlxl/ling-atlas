@@ -10,39 +10,23 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { globby } from 'globby'
 import matter from 'gray-matter'
-import { LOCALE_REGISTRY } from './pagegen.locales.mjs'
+import { LOCALE_REGISTRY, getPreferredLocale } from './pagegen.locales.mjs'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const ROOT = path.resolve(__dirname, '..')
 const OUTPUT_DIR = path.join(ROOT, 'docs', 'public', 'data')
 const OUTPUT_FILE = path.join(OUTPUT_DIR, 'embeddings.json')
-const DOCS_DIR = path.join(ROOT, 'docs')
-const DEFAULT_LOCALE = 'zh'
-const detectedLocaleDirs = await globby('content.*', {
-  cwd: DOCS_DIR,
-  onlyDirectories: true
+const preferredLocale = getPreferredLocale()
+
+const LANG_SOURCES = LOCALE_REGISTRY.map(locale => ({
+  code: locale.code,
+  dir: locale.contentDir,
+  basePath: locale.basePath
+})).sort((a, b) => {
+  if (a.code === preferredLocale) return -1
+  if (b.code === preferredLocale) return 1
+  return a.code.localeCompare(b.code)
 })
-
-const LANG_SOURCES = detectedLocaleDirs
-  .map(dirName => {
-    const locale = dirName.slice('content.'.length)
-    if (!locale) return null
-    return {
-      code: locale,
-      dir: path.join(DOCS_DIR, dirName),
-      basePath: locale === DEFAULT_LOCALE ? '/content/' : `/${locale}/content/`
-    }
-  })
-  .filter(Boolean)
-  .sort((a, b) => (a.code === DEFAULT_LOCALE ? -1 : b.code === DEFAULT_LOCALE ? 1 : a.code.localeCompare(b.code)))
-
-if (!LANG_SOURCES.some(source => source.code === DEFAULT_LOCALE)) {
-  LANG_SOURCES.unshift({
-    code: DEFAULT_LOCALE,
-    dir: path.join(DOCS_DIR, `content.${DEFAULT_LOCALE}`),
-    basePath: '/content/'
-  })
-}
 
 function isDraft(frontmatter) {
   const { status, draft } = frontmatter || {}
@@ -77,7 +61,7 @@ function buildUrl(mdPath, source) {
   const relative = path.relative(source.dir, mdPath)
   const clean = relative.replace(/\\/g, '/')
   const dir = clean.replace(/\/index\.md$/, '')
-  return `${source.basePath}${dir}/`
+  return dir ? `${source.basePath}${dir}/` : source.basePath
 }
 
 async function exists(target) {
