@@ -64,6 +64,8 @@ function refreshNow() {
 }
 
 let navBrandEl: HTMLAnchorElement | null = null
+let stopBrandWatch: (() => void) | null = null
+
 function onBrandClick(event: MouseEvent) {
   if (!navBrandEl) return
   const target = brandLink.value
