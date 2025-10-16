@@ -4,12 +4,11 @@ import fs from 'node:fs'
 import { VitePWA } from 'vite-plugin-pwa'
 import {
   DEFAULT_LOCALE,
+  SUPPORTED_LOCALES,
   LocaleCode,
   VitepressLocaleKey,
   manifestFileName,
-  isLocaleCode,
-  isVitepressLocaleKey,
-  vitepressKeyFromLocale
+  normalizedRoutePrefix
 } from './theme/locales'
 
 function loadCspTemplate() {
@@ -58,11 +57,73 @@ const baseFromEnv = (process.env.BASE as string) || '/'
 const normalizedBase = baseFromEnv.endsWith('/') ? baseFromEnv : `${baseFromEnv}/`
 const escapedBase = escapeRegex(normalizedBase)
 
-const metaZh = loadMeta('docs/_generated/meta.json')
-const metaEn = loadMeta('docs/_generated/meta.en.json')
-const manifestZh = loadNavManifest('zh')
-const manifestEn = loadNavManifest('en')
 const i18nMap = loadI18nTranslations()
+
+const localeMeta = Object.fromEntries(
+  SUPPORTED_LOCALES.map(locale => [locale.code, loadLocaleMeta(locale.code)])
+) as Record<LocaleCode, any>
+
+const localeManifest = Object.fromEntries(
+  SUPPORTED_LOCALES.map(locale => [locale.code, loadNavManifest(locale.code)])
+) as Record<LocaleCode, NavManifest | null>
+
+type LocaleCopy = {
+  label: string
+  lang: string
+  title: string
+  description: string
+  lightModeSwitchTitle: string
+  darkModeSwitchTitle: string
+}
+
+const localeCopy: Record<LocaleCode, LocaleCopy> = {
+  zh: {
+    label: '简体中文',
+    lang: 'zh-CN',
+    title: 'Ling Atlas · 小凌的个人知识库',
+    description: '现代化、可演进、可检索的知识库工程',
+    lightModeSwitchTitle: '切换到浅色模式',
+    darkModeSwitchTitle: '切换到深色模式'
+  },
+  en: {
+    label: 'English',
+    lang: 'en-US',
+    title: 'Ling Atlas · Personal Knowledge Base',
+    description: 'A modern, evolvable, and searchable knowledge base project',
+    lightModeSwitchTitle: 'Switch to light mode',
+    darkModeSwitchTitle: 'Switch to dark mode'
+  }
+}
+
+const localizedLocaleConfigs = Object.fromEntries(
+  SUPPORTED_LOCALES.map(locale => {
+    const code = locale.code
+    const strings = localeCopy[code]
+    const manifest = localeManifest[code] ?? null
+    const meta = localeMeta[code]
+    return [
+      locale.vitepressKey,
+      {
+        label: strings.label,
+        lang: strings.lang,
+        title: strings.title,
+        description: strings.description,
+        themeConfig: {
+          nav: navFromMeta(meta, manifest, code),
+          sidebar: 'auto',
+          lightModeSwitchTitle: strings.lightModeSwitchTitle,
+          darkModeSwitchTitle: strings.darkModeSwitchTitle
+        }
+      }
+    ]
+  })
+) as Record<VitepressLocaleKey, {
+  label: string
+  lang: string
+  title: string
+  description: string
+  themeConfig: Record<string, any>
+}>
 
 const cspTemplate = loadCspTemplate()
 const cspContent = cspTemplate ? serializeCsp(cspTemplate) : null
@@ -79,18 +140,18 @@ const embeddingsJsonPattern = /embeddings-texts\.json$/
 const embeddingsWorkerPattern = /worker\/embeddings\.worker\.js$/
 
 type NavManifest = {
-  locale: 'zh' | 'en'
+  locale: LocaleCode
   categories: Record<string, string>
   series: Record<string, string>
   tags: Record<string, string>
   archive: Record<string, string>
 }
 
-function navFromMeta(meta: any, manifest: NavManifest | null, locale: 'zh' | 'en') {
+function navFromMeta(meta: any, manifest: NavManifest | null, locale: LocaleCode) {
   if (!manifest) return legacyNavFromMeta(meta, locale)
 
   const t = i18nMap.nav[locale]
-  const prefix = manifest.locale === 'en' ? '/en' : ''
+  const routeRoot = normalizedRoutePrefix(locale).replace(/\/$/, '')
   const collator = new Intl.Collator(locale === 'en' ? 'en' : 'zh-CN')
 
   const archiveYears = Object.keys(meta.byYear || {}).sort((a, b) => b.localeCompare(a))
@@ -150,25 +211,25 @@ function navFromMeta(meta: any, manifest: NavManifest | null, locale: 'zh' | 'en
   nav.push({
     text: t.about,
     items: [
-      { text: t.metrics, link: `${prefix}/about/metrics.html` },
-      { text: t.qa, link: `${prefix}/about/qa.html` }
+      { text: t.metrics, link: `${routeRoot}/about/metrics.html` },
+      { text: t.qa, link: `${routeRoot}/about/qa.html` }
     ]
   })
 
   nav.push({
     text: t.guides,
     items: [
-      { text: t.deploy, link: `${prefix}/DEPLOYMENT.html` },
-      { text: t.migration, link: `${prefix}/MIGRATION.html` }
+      { text: t.deploy, link: `${routeRoot}/DEPLOYMENT.html` },
+      { text: t.migration, link: `${routeRoot}/MIGRATION.html` }
     ]
   })
 
   return nav
 }
 
-function legacyNavFromMeta(meta: any, locale: 'zh' | 'en') {
+function legacyNavFromMeta(meta: any, locale: LocaleCode) {
   const t = i18nMap.nav[locale]
-  const prefix = locale === DEFAULT_LOCALE ? '' : `/${locale}`
+  const prefix = normalizedRoutePrefix(locale).replace(/\/$/, '')
   const years = Object.keys(meta.byYear || {}).sort().reverse()
   const firstTag = Object.keys(meta.byTag || {})[0] || 'all'
   return [
@@ -203,10 +264,14 @@ function legacyNavFromMeta(meta: any, locale: 'zh' | 'en') {
   ]
 }
 
-function loadNavManifest(localeId: 'zh' | 'en'): NavManifest | null {
-  const candidates = [`docs/_generated/nav.manifest.${localeId}.json`]
+function loadNavManifest(localeId: LocaleCode): NavManifest | null {
+  const baseFile = manifestFileName(localeId)
+  const candidates = [
+    `docs/${localeId}/_generated/${baseFile}`,
+    `docs/_generated/${baseFile}`
+  ]
   if (localeId === 'zh') {
-    candidates.push('docs/_generated/nav.manifest.root.json')
+    candidates.push('docs/zh/_generated/nav.manifest.root.json', 'docs/_generated/nav.manifest.root.json')
   }
 
   let lastError: unknown = null
@@ -238,11 +303,29 @@ function loadNavManifest(localeId: 'zh' | 'en'): NavManifest | null {
   return null
 }
 
+function loadLocaleMeta(localeId: LocaleCode) {
+  const candidates = [
+    `docs/${localeId}/_generated/meta.json`,
+    `docs/_generated/meta.${localeId}.json`
+  ]
+
+  if (localeId === DEFAULT_LOCALE) {
+    candidates.push('docs/_generated/meta.json')
+  }
+
+  for (const file of candidates) {
+    if (!file) continue
+    if (!fs.existsSync(file)) continue
+    return loadMeta(file)
+  }
+
+  return loadMeta(candidates[0]!)
+}
+
 export default defineConfig({
   // Inject base from env to support GitHub Pages subpath deployment
   base: baseFromEnv,
   rewrites: {},
-  srcExclude: ['content.zh/**/*'],
   head,
   themeConfig: {
     socialLinks: [{ icon: 'github', link: 'https://github.com/shlxl/ling-atlas' }],
@@ -253,29 +336,16 @@ export default defineConfig({
   },
   locales: {
     root: {
-      label: '简体中文',
-      lang: 'zh-CN',
-      title: 'Ling Atlas · 小凌的个人知识库',
-      description: '现代化、可演进、可检索的知识库工程',
+      label: 'Ling Atlas',
+      lang: 'en-US',
+      title: 'Ling Atlas',
+      description: 'Select your preferred language to continue.',
       themeConfig: {
-        nav: navFromMeta(metaZh, manifestZh, 'zh'),
-        sidebar: 'auto',
-        lightModeSwitchTitle: '切换到浅色模式',
-        darkModeSwitchTitle: '切换到深色模式'
+        nav: [],
+        sidebar: false
       }
     },
-    en: {
-      label: 'English',
-      lang: 'en-US',
-      title: 'Ling Atlas · Personal Knowledge Base',
-      description: 'A modern, evolvable, and searchable knowledge base project',
-      themeConfig: {
-        nav: navFromMeta(metaEn, manifestEn, 'en'),
-        sidebar: 'auto',
-        lightModeSwitchTitle: 'Switch to light mode',
-        darkModeSwitchTitle: 'Switch to dark mode'
-      }
-    }
+    ...localizedLocaleConfigs
   },
   vite: {
     plugins: [

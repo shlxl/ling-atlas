@@ -5,7 +5,7 @@
 - 站点的导航栏目由 `docs/.vitepress/config.ts` 中的 `navFromMeta` 函数按语言生成，但当前逻辑默认所有聚合页（分类、系列、标签、归档）都会存在，因此直接拼出链接。【F:docs/.vitepress/config.ts†L63-L82】
 - 聚合页的静态内容和 i18n 映射在 `scripts/pagegen.mjs` 内一次性生成。该脚本仅在对应目录下确有文章时才写出聚合页文件，也只有在存在文章的情况下才会写入 i18n 对应关系。【F:scripts/pagegen.mjs†L189-L252】【F:scripts/pagegen.mjs†L289-L347】
 - 当语言切换到目标语言后，如果某个聚合页并不存在（例如英文侧缺失该分类），导航仍会展示对应入口，最终落到 404；即使 Locale Toggle 会 fallback 到该语言首页，用户仍可能通过导航点到空链。
-- README 仍沿用早期的“`docs/content.zh` 与 `docs/content.en` 结构镜像”约定，使得 pagegen、导航与内容生产默认两种语言完全同步；这种假设与当前内容的实际状态相违背，也阻碍了只在英文侧增设聚合页或分类的需求。
+- README 仍沿用早期的“`docs/zh/content` 与 `docs/en/content` 结构镜像”约定，使得 pagegen、导航与内容生产默认两种语言完全同步；这种假设与当前内容的实际状态相违背，也阻碍了只在英文侧增设聚合页或分类的需求。
 
 ## 目标
 
@@ -28,7 +28,7 @@
 
 ### 1. Pagegen 输出可用聚合清单
 
-- 在 `scripts/pagegen.mjs` 中收集每个语言生成的聚合页 slug → 路径，写入 `docs/_generated/nav.manifest.json`（或按语言拆分）。
+- 在 `scripts/pagegen.mjs` 中收集每个语言生成的聚合页 slug → 路径，写入 `docs/<locale>/_generated/nav.manifest.<locale>.json`。
 - 清单应包含：语言代码、聚合类型（categories/series/tags/archive）、slug 与最终 URL。未来若扩展其他聚合（作者等）也可复用结构。
 - 同步更新 `i18n-map.json` 的生成逻辑，确保只在双语都存在时写入跨语言映射，避免记录“半吊子”链接。
 
@@ -48,7 +48,7 @@
 - 新增一个脚本（或在 `scripts/check-links.mjs` 中扩展）来验证 manifest 中的 URL 均可读取文件，CI 失败时给出详细列表，并在 README 调整后同步更新守护脚本的“多语结构”提示。
 - 本地手动跑一次 `codex run gen` + `npm run build`，确认 manifest 生效且构建通过。
 - 编写回归测试：覆盖仅存在英文内容时的导航裁剪、分类只存在于单语时的 Locale 回退，以及 manifest 缺失场景下的兜底逻辑。
-  - **仅有英文内容**：模拟只在 `docs/content.en` 下存在聚合数据时，确认中文导航不会生成空链。
+  - **仅有英文内容**：模拟只在 `docs/en/content` 下存在聚合数据时，确认中文导航不会生成空链。
   - **分类独占单语**：当分类只出现在一种语言时，验证 Locale Toggle 会回退到对应语言的分类索引或首页。
   - **manifest 缺失**：故意删除 manifest，确保配置和页面在读取失败时仍能回退到当前的导航生成逻辑。
 - 更新 README：删去“目录结构需镜像”的旧约定，补充新的内容生产规范与语言独立策略，并在 CI 或 pagegen 校验中记录链接到该段落，提醒贡献者遵循。
