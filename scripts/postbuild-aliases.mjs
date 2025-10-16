@@ -43,7 +43,7 @@ if (copied.length) {
 }
 
 for (const skipped of skippedMissing) {
-  console.warn(`[postbuild-aliases] skipped: source not found (${path.relative(distDir, skipped.source)})`)
+  console.info(`[postbuild-aliases] skipped: source not found (${path.relative(distDir, skipped.source)})`)
 }
 
 for (const skipped of skippedType) {
