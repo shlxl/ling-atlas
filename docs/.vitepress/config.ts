@@ -80,7 +80,7 @@ const localeCopy: Record<LocaleCode, LocaleCopy> = {
   zh: {
     label: '简体中文',
     lang: 'zh-CN',
-    title: 'Ling Atlas · 小凌的个人知识库',
+    title: 'Ling Atlas · 知识库',
     description: '现代化、可演进、可检索的知识库工程',
     lightModeSwitchTitle: '切换到浅色模式',
     darkModeSwitchTitle: '切换到深色模式'
@@ -88,7 +88,7 @@ const localeCopy: Record<LocaleCode, LocaleCopy> = {
   en: {
     label: 'English',
     lang: 'en-US',
-    title: 'Ling Atlas · Personal Knowledge Base',
+    title: 'Ling Atlas · Knowledge',
     description: 'A modern, evolvable, and searchable knowledge base project',
     lightModeSwitchTitle: 'Switch to light mode',
     darkModeSwitchTitle: 'Switch to dark mode'
