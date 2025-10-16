@@ -1,6 +1,7 @@
 import { computed, onMounted, ref, watchEffect } from 'vue'
 import { useRouter } from 'vitepress'
 import { resolveAsset } from '../telemetry'
+import { routePrefix } from '../locales'
 
 export type LocaleId = 'zh' | 'en'
 type RawLocaleEntry = Partial<Record<string, string>>
