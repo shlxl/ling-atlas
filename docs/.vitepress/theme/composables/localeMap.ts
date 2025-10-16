@@ -41,12 +41,22 @@ let loadPromise: Promise<void> | null = null
 
 const fallbackCache: Partial<Record<LocaleCode, string>> = {}
 
+function decodePathname(path: string): string {
+  try {
+    return decodeURI(path)
+  } catch (error) {
+    console.warn('[locale-map] failed to decode path', path, error)
+    return path
+  }
+}
+
 export function normalizeRoutePath(path: string) {
   const fallbackLocale = getFallbackLocale()
   if (!path) return getFallbackPath(fallbackLocale)
   const [pathname] = path.split(/[?#]/)
   if (!pathname) return getFallbackPath(fallbackLocale)
-  return normalizeLocalePath(pathname)
+  const decoded = decodePathname(pathname)
+  return normalizeLocalePath(decoded)
 }
 
 export function getFallbackPath(locale: LocaleCode) {
@@ -91,7 +101,8 @@ async function loadLocaleMap() {
           const normalizedLocale =
             isLocaleCode(localeKey) ? (localeKey as LocaleCode) : localeFromVitepressKey(localeKey)
           if (!normalizedLocale) continue
-          const resolved = normalizeLocalePath(rawPath)
+          const decodedPath = decodePathname(rawPath)
+          const resolved = normalizeLocalePath(decodedPath)
           normalizedEntry[normalizedLocale] = resolved
         }
 
@@ -241,11 +252,18 @@ function normalizeManifest(payload: Partial<NavManifest> | null | undefined, fal
   const locale = normalized ?? fallbackLocale
   return {
     locale,
-    categories: payload?.categories ?? {},
-    series: payload?.series ?? {},
-    tags: payload?.tags ?? {},
-    archive: payload?.archive ?? {}
+    categories: normalizeManifestSection(payload?.categories),
+    series: normalizeManifestSection(payload?.series),
+    tags: normalizeManifestSection(payload?.tags),
+    archive: normalizeManifestSection(payload?.archive)
   }
+}
+
+function normalizeManifestSection(section: Record<string, string> | undefined): Record<string, string> {
+  if (!section) return {}
+  return Object.fromEntries(
+    Object.entries(section).map(([key, value]) => [key, normalizeLocalePath(decodePathname(value))])
+  )
 }
 
 function parseAggregatePath(path: string): { type: AggregateType; slug: string } | null {
@@ -273,5 +291,5 @@ function getFirstManifestPath(manifest: NavManifest, type: AggregateType) {
   if (!entries) return null
   const first = Object.values(entries)[0]
   if (!first) return null
-  return normalizeLocalePath(first)
+  return normalizeLocalePath(decodePathname(first))
 }

@@ -112,7 +112,9 @@ function hasLocalePrefix(path: string) {
       </div>
     </template>
     <template #nav-screen-content-after>
-      <VPNavScreenTranslations />
+      <div class="la-nav-screen__locale">
+        <LocaleToggleButton />
+      </div>
     </template>
     <template #layout-bottom>
       <transition name="pwa-update-fade">
@@ -189,6 +191,20 @@ function hasLocalePrefix(path: string) {
   align-items: center;
   gap: 0.5rem;
   margin-right: 0.75rem;
+}
+
+.la-nav-screen__locale {
+  border-top: 1px solid var(--vp-c-divider);
+  padding: 1rem 1.5rem 0;
+}
+
+.la-nav-screen__locale :deep(.la-locale-toggle) {
+  width: 100%;
+  justify-content: space-between;
+}
+
+.la-nav-screen__locale :deep(.la-locale-toggle__select) {
+  width: 100%;
 }
 .chat-fab {
   position: fixed;
