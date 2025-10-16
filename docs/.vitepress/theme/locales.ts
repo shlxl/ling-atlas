@@ -4,7 +4,7 @@ type LocaleDefinition<TCode extends string = string, TVitepressKey extends strin
 }
 
 const RAW_SUPPORTED_LOCALES = [
-  { code: 'zh', vitepressKey: 'root' },
+  { code: 'zh', vitepressKey: 'zh' },
   { code: 'en', vitepressKey: 'en' }
 ] as const satisfies readonly LocaleDefinition[]
 
@@ -12,6 +12,8 @@ export const SUPPORTED_LOCALES = RAW_SUPPORTED_LOCALES
 
 export type LocaleCode = (typeof SUPPORTED_LOCALES)[number]['code']
 export type VitepressLocaleKey = (typeof SUPPORTED_LOCALES)[number]['vitepressKey']
+
+export const DEFAULT_LOCALE = SUPPORTED_LOCALES[0]!.code
 
 type LocaleIndex = Record<LocaleCode, (typeof SUPPORTED_LOCALES)[number]>
 type VitepressIndex = Record<VitepressLocaleKey, (typeof SUPPORTED_LOCALES)[number]>
@@ -72,8 +74,6 @@ export function normalizedRoutePrefix(locale: LocaleCode): string {
 }
 
 export function routePrefix(locale: LocaleCode): string {
-  const fallback = getFallbackLocale()
-  if (locale === fallback) return '/'
   return normalizedRoutePrefix(locale)
 }
 
