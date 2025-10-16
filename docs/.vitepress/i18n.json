@@ -26,5 +26,21 @@
       "migration": "Migration",
       "chat": "Chat"
     }
+  },
+  "locales": {
+    "zh": "中文",
+    "en": "English"
+  },
+  "ui": {
+    "localeToggleLabel": {
+      "label": {
+        "zh": "选择语言",
+        "en": "Language"
+      },
+      "aria": {
+        "zh": "选择显示语言",
+        "en": "Select display language"
+      }
+    }
   }
 }

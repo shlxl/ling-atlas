@@ -7,13 +7,15 @@ import LocaleToggleButton from './components/LocaleToggleButton.vue'
 import { initTelemetry, setupTelemetryRouterHook } from './telemetry'
 import { useRegisterSW } from 'virtual:pwa-register/vue'
 import { useI18nRouting } from './i18n'
-import { getFallbackLocale, LocaleCode } from './locales'
+import { getFallbackLocale, LocaleCode, SUPPORTED_LOCALES, normalizeLocalePath, routePrefix } from './locales'
+import { usePreferredLocale } from './composables/preferredLocale'
 
 const router = useRouter()
 const offlineReady = ref(false)
 const needRefresh = ref(false)
 const chatOpen = ref(false)
 const activeLocale = ref<LocaleCode>(getFallbackLocale())
+const { preferredLocale, rememberLocale, refreshPreferredLocale } = usePreferredLocale()
 
 const { detectLocaleFromPath } = useI18nRouting()
 
@@ -44,11 +46,10 @@ const chatLabels: Record<LocaleCode, string> = { zh: '知识问答', en: 'Knowle
 const chatButtonLabel = computed(() => chatLabels[activeLocale.value] || chatLabels[getFallbackLocale()])
 
 function normalizePath(path: string) {
-  if (!path) return '/'
+  if (!path) return routePrefix(getFallbackLocale())
   const [pathname] = path.split(/[?#]/)
-  if (!pathname) return '/'
-  if (pathname.endsWith('/') || pathname.endsWith('.html')) return pathname
-  return `${pathname}/`
+  if (!pathname) return routePrefix(getFallbackLocale())
+  return normalizeLocalePath(pathname)
 }
 
 function closeBanner() {
@@ -64,7 +65,23 @@ function refreshNow() {
 onMounted(() => {
   void initTelemetry()
   setupTelemetryRouterHook(router)
-  updateLocale(router.route.path)
+  refreshPreferredLocale()
+  const initialPath = normalizePath(router.route.path)
+  let redirected = false
+  if (!hasLocalePrefix(initialPath)) {
+    const targetLocale = preferredLocale.value
+    const targetPath = routePrefix(targetLocale)
+    if (initialPath !== targetPath) {
+      redirected = true
+      activeLocale.value = targetLocale
+      rememberLocale(targetLocale)
+      router.go(targetPath)
+    }
+  }
+  if (!redirected) {
+    updateLocale(initialPath)
+    rememberLocale(activeLocale.value)
+  }
   router.onAfterRouteChanged?.((to: string) => {
     handleRouteChange(to)
   })
@@ -77,6 +94,12 @@ function updateLocale(path: string) {
 
 function handleRouteChange(path: string) {
   updateLocale(path)
+  rememberLocale(activeLocale.value)
+}
+
+function hasLocalePrefix(path: string) {
+  const normalized = normalizePath(path)
+  return SUPPORTED_LOCALES.some(locale => normalized.startsWith(routePrefix(locale.code as LocaleCode)))
 }
 </script>
 
@@ -89,7 +112,9 @@ function handleRouteChange(path: string) {
       </div>
     </template>
     <template #nav-screen-content-after>
-      <VPNavScreenTranslations />
+      <div class="la-nav-screen__locale">
+        <LocaleToggleButton />
+      </div>
     </template>
     <template #layout-bottom>
       <transition name="pwa-update-fade">
@@ -166,6 +191,20 @@ function handleRouteChange(path: string) {
   align-items: center;
   gap: 0.5rem;
   margin-right: 0.75rem;
+}
+
+.la-nav-screen__locale {
+  border-top: 1px solid var(--vp-c-divider);
+  padding: 1rem 1.5rem 0;
+}
+
+.la-nav-screen__locale :deep(.la-locale-toggle) {
+  width: 100%;
+  justify-content: space-between;
+}
+
+.la-nav-screen__locale :deep(.la-locale-toggle__select) {
+  width: 100%;
 }
 .chat-fab {
   position: fixed;
