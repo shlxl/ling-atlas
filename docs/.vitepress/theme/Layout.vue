@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, defineAsyncComponent, onMounted, ref } from 'vue'
+import { computed, defineAsyncComponent, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vitepress'
 import DefaultTheme from 'vitepress/dist/client/theme-default/without-fonts'
 import SearchBox from './components/SearchBox.vue'
@@ -44,6 +44,7 @@ const ChatWidget = defineAsyncComponent(() => import('./components/ChatWidget.vu
 
 const chatLabels: Record<LocaleCode, string> = { zh: '知识问答', en: 'Knowledge Chat' }
 const chatButtonLabel = computed(() => chatLabels[activeLocale.value] || chatLabels[getFallbackLocale()])
+const brandLink = computed(() => routePrefix(activeLocale.value))
 
 function normalizePath(path: string) {
   if (!path) return routePrefix(getFallbackLocale())
@@ -60,6 +61,49 @@ function closeBanner() {
 function refreshNow() {
   updateServiceWorker?.(true)
   closeBanner()
+}
+
+let navBrandEl: HTMLAnchorElement | null = null
+let stopBrandWatch: (() => void) | null = null
+
+function onBrandClick(event: MouseEvent) {
+  if (!navBrandEl) return
+  const target = brandLink.value
+  if (!target) return
+  event.preventDefault()
+  const current = normalizePath(router.route.path)
+  if (current === target) return
+  router.go(target)
+}
+
+async function syncBrandLink() {
+  if (typeof document === 'undefined') return
+  await nextTick()
+  const anchor = document.querySelector<HTMLAnchorElement>('.VPNavBarTitle .title')
+  if (!anchor) {
+    if (navBrandEl) {
+      navBrandEl.removeEventListener('click', onBrandClick)
+      navBrandEl = null
+    }
+    return
+  }
+  if (navBrandEl && navBrandEl !== anchor) {
+    navBrandEl.removeEventListener('click', onBrandClick)
+  }
+  navBrandEl = anchor
+  navBrandEl.href = brandLink.value
+  navBrandEl.addEventListener('click', onBrandClick, { once: false })
+}
+
+function teardownBrandLink() {
+  if (navBrandEl) {
+    navBrandEl.removeEventListener('click', onBrandClick)
+    navBrandEl = null
+  }
+  if (stopBrandWatch) {
+    stopBrandWatch()
+    stopBrandWatch = null
+  }
 }
 
 onMounted(() => {
@@ -85,6 +129,15 @@ onMounted(() => {
   router.onAfterRouteChanged?.((to: string) => {
     handleRouteChange(to)
   })
+
+  void syncBrandLink()
+  stopBrandWatch = watch(brandLink, () => {
+    void syncBrandLink()
+  })
+})
+
+onBeforeUnmount(() => {
+  teardownBrandLink()
 })
 
 function updateLocale(path: string) {
@@ -106,17 +159,17 @@ function hasLocalePrefix(path: string) {
 <template>
   <DefaultTheme.Layout>
     <template #nav-bar-content-after>
-      <div class="la-nav-actions">
-        <div class="la-nav-actions__search VPNavBarSearch">
+      <div class="la-nav-bar-actions">
+        <div class="la-nav-bar-search VPNavBarSearch">
           <SearchBox />
         </div>
-        <div class="la-nav-actions__locale">
+        <div class="la-nav-bar-locale">
           <LocaleToggleButton />
         </div>
       </div>
     </template>
     <template #nav-screen-content-after>
-      <div class="la-nav-screen__locale">
+      <div class="la-nav-screen-locale">
         <LocaleToggleButton />
       </div>
     </template>
@@ -190,61 +243,44 @@ function hasLocalePrefix(path: string) {
   opacity: 0;
   transform: translate(-50%, 10px);
 }
-.la-nav-actions {
+.la-nav-bar-actions {
   display: flex;
   align-items: center;
   justify-content: flex-end;
   gap: 0.5rem;
   min-width: 0;
+  flex: 1 1 auto;
 }
 
-.la-nav-actions__search,
-.la-nav-actions__locale {
+.la-nav-bar-search {
   display: flex;
-  align-items: center;
+  justify-content: flex-end;
+  flex: 1 1 240px;
   min-width: 0;
 }
 
-.la-nav-actions__search {
-  justify-content: flex-end;
-  flex: 0 1 auto;
+.la-nav-bar-search :deep(.la-search) {
+  width: min(420px, 100%);
 }
 
-.la-nav-actions__locale {
-  justify-content: flex-end;
+.la-nav-bar-locale {
+  display: none;
   flex: 0 0 auto;
 }
 
-.la-nav-actions :deep(.la-search) {
-  display: inline-flex;
-  align-items: center;
-  justify-content: flex-end;
+@media (min-width: 960px) {
+  .la-nav-bar-search {
+    flex: 1 1 280px;
+  }
+
+  .la-nav-bar-locale {
+    display: flex;
+    align-items: center;
+    padding-left: 24px;
+  }
 }
 
-.la-nav-actions__search,
-.la-nav-actions__locale {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  min-width: 0;
-}
-
-.la-nav-actions__search {
-  flex: 1 1 160px;
-}
-
-.la-nav-actions__locale {
-  flex: 0 0 auto;
-}
-
-.la-nav-actions :deep(.la-search) {
-  display: inline-flex;
-  align-items: center;
-  justify-content: flex-end;
-  width: auto;
-}
-
-.la-nav-screen__locale {
+.la-nav-screen-locale {
   border-top: 1px solid var(--vp-c-divider);
   padding: 1rem 1.5rem 0;
   display: flex;
@@ -252,19 +288,19 @@ function hasLocalePrefix(path: string) {
 }
 
 @media (max-width: 767px) {
-  .la-nav-actions {
+  .la-nav-bar-actions {
+    flex: 1 1 100%;
+  }
+
+  .la-nav-bar-search {
     flex: 1 1 auto;
   }
 
-  .la-nav-actions__search {
-    flex: 1 1 auto;
+  .la-nav-bar-search :deep(.la-search) {
+    width: 100%;
   }
 
-  .la-nav-actions__locale {
-    flex: 0 0 auto;
-  }
-
-  .la-nav-screen__locale {
+  .la-nav-screen-locale {
     padding: 0.75rem 1.25rem 0;
   }
 }
@@ -274,7 +310,7 @@ function hasLocalePrefix(path: string) {
   display: none !important;
 }
 
-.la-nav-screen__locale :deep(.la-locale-toggle) {
+.la-nav-screen-locale :deep(.la-locale-toggle) {
   width: 100%;
   justify-content: flex-end;
 }

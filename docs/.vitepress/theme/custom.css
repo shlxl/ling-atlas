@@ -167,7 +167,7 @@
 }
 
 .VPNavBar .la-locale-toggle,
-.la-nav-screen__locale .la-locale-toggle {
+.la-nav-screen-locale .la-locale-toggle {
   width: auto;
 }
 
@@ -179,17 +179,17 @@
   letter-spacing: 0.08em;
 }
 
-.la-nav-screen__locale .la-locale-toggle {
+.la-nav-screen-locale .la-locale-toggle {
   width: 100%;
   justify-content: flex-end;
 }
 
-.la-nav-screen__locale .la-locale-toggle__select {
+.la-nav-screen-locale .la-locale-toggle__select {
   min-width: 3rem;
 }
 
 .VPNavBar .la-locale-toggle:focus-visible,
-.la-nav-screen__locale .la-locale-toggle:focus-visible {
+.la-nav-screen-locale .la-locale-toggle:focus-visible {
   box-shadow: 0 0 0 2px color-mix(in srgb, var(--vp-c-brand-1) 45%, transparent);
 }
 
