@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, defineAsyncComponent, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, defineAsyncComponent, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useRouter } from 'vitepress'
 import DefaultTheme from 'vitepress/dist/client/theme-default/without-fonts'
 import SearchBox from './components/SearchBox.vue'
@@ -76,14 +76,18 @@ function onBrandClick(event: MouseEvent) {
   router.go(target)
 }
 
-async function syncBrandLink() {
+function syncBrandLink() {
   if (typeof document === 'undefined') return
-  await nextTick()
   const anchor = document.querySelector<HTMLAnchorElement>('.VPNavBarTitle .title')
   if (!anchor) {
     if (navBrandEl) {
       navBrandEl.removeEventListener('click', onBrandClick)
       navBrandEl = null
+    }
+    if (typeof requestAnimationFrame === 'function') {
+      requestAnimationFrame(() => {
+        syncBrandLink()
+      })
     }
     return
   }
@@ -99,10 +103,6 @@ function teardownBrandLink() {
   if (navBrandEl) {
     navBrandEl.removeEventListener('click', onBrandClick)
     navBrandEl = null
-  }
-  if (stopBrandWatch) {
-    stopBrandWatch()
-    stopBrandWatch = null
   }
 }
 
@@ -130,10 +130,7 @@ onMounted(() => {
     handleRouteChange(to)
   })
 
-  void syncBrandLink()
-  stopBrandWatch = watch(brandLink, () => {
-    void syncBrandLink()
-  })
+  syncBrandLink()
 })
 
 onBeforeUnmount(() => {
@@ -148,6 +145,11 @@ function updateLocale(path: string) {
 function handleRouteChange(path: string) {
   updateLocale(path)
   rememberLocale(activeLocale.value)
+  if (navBrandEl) {
+    navBrandEl.href = brandLink.value
+  } else {
+    syncBrandLink()
+  }
 }
 
 function hasLocalePrefix(path: string) {
