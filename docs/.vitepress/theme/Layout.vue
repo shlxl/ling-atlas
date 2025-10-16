@@ -240,17 +240,19 @@ function hasLocalePrefix(path: string) {
 
 @media (max-width: 960px) {
   .la-nav-actions {
-    width: 100%;
-    padding: 0 1rem;
-    gap: 0.75rem;
+    flex: 0 1 auto;
+    width: auto;
+    padding: 0 0.75rem;
+    gap: 0.5rem;
+    flex-wrap: nowrap;
   }
 
   .la-nav-actions__search {
-    flex: 1 1 100%;
+    flex: 0 1 auto;
   }
 
   .la-nav-actions :deep(.la-search) {
-    width: 100%;
+    width: auto;
     justify-content: flex-end;
     align-items: center;
   }
@@ -258,7 +260,7 @@ function hasLocalePrefix(path: string) {
 
 @media (max-width: 640px) {
   .la-nav-actions__locale {
-    width: 100%;
+    width: auto;
     justify-content: flex-end;
   }
 
