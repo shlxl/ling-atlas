@@ -7,6 +7,7 @@ import {
   isLocaleCode,
   localeFromVitepressKey,
   manifestFileName,
+  normalizeLocalePath,
   routePrefix,
   type LocaleCode
 } from '../locales'
@@ -40,27 +41,17 @@ let loadPromise: Promise<void> | null = null
 
 const fallbackCache: Partial<Record<LocaleCode, string>> = {}
 
-function ensureTrailingSlash(path: string) {
-  if (!path) return '/'
-  if (path.endsWith('/')) return path
-  if (path.endsWith('.html')) return path
-  return `${path}/`
-}
-
 export function normalizeRoutePath(path: string) {
   const fallbackLocale = getFallbackLocale()
   if (!path) return getFallbackPath(fallbackLocale)
   const [pathname] = path.split(/[?#]/)
   if (!pathname) return getFallbackPath(fallbackLocale)
-  return ensureTrailingSlash(pathname.startsWith('/') ? pathname : `/${pathname}`)
+  return normalizeLocalePath(pathname)
 }
 
 export function getFallbackPath(locale: LocaleCode) {
   if (!fallbackCache[locale]) {
-    const basePath = routePrefix(locale)
-    const resolved = resolveAsset(basePath).pathname
-    const normalized = ensureTrailingSlash(resolved.startsWith('/') ? resolved : `/${resolved}`)
-    fallbackCache[locale] = normalized
+    fallbackCache[locale] = routePrefix(locale)
   }
   return fallbackCache[locale]!
 }
@@ -100,7 +91,7 @@ async function loadLocaleMap() {
           const normalizedLocale =
             isLocaleCode(localeKey) ? (localeKey as LocaleCode) : localeFromVitepressKey(localeKey)
           if (!normalizedLocale) continue
-          const resolved = normalizeRoutePath(resolveAsset(rawPath).pathname)
+          const resolved = normalizeLocalePath(rawPath)
           normalizedEntry[normalizedLocale] = resolved
         }
 
@@ -139,7 +130,7 @@ function resolveTargetPath(path: string, currentLocale: LocaleCode, targetLocale
   if (manifest && aggregateInfo) {
     const direct = manifest[aggregateInfo.type]?.[aggregateInfo.slug]
     if (direct) {
-      return { path: normalizeRoutePath(resolveAsset(direct).pathname), hasMapping: true, reason: 'manifest-match' }
+      return { path: normalizeLocalePath(direct), hasMapping: true, reason: 'manifest-match' }
     }
     const fallback = getFirstManifestPath(manifest, aggregateInfo.type)
     if (fallback) {
@@ -282,5 +273,5 @@ function getFirstManifestPath(manifest: NavManifest, type: AggregateType) {
   if (!entries) return null
   const first = Object.values(entries)[0]
   if (!first) return null
-  return normalizeRoutePath(resolveAsset(first).pathname)
+  return normalizeLocalePath(first)
 }
