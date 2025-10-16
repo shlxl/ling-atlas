@@ -1,16 +1,23 @@
 import { computed, onMounted, ref, watchEffect } from 'vue'
 import { useRouter } from 'vitepress'
 import { resolveAsset } from '../telemetry'
-import { routePrefix } from '../locales'
+import {
+  SUPPORTED_LOCALES,
+  getFallbackLocale,
+  isLocaleCode,
+  localeFromVitepressKey,
+  manifestFileName,
+  routePrefix,
+  type LocaleCode
+} from '../locales'
 
-export type LocaleId = 'zh' | 'en'
 type RawLocaleEntry = Partial<Record<string, string>>
-type LocaleEntry = Partial<Record<LocaleId, string>>
+type LocaleEntry = Partial<Record<LocaleCode, string>>
 type Lookup = Record<string, LocaleEntry>
 type AggregateType = 'categories' | 'series' | 'tags' | 'archive'
 
 type NavManifest = {
-  locale: LocaleId
+  locale: LocaleCode
   categories: Record<string, string>
   series: Record<string, string>
   tags: Record<string, string>
@@ -19,7 +26,7 @@ type NavManifest = {
 
 type LocaleMapState = {
   lookup: Lookup
-  manifests: Partial<Record<LocaleId, NavManifest>>
+  manifests: Partial<Record<LocaleCode, NavManifest>>
 }
 
 type TargetResolution = {
@@ -31,7 +38,7 @@ type TargetResolution = {
 const localeMapState = ref<LocaleMapState>({ lookup: {}, manifests: {} })
 let loadPromise: Promise<void> | null = null
 
-const fallbackCache: Partial<Record<LocaleId, string>> = {}
+const fallbackCache: Partial<Record<LocaleCode, string>> = {}
 
 function ensureTrailingSlash(path: string) {
   if (!path) return '/'
@@ -41,24 +48,37 @@ function ensureTrailingSlash(path: string) {
 }
 
 export function normalizeRoutePath(path: string) {
-  if (!path) return getFallbackPath('zh')
+  const fallbackLocale = getFallbackLocale()
+  if (!path) return getFallbackPath(fallbackLocale)
   const [pathname] = path.split(/[?#]/)
-  if (!pathname) return getFallbackPath('zh')
+  if (!pathname) return getFallbackPath(fallbackLocale)
   return ensureTrailingSlash(pathname.startsWith('/') ? pathname : `/${pathname}`)
 }
 
-export function getFallbackPath(locale: LocaleId) {
+export function getFallbackPath(locale: LocaleCode) {
   if (!fallbackCache[locale]) {
     const basePath = routePrefix(locale)
-    fallbackCache[locale] = normalizeRoutePath(resolveAsset(basePath).pathname)
+    const resolved = resolveAsset(basePath).pathname
+    const normalized = ensureTrailingSlash(resolved.startsWith('/') ? resolved : `/${resolved}`)
+    fallbackCache[locale] = normalized
   }
   return fallbackCache[locale]!
 }
 
-export function detectLocaleFromPath(path: string): LocaleId {
+const orderedPrefixes = computed(() =>
+  SUPPORTED_LOCALES.map(locale => ({
+    code: locale.code as LocaleCode,
+    prefix: getFallbackPath(locale.code as LocaleCode)
+  }))
+    .sort((a, b) => b.prefix.length - a.prefix.length)
+)
+
+export function detectLocaleFromPath(path: string): LocaleCode {
   const normalized = normalizeRoutePath(path)
-  const enPrefix = getFallbackPath('en')
-  return normalized.startsWith(enPrefix) ? 'en' : 'zh'
+  for (const { code, prefix } of orderedPrefixes.value) {
+    if (normalized.startsWith(prefix)) return code
+  }
+  return getFallbackLocale()
 }
 
 async function loadLocaleMap() {
@@ -78,7 +98,7 @@ async function loadLocaleMap() {
         for (const [localeKey, rawPath] of Object.entries(entry)) {
           if (typeof rawPath !== 'string' || !rawPath) continue
           const normalizedLocale =
-            localeKey === 'en' ? 'en' : localeKey === 'zh' || localeKey === 'root' ? 'zh' : null
+            isLocaleCode(localeKey) ? (localeKey as LocaleCode) : localeFromVitepressKey(localeKey)
           if (!normalizedLocale) continue
           const resolved = normalizeRoutePath(resolveAsset(rawPath).pathname)
           normalizedEntry[normalizedLocale] = resolved
@@ -106,7 +126,7 @@ async function loadLocaleMap() {
   }
 }
 
-function resolveTargetPath(path: string, currentLocale: LocaleId, targetLocale: LocaleId): TargetResolution {
+function resolveTargetPath(path: string, currentLocale: LocaleCode, targetLocale: LocaleCode): TargetResolution {
   const normalized = normalizeRoutePath(path)
   const entry = localeMapState.value.lookup[normalized]
   const mapped = entry?.[targetLocale]
@@ -136,9 +156,16 @@ function resolveTargetPath(path: string, currentLocale: LocaleId, targetLocale: 
 
 export function useLocaleToggle() {
   const router = useRouter()
+  const orderedLocales = SUPPORTED_LOCALES.map(locale => locale.code as LocaleCode)
   const currentPath = computed(() => normalizeRoutePath(router.route.path))
-  const currentLocale = computed<LocaleId>(() => detectLocaleFromPath(currentPath.value))
-  const targetLocale = computed<LocaleId>(() => (currentLocale.value === 'en' ? 'zh' : 'en'))
+  const currentLocale = computed<LocaleCode>(() => detectLocaleFromPath(currentPath.value))
+  const targetLocale = computed<LocaleCode>(() => {
+    if (orderedLocales.length === 0) return getFallbackLocale()
+    if (orderedLocales.length === 1) return orderedLocales[0]
+    const index = orderedLocales.indexOf(currentLocale.value)
+    if (index === -1) return orderedLocales[0]
+    return orderedLocales[(index + 1) % orderedLocales.length]
+  })
   const resolution = ref<TargetResolution>({
     path: getFallbackPath(targetLocale.value),
     hasMapping: currentPath.value === getFallbackPath(currentLocale.value),
@@ -177,16 +204,20 @@ export function useLocaleToggle() {
 }
 
 async function loadNavManifests() {
-  const locales: LocaleId[] = ['zh', 'en']
-  const manifests: Partial<Record<LocaleId, NavManifest>> = {}
-  const manifestCandidates: Record<LocaleId, string[]> = {
-    zh: ['nav.manifest.zh.json', 'nav.manifest.root.json'],
-    en: ['nav.manifest.en.json']
+  const manifests: Partial<Record<LocaleCode, NavManifest>> = {}
+  const candidateMap = new Map<LocaleCode, string[]>()
+
+  for (const locale of SUPPORTED_LOCALES) {
+    const code = locale.code as LocaleCode
+    const candidates = new Set<string>([manifestFileName(code)])
+    if (locale.vitepressKey !== code) {
+      candidates.add(`nav.manifest.${locale.vitepressKey}.json`)
+    }
+    candidateMap.set(code, Array.from(candidates))
   }
 
   await Promise.all(
-    locales.map(async locale => {
-      const candidates = manifestCandidates[locale] || []
+    Array.from(candidateMap.entries()).map(async ([locale, candidates]) => {
       let lastError: unknown = null
 
       for (const candidate of candidates) {
@@ -214,14 +245,11 @@ async function loadNavManifests() {
   return manifests
 }
 
-function normalizeManifest(payload: Partial<NavManifest> | null | undefined, fallbackLocale: LocaleId): NavManifest {
+function normalizeManifest(payload: Partial<NavManifest> | null | undefined, fallbackLocale: LocaleCode): NavManifest {
   const localeKey = payload?.locale
-  const locale =
-    localeKey === 'en'
-      ? 'en'
-      : localeKey === 'zh' || localeKey === 'root'
-        ? 'zh'
-        : fallbackLocale
+  const normalized =
+    (localeKey && (isLocaleCode(localeKey) ? (localeKey as LocaleCode) : localeFromVitepressKey(localeKey))) || null
+  const locale = normalized ?? fallbackLocale
   return {
     locale,
     categories: payload?.categories ?? {},
@@ -233,13 +261,19 @@ function normalizeManifest(payload: Partial<NavManifest> | null | undefined, fal
 
 function parseAggregatePath(path: string): { type: AggregateType; slug: string } | null {
   const normalized = normalizeRoutePath(path)
-  const segments = normalized.split('/').filter(Boolean)
+  let relative = normalized
+
+  for (const { prefix } of orderedPrefixes.value) {
+    if (!normalized.startsWith(prefix)) continue
+    relative = prefix === '/' ? normalized : normalized.slice(prefix.length - 1)
+    break
+  }
+
+  const segments = relative.split('/').filter(Boolean)
   if (!segments.length) return null
-  const hasLocale = segments[0] === 'en'
-  const offset = hasLocale ? 1 : 0
-  if (segments[offset] !== '_generated') return null
-  const type = segments[offset + 1] as AggregateType | undefined
-  const slug = segments[offset + 2]
+  if (segments[0] !== '_generated') return null
+  const type = segments[1] as AggregateType | undefined
+  const slug = segments[2]
   if (!type || !slug) return null
   if (!['categories', 'series', 'tags', 'archive'].includes(type)) return null
   return { type, slug }
