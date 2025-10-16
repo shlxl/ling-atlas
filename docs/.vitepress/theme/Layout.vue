@@ -221,6 +221,29 @@ function hasLocalePrefix(path: string) {
   justify-content: flex-end;
 }
 
+.la-nav-actions__search,
+.la-nav-actions__locale {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  min-width: 0;
+}
+
+.la-nav-actions__search {
+  flex: 1 1 160px;
+}
+
+.la-nav-actions__locale {
+  flex: 0 0 auto;
+}
+
+.la-nav-actions :deep(.la-search) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  width: auto;
+}
+
 .la-nav-screen__locale {
   border-top: 1px solid var(--vp-c-divider);
   padding: 1rem 1.5rem 0;
