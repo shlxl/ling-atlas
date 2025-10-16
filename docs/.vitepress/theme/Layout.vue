@@ -198,6 +198,11 @@ function hasLocalePrefix(path: string) {
   padding: 1rem 1.5rem 0;
 }
 
+:deep(.VPNavBarTranslations),
+:deep(.VPNavScreenTranslations) {
+  display: none !important;
+}
+
 .la-nav-screen__locale :deep(.la-locale-toggle) {
   width: 100%;
   justify-content: space-between;
