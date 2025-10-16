@@ -11,6 +11,7 @@ let distReady = false
 const INTERNAL_PREFIXES = ['/', './', '../']
 const ROOT_LOCALE = 'zh'
 const FALLBACK_LOCALE_PREFIXES = [
+  { locale: 'zh', prefix: '/zh/' },
   { locale: 'en', prefix: '/en/' }
 ]
 
@@ -18,9 +19,9 @@ const LOCALE_SEARCH_ROOTS = new Map([
   [
     'zh',
     {
-      docDirs: [DOCS_DIR],
-      generatedDirs: [path.join(DOCS_DIR, '_generated')],
-      contentDirs: [path.join(DOCS_DIR, 'content.zh')]
+      docDirs: [path.join(DOCS_DIR, 'zh')],
+      generatedDirs: [path.join(DOCS_DIR, 'zh/_generated')],
+      contentDirs: [path.join(DOCS_DIR, 'zh/content')]
     }
   ],
   [
@@ -28,7 +29,7 @@ const LOCALE_SEARCH_ROOTS = new Map([
     {
       docDirs: [path.join(DOCS_DIR, 'en')],
       generatedDirs: [path.join(DOCS_DIR, 'en/_generated')],
-      contentDirs: [path.join(DOCS_DIR, 'content.en')]
+      contentDirs: [path.join(DOCS_DIR, 'en/content')]
     }
   ]
 ])
@@ -39,13 +40,17 @@ const DEFAULT_MANIFESTS = [
   {
     locale: 'zh',
     files: [
+      path.join(DOCS_DIR, 'zh/_generated/nav.manifest.zh.json'),
       path.join(GENERATED_DIR, 'nav.manifest.zh.json'),
       path.join(GENERATED_DIR, 'nav.manifest.root.json')
     ]
   },
   {
     locale: 'en',
-    files: [path.join(GENERATED_DIR, 'nav.manifest.en.json')]
+    files: [
+      path.join(DOCS_DIR, 'en/_generated/nav.manifest.en.json'),
+      path.join(GENERATED_DIR, 'nav.manifest.en.json')
+    ]
   }
 ]
 
@@ -288,14 +293,14 @@ const LOCALE_CONTENT_FIELDS = {
     tags: ['tags_zh', 'tags'],
     series: ['series'],
     seriesSlug: ['series_slug'],
-    contentDir: path.join(DOCS_DIR, 'content.zh')
+    contentDir: path.join(DOCS_DIR, 'zh/content')
   },
   en: {
     category: ['category_en', 'category'],
     tags: ['tags_en', 'tags'],
     series: ['series_en', 'series'],
     seriesSlug: ['series_slug_en', 'series_slug', 'series_en', 'series'],
-    contentDir: path.join(DOCS_DIR, 'content.en')
+    contentDir: path.join(DOCS_DIR, 'en/content')
   }
 }
 

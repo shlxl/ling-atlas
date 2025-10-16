@@ -2,7 +2,7 @@
 
 /**
  * 构建期知识分段导出
- * - 扫描 docs/content.<locale>/ 下各 index.md
+ * - 扫描 docs/<locale>/content/ 下各 index.md
  * - 每段 300~500 中文字符（依据句号/换行切分）
  * - 输出 docs/public/api/knowledge.json，供前端检索/问答引用
  */

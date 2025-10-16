@@ -1,0 +1,14 @@
+{
+  "locale": "en",
+  "categories": {
+    "uncategorized": "/en/_generated/categories/uncategorized/"
+  },
+  "series": {
+    "knowledge-ops": "/en/_generated/series/knowledge-ops/",
+    "getting-started": "/en/_generated/series/getting-started/"
+  },
+  "tags": {},
+  "archive": {
+    "2025": "/en/_generated/archive/2025/"
+  }
+}

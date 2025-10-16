@@ -1,11 +1,14 @@
 import fs from 'node:fs'
 import path from 'node:path'
+import { LANGUAGES } from './pagegen.locales.mjs'
 
 const distDir = path.resolve('docs/.vitepress/dist')
 
-const aliasPairs = [
-  ['content.zh', 'content']
-]
+const aliasPairs = LANGUAGES.map(locale => ({
+  code: locale.code,
+  source: path.join(distDir, `content.${locale.code}`),
+  target: path.join(distDir, locale.code, 'content')
+}))
 
 function ensureDirAlias(sourceDir, targetDir) {
   if (!fs.existsSync(sourceDir)) {
@@ -22,13 +25,7 @@ function ensureDirAlias(sourceDir, targetDir) {
   return { status: 'copied', source: sourceDir, target: targetDir }
 }
 
-const results = []
-
-for (const [source, target] of aliasPairs) {
-  const sourcePath = path.join(distDir, source)
-  const targetPath = path.join(distDir, target)
-  results.push(ensureDirAlias(sourcePath, targetPath))
-}
+const results = aliasPairs.map(({ source, target }) => ensureDirAlias(source, target))
 
 const copied = results.filter(entry => entry.status === 'copied')
 const skippedMissing = results.filter(entry => entry.status === 'missing-source')
