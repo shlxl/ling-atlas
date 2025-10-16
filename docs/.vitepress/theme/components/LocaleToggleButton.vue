@@ -91,46 +91,12 @@ function handleLocaleChange(event: Event) {
 
 <style scoped>
 .la-locale-toggle {
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
+  width: 100%;
 }
 
-.la-locale-toggle__label {
-  font-size: 0.85rem;
-  color: var(--vp-c-text-2);
-}
-
-.la-locale-toggle__select {
-  appearance: none;
-  border: 1px solid var(--vp-c-divider);
-  border-radius: 999px;
-  padding: 0.25rem 1.75rem 0.25rem 0.75rem;
-  background: var(--vp-c-bg-soft);
-  color: var(--vp-c-text-1);
-  font-size: 0.85rem;
-  line-height: 1.2;
-  cursor: pointer;
-  position: relative;
-}
-
-.la-locale-toggle__select:focus {
-  outline: none;
-  border-color: var(--vp-c-brand-1);
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--vp-c-brand-1) 30%, transparent);
-}
-
-.la-locale-toggle__select option {
-  color: var(--vp-c-text-1);
-}
-
-@media (max-width: 640px) {
-  .la-locale-toggle__label {
-    display: none;
-  }
-
-  .la-locale-toggle__select {
-    padding-right: 1rem;
+@media (min-width: 641px) {
+  .la-locale-toggle {
+    width: auto;
   }
 }
 </style>

@@ -650,8 +650,21 @@ onBeforeUnmount(() => {
 
 <template>
   <div class="la-search">
-    <button class="la-search-btn" type="button" @click="open">
-      {{ uiText.button }}
+    <button class="la-search-btn" type="button" :aria-label="uiText.button" @click="open">
+      <svg
+        class="la-search-btn__icon"
+        width="18"
+        height="18"
+        viewBox="0 0 24 24"
+        role="img"
+        aria-hidden="true"
+      >
+        <path
+          fill="currentColor"
+          d="M11 4a7 7 0 0 1 5.61 11.28l3.55 3.56a1 1 0 0 1-1.42 1.42l-3.56-3.55A7 7 0 1 1 11 4m0 2a5 5 0 1 0 0 10a5 5 0 0 0 0-10"
+        />
+      </svg>
+      <span class="la-search-btn__label">{{ uiText.button }}</span>
     </button>
 
     <div v-if="isOpen" class="la-search-overlay" @click.self="close">
@@ -685,12 +698,57 @@ onBeforeUnmount(() => {
 
 <style scoped>
 .la-search-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
   font-size: 0.9rem;
-  padding: 6px 10px;
+  padding: 0.5rem 0.75rem;
   border: 1px solid var(--vp-c-divider);
-  border-radius: 6px;
+  border-radius: 999px;
   background: var(--vp-c-bg);
   color: var(--vp-c-text-1);
+  min-height: 2.75rem;
+  min-width: 2.75rem;
+  transition: background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.la-search-btn:hover {
+  background: var(--vp-c-bg-soft);
+}
+
+.la-search-btn:focus-visible {
+  outline: none;
+  border-color: var(--vp-c-brand-1);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--vp-c-brand-1) 35%, transparent);
+}
+
+.la-search-btn__icon {
+  flex-shrink: 0;
+}
+
+.la-search-btn__label {
+  display: inline-flex;
+  align-items: center;
+  line-height: 1;
+}
+
+@media (max-width: 640px) {
+  .la-search-btn {
+    justify-content: center;
+    padding-inline: 0.75rem;
+  }
+
+  .la-search-btn__label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
 }
 
 .la-search-overlay {
