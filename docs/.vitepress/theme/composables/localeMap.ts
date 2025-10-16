@@ -1,6 +1,7 @@
 import { computed, onMounted, ref, watchEffect } from 'vue'
 import { useRouter } from 'vitepress'
 import { resolveAsset } from '../telemetry'
+import { routePrefix } from '../locales'
 
 export type LocaleId = 'zh' | 'en'
 type RawLocaleEntry = Partial<Record<string, string>>
@@ -144,6 +145,8 @@ export function useLocaleToggle() {
     reason: 'home'
   })
 
+  const normalizedDestination = computed(() => normalizeRoutePath(resolution.value.path))
+
   onMounted(() => {
     void loadLocaleMap()
   })
@@ -166,9 +169,10 @@ export function useLocaleToggle() {
   return {
     currentLocale,
     targetLocale,
-    destination: computed(() => resolution.value.path),
+    destination: normalizedDestination,
     goToTarget,
-    hasMapping: computed(() => resolution.value.hasMapping)
+    hasMapping: computed(() => resolution.value.hasMapping),
+    canNavigate: computed(() => normalizedDestination.value !== currentPath.value)
   }
 }
 
