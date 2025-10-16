@@ -1,15 +1,25 @@
 {
-  "generatedAt": "2025-10-14T02:09:38.750Z",
+  "generatedAt": "2025-10-16T04:34:58.505Z",
   "items": [
     {
-      "url": "/content/from-zero-to-one/",
+      "url": "/zh/content/from-zero-to-one/",
       "title": "从0到1：Ling Atlas 的诞生记",
       "summary": "记录 Ling Atlas 从脚手架到全自动部署的首篇实践，总结决策脉络与经验。"
     },
     {
-      "url": "/content/hello-world/",
+      "url": "/zh/content/hello-world/",
       "title": "你好，知识库",
       "summary": "这是第一篇示例文。实际使用时请删除本目录并导入你的内容。"
+    },
+    {
+      "url": "/zh/content/taxonomy-reference/",
+      "title": "Ling Atlas 分类与元数据规范 v1.0",
+      "summary": "全量保留 TAXONOMY.md 的规范内容，方便在站点内直接查阅 Ling Atlas 的分类、元数据与变更流程。"
+    },
+    {
+      "url": "/zh/content/taxonomy-playbook/",
+      "title": "Ling Atlas 分类与元数据实战手册",
+      "summary": "按照 TAXONOMY.md 给出的规范，落地一套可执行的分类与元数据流程，帮助内容团队把写作与自动化部署串起来。"
     }
   ]
 }

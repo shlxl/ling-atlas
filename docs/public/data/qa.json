@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2025-10-14T02:09:38.905Z",
+  "generatedAt": "2025-10-16T04:34:59.038Z",
   "items": [
     {
-      "url": "/content/from-zero-to-one/",
+      "url": "/zh/content/from-zero-to-one/",
       "title": "从0到1：Ling Atlas 的诞生记",
       "qa": [
         {
@@ -11,7 +11,7 @@
         },
         {
           "q": "从0到1：Ling Atlas 的诞生记 涉及了哪些关键主题或标签？",
-          "a": "github-actions、自动化、知识库"
+          "a": "github-actions、automation、knowledge-base"
         },
         {
           "q": "从0到1：Ling Atlas 的诞生记 属于哪个系列？",
@@ -24,7 +24,7 @@
       ]
     },
     {
-      "url": "/content/hello-world/",
+      "url": "/zh/content/hello-world/",
       "title": "你好，知识库",
       "qa": [
         {
@@ -42,6 +42,50 @@
         {
           "q": "你好，知识库 的发布日期是？",
           "a": "2025-10-12"
+        }
+      ]
+    },
+    {
+      "url": "/zh/content/taxonomy-reference/",
+      "title": "Ling Atlas 分类与元数据规范 v1.0",
+      "qa": [
+        {
+          "q": "Ling Atlas 分类与元数据规范 v1.0 主要讲述了什么内容？",
+          "a": "全量保留 TAXONOMY.md 的规范内容，方便在站点内直接查阅 Ling Atlas 的分类、元数据与变更流程。"
+        },
+        {
+          "q": "Ling Atlas 分类与元数据规范 v1.0 涉及了哪些关键主题或标签？",
+          "a": "内容治理、分类体系、规范"
+        },
+        {
+          "q": "Ling Atlas 分类与元数据规范 v1.0 被归类在哪个知识领域？",
+          "a": "管理与协作"
+        },
+        {
+          "q": "Ling Atlas 分类与元数据规范 v1.0 的发布日期是？",
+          "a": "2025-01-18"
+        }
+      ]
+    },
+    {
+      "url": "/zh/content/taxonomy-playbook/",
+      "title": "Ling Atlas 分类与元数据实战手册",
+      "qa": [
+        {
+          "q": "Ling Atlas 分类与元数据实战手册 主要讲述了什么内容？",
+          "a": "按照 TAXONOMY.md 给出的规范，落地一套可执行的分类与元数据流程，帮助内容团队把写作与自动化部署串起来。"
+        },
+        {
+          "q": "Ling Atlas 分类与元数据实战手册 涉及了哪些关键主题或标签？",
+          "a": "内容治理、分类体系、automation"
+        },
+        {
+          "q": "Ling Atlas 分类与元数据实战手册 被归类在哪个知识领域？",
+          "a": "管理与协作"
+        },
+        {
+          "q": "Ling Atlas 分类与元数据实战手册 的发布日期是？",
+          "a": "2025-01-18"
         }
       ]
     }
