@@ -194,11 +194,31 @@ function hasLocalePrefix(path: string) {
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  flex-wrap: wrap;
   gap: 0.5rem;
-  flex: 1 1 auto;
   min-width: 0;
-  margin-right: 0.75rem;
+}
+
+.la-nav-actions__search,
+.la-nav-actions__locale {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.la-nav-actions__search {
+  justify-content: flex-end;
+  flex: 0 1 auto;
+}
+
+.la-nav-actions__locale {
+  justify-content: flex-end;
+  flex: 0 0 auto;
+}
+
+.la-nav-actions :deep(.la-search) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
 }
 
 .la-nav-actions__search,
@@ -231,37 +251,17 @@ function hasLocalePrefix(path: string) {
   justify-content: flex-end;
 }
 
-@media (max-width: 1280px) {
+@media (max-width: 767px) {
   .la-nav-actions {
-    margin-right: 0;
-    padding-right: 0.75rem;
-  }
-}
-
-@media (max-width: 960px) {
-  .la-nav-actions {
-    flex: 0 1 auto;
-    width: auto;
-    padding: 0 0.75rem;
-    gap: 0.5rem;
-    flex-wrap: nowrap;
+    flex: 1 1 auto;
   }
 
   .la-nav-actions__search {
-    flex: 0 1 auto;
+    flex: 1 1 auto;
   }
 
-  .la-nav-actions :deep(.la-search) {
-    width: auto;
-    justify-content: flex-end;
-    align-items: center;
-  }
-}
-
-@media (max-width: 640px) {
   .la-nav-actions__locale {
-    width: auto;
-    justify-content: flex-end;
+    flex: 0 0 auto;
   }
 
   .la-nav-screen__locale {
