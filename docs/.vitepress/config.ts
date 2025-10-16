@@ -241,9 +241,8 @@ function loadNavManifest(localeId: 'zh' | 'en'): NavManifest | null {
 export default defineConfig({
   // Inject base from env to support GitHub Pages subpath deployment
   base: baseFromEnv,
-  rewrites: {
-    'content/:path*': 'content.zh/:path*/index.md'
-  },
+  rewrites: {},
+  srcExclude: ['content.zh/**/*'],
   head,
   themeConfig: {
     socialLinks: [{ icon: 'github', link: 'https://github.com/shlxl/ling-atlas' }],
