@@ -1,6 +1,44 @@
+import { resolveAsset } from './telemetry'
+
 type LocaleDefinition<TCode extends string = string, TVitepressKey extends string = string> = {
   code: TCode
   vitepressKey: TVitepressKey
+}
+
+function ensureLeadingSlash(path: string | null | undefined) {
+  if (!path) return '/'
+  return path.startsWith('/') ? path : `/${path}`
+}
+
+function ensureTrailingSlash(path: string) {
+  if (!path) return '/'
+  if (path.endsWith('/') || path.endsWith('.html')) return path
+  return `${path}/`
+}
+
+let cachedSiteBasePath: string | null = null
+
+export function getSiteBasePath(): string {
+  if (cachedSiteBasePath) return cachedSiteBasePath
+  const resolved = resolveAsset('/').pathname
+  cachedSiteBasePath = ensureTrailingSlash(ensureLeadingSlash(resolved || '/'))
+  return cachedSiteBasePath
+}
+
+export function withSiteBase(path: string | null | undefined): string {
+  const base = getSiteBasePath()
+  if (!path) return base
+  let normalized = ensureLeadingSlash(path)
+  if (normalized === '/' || normalized === base) return base
+  if (base !== '/' && normalized.startsWith(base)) return normalized
+  if (base === '/') return normalized
+  const trimmed = normalized.replace(/^\/+/, '')
+  return trimmed ? `${base}${trimmed}` : base
+}
+
+export function normalizeLocalePath(path: string | null | undefined): string {
+  const combined = withSiteBase(path)
+  return ensureTrailingSlash(combined)
 }
 
 const RAW_SUPPORTED_LOCALES = [
@@ -74,7 +112,7 @@ export function normalizedRoutePrefix(locale: LocaleCode): string {
 }
 
 export function routePrefix(locale: LocaleCode): string {
-  return normalizedRoutePrefix(locale)
+  return normalizeLocalePath(normalizedRoutePrefix(locale))
 }
 
 export function manifestFileName(locale: LocaleCode): string {

@@ -7,6 +7,7 @@ import {
   isLocaleCode,
   localeFromVitepressKey,
   manifestFileName,
+  normalizeLocalePath,
   routePrefix,
   type LocaleCode
 } from '../locales'
@@ -40,11 +41,13 @@ let loadPromise: Promise<void> | null = null
 
 const fallbackCache: Partial<Record<LocaleCode, string>> = {}
 
-function ensureTrailingSlash(path: string) {
-  if (!path) return '/'
-  if (path.endsWith('/')) return path
-  if (path.endsWith('.html')) return path
-  return `${path}/`
+function decodePathname(path: string): string {
+  try {
+    return decodeURI(path)
+  } catch (error) {
+    console.warn('[locale-map] failed to decode path', path, error)
+    return path
+  }
 }
 
 export function normalizeRoutePath(path: string) {
@@ -52,15 +55,13 @@ export function normalizeRoutePath(path: string) {
   if (!path) return getFallbackPath(fallbackLocale)
   const [pathname] = path.split(/[?#]/)
   if (!pathname) return getFallbackPath(fallbackLocale)
-  return ensureTrailingSlash(pathname.startsWith('/') ? pathname : `/${pathname}`)
+  const decoded = decodePathname(pathname)
+  return normalizeLocalePath(decoded)
 }
 
 export function getFallbackPath(locale: LocaleCode) {
   if (!fallbackCache[locale]) {
-    const basePath = routePrefix(locale)
-    const resolved = resolveAsset(basePath).pathname
-    const normalized = ensureTrailingSlash(resolved.startsWith('/') ? resolved : `/${resolved}`)
-    fallbackCache[locale] = normalized
+    fallbackCache[locale] = routePrefix(locale)
   }
   return fallbackCache[locale]!
 }
@@ -100,7 +101,8 @@ async function loadLocaleMap() {
           const normalizedLocale =
             isLocaleCode(localeKey) ? (localeKey as LocaleCode) : localeFromVitepressKey(localeKey)
           if (!normalizedLocale) continue
-          const resolved = normalizeRoutePath(resolveAsset(rawPath).pathname)
+          const decodedPath = decodePathname(rawPath)
+          const resolved = normalizeLocalePath(decodedPath)
           normalizedEntry[normalizedLocale] = resolved
         }
 
@@ -139,7 +141,7 @@ function resolveTargetPath(path: string, currentLocale: LocaleCode, targetLocale
   if (manifest && aggregateInfo) {
     const direct = manifest[aggregateInfo.type]?.[aggregateInfo.slug]
     if (direct) {
-      return { path: normalizeRoutePath(resolveAsset(direct).pathname), hasMapping: true, reason: 'manifest-match' }
+      return { path: normalizeLocalePath(direct), hasMapping: true, reason: 'manifest-match' }
     }
     const fallback = getFirstManifestPath(manifest, aggregateInfo.type)
     if (fallback) {
@@ -154,40 +156,39 @@ function resolveTargetPath(path: string, currentLocale: LocaleCode, targetLocale
   return { path: getFallbackPath(targetLocale), hasMapping: false, reason: 'home' }
 }
 
+type LocaleDestination = TargetResolution & { normalized: string }
+
+type DestinationIndex = Partial<Record<LocaleCode, LocaleDestination>>
+
 export function useLocaleToggle() {
   const router = useRouter()
-  const orderedLocales = SUPPORTED_LOCALES.map(locale => locale.code as LocaleCode)
+  const availableLocales = computed(() => SUPPORTED_LOCALES.map(locale => locale.code as LocaleCode))
   const currentPath = computed(() => normalizeRoutePath(router.route.path))
   const currentLocale = computed<LocaleCode>(() => detectLocaleFromPath(currentPath.value))
-  const targetLocale = computed<LocaleCode>(() => {
-    if (orderedLocales.length === 0) return getFallbackLocale()
-    if (orderedLocales.length === 1) return orderedLocales[0]
-    const index = orderedLocales.indexOf(currentLocale.value)
-    if (index === -1) return orderedLocales[0]
-    return orderedLocales[(index + 1) % orderedLocales.length]
-  })
-  const resolution = ref<TargetResolution>({
-    path: getFallbackPath(targetLocale.value),
-    hasMapping: currentPath.value === getFallbackPath(currentLocale.value),
-    reason: 'home'
-  })
-
-  const normalizedDestination = computed(() => normalizeRoutePath(resolution.value.path))
+  const destinations = ref<DestinationIndex>({})
 
   onMounted(() => {
     void loadLocaleMap()
   })
 
   watchEffect(() => {
-    resolution.value = resolveTargetPath(currentPath.value, currentLocale.value, targetLocale.value)
+    const next: DestinationIndex = {}
+    for (const locale of availableLocales.value) {
+      const resolution = resolveTargetPath(currentPath.value, currentLocale.value, locale)
+      next[locale] = {
+        ...resolution,
+        normalized: normalizeRoutePath(resolution.path)
+      }
+    }
+    destinations.value = next
   })
 
-  async function goToTarget() {
+  async function goToLocale(locale: LocaleCode) {
+    if (!locale) return
     if (typeof window !== 'undefined') {
       await loadLocaleMap()
     }
-    const next = resolveTargetPath(currentPath.value, currentLocale.value, targetLocale.value)
-    resolution.value = next
+    const next = resolveTargetPath(currentPath.value, currentLocale.value, locale)
     const target = normalizeRoutePath(next.path)
     if (!target || target === currentPath.value) return
     router.go(target)
@@ -195,11 +196,10 @@ export function useLocaleToggle() {
 
   return {
     currentLocale,
-    targetLocale,
-    destination: normalizedDestination,
-    goToTarget,
-    hasMapping: computed(() => resolution.value.hasMapping),
-    canNavigate: computed(() => normalizedDestination.value !== currentPath.value)
+    currentPath,
+    availableLocales,
+    destinations: computed(() => destinations.value),
+    goToLocale
   }
 }
 
@@ -252,11 +252,18 @@ function normalizeManifest(payload: Partial<NavManifest> | null | undefined, fal
   const locale = normalized ?? fallbackLocale
   return {
     locale,
-    categories: payload?.categories ?? {},
-    series: payload?.series ?? {},
-    tags: payload?.tags ?? {},
-    archive: payload?.archive ?? {}
+    categories: normalizeManifestSection(payload?.categories),
+    series: normalizeManifestSection(payload?.series),
+    tags: normalizeManifestSection(payload?.tags),
+    archive: normalizeManifestSection(payload?.archive)
   }
+}
+
+function normalizeManifestSection(section: Record<string, string> | undefined): Record<string, string> {
+  if (!section) return {}
+  return Object.fromEntries(
+    Object.entries(section).map(([key, value]) => [key, normalizeLocalePath(decodePathname(value))])
+  )
 }
 
 function parseAggregatePath(path: string): { type: AggregateType; slug: string } | null {
@@ -284,5 +291,5 @@ function getFirstManifestPath(manifest: NavManifest, type: AggregateType) {
   if (!entries) return null
   const first = Object.values(entries)[0]
   if (!first) return null
-  return normalizeRoutePath(resolveAsset(first).pathname)
+  return normalizeLocalePath(decodePathname(first))
 }
