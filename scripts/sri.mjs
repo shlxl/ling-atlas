@@ -30,22 +30,56 @@ function hashBuffer(buffer) {
   return crypto.createHash('sha384').update(buffer).digest('base64')
 }
 
-async function fetchResource(url) {
-  const response = await fetch(url, {
-    redirect: 'follow',
-    cache: 'no-store',
-    referrerPolicy: 'no-referrer'
-  })
-  if (!response.ok) {
-    throw new Error(`Failed to fetch ${url} (${response.status} ${response.statusText})`)
+const NETWORK_ERROR_CODES = new Set([
+  'ENETUNREACH',
+  'EHOSTUNREACH',
+  'ECONNRESET',
+  'ECONNREFUSED',
+  'EAI_AGAIN',
+  'EAI_FAIL',
+  'ENOTFOUND',
+  'ETIMEDOUT'
+])
+
+function isNetworkError(error) {
+  if (!error || typeof error !== 'object') return false
+  if (NETWORK_ERROR_CODES.has(error.code)) return true
+  if (Array.isArray(error.errors)) {
+    return error.errors.some(isNetworkError)
   }
-  const arrayBuffer = await response.arrayBuffer()
-  return Buffer.from(arrayBuffer)
+  if (error.cause && error.cause !== error) {
+    return isNetworkError(error.cause)
+  }
+  return false
+}
+
+async function fetchResource(url) {
+  try {
+    const response = await fetch(url, {
+      redirect: 'follow',
+      cache: 'no-store',
+      referrerPolicy: 'no-referrer'
+    })
+    if (!response.ok) {
+      throw new Error(`Failed to fetch ${url} (${response.status} ${response.statusText})`)
+    }
+    const arrayBuffer = await response.arrayBuffer()
+    return Buffer.from(arrayBuffer)
+  } catch (error) {
+    if (isNetworkError(error) || isNetworkError(error?.cause)) {
+      const offlineError = new Error(`Network request failed for ${url}`)
+      offlineError.cause = error
+      offlineError.code = 'OFFLINE'
+      throw offlineError
+    }
+    throw error
+  }
 }
 
 async function buildManifest() {
   const allowlist = await readAllowlist()
   const manifest = []
+  const offline = []
   for (const entry of allowlist) {
     const url = entry?.url
     const expected = entry?.integrity
@@ -55,17 +89,25 @@ async function buildManifest() {
     if (!expected || typeof expected !== 'string') {
       throw new Error(`Missing integrity for ${url}. Update security/sri-allowlist.json.`)
     }
-    const buffer = await fetchResource(url)
-    const computed = `sha384-${hashBuffer(buffer)}`
-    if (computed !== expected) {
-      throw new Error(
-        `SRI mismatch for ${url}\n  expected: ${expected}\n  computed: ${computed}\n` +
-        'Update security/sri-allowlist.json with the new hash after validating the change.'
-      )
+    try {
+      const buffer = await fetchResource(url)
+      const computed = `sha384-${hashBuffer(buffer)}`
+      if (computed !== expected) {
+        throw new Error(
+          `SRI mismatch for ${url}\n  expected: ${expected}\n  computed: ${computed}\n` +
+          'Update security/sri-allowlist.json with the new hash after validating the change.'
+        )
+      }
+    } catch (error) {
+      if (error?.code === 'OFFLINE') {
+        offline.push({ url, error })
+      } else {
+        throw error
+      }
     }
     manifest.push({ url, integrity: expected })
   }
-  return manifest
+  return { manifest, offline }
 }
 
 function normalizeManifest(list) {
@@ -112,7 +154,7 @@ async function mirrorManifest() {
 
 async function main() {
   await ensureDir(WELL_KNOWN)
-  const manifest = await buildManifest()
+  const { manifest, offline } = await buildManifest()
   const normalized = normalizeManifest(manifest)
   const previousRaw = await loadPreviousManifest()
   const previous = normalizeManifest(previousRaw || [])
@@ -139,6 +181,14 @@ async function main() {
   console.log('[security] SRI manifest entries:')
   for (const item of normalized) {
     console.log(`  - ${item.url} :: ${item.integrity}`)
+  }
+  if (offline.length) {
+    console.warn('[security] SRI verification skipped for the following resources due to network issues:')
+    for (const item of offline) {
+      const reason = item.error?.cause?.message || item.error?.message || 'Unknown error'
+      console.warn(`  - ${item.url} :: ${reason}`)
+    }
+    console.warn('[security] 请在网络恢复后重新运行 node scripts/sri.mjs 以完成完整校验。')
   }
 }
 

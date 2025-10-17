@@ -2,6 +2,8 @@ import { defineConfig, type HeadConfig } from 'vitepress'
 import cssnano from 'cssnano'
 import fs from 'node:fs'
 import { VitePWA } from 'vite-plugin-pwa'
+import { navFromMeta as buildNavFromMeta } from './theme/nav-core.mjs'
+import type { NavManifest, NavTranslations } from './theme/nav-core.mjs'
 import {
   DEFAULT_LOCALE,
   SUPPORTED_LOCALES,
@@ -40,14 +42,6 @@ function serializeCsp(directives: Record<string, string[] | string> | null) {
       return `${name} ${parts.join(' ')}`
     })
     .join('; ')
-}
-
-function slug(input: string) {
-  return input.normalize('NFKD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^\p{Letter}\p{Number}]+/gu, '-')
-    .replace(/(^-|-$)/g, '')
-    .toLowerCase()
 }
 
 function escapeRegex(input: string) {
@@ -133,6 +127,13 @@ const head: HeadConfig[] = [
   ['meta', { name: 'referrer', content: 'no-referrer' }]
 ]
 
+const supportedLocalesMeta = SUPPORTED_LOCALES.map(locale => locale.code).join(',')
+if (supportedLocalesMeta) {
+  head.push(['meta', { name: 'ling-atlas:supported-locales', content: supportedLocalesMeta }])
+}
+
+head.push(['meta', { name: 'ling-atlas:base', content: normalizedBase }])
+
 if (cspContent) {
   head.unshift(['meta', { 'http-equiv': 'Content-Security-Policy', content: cspContent }])
 }
@@ -140,131 +141,6 @@ const navigationAllowlist = [new RegExp(`^${escapedBase}`)]
 const pagefindPattern = new RegExp(`^${escapedBase}pagefind/`)
 const embeddingsJsonPattern = /embeddings-texts\.json$/
 const embeddingsWorkerPattern = /worker\/embeddings\.worker\.js$/
-
-type NavManifest = {
-  locale: LocaleCode
-  categories: Record<string, string>
-  series: Record<string, string>
-  tags: Record<string, string>
-  archive: Record<string, string>
-}
-
-function navFromMeta(meta: any, manifest: NavManifest | null, locale: LocaleCode) {
-  if (!manifest) return legacyNavFromMeta(meta, locale)
-
-  const t = i18nMap.nav[locale]
-  const routeRoot = normalizedRoutePrefix(locale).replace(/\/$/, '')
-  const collator = new Intl.Collator(locale === 'en' ? 'en' : 'zh-CN')
-
-  const archiveYears = Object.keys(meta.byYear || {}).sort((a, b) => b.localeCompare(a))
-  const availableArchive = archiveYears.find(year => manifest.archive?.[year])
-  const archiveFallback = Object.values(manifest.archive || {})[0]
-
-  const categories = (Object.keys(meta.byCategory || {}) as string[])
-    .map(name => {
-      const slugValue = slug(name)
-      const link = manifest.categories?.[slugValue]
-      if (!link) return null
-      return { text: name, link }
-    })
-    .filter(Boolean)
-    .sort((a, b) => a!.text.localeCompare(b!.text, locale === 'en' ? 'en' : 'zh-CN')) as { text: string; link: string }[]
-
-  const series = Object.entries(meta.bySeries || {})
-    .map(([slugValue, items]) => {
-      const link = manifest.series?.[slugValue]
-      if (!link) return null
-      const label = Array.isArray(items) && items[0]?.series ? items[0].series : slugValue
-      return { text: label, link }
-    })
-    .filter(Boolean)
-    .sort((a, b) => a!.text.localeCompare(b!.text, locale === 'en' ? 'en' : 'zh-CN')) as { text: string; link: string }[]
-
-  const tags = Object.keys(meta.byTag || {})
-    .map(tag => {
-      const slugValue = slug(tag)
-      const link = manifest.tags?.[slugValue]
-      if (!link) return null
-      return { tag, slugValue, link }
-    })
-    .filter(Boolean)
-    .sort((a, b) => collator.compare(a!.tag, b!.tag)) as { tag: string; slugValue: string; link: string }[]
-
-  const nav = [] as any[]
-
-  if (availableArchive && manifest.archive?.[availableArchive]) {
-    nav.push({ text: t.latest, link: manifest.archive[availableArchive] })
-  } else if (archiveFallback) {
-    nav.push({ text: t.latest, link: archiveFallback })
-  }
-
-  if (categories.length) {
-    nav.push({ text: t.categories, items: categories })
-  }
-
-  if (series.length) {
-    nav.push({ text: t.series, items: series })
-  }
-
-  if (tags.length) {
-    nav.push({ text: t.tags, link: tags[0]!.link })
-  }
-
-  nav.push({
-    text: t.about,
-    items: [
-      { text: t.metrics, link: `${routeRoot}/about/metrics.html` },
-      { text: t.qa, link: `${routeRoot}/about/qa.html` }
-    ]
-  })
-
-  nav.push({
-    text: t.guides,
-    items: [
-      { text: t.deploy, link: `${routeRoot}/DEPLOYMENT.html` },
-      { text: t.migration, link: `${routeRoot}/MIGRATION.html` }
-    ]
-  })
-
-  return nav
-}
-
-function legacyNavFromMeta(meta: any, locale: LocaleCode) {
-  const t = i18nMap.nav[locale]
-  const prefix = normalizedRoutePrefix(locale).replace(/\/$/, '')
-  const years = Object.keys(meta.byYear || {}).sort().reverse()
-  const firstTag = Object.keys(meta.byTag || {})[0] || 'all'
-  return [
-    { text: t.latest, link: `${prefix}/_generated/archive/${years[0] || ''}/` },
-    {
-      text: t.categories,
-      items: Object.keys(meta.byCategory || {})
-        .sort()
-        .map(c => ({ text: c, link: `${prefix}/_generated/categories/${slug(c)}/` }))
-    },
-    {
-      text: t.series,
-      items: Object.keys(meta.bySeries || {})
-        .sort()
-        .map(s => ({ text: s, link: `${prefix}/_generated/series/${s}/` }))
-    },
-    { text: t.tags, link: `${prefix}/_generated/tags/${slug(firstTag)}/` },
-    {
-      text: t.about,
-      items: [
-        { text: t.metrics, link: `${prefix}/about/metrics.html` },
-        { text: t.qa, link: `${prefix}/about/qa.html` }
-      ]
-    },
-    {
-      text: t.guides,
-      items: [
-        { text: t.deploy, link: `${prefix}/DEPLOYMENT.html` },
-        { text: t.migration, link: `${prefix}/MIGRATION.html` }
-      ]
-    }
-  ]
-}
 
 function loadNavManifest(localeId: LocaleCode): NavManifest | null {
   const baseFile = manifestFileName(localeId)
