@@ -17,8 +17,13 @@ head:
             const storageKey = 'ling-atlas:preferred-locale'
             const baseMeta = document.querySelector('meta[name="ling-atlas:base"]')
             const vpBase = window.__VP_SITE_DATA__ && window.__VP_SITE_DATA__.site ? window.__VP_SITE_DATA__.site.base : null
-            const siteBase = (baseMeta && baseMeta.getAttribute('content')) || vpBase || '/'
-            const normalizedBase = siteBase.endsWith('/') ? siteBase : `${siteBase}/`
+            const declaredBase = (baseMeta && baseMeta.getAttribute('content')) || vpBase || '/'
+            const normalizedDeclaredBase = declaredBase.endsWith('/') ? declaredBase : `${declaredBase}/`
+            const currentPath = typeof window.location?.pathname === 'string' ? window.location.pathname : '/'
+            const activeBase =
+              normalizedDeclaredBase !== '/' && currentPath && !currentPath.startsWith(normalizedDeclaredBase)
+                ? '/'
+                : normalizedDeclaredBase
             const supportedMeta = document.querySelector('meta[name="ling-atlas:supported-locales"]')
             const supportedRaw = (supportedMeta && supportedMeta.getAttribute('content')) || ''
             const supported = supportedRaw
@@ -31,7 +36,7 @@ head:
             const fallback = supported[0]
             const withBase = value => {
               const trimmed = value.startsWith('/') ? value.slice(1) : value
-              return normalizedBase === '/' ? `/${trimmed}` : `${normalizedBase}${trimmed}`
+              return activeBase === '/' ? `/${trimmed}` : `${activeBase}${trimmed}`
             }
             const ensureTrailingSlash = value => (value.endsWith('/') ? value : `${value}/`)
 
@@ -102,8 +107,16 @@ import { SUPPORTED_LOCALES } from './.vitepress/theme/locales'
 
 const GLOBAL_REDIRECT_FLAG = '__LING_ATLAS_REDIRECT_DONE__'
 
-const base = import.meta.env.BASE_URL || '/'
-const normalizedBase = base.endsWith('/') ? base : `${base}/`
+const declaredBase = import.meta.env.BASE_URL || '/'
+const normalizedDeclaredBase = declaredBase.endsWith('/') ? declaredBase : `${declaredBase}/`
+let activeBase = normalizedDeclaredBase
+
+if (typeof window !== 'undefined') {
+  const currentPath = window.location?.pathname || '/'
+  if (activeBase !== '/' && currentPath && !currentPath.startsWith(activeBase)) {
+    activeBase = '/'
+  }
+}
 
 const CARD_COPY: Record<string, { label: string; description: string }> = {
   zh: {
@@ -126,9 +139,9 @@ const localeEntries = SUPPORTED_LOCALES.map(locale => {
   }
 })
 
-function withBase(path: string) {
+function withBase(path: string, base: string = activeBase) {
   const sanitized = path.startsWith('/') ? path.slice(1) : path
-  return `${normalizedBase}${sanitized}`
+  return base === '/' ? `/${sanitized}` : `${base}${sanitized}`
 }
 
 function ensureTrailingSlash(path: string) {
