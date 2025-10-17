@@ -48,6 +48,7 @@
 - 登陆页的内联重定向脚本会在检测 BASE 与当前路径不一致时回退到 `/`，并把解析结果写入 `window.__LING_ATLAS_ACTIVE_BASE__`，Vue 侧在 hydration 期间读取该变量避免二次判断偏差。这保证了 Lighthouse、CI 静态预览与本地 `vitepress preview` 使用不同 BASE 时都能落到正确语言入口。
 - 新增 `docs/.vitepress/theme/base.ts` 负责读取 `<meta name="ling-atlas:base">`、`import.meta.env.BASE_URL` 与当前路径推断出的真实 BASE，并缓存到 `window.__LING_ATLAS_ACTIVE_BASE__`；
   `LocaleToggleButton.vue`、`useLocaleMap`、`telemetry.ts` 与 Landing 页的 `<script setup>` 均复用该模块，避免不同入口下出现 BASE 判定分叉。
+- 扩充 `tests/pagegen/i18n-registry.test.mjs`，新增“仅存在英文聚合”与“聚合只属于单一语言”两种回归场景，验证 nav manifest 仅写入具备真实聚合页的语言，防止导航渲染空链，并确保 i18n-map 不会记录缺失目标语言的映射。
 
 ### 4. 验证与守护
 
