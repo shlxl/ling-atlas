@@ -1,14 +1,19 @@
 <script setup lang="ts">
-import { computed, defineAsyncComponent, onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, defineAsyncComponent, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vitepress'
 import DefaultTheme from 'vitepress/dist/client/theme-default/without-fonts'
 import SearchBox from './components/SearchBox.vue'
 import LocaleToggleButton from './components/LocaleToggleButton.vue'
 import { initTelemetry, setupTelemetryRouterHook } from './telemetry'
 import { useRegisterSW } from 'virtual:pwa-register/vue'
-import { useI18nRouting } from './i18n'
-import { getFallbackLocale, LocaleCode, SUPPORTED_LOCALES, normalizeLocalePath, routePrefix } from './locales'
-import { usePreferredLocale } from './composables/preferredLocale'
+import { getFallbackLocale, type LocaleCode } from './locales.mjs'
+import { usePreferredLocale } from './composables/preferredLocale.mjs'
+import {
+  detectLocaleFromPath,
+  getFallbackPath,
+  hasLocalePrefix,
+  normalizeRoutePath
+} from './composables/localeMap'
 
 const router = useRouter()
 const offlineReady = ref(false)
@@ -16,8 +21,6 @@ const needRefresh = ref(false)
 const chatOpen = ref(false)
 const activeLocale = ref<LocaleCode>(getFallbackLocale())
 const { preferredLocale, rememberLocale, refreshPreferredLocale } = usePreferredLocale()
-
-const { detectLocaleFromPath } = useI18nRouting()
 
 let updateServiceWorker: (reloadPage?: boolean) => Promise<void>
 
@@ -44,13 +47,10 @@ const ChatWidget = defineAsyncComponent(() => import('./components/ChatWidget.vu
 
 const chatLabels: Record<LocaleCode, string> = { zh: '知识问答', en: 'Knowledge Chat' }
 const chatButtonLabel = computed(() => chatLabels[activeLocale.value] || chatLabels[getFallbackLocale()])
-const brandLink = computed(() => routePrefix(activeLocale.value))
+const brandLink = computed(() => getFallbackPath(activeLocale.value))
 
 function normalizePath(path: string) {
-  if (!path) return routePrefix(getFallbackLocale())
-  const [pathname] = path.split(/[?#]/)
-  if (!pathname) return routePrefix(getFallbackLocale())
-  return normalizeLocalePath(pathname)
+  return normalizeRoutePath(path)
 }
 
 function closeBanner() {
@@ -64,7 +64,6 @@ function refreshNow() {
 }
 
 let navBrandEl: HTMLAnchorElement | null = null
-let stopBrandWatch: (() => void) | null = null
 
 function onBrandClick(event: MouseEvent) {
   if (!navBrandEl) return
@@ -114,7 +113,7 @@ onMounted(() => {
   let redirected = false
   if (!hasLocalePrefix(initialPath)) {
     const targetLocale = preferredLocale.value
-    const targetPath = routePrefix(targetLocale)
+    const targetPath = getFallbackPath(targetLocale)
     if (initialPath !== targetPath) {
       redirected = true
       activeLocale.value = targetLocale
@@ -145,17 +144,32 @@ function updateLocale(path: string) {
 function handleRouteChange(path: string) {
   updateLocale(path)
   rememberLocale(activeLocale.value)
-  if (navBrandEl) {
-    navBrandEl.href = brandLink.value
-  } else {
-    syncBrandLink()
-  }
+  queueBrandSync()
 }
 
-function hasLocalePrefix(path: string) {
-  const normalized = normalizePath(path)
-  return SUPPORTED_LOCALES.some(locale => normalized.startsWith(routePrefix(locale.code as LocaleCode)))
+function queueBrandSync() {
+  const schedule = typeof requestAnimationFrame === 'function' ? requestAnimationFrame : (cb: FrameRequestCallback) => setTimeout(cb, 0)
+  schedule(() => {
+    if (!navBrandEl || !navBrandEl.isConnected) {
+      syncBrandLink()
+      return
+    }
+    const target = brandLink.value
+    if (typeof target === 'string') {
+      navBrandEl.href = target
+    }
+  })
 }
+
+watch(
+  brandLink,
+  () => {
+    if (typeof document === 'undefined') return
+    queueBrandSync()
+  },
+  { immediate: true }
+)
+
 </script>
 
 <template>

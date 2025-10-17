@@ -94,3 +94,91 @@ test('i18n registry merges posts, tags, and nav entries', async t => {
   assert.equal(zhPayload.categories.guides, '/zh/_generated/categories/guides/')
   assert.equal(enPayload.archive['2025'], '/en/_generated/archive/2025/')
 })
+
+test('i18n registry skips locales without backing aggregates', async t => {
+  const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), TMP_PREFIX))
+  t.after(async () => {
+    await fs.rm(tmpDir, { recursive: true, force: true })
+  })
+
+  const locales = createLocales(tmpDir)
+  const registry = createI18nRegistry(locales)
+
+  const enNav = {
+    categories: new Map([['guides', '/en/_generated/categories/guides/']]),
+    series: new Map(),
+    tags: new Map([['workflow', '/en/_generated/tags/workflow/']]),
+    archive: new Map([['2025', '/en/_generated/archive/2025/']])
+  }
+
+  registry.addNavEntries(locales[1], enNav)
+
+  registry.registerPost(
+    {
+      relative: 'guides/post',
+      path: '/en/content/post/',
+      category_slug: 'guides',
+      series_slug: '',
+      tags: ['workflow'],
+      year: '2025'
+    },
+    locales[1]
+  )
+
+  const i18nMap = registry.getI18nMap()
+  assert.equal(i18nMap['guides/post'], undefined)
+  assert.equal(i18nMap['tags/workflow'], undefined)
+
+  const payloads = registry.getNavManifestPayloads()
+  const zhPayload = payloads.find(item => item.lang.manifestLocale === 'zh').payload
+  const enPayload = payloads.find(item => item.lang.manifestLocale === 'en').payload
+
+  assert.deepEqual(zhPayload.categories, {})
+  assert.deepEqual(zhPayload.tags, {})
+  assert.deepEqual(zhPayload.archive, {})
+  assert.equal(Object.keys(enPayload.categories).length, 1)
+  assert.equal(enPayload.categories.guides, '/en/_generated/categories/guides/')
+  assert.equal(enPayload.tags.workflow, '/en/_generated/tags/workflow/')
+})
+
+test('i18n registry keeps locale-specific aggregates separated', async t => {
+  const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), TMP_PREFIX))
+  t.after(async () => {
+    await fs.rm(tmpDir, { recursive: true, force: true })
+  })
+
+  const locales = createLocales(tmpDir)
+  const registry = createI18nRegistry(locales)
+
+  const zhNav = {
+    categories: new Map([['cases', '/zh/_generated/categories/cases/']]),
+    series: new Map([['deep-dive', '/zh/_generated/series/deep-dive/']]),
+    tags: new Map(),
+    archive: new Map([['2024', '/zh/_generated/archive/2024/']])
+  }
+
+  registry.addNavEntries(locales[0], zhNav)
+
+  registry.registerPost(
+    {
+      relative: 'cases/post',
+      path: '/zh/content/cases/post/',
+      category_slug: 'cases',
+      series_slug: 'deep-dive',
+      tags: [],
+      year: '2024'
+    },
+    locales[0]
+  )
+
+  const payloads = registry.getNavManifestPayloads()
+  const zhPayload = payloads.find(item => item.lang.manifestLocale === 'zh').payload
+  const enPayload = payloads.find(item => item.lang.manifestLocale === 'en').payload
+
+  assert.equal(zhPayload.categories.cases, '/zh/_generated/categories/cases/')
+  assert.equal(zhPayload.series['deep-dive'], '/zh/_generated/series/deep-dive/')
+  assert.equal(zhPayload.archive['2024'], '/zh/_generated/archive/2024/')
+  assert.deepEqual(enPayload.categories, {})
+  assert.deepEqual(enPayload.series, {})
+  assert.deepEqual(enPayload.archive, {})
+})
