@@ -62,6 +62,7 @@ title: Pagegen 模块拆分草案（阶段 1）
 - 回退选项：保持 CLI 开关 `--no-batch` 或 `PAGEGEN_DISABLE_BATCH=1`，在出错时回退到串行写入。
 - 指标记录：每次运行将 `writeTasks`、`written`、`skipped`、`failed` 写入 `data/pagegen-metrics.json`，便于观测命中率。
 - 测试覆盖：模拟写入失败（例如 mock `fs.writeFile` 抛错），验证错误收集与回退逻辑；对哈希跳过进行快照测试。
+
 ## 操作步骤
 
 1. 创建 `scripts/pagegen/` 子目录，实施 orchestrator 与模块拆分（保留旧脚本备份）。
