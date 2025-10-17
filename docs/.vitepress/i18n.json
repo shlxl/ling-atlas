@@ -41,6 +41,34 @@
         "zh": "选择显示语言",
         "en": "Select display language"
       }
+    },
+    "localeToggleHint": {
+      "zh": {
+        "exact": "（已翻译）",
+        "manifest-match": "（聚合入口可用）",
+        "manifest-fallback": "（回退聚合索引）",
+        "home": "（将前往首页）"
+      },
+      "en": {
+        "exact": " (fully translated)",
+        "manifest-match": " (aggregate available)",
+        "manifest-fallback": " (falls back to aggregate index)",
+        "home": " (redirects to home)"
+      }
+    },
+    "localeToggleDetail": {
+      "zh": {
+        "exact": "将打开该页面的完整中文译文。",
+        "manifest-match": "聚合页在该语言可用，将进入对应分类或系列。",
+        "manifest-fallback": "该分类尚未翻译，将跳到该语言的聚合索引。",
+        "home": "当前页面缺少该语言版本，将返回该语言首页。"
+      },
+      "en": {
+        "exact": "Opens the fully translated page in this locale.",
+        "manifest-match": "Navigates to the aggregate entry that exists in this locale.",
+        "manifest-fallback": "Falls back to this locale's aggregate index because the slug is missing.",
+        "home": "Redirects to the locale home because this page has no translation."
+      }
     }
   }
 }

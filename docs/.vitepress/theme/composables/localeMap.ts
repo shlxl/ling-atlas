@@ -10,36 +10,25 @@ import {
   normalizeLocalePath,
   routePrefix,
   type LocaleCode
-} from '../locales'
+} from '../locales.mjs'
+import { createLocaleMapCore } from './locale-map-core.mjs'
+import type { LocaleMapState, ResolveTargetPathResult, NavManifest } from './locale-map-core.mjs'
 
 type RawLocaleEntry = Partial<Record<string, string>>
 type LocaleEntry = Partial<Record<LocaleCode, string>>
 type Lookup = Record<string, LocaleEntry>
-type AggregateType = 'categories' | 'series' | 'tags' | 'archive'
 
-type NavManifest = {
-  locale: LocaleCode
-  categories: Record<string, string>
-  series: Record<string, string>
-  tags: Record<string, string>
-  archive: Record<string, string>
-}
+type TargetResolution = ResolveTargetPathResult
 
-type LocaleMapState = {
-  lookup: Lookup
-  manifests: Partial<Record<LocaleCode, NavManifest>>
-}
-
-type TargetResolution = {
-  path: string
-  hasMapping: boolean
-  reason: 'exact' | 'manifest-match' | 'manifest-fallback' | 'home'
-}
+const localeMapCore = createLocaleMapCore({
+  supportedLocales: SUPPORTED_LOCALES.map(locale => ({ code: locale.code as LocaleCode })),
+  getFallbackLocale,
+  normalizeLocalePath,
+  routePrefix
+})
 
 const localeMapState = ref<LocaleMapState>({ lookup: {}, manifests: {} })
 let loadPromise: Promise<void> | null = null
-
-const fallbackCache: Partial<Record<LocaleCode, string>> = {}
 
 function decodePathname(path: string): string {
   try {
@@ -50,36 +39,15 @@ function decodePathname(path: string): string {
   }
 }
 
-export function normalizeRoutePath(path: string) {
-  const fallbackLocale = getFallbackLocale()
-  if (!path) return getFallbackPath(fallbackLocale)
-  const [pathname] = path.split(/[?#]/)
-  if (!pathname) return getFallbackPath(fallbackLocale)
-  const decoded = decodePathname(pathname)
-  return normalizeLocalePath(decoded)
-}
+export const normalizeRoutePath = (path: string) => localeMapCore.normalizeRoutePath(path)
 
-export function getFallbackPath(locale: LocaleCode) {
-  if (!fallbackCache[locale]) {
-    fallbackCache[locale] = routePrefix(locale)
-  }
-  return fallbackCache[locale]!
-}
+export const getFallbackPath = (locale: LocaleCode) => localeMapCore.getFallbackPath(locale)
 
-const orderedPrefixes = computed(() =>
-  SUPPORTED_LOCALES.map(locale => ({
-    code: locale.code as LocaleCode,
-    prefix: getFallbackPath(locale.code as LocaleCode)
-  }))
-    .sort((a, b) => b.prefix.length - a.prefix.length)
-)
+export const hasLocalePrefix = (path: string) => localeMapCore.hasLocalePrefix(path)
 
 export function detectLocaleFromPath(path: string): LocaleCode {
-  const normalized = normalizeRoutePath(path)
-  for (const { code, prefix } of orderedPrefixes.value) {
-    if (normalized.startsWith(prefix)) return code
-  }
-  return getFallbackLocale()
+  const detected = localeMapCore.detectLocaleFromPath(path)
+  return isLocaleCode(detected) ? detected : getFallbackLocale()
 }
 
 async function loadLocaleMap() {
@@ -129,31 +97,7 @@ async function loadLocaleMap() {
 }
 
 function resolveTargetPath(path: string, currentLocale: LocaleCode, targetLocale: LocaleCode): TargetResolution {
-  const normalized = normalizeRoutePath(path)
-  const entry = localeMapState.value.lookup[normalized]
-  const mapped = entry?.[targetLocale]
-  if (mapped) {
-    return { path: mapped, hasMapping: true, reason: 'exact' }
-  }
-
-  const manifest = localeMapState.value.manifests[targetLocale]
-  const aggregateInfo = parseAggregatePath(normalized)
-  if (manifest && aggregateInfo) {
-    const direct = manifest[aggregateInfo.type]?.[aggregateInfo.slug]
-    if (direct) {
-      return { path: normalizeLocalePath(direct), hasMapping: true, reason: 'manifest-match' }
-    }
-    const fallback = getFirstManifestPath(manifest, aggregateInfo.type)
-    if (fallback) {
-      return { path: fallback, hasMapping: false, reason: 'manifest-fallback' }
-    }
-  }
-
-  if (normalized === getFallbackPath(currentLocale)) {
-    return { path: getFallbackPath(targetLocale), hasMapping: true, reason: 'home' }
-  }
-
-  return { path: getFallbackPath(targetLocale), hasMapping: false, reason: 'home' }
+  return localeMapCore.resolveTargetPath(localeMapState.value, path, currentLocale, targetLocale)
 }
 
 type LocaleDestination = TargetResolution & { normalized: string }
@@ -264,32 +208,4 @@ function normalizeManifestSection(section: Record<string, string> | undefined): 
   return Object.fromEntries(
     Object.entries(section).map(([key, value]) => [key, normalizeLocalePath(decodePathname(value))])
   )
-}
-
-function parseAggregatePath(path: string): { type: AggregateType; slug: string } | null {
-  const normalized = normalizeRoutePath(path)
-  let relative = normalized
-
-  for (const { prefix } of orderedPrefixes.value) {
-    if (!normalized.startsWith(prefix)) continue
-    relative = prefix === '/' ? normalized : normalized.slice(prefix.length - 1)
-    break
-  }
-
-  const segments = relative.split('/').filter(Boolean)
-  if (!segments.length) return null
-  if (segments[0] !== '_generated') return null
-  const type = segments[1] as AggregateType | undefined
-  const slug = segments[2]
-  if (!type || !slug) return null
-  if (!['categories', 'series', 'tags', 'archive'].includes(type)) return null
-  return { type, slug }
-}
-
-function getFirstManifestPath(manifest: NavManifest, type: AggregateType) {
-  const entries = manifest[type]
-  if (!entries) return null
-  const first = Object.values(entries)[0]
-  if (!first) return null
-  return normalizeLocalePath(decodePathname(first))
 }
