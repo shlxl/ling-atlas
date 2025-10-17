@@ -25,6 +25,7 @@
     "ai:qa": "node scripts/qa-build.mjs",
     "ai:all": "npm run ai:embed && (npm run ai:summary || true) && (npm run ai:qa || true)",
     "test:pagegen": "node --test tests/pagegen/*.test.mjs",
+    "test:theme": "node --test tests/locale-map/*.test.mjs tests/theme/*.test.mjs",
     "audit": "npm audit --omit=dev || true",
     "license": "license-checker --summary",
     "sbom": "node scripts/sbom.mjs"
