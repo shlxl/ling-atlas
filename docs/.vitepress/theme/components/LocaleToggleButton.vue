@@ -91,6 +91,7 @@ const selectOptions = computed(() => {
       detail,
       ariaLabel: optionAriaLabel,
       title
+      suffix
     })
   }
   return list
