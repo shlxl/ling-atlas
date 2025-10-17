@@ -1,14 +1,6 @@
-let telemetryModulePromise: Promise<any> | null = null
+import { getActiveBase } from './base'
 
-function getBase() {
-  const envBase = (import.meta as any).env?.BASE_URL
-  if (typeof envBase === 'string' && envBase.length) return envBase
-  if (typeof window !== 'undefined') {
-    const siteBase = (window as any).__VP_SITE_DATA__?.site?.base
-    if (typeof siteBase === 'string' && siteBase.length) return siteBase
-  }
-  return '/'
-}
+let telemetryModulePromise: Promise<any> | null = null
 
 function normalizeBase(base: string) {
   let value = base || '/'
@@ -19,7 +11,7 @@ function normalizeBase(base: string) {
 
 export function resolveAsset(path: string) {
   const cleaned = path.replace(/^\/+/, '')
-  const base = normalizeBase(getBase())
+  const base = normalizeBase(getActiveBase())
   const href = base === '/' ? `/${cleaned}` : `${base}${cleaned}`
   const origin = typeof window !== 'undefined' ? window.location.origin : 'http://127.0.0.1'
   return new URL(href, origin)

@@ -131,6 +131,13 @@ const head: HeadConfig[] = [
   ['meta', { name: 'referrer', content: 'no-referrer' }]
 ]
 
+const supportedLocalesMeta = SUPPORTED_LOCALES.map(locale => locale.code).join(',')
+if (supportedLocalesMeta) {
+  head.push(['meta', { name: 'ling-atlas:supported-locales', content: supportedLocalesMeta }])
+}
+
+head.push(['meta', { name: 'ling-atlas:base', content: normalizedBase }])
+
 if (cspContent) {
   head.unshift(['meta', { 'http-equiv': 'Content-Security-Policy', content: cspContent }])
 }
