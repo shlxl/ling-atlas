@@ -2,7 +2,8 @@
 import { computed, onMounted, onBeforeUnmount, ref } from 'vue'
 import { useRouter } from 'vitepress'
 import { trackEvent, hashQuery, resolveAsset } from '../telemetry'
-import { detectLocaleFromPath, getFallbackPath, normalizeRoutePath } from '../composables/localeMap'
+import { detectLocaleFromPath, normalizeRoutePath } from '../composables/localeMap'
+import { getFallbackLocale, type LocaleCode } from '../locales.mjs'
 
 type LexicalResult = { url: string; title: string; excerpt: string; rank: number }
 type SemanticCandidate = { url: string; score: number; vector: number[] | null; rank: number }
@@ -30,10 +31,10 @@ let debounceTimer = 0
 const allowedVariants = new Set(['lex', 'rrf', 'rrf-mmr'])
 const activeVariant = ref<'none' | 'lex' | 'rrf' | 'rrf-mmr'>('none')
 let interleaveTeams: Record<string, 'control' | 'variant'> = {}
-const currentLocale = ref<'zh' | 'en'>('zh')
+const fallbackLocale = getFallbackLocale()
+const currentLocale = ref<LocaleCode>(fallbackLocale)
 const router = useRouter()
-const rootPathPrefix = resolveAsset('/').pathname
-const enPathPrefix = resolveAsset('/en/').pathname
+const rootPathPrefix = normalizeRoutePath('/')
 const SEARCH_I18N = {
   zh: {
     button: '搜索（Ctrl/⌘K）',
@@ -80,17 +81,15 @@ function detectVariantFromLocation() {
   }
 }
 
-function normalizePath(path: string) {
-  if (!path) return rootPathPrefix
-  const [pathname] = path.split(/[?#]/)
-  if (!pathname) return rootPathPrefix
-  return pathname
-}
-
 function updateLocaleFromPath(path: string) {
   if (!path) return
-  const normalized = normalizePath(path)
-  currentLocale.value = normalized.startsWith(enPathPrefix) ? 'en' : 'zh'
+  try {
+    const detected = detectLocaleFromPath(path)
+    currentLocale.value = detected
+  } catch (err) {
+    console.warn('[search] locale detection failed', err)
+    currentLocale.value = fallbackLocale
+  }
 }
 
 type RankedItem = { url: string; title: string; excerpt: string }
@@ -100,8 +99,8 @@ function splitByLocale(items: RankedItem[]) {
   const same: RankedItem[] = []
   const others: RankedItem[] = []
   for (const item of items) {
-    const isEn = isEnglishUrl(item.url)
-    if ((currentLocale.value === 'en' && isEn) || (currentLocale.value === 'zh' && !isEn)) {
+    const detected = detectResultLocale(item.url)
+    if (detected === currentLocale.value) {
       same.push(item)
     } else {
       others.push(item)
@@ -110,14 +109,17 @@ function splitByLocale(items: RankedItem[]) {
   return same.length ? same.concat(others) : others
 }
 
-function isEnglishUrl(url: string) {
-  if (!url || /^https?:\/\//i.test(url)) return false
+function isExternalUrl(url: string) {
+  return /^https?:\/\//i.test(url)
+}
+
+function detectResultLocale(url: string): LocaleCode {
+  if (!url || isExternalUrl(url)) return fallbackLocale
   try {
-    const normalized = normalizeRoutePath(url)
-    return normalized.startsWith(enPathPrefix)
+    return detectLocaleFromPath(url)
   } catch (err) {
-    console.warn('[search] english detection failed', err)
-    return false
+    console.warn('[search] result locale detection failed', err)
+    return fallbackLocale
   }
 }
 

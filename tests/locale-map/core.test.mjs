@@ -114,6 +114,13 @@ test('detectLocaleFromPath identifies locale by longest prefix', () => {
   assert.equal(localeMapCore.detectLocaleFromPath(enPath), 'en')
 })
 
+test('detectLocaleFromPath falls back to default locale when prefix missing', () => {
+  const rootPath = localeMapCore.normalizeRoutePath('/')
+  const unknownPath = localeMapCore.normalizeRoutePath('/guides/getting-started/')
+  assert.equal(localeMapCore.detectLocaleFromPath(rootPath), 'zh')
+  assert.equal(localeMapCore.detectLocaleFromPath(unknownPath), 'zh')
+})
+
 test('getFallbackPath returns normalized locale roots', () => {
   assert.equal(localeMapCore.getFallbackPath('zh'), '/zh/')
   assert.equal(localeMapCore.getFallbackPath('en'), '/en/')

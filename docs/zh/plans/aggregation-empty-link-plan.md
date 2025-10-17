@@ -56,6 +56,7 @@
 - `docs/index.md` 的首屏脚本改为直接复用 `docs/.vitepress/theme/composables/preferredLocale.mjs`，与 Layout 与 Locale Toggle 共用首选语言记忆与存储键，避免登陆页与主题逻辑分叉。
 - `LocaleToggleButton.vue` 会读取 `i18n.ui.localeToggleHint` 为每个语言选项追加“已翻译 / 聚合回退 / 首页跳转”等提示，提前告知读者切换后的落点；如需新增语言，请同步维护这段提示文本。
 - Locale Toggle 的 `<option>` 现会从 `i18n.ui.localeToggleDetail` 读取完整说明，写入 `title` 与 `aria-label`，便于读者与辅助技术在选择时了解最终落点；新增语言请同步补充提示文案。
+- 搜索面板的结果排序改为调用 `localeMap` 的 `detectLocaleFromPath` 判定条目语言，再按当前语言优先级排列；未知或缺失聚合映射的条目会沿用聚合兜底策略回退到默认语言，避免重新实现 BASE 兼容逻辑。
 
 ### 4. 验证与守护
 

@@ -144,6 +144,7 @@ codex run audit   # 可选
   Layout.vue 已改用 `locale-map-core` 暴露的 `normalizeRoutePath`、`getFallbackPath` 与 `hasLocalePrefix` 判断首页跳转与导航品牌链接，避免与 Locale Toggle 的检测分叉。
   Landing 页的 `usePreferredLocale` 现直接复用 `docs/.vitepress/theme/composables/preferredLocale.mjs`，保持与 Layout/Locale Toggle 共用的存储键与回忆逻辑；修改存储策略时需同步内联重定向脚本与该模块。
   Locale Toggle 的选项文本会读取 `i18n.ui.localeToggleHint` 追加“已翻译 / 聚合回退 / 首页跳转”等标记，帮助读者理解切换结果；新语言若缺少对应翻译会出现空白后缀，提交前请补齐。选项的 `title` 与 `aria-label` 会使用 `i18n.ui.localeToggleDetail` 的文案提示最终跳转落点，如缺失会回退到默认语言，请同步维护。
+  搜索框的结果排序现在依赖 `docs/.vitepress/theme/composables/localeMap.ts` 输出的 `detectLocaleFromPath` 来判断条目语言，并沿用聚合兜底策略；调整搜索逻辑时请确保仍复用该模块，避免重新实现语言判定或遗漏 BASE 兼容处理。
 - ✅ **Nav manifest 回归测试**：`tests/pagegen/i18n-registry.test.mjs` 已覆盖“仅英文聚合”“聚合独占单语”等场景，确保 Pagegen 只为具备真实聚合页的语言写出 manifest；CI 若在该用例失败，请优先检查聚合目录与 i18n-map 是否缺失对应语言的内容。
 - ✅ **Nav manifest / i18n map 链接守门**：`node scripts/check-links.mjs` 会同时校验 Markdown 内部链接与 `nav.manifest.<locale>.json`、`i18n-map.json` 的目标路径，确保聚合入口与跨语言映射不会指向缺失页面。
 - ✅ **Locale 切换兜底测试**：`npm run test:theme` 会执行 `tests/locale-map/core.test.mjs` 与 `tests/theme/preferred-locale.test.mjs`，验证当目标语言缺失聚合页时的跳转降级，以及首选语言记忆是否与主题共享存储键，确保不会出现空链或偏离记忆的跳转。
