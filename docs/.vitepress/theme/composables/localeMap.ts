@@ -10,7 +10,7 @@ import {
   normalizeLocalePath,
   routePrefix,
   type LocaleCode
-} from '../locales'
+} from '../locales.mjs'
 import { createLocaleMapCore } from './locale-map-core.mjs'
 import type { LocaleMapState, ResolveTargetPathResult, NavManifest } from './locale-map-core.mjs'
 

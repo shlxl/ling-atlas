@@ -11,7 +11,7 @@ import {
   VitepressLocaleKey,
   manifestFileName,
   normalizedRoutePrefix
-} from './theme/locales'
+} from './theme/locales.mjs'
 
 function loadCspTemplate() {
   try {

@@ -108,8 +108,8 @@ head:
 
 <script setup lang="ts">
 import { onMounted } from 'vue'
-import { PREFERRED_LOCALE_STORAGE_KEY, usePreferredLocale } from './.vitepress/composables/usePreferredLocale'
-import { SUPPORTED_LOCALES } from './.vitepress/theme/locales'
+import { usePreferredLocale } from './.vitepress/composables/usePreferredLocale'
+import { SUPPORTED_LOCALES, type LocaleCode } from './.vitepress/theme/locales.mjs'
 import { ACTIVE_BASE_GLOBAL, getActiveBase, withActiveBase } from './.vitepress/theme/base'
 
 const GLOBAL_REDIRECT_FLAG = '__LING_ATLAS_REDIRECT_DONE__'
@@ -142,26 +142,24 @@ function withBase(path: string, base: string = activeBase) {
   return withActiveBase(sanitized, base)
 }
 
-const localeEntries = SUPPORTED_LOCALES.map(locale => {
+type LocaleCard = {
+  code: LocaleCode
+  label: string
+  description: string
+  href: string
+}
+
+const localeEntries: LocaleCard[] = SUPPORTED_LOCALES.map(locale => {
   const copy = CARD_COPY[locale.code] || { label: locale.code, description: '' }
   return {
-    code: locale.code,
+    code: locale.code as LocaleCode,
     label: copy.label,
     description: copy.description,
     href: withBase(`${locale.code}/`)
   }
 })
 
-const locale = usePreferredLocale()
-
-function rememberLocale(code: string) {
-  if (typeof window === 'undefined') return
-  try {
-    window.localStorage?.setItem(PREFERRED_LOCALE_STORAGE_KEY, code)
-  } catch {
-    /* ignore storage errors */
-  }
-}
+const { preferredLocale, rememberLocale, refreshPreferredLocale } = usePreferredLocale()
 
 onMounted(() => {
   if (typeof window === 'undefined') return
@@ -169,13 +167,15 @@ onMounted(() => {
   const globalWindow = window as GlobalWindow
   const mutableWindow = globalWindow as MutableGlobal
 
+  refreshPreferredLocale()
+
   const currentBase = Reflect.get(mutableWindow, ACTIVE_BASE_GLOBAL)
   if (typeof currentBase !== 'string' || !currentBase.length) {
     Reflect.set(mutableWindow, ACTIVE_BASE_GLOBAL, activeBase)
   }
   if (globalWindow.__LING_ATLAS_REDIRECT_DONE__) return
 
-  const preferred = locale.value
+  const preferred = preferredLocale.value
   if (!preferred) return
   const targetPath = ensureTrailingSlash(withBase(`${preferred}/`))
   const currentPath = ensureTrailingSlash(window.location.pathname)

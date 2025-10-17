@@ -1,4 +1,4 @@
-import { getActiveBase } from './base'
+import { getActiveBase } from './base.mjs'
 
 let telemetryModulePromise: Promise<any> | null = null
 

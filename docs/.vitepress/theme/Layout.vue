@@ -6,8 +6,8 @@ import SearchBox from './components/SearchBox.vue'
 import LocaleToggleButton from './components/LocaleToggleButton.vue'
 import { initTelemetry, setupTelemetryRouterHook } from './telemetry'
 import { useRegisterSW } from 'virtual:pwa-register/vue'
-import { getFallbackLocale, LocaleCode } from './locales'
-import { usePreferredLocale } from './composables/preferredLocale'
+import { getFallbackLocale, type LocaleCode } from './locales.mjs'
+import { usePreferredLocale } from './composables/preferredLocale.mjs'
 import {
   detectLocaleFromPath,
   getFallbackPath,
