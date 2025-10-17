@@ -90,9 +90,9 @@ codex run audit   # 可选
 ---
 
 ## 8. 未来扩展（由 Agents 继续推进）
-- 接入 Transformers.js 的 L1 语义检索（浏览器端）  
-- USearch WASM + Pagefind 的混合检索与 RRF/MMR 融合  
-- Lighthouse 与资源体积预算的自动化体检与报表  
+- 接入 Transformers.js 的 L1 语义检索（浏览器端）
+- USearch WASM + Pagefind 的混合检索与 RRF/MMR 融合
+- Lighthouse 与资源体积预算的自动化体检与报表
 
 > 原则：所有新功能都通过 `codex run <task>` 接入，保证“可脚本、可回滚、可观测”。
 
@@ -123,6 +123,11 @@ codex run audit   # 可选
 - PR-L 多语/i18n：`docs/zh/content`（默认中文）与 `docs/en/content`（英文）双目录，`pagegen` 自动生成 `/zh/` 与 `/en/` 聚合页、RSS、Sitemap，并同步路径映射到 `docs/public/i18n-map.json`；Layout 注入语言切换按钮，搜索与 Chat 依据当前语言优先返回同语结果。
 - PR-M（待推进）：SEO / OpenGraph 优化与站点地图扩展，让知识库在搜索引擎中拥有更高可见度。
 - PR-M 供应链加固 2.0：CI 强制 `npm ci`；新增 `npm run audit`、`npm run license`、`npm run sbom`；`scripts/sri.mjs` 对外链哈希差异直接报错，`docs/public/.well-known/sbom.json` 输出 CycloneDX SBOM。
+
+## 9. 下一阶段任务：Pagegen 优化重构
+
+- 阅读 `docs/zh/plans/refactor-optimization.md`，按照提案拆分脚本职责、引入增量同步与并发解析等优化。
+- 输出实施路线图（阶段里程碑、风险评估、回滚策略），并在执行过程中同步更新本文件。
 
 ## 内容生产力守门
 
