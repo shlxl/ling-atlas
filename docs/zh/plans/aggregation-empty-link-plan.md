@@ -52,6 +52,7 @@
 - 提取 `Locale Toggle` 的聚合解析逻辑为 `locale-map-core`，并通过 `tests/locale-map/core.test.mjs` 验证当聚合缺失时会优雅退回 manifest 提供的入口或语言首页，覆盖 direct mapping、manifest fallback 与纯首页降级的分支。
 - 抽离导航构建逻辑为 `docs/.vitepress/theme/nav-core.mjs`，在 `docs/.vitepress/config.ts` 中复用同一实现，并以 `tests/theme/nav-core.test.mjs` 覆盖 manifest 裁剪、归档兜底与无 manifest 时的旧导航回退，确保导航入口与 pagegen 产物保持同步。
 - 扩展 `scripts/check-links.mjs`，在 Markdown 巡检时同步校验 `nav.manifest.<locale>.json` 与 `i18n-map.json` 的链接指向，CI 如发现缺失聚合或跨语言映射会直接报错。
+- `docs/.vitepress/theme/Layout.vue` 与 `i18n.ts` 已复用 `locale-map-core` 导出的 `normalizeRoutePath`、`getFallbackPath` 与 `hasLocalePrefix`，统一首页跳转、品牌链接与路由前缀检测的实现，避免与 Locale Toggle 的定位策略产生分叉。
 
 ### 4. 验证与守护
 

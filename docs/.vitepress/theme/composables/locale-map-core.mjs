@@ -62,6 +62,17 @@ export function createLocaleMapCore({
     return getFallbackLocale()
   }
 
+  function hasLocalePrefix(path) {
+    const normalized = normalizeRoutePath(path)
+    for (const locale of supportedLocales) {
+      const code = locale?.code
+      if (!code) continue
+      const prefix = getFallbackPath(code)
+      if (normalized.startsWith(prefix)) return true
+    }
+    return false
+  }
+
   function parseAggregatePath(path) {
     const normalized = normalizeRoutePath(path)
     let relative = normalized
@@ -129,6 +140,7 @@ export function createLocaleMapCore({
     detectLocaleFromPath,
     parseAggregatePath,
     resolveTargetPath,
+    hasLocalePrefix,
     resetFallbackCache
   }
 }

@@ -43,6 +43,8 @@ export const normalizeRoutePath = (path: string) => localeMapCore.normalizeRoute
 
 export const getFallbackPath = (locale: LocaleCode) => localeMapCore.getFallbackPath(locale)
 
+export const hasLocalePrefix = (path: string) => localeMapCore.hasLocalePrefix(path)
+
 export function detectLocaleFromPath(path: string): LocaleCode {
   const detected = localeMapCore.detectLocaleFromPath(path)
   return isLocaleCode(detected) ? detected : getFallbackLocale()

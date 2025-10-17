@@ -34,6 +34,7 @@ export function createLocaleMapCore(deps: LocaleMapCoreDeps): {
   normalizeRoutePath(path: string): string
   getFallbackPath(locale: string): string
   detectLocaleFromPath(path: string): string
+  hasLocalePrefix(path: string): boolean
   parseAggregatePath(path: string): { type: AggregateType; slug: string } | null
   resolveTargetPath(
     state: LocaleMapState,

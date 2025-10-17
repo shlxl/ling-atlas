@@ -113,3 +113,15 @@ test('detectLocaleFromPath identifies locale by longest prefix', () => {
   assert.equal(localeMapCore.detectLocaleFromPath(zhPath), 'zh')
   assert.equal(localeMapCore.detectLocaleFromPath(enPath), 'en')
 })
+
+test('getFallbackPath returns normalized locale roots', () => {
+  assert.equal(localeMapCore.getFallbackPath('zh'), '/zh/')
+  assert.equal(localeMapCore.getFallbackPath('en'), '/en/')
+})
+
+test('hasLocalePrefix flags supported locale segments', () => {
+  assert.equal(localeMapCore.hasLocalePrefix('/zh/_generated/archive/2024/'), true)
+  assert.equal(localeMapCore.hasLocalePrefix('/en/content/example/'), true)
+  assert.equal(localeMapCore.hasLocalePrefix('/unknown/path/'), false)
+  assert.equal(localeMapCore.hasLocalePrefix('/'), false)
+})
