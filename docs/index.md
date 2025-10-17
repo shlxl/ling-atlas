@@ -7,10 +7,15 @@ head:
     - |
         (() => {
           if (typeof window === 'undefined' || typeof document === 'undefined') return
-          if (window.__LING_ATLAS_REDIRECT_DONE__) return
+
+          const ACTIVE_BASE_GLOBAL = '__LING_ATLAS_ACTIVE_BASE__'
+          const REDIRECT_FLAG = '__LING_ATLAS_REDIRECT_DONE__'
+          const globalWindow = window
+
+          if (globalWindow[REDIRECT_FLAG]) return
 
           const markRedirectHandled = () => {
-            window.__LING_ATLAS_REDIRECT_DONE__ = true
+            globalWindow[REDIRECT_FLAG] = true
           }
 
           try {
@@ -24,6 +29,7 @@ head:
               normalizedDeclaredBase !== '/' && currentPath && !currentPath.startsWith(normalizedDeclaredBase)
                 ? '/'
                 : normalizedDeclaredBase
+            globalWindow[ACTIVE_BASE_GLOBAL] = activeBase
             const supportedMeta = document.querySelector('meta[name="ling-atlas:supported-locales"]')
             const supportedRaw = (supportedMeta && supportedMeta.getAttribute('content')) || ''
             const supported = supportedRaw
@@ -106,17 +112,43 @@ import { PREFERRED_LOCALE_STORAGE_KEY, usePreferredLocale } from './.vitepress/c
 import { SUPPORTED_LOCALES } from './.vitepress/theme/locales'
 
 const GLOBAL_REDIRECT_FLAG = '__LING_ATLAS_REDIRECT_DONE__'
+const GLOBAL_ACTIVE_BASE = '__LING_ATLAS_ACTIVE_BASE__'
+
+type GlobalWindow = Window & {
+  __LING_ATLAS_REDIRECT_DONE__?: boolean
+  __LING_ATLAS_ACTIVE_BASE__?: string
+}
+
+function ensureTrailingSlash(path: string) {
+  return path.endsWith('/') ? path : `${path}/`
+}
+
+function normalizeBase(base: string) {
+  if (!base) return '/'
+  if (base === '/') return '/'
+  return ensureTrailingSlash(base)
+}
+
+function resolveActiveBase(defaultBase: string) {
+  if (typeof window === 'undefined') return defaultBase
+
+  const globalWindow = window as GlobalWindow
+  const stored = globalWindow.__LING_ATLAS_ACTIVE_BASE__
+  if (typeof stored === 'string' && stored.length) {
+    return normalizeBase(stored)
+  }
+
+  const currentPath = window.location?.pathname || '/'
+  if (defaultBase !== '/' && currentPath && !currentPath.startsWith(defaultBase)) {
+    return '/'
+  }
+
+  return defaultBase
+}
 
 const declaredBase = import.meta.env.BASE_URL || '/'
-const normalizedDeclaredBase = declaredBase.endsWith('/') ? declaredBase : `${declaredBase}/`
-let activeBase = normalizedDeclaredBase
-
-if (typeof window !== 'undefined') {
-  const currentPath = window.location?.pathname || '/'
-  if (activeBase !== '/' && currentPath && !currentPath.startsWith(activeBase)) {
-    activeBase = '/'
-  }
-}
+const normalizedDeclaredBase = normalizeBase(declaredBase)
+const activeBase = resolveActiveBase(normalizedDeclaredBase)
 
 const CARD_COPY: Record<string, { label: string; description: string }> = {
   zh: {
@@ -129,6 +161,11 @@ const CARD_COPY: Record<string, { label: string; description: string }> = {
   }
 }
 
+function withBase(path: string, base: string = activeBase) {
+  const sanitized = path.startsWith('/') ? path.slice(1) : path
+  return base === '/' ? `/${sanitized}` : `${base}${sanitized}`
+}
+
 const localeEntries = SUPPORTED_LOCALES.map(locale => {
   const copy = CARD_COPY[locale.code] || { label: locale.code, description: '' }
   return {
@@ -138,15 +175,6 @@ const localeEntries = SUPPORTED_LOCALES.map(locale => {
     href: withBase(`${locale.code}/`)
   }
 })
-
-function withBase(path: string, base: string = activeBase) {
-  const sanitized = path.startsWith('/') ? path.slice(1) : path
-  return base === '/' ? `/${sanitized}` : `${base}${sanitized}`
-}
-
-function ensureTrailingSlash(path: string) {
-  return path.endsWith('/') ? path : `${path}/`
-}
 
 const locale = usePreferredLocale()
 
@@ -162,15 +190,19 @@ function rememberLocale(code: string) {
 onMounted(() => {
   if (typeof window === 'undefined') return
 
-  const globalWindow = window as Window & { [GLOBAL_REDIRECT_FLAG]?: boolean }
-  if (globalWindow[GLOBAL_REDIRECT_FLAG]) return
+  const globalWindow = window as GlobalWindow
+
+  if (!globalWindow.__LING_ATLAS_ACTIVE_BASE__) {
+    globalWindow.__LING_ATLAS_ACTIVE_BASE__ = activeBase
+  }
+  if (globalWindow.__LING_ATLAS_REDIRECT_DONE__) return
 
   const preferred = locale.value
   if (!preferred) return
   const targetPath = ensureTrailingSlash(withBase(`${preferred}/`))
   const currentPath = ensureTrailingSlash(window.location.pathname)
 
-  globalWindow[GLOBAL_REDIRECT_FLAG] = true
+  globalWindow.__LING_ATLAS_REDIRECT_DONE__ = true
   rememberLocale(preferred)
 
   if (currentPath === targetPath) return

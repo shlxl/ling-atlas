@@ -43,6 +43,11 @@
 - 扩展 `docs/.vitepress/theme/composables/localeMap.ts` 与 `LocaleToggleButton.vue`，在解析目标路径时先检查 manifest 中是否存在对应 slug；若不存在则降级到语言首页或聚合主入口。
 - 该逻辑也可以复用在搜索结果或站内跳转中：当发现 URL 指向的聚合页在当前语言缺失时，提示“暂未翻译，切换到 XX 语言”。（可作为后续增强。）
 
+### 近期进展
+
+- 登陆页的内联重定向脚本会在检测 BASE 与当前路径不一致时回退到 `/`，并把解析结果写入 `window.__LING_ATLAS_ACTIVE_BASE__`，Vue 侧在 hydration 期间读取该变量避免二次判断偏差。这保证了 Lighthouse、CI 静态预览与本地 `vitepress preview` 使用不同 BASE 时都能落到正确语言入口。
+- 下一步需要把同一变量引入 `LocaleToggleButton.vue` 与 `useLocaleMap`，让语言切换和聚合链接裁剪复用同一套 BASE 判定逻辑，避免不同入口下再次分叉。
+
 ### 4. 验证与守护
 
 - 新增一个脚本（或在 `scripts/check-links.mjs` 中扩展）来验证 manifest 中的 URL 均可读取文件，CI 失败时给出详细列表，并在 README 调整后同步更新守护脚本的“多语结构”提示。
