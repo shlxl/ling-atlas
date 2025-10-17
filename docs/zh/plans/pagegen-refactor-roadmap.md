@@ -54,3 +54,10 @@ Pagegen 当前为串行的单体脚本，承担同步内容、解析元数据、
 
 - 每个阶段完成后都留存 Git 标签及 `codex run gen` 输出对照；若发现回归，可快速回退至上一稳定版本。
 - 增量同步与批量写入均提供显式 CLI flag（如 `--no-cache`、`--full-sync`）以关闭新特性，确保在 CI 或生产环境出现异常时可即时切换回传统行为。
+
+## 当前审查行动（2024-XX）
+
+- **协作约束梳理**：完成 `AGENTS.md`、README 与 `.codex/` 指南的交叉检查，产出 README《协作约束速查》以便快速上手。
+- **模块盘点计划**：准备巡查 `schema/`（Frontmatter/导航 Schema）、`scripts/`（Pagegen、校验、守门脚本）、`docs/zh/plans/`（规划文档）与 `tests/`（Pagegen 单测/fixtures）等目录，确认后续检查顺序。
+- **Pagegen 深入检查筹备**：将在整理完成后集中复核 `scripts/pagegen/*.mjs` 的模块职责、缓存/批处理路径与 `tests/pagegen.test.mjs` 覆盖面，针对缺口输出补测提案。
+- **反馈同步机制**：本节会随巡检推进持续更新，关键结论亦会同步至 `AGENTS.md` 第 10 节，确保多代理协作信息一致。
