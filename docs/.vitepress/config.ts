@@ -8,7 +8,8 @@ import {
   LocaleCode,
   VitepressLocaleKey,
   manifestFileName,
-  normalizedRoutePrefix
+  normalizedRoutePrefix,
+  routePrefix
 } from './theme/locales'
 
 function loadCspTemplate() {
@@ -101,6 +102,7 @@ const localizedLocaleConfigs = Object.fromEntries(
     const strings = localeCopy[code]
     const manifest = localeManifest[code] ?? null
     const meta = localeMeta[code]
+    const homeLink = routePrefix(code as LocaleCode)
     return [
       locale.vitepressKey,
       {
@@ -109,6 +111,7 @@ const localizedLocaleConfigs = Object.fromEntries(
         title: strings.title,
         description: strings.description,
         themeConfig: {
+          logoLink: homeLink,
           nav: navFromMeta(meta, manifest, code),
           sidebar: 'auto',
           lightModeSwitchTitle: strings.lightModeSwitchTitle,
@@ -341,6 +344,7 @@ export default defineConfig({
       title: 'Ling Atlas',
       description: 'Select your preferred language to continue.',
       themeConfig: {
+        logoLink: normalizedBase,
         nav: [],
         sidebar: false
       }
