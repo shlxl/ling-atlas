@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useLocaleToggle } from '../composables/localeMap'
-import { usePreferredLocale } from '../composables/preferredLocale'
-import { getFallbackLocale, type LocaleCode } from '../locales'
+import { usePreferredLocale } from '../composables/preferredLocale.mjs'
+import { getFallbackLocale, type LocaleCode } from '../locales.mjs'
 import i18n from '../../i18n.json'
 
 const { currentLocale, currentPath, availableLocales, destinations, goToLocale } = useLocaleToggle()
