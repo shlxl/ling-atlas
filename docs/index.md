@@ -1,15 +1,122 @@
 ---
 title: Ling Atlas
 layout: page
+head:
+  - - script
+    - { id: 'ling-atlas-locale-redirect', type: 'application/javascript' }
+    - |
+        (() => {
+          if (typeof window === 'undefined' || typeof document === 'undefined') return
+          if (window.__LING_ATLAS_REDIRECT_DONE__) return
+
+          const markRedirectHandled = () => {
+            window.__LING_ATLAS_REDIRECT_DONE__ = true
+          }
+
+          try {
+            const storageKey = 'ling-atlas:preferred-locale'
+            const baseMeta = document.querySelector('meta[name="ling-atlas:base"]')
+            const vpBase = window.__VP_SITE_DATA__ && window.__VP_SITE_DATA__.site ? window.__VP_SITE_DATA__.site.base : null
+            const declaredBase = (baseMeta && baseMeta.getAttribute('content')) || vpBase || '/'
+            const normalizedDeclaredBase = declaredBase.endsWith('/') ? declaredBase : `${declaredBase}/`
+            const currentPath = typeof window.location?.pathname === 'string' ? window.location.pathname : '/'
+            const activeBase =
+              normalizedDeclaredBase !== '/' && currentPath && !currentPath.startsWith(normalizedDeclaredBase)
+                ? '/'
+                : normalizedDeclaredBase
+            const supportedMeta = document.querySelector('meta[name="ling-atlas:supported-locales"]')
+            const supportedRaw = (supportedMeta && supportedMeta.getAttribute('content')) || ''
+            const supported = supportedRaw
+              .split(',')
+              .map(value => value.trim())
+              .filter(Boolean)
+
+            if (!supported.length) supported.push('zh')
+
+            const fallback = supported[0]
+            const withBase = value => {
+              const trimmed = value.startsWith('/') ? value.slice(1) : value
+              return activeBase === '/' ? `/${trimmed}` : `${activeBase}${trimmed}`
+            }
+            const ensureTrailingSlash = value => (value.endsWith('/') ? value : `${value}/`)
+
+            let stored = null
+            let preferred = null
+
+            try {
+              stored = window.localStorage ? window.localStorage.getItem(storageKey) : null
+            } catch (storageError) {
+              // ignore storage read failures (e.g. private mode)
+            }
+
+            if (stored && supported.includes(stored)) {
+              preferred = stored
+            }
+
+            if (!preferred && typeof navigator !== 'undefined') {
+              const sources = Array.isArray(navigator.languages) && navigator.languages.length
+                ? navigator.languages
+                : navigator.language
+                ? [navigator.language]
+                : []
+
+              for (const candidate of sources) {
+                if (!candidate) continue
+                const normalized = candidate.toLowerCase().split('-')[0]
+                if (supported.includes(normalized)) {
+                  preferred = normalized
+                  break
+                }
+              }
+            }
+
+            if (!preferred) {
+              preferred = fallback
+            }
+
+            if (!stored || stored !== preferred) {
+              try {
+                if (window.localStorage) {
+                  window.localStorage.setItem(storageKey, preferred)
+                }
+              } catch (storageError) {
+                // ignore storage write failures (e.g. private mode)
+              }
+            }
+
+            const target = ensureTrailingSlash(withBase(`${preferred}/`))
+            const current = ensureTrailingSlash(window.location.pathname)
+
+            markRedirectHandled()
+
+            if (current === target || current.startsWith(target)) {
+              return
+            }
+
+            window.location.replace(target)
+          } catch (error) {
+            console.warn('[ling-atlas] locale redirect failed', error)
+          }
+        })()
 ---
 
 <script setup lang="ts">
 import { onMounted } from 'vue'
-import { usePreferredLocale } from './.vitepress/composables/usePreferredLocale'
+import { PREFERRED_LOCALE_STORAGE_KEY, usePreferredLocale } from './.vitepress/composables/usePreferredLocale'
 import { SUPPORTED_LOCALES } from './.vitepress/theme/locales'
 
-const base = import.meta.env.BASE_URL || '/'
-const normalizedBase = base.endsWith('/') ? base : `${base}/`
+const GLOBAL_REDIRECT_FLAG = '__LING_ATLAS_REDIRECT_DONE__'
+
+const declaredBase = import.meta.env.BASE_URL || '/'
+const normalizedDeclaredBase = declaredBase.endsWith('/') ? declaredBase : `${declaredBase}/`
+let activeBase = normalizedDeclaredBase
+
+if (typeof window !== 'undefined') {
+  const currentPath = window.location?.pathname || '/'
+  if (activeBase !== '/' && currentPath && !currentPath.startsWith(activeBase)) {
+    activeBase = '/'
+  }
+}
 
 const CARD_COPY: Record<string, { label: string; description: string }> = {
   zh: {
@@ -32,9 +139,9 @@ const localeEntries = SUPPORTED_LOCALES.map(locale => {
   }
 })
 
-function withBase(path: string) {
+function withBase(path: string, base: string = activeBase) {
   const sanitized = path.startsWith('/') ? path.slice(1) : path
-  return `${normalizedBase}${sanitized}`
+  return base === '/' ? `/${sanitized}` : `${base}${sanitized}`
 }
 
 function ensureTrailingSlash(path: string) {
@@ -43,13 +150,32 @@ function ensureTrailingSlash(path: string) {
 
 const locale = usePreferredLocale()
 
+function rememberLocale(code: string) {
+  if (typeof window === 'undefined') return
+  try {
+    window.localStorage?.setItem(PREFERRED_LOCALE_STORAGE_KEY, code)
+  } catch {
+    /* ignore storage errors */
+  }
+}
+
 onMounted(() => {
+  if (typeof window === 'undefined') return
+
+  const globalWindow = window as Window & { [GLOBAL_REDIRECT_FLAG]?: boolean }
+  if (globalWindow[GLOBAL_REDIRECT_FLAG]) return
+
   const preferred = locale.value
   if (!preferred) return
   const targetPath = ensureTrailingSlash(withBase(`${preferred}/`))
   const currentPath = ensureTrailingSlash(window.location.pathname)
+
+  globalWindow[GLOBAL_REDIRECT_FLAG] = true
+  rememberLocale(preferred)
+
   if (currentPath === targetPath) return
   if (currentPath.startsWith(targetPath)) return
+
   window.location.replace(targetPath)
 })
 </script>
@@ -59,7 +185,13 @@ onMounted(() => {
 Select the language you would like to read **Ling Atlas** in. You can also bookmark your favourite locale for quick access next time.
 
 <div class="language-grid">
-  <a v-for="entry in localeEntries" :key="entry.code" class="language-card" :href="entry.href">
+  <a
+    v-for="entry in localeEntries"
+    :key="entry.code"
+    class="language-card"
+    :href="entry.href"
+    @click="rememberLocale(entry.code)"
+  >
     <span class="language-code">{{ entry.code.toUpperCase() }}</span>
     <span class="language-label">{{ entry.label }}</span>
     <span class="language-description">{{ entry.description }}</span>
