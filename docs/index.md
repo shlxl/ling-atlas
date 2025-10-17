@@ -110,45 +110,19 @@ head:
 import { onMounted } from 'vue'
 import { PREFERRED_LOCALE_STORAGE_KEY, usePreferredLocale } from './.vitepress/composables/usePreferredLocale'
 import { SUPPORTED_LOCALES } from './.vitepress/theme/locales'
+import { ACTIVE_BASE_GLOBAL, getActiveBase, withActiveBase } from './.vitepress/theme/base'
 
 const GLOBAL_REDIRECT_FLAG = '__LING_ATLAS_REDIRECT_DONE__'
-const GLOBAL_ACTIVE_BASE = '__LING_ATLAS_ACTIVE_BASE__'
 
 type GlobalWindow = Window & {
   __LING_ATLAS_REDIRECT_DONE__?: boolean
-  __LING_ATLAS_ACTIVE_BASE__?: string
 }
 
 function ensureTrailingSlash(path: string) {
   return path.endsWith('/') ? path : `${path}/`
 }
 
-function normalizeBase(base: string) {
-  if (!base) return '/'
-  if (base === '/') return '/'
-  return ensureTrailingSlash(base)
-}
-
-function resolveActiveBase(defaultBase: string) {
-  if (typeof window === 'undefined') return defaultBase
-
-  const globalWindow = window as GlobalWindow
-  const stored = globalWindow.__LING_ATLAS_ACTIVE_BASE__
-  if (typeof stored === 'string' && stored.length) {
-    return normalizeBase(stored)
-  }
-
-  const currentPath = window.location?.pathname || '/'
-  if (defaultBase !== '/' && currentPath && !currentPath.startsWith(defaultBase)) {
-    return '/'
-  }
-
-  return defaultBase
-}
-
-const declaredBase = import.meta.env.BASE_URL || '/'
-const normalizedDeclaredBase = normalizeBase(declaredBase)
-const activeBase = resolveActiveBase(normalizedDeclaredBase)
+const activeBase = getActiveBase()
 
 const CARD_COPY: Record<string, { label: string; description: string }> = {
   zh: {
@@ -163,7 +137,7 @@ const CARD_COPY: Record<string, { label: string; description: string }> = {
 
 function withBase(path: string, base: string = activeBase) {
   const sanitized = path.startsWith('/') ? path.slice(1) : path
-  return base === '/' ? `/${sanitized}` : `${base}${sanitized}`
+  return withActiveBase(sanitized, base)
 }
 
 const localeEntries = SUPPORTED_LOCALES.map(locale => {
@@ -192,8 +166,9 @@ onMounted(() => {
 
   const globalWindow = window as GlobalWindow
 
-  if (!globalWindow.__LING_ATLAS_ACTIVE_BASE__) {
-    globalWindow.__LING_ATLAS_ACTIVE_BASE__ = activeBase
+  const currentBase = (globalWindow as any)[ACTIVE_BASE_GLOBAL]
+  if (typeof currentBase !== 'string' || !currentBase.length) {
+    ;(globalWindow as any)[ACTIVE_BASE_GLOBAL] = activeBase
   }
   if (globalWindow.__LING_ATLAS_REDIRECT_DONE__) return
 
