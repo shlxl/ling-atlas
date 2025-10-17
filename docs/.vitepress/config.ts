@@ -2,6 +2,8 @@ import { defineConfig, type HeadConfig } from 'vitepress'
 import cssnano from 'cssnano'
 import fs from 'node:fs'
 import { VitePWA } from 'vite-plugin-pwa'
+import { navFromMeta as buildNavFromMeta } from './theme/nav-core.mjs'
+import type { NavManifest, NavTranslations } from './theme/nav-core.mjs'
 import {
   DEFAULT_LOCALE,
   SUPPORTED_LOCALES,
@@ -178,6 +180,13 @@ const cspContent = cspTemplate ? serializeCsp(cspTemplate) : null
 const head: HeadConfig[] = [
   ['meta', { name: 'referrer', content: 'no-referrer' }]
 ]
+
+const supportedLocalesMeta = SUPPORTED_LOCALES.map(locale => locale.code).join(',')
+if (supportedLocalesMeta) {
+  head.push(['meta', { name: 'ling-atlas:supported-locales', content: supportedLocalesMeta }])
+}
+
+head.push(['meta', { name: 'ling-atlas:base', content: normalizedBase }])
 
 if (cspContent) {
   head.unshift(['meta', { 'http-equiv': 'Content-Security-Policy', content: cspContent }])
