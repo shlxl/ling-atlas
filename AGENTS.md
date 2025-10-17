@@ -123,6 +123,7 @@ codex run audit   # 可选
 - PR-L 多语/i18n：`docs/zh/content`（默认中文）与 `docs/en/content`（英文）双目录，`pagegen` 自动生成 `/zh/` 与 `/en/` 聚合页、RSS、Sitemap，并同步路径映射到 `docs/public/i18n-map.json`；Layout 注入语言切换按钮，搜索与 Chat 依据当前语言优先返回同语结果。
 - PR-M（待推进）：SEO / OpenGraph 优化与站点地图扩展，让知识库在搜索引擎中拥有更高可见度。
 - PR-M 供应链加固 2.0：CI 强制 `npm ci`；新增 `npm run audit`、`npm run license`、`npm run sbom`；`scripts/sri.mjs` 对外链哈希差异直接报错，`docs/public/.well-known/sbom.json` 输出 CycloneDX SBOM。
+- SRI 离线回退：若无法访问 CDN，`npm run build:search` 会复用 `security/sri-allowlist.json` 中的哈希并打印警告，网络恢复后务必重新执行命令确认哈希未漂移。
 
 ## 9. 下一阶段任务：Pagegen 优化重构
 
