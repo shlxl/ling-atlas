@@ -122,7 +122,7 @@ codex run audit   # 可选
 - PR-K 搜索评测：`node scripts/eval/offline.mjs` 守门 nDCG/MRR/Recall，`?variant=lex|rrf|rrf-mmr` 触发 Team Draft 交替曝光并写入匿名遥测。
 - PR-L 多语/i18n：`docs/zh/content`（默认中文）与 `docs/en/content`（英文）双目录，`pagegen` 自动生成 `/zh/` 与 `/en/` 聚合页、RSS、Sitemap，并同步路径映射到 `docs/public/i18n-map.json`；Layout 注入语言切换按钮，搜索与 Chat 依据当前语言优先返回同语结果。
 - PR-M（待推进）：SEO / OpenGraph 优化与站点地图扩展，让知识库在搜索引擎中拥有更高可见度。
-- PR-M 供应链加固 2.0：CI 强制 `npm ci`；新增 `npm run audit`、`npm run license`、`npm run sbom`；`scripts/sri.mjs` 对外链哈希差异直接报错，`docs/public/.well-known/sbom.json` 输出 CycloneDX SBOM。
+- PR-M 供应链加固 2.0：CI 强制 `npm ci`；新增 `npm run audit`、`npm run license`、`npm run sbom`；`scripts/sri.mjs` 对外链哈希差异直接报错，`docs/public/.well-known/sbom.json` 输出 CycloneDX SBOM。离线或 CDN 无法访问时脚本会沿用 allowlist 的哈希并打印警告，不会阻断构建；联网后请重新执行确认哈希仍然匹配。
 
 ## 9. 下一阶段任务：Pagegen 优化重构
 
@@ -143,7 +143,7 @@ codex run audit   # 可选
 - ✅ **Landing 入口 root 兼容**：`docs/index.md` 的预渲染脚本会写入 `__LING_ATLAS_ACTIVE_BASE__` 并在 Vue hydration 期间复用，确保 Lighthouse/本地 root 服务下的 locale 重定向保持一致；前端会通过 `docs/.vitepress/theme/base.mjs` 统一读取与缓存该 BASE，Locale Toggle、导航 manifest 与 Telemetry 资产加载均复用同一逻辑。如需调整入口，请同步更新内联脚本、`base.mjs` 与 `<script setup>` 内的调用。
   Layout.vue 已改用 `locale-map-core` 暴露的 `normalizeRoutePath`、`getFallbackPath` 与 `hasLocalePrefix` 判断首页跳转与导航品牌链接，避免与 Locale Toggle 的检测分叉。
   Landing 页的 `usePreferredLocale` 现直接复用 `docs/.vitepress/theme/composables/preferredLocale.mjs`，保持与 Layout/Locale Toggle 共用的存储键与回忆逻辑；修改存储策略时需同步内联重定向脚本与该模块。
-  Locale Toggle 的选项文本会读取 `i18n.ui.localeToggleHint` 追加“已翻译 / 聚合回退 / 首页跳转”等标记，帮助读者理解切换结果；新语言若缺少对应翻译会出现空白后缀，提交前请补齐。
+  Locale Toggle 的选项文本会读取 `i18n.ui.localeToggleHint` 追加“已翻译 / 聚合回退 / 首页跳转”等标记，帮助读者理解切换结果；新语言若缺少对应翻译会出现空白后缀，提交前请补齐。选项的 `title` 与 `aria-label` 会使用 `i18n.ui.localeToggleDetail` 的文案提示最终跳转落点，如缺失会回退到默认语言，请同步维护。
 - ✅ **Nav manifest 回归测试**：`tests/pagegen/i18n-registry.test.mjs` 已覆盖“仅英文聚合”“聚合独占单语”等场景，确保 Pagegen 只为具备真实聚合页的语言写出 manifest；CI 若在该用例失败，请优先检查聚合目录与 i18n-map 是否缺失对应语言的内容。
 - ✅ **Nav manifest / i18n map 链接守门**：`node scripts/check-links.mjs` 会同时校验 Markdown 内部链接与 `nav.manifest.<locale>.json`、`i18n-map.json` 的目标路径，确保聚合入口与跨语言映射不会指向缺失页面。
 - ✅ **Locale 切换兜底测试**：`npm run test:theme` 会执行 `tests/locale-map/core.test.mjs` 与 `tests/theme/preferred-locale.test.mjs`，验证当目标语言缺失聚合页时的跳转降级，以及首选语言记忆是否与主题共享存储键，确保不会出现空链或偏离记忆的跳转。

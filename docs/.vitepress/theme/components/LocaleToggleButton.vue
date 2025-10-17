@@ -32,6 +32,15 @@ const reasonSuffixes = computed<Partial<Record<ResolutionReason, string>>>(() =>
   return localized
 })
 
+const reasonDetails = computed<Partial<Record<ResolutionReason, string>>>(() => {
+  const details = ((i18n as any)?.ui?.localeToggleDetail ?? {}) as Record<
+    string,
+    Partial<Record<ResolutionReason, string>>
+  >
+  const localized = details[currentLocale.value] || details[fallbackLocale] || {}
+  return localized
+})
+
 function resolveUiString(key: 'label' | 'aria'): string {
   const resources = ((i18n as any)?.ui?.localeToggleLabel ?? {}) as Record<string, Record<string, string> | string>
   const raw = resources[key]
@@ -57,6 +66,9 @@ const selectOptions = computed(() => {
     hasMapping: boolean
     reason: ResolutionReason
     suffix: string
+    detail: string
+    ariaLabel: string
+    title: string
   }> = []
   const destinationMap = destinations.value
   for (const locale of availableLocales.value) {
@@ -64,6 +76,9 @@ const selectOptions = computed(() => {
     const baseLabel = localeLabels.value[locale] ?? locale.toUpperCase()
     const reason = (target?.reason ?? 'home') as ResolutionReason
     const suffix = reasonSuffixes.value?.[reason] ?? ''
+    const detail = reasonDetails.value?.[reason] ?? ''
+    const optionAriaLabel = detail ? `${baseLabel} · ${detail}` : baseLabel
+    const title = detail || ''
     const displayLabel = suffix ? `${baseLabel}${suffix}` : baseLabel
     list.push({
       code: locale,
@@ -72,7 +87,10 @@ const selectOptions = computed(() => {
       destination: target?.normalized ?? currentPath.value,
       hasMapping: target?.hasMapping ?? false,
       reason,
-      suffix
+      suffix,
+      detail,
+      ariaLabel: optionAriaLabel,
+      title
     })
   }
   return list
@@ -105,6 +123,8 @@ function handleLocaleChange(event: Event) {
         :data-destination="option.destination"
         :data-has-mapping="option.hasMapping"
         :data-resolution="option.reason"
+        :aria-label="option.ariaLabel"
+        :title="option.title || undefined"
       >
         {{ option.displayLabel }}
       </option>

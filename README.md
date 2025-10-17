@@ -97,6 +97,7 @@ npm run dev
 - `.well-known/security-headers.txt`：`npm run build:search` 会自动更新并同步到发布目录，同时在静态页面注入 CSP `<meta>`。
 - CSP `<meta>` 会跳过 `frame-ancestors` 指令（浏览器限制），构建时会输出警告，部署到生产环境时请通过服务器响应头追加该指令。
 - `.well-known/sri-manifest.json`：记录外部资源的 SRI；若 CDN 内容变更但未更新 `security/sri-allowlist.json`，CI 会直接失败。
+  - 离线或无法访问 CDN 时，`node scripts/sri.mjs` 会沿用 allowlist 中的哈希写入 manifest，同时打印跳过校验的警告；请在网络恢复后重新运行以确认哈希未漂移。
 - `docs/public/robots.txt`：默认禁止抓取 `/data/`、`/admin/`，并指向站点 `sitemap.xml`。
 - `docs/public/sitemap.xml`：由 PageGen 生成，保持与 robots 中链接一致。
 - AI 自演进产物：`docs/public/data/embeddings.json`、`summaries.json`、`qa.json`，CI/构建阶段自动刷新，失败不阻断主流程。
@@ -105,7 +106,7 @@ npm run dev
   - 导航栏中有两类语言切换：
     1. **VitePress 默认下拉菜单**（`localeLinks`），负责跳转到当前页面的另一语言版本，但只在两侧都有对等文章时才安全；因此配置中默认关闭该下拉，以免聚合页落到缺失的 slug 导致 404。
     2. **自定义按钮**（`LocaleToggleButton.vue`），与亮/暗色主题开关类似，读取 `docs/public/i18n-map.json` 与 `nav.manifest.<locale>.json`；仅当目标语言存在对应 slug 或可用聚合页时展示，缺少映射则直接回退到语言首页。
-  - 自定义按钮的下拉选项会结合 `i18n.ui.localeToggleHint` 的提示词附加“已翻译 / 聚合回退 / 首页跳转”等标记，帮助读者预判切换后的落点；新增语言时请同步补充该段翻译，避免出现空白后缀。
+  - 自定义按钮的下拉选项会结合 `i18n.ui.localeToggleHint` 的提示词附加“已翻译 / 聚合回退 / 首页跳转”等标记，帮助读者预判切换后的落点；新增语言时请同步补充该段翻译，避免出现空白后缀。每个选项的 `title` 与 `aria-label` 会读取 `i18n.ui.localeToggleDetail` 提供的完整说明，缺失时会回退到默认语言的文案，请一并维护。
   - 两者共享同一份语言配置，但逻辑完全独立；保留按钮、关闭下拉即可避免依赖关系导致的 404 问题。
   - `tests/pagegen/i18n-registry.test.mjs` 已补充“仅英文聚合”与“聚合独占单语”等回归场景，确保 nav manifest 只暴露真实存在的聚合入口并避免 i18n-map 输出缺失语言的映射，CI 若失败请优先排查聚合产物。
   - `node scripts/check-links.mjs` 会在链接巡检阶段同步验证 Markdown、`nav.manifest.<locale>.json` 与 `i18n-map.json` 的目标路径，阻止聚合入口与跨语言映射指向不存在的页面。
