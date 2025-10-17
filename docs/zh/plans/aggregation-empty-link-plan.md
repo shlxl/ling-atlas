@@ -43,6 +43,14 @@
 - 扩展 `docs/.vitepress/theme/composables/localeMap.ts` 与 `LocaleToggleButton.vue`，在解析目标路径时先检查 manifest 中是否存在对应 slug；若不存在则降级到语言首页或聚合主入口。
 - 该逻辑也可以复用在搜索结果或站内跳转中：当发现 URL 指向的聚合页在当前语言缺失时，提示“暂未翻译，切换到 XX 语言”。（可作为后续增强。）
 
+### 近期进展
+
+- 登陆页的内联重定向脚本会在检测 BASE 与当前路径不一致时回退到 `/`，并把解析结果写入 `window.__LING_ATLAS_ACTIVE_BASE__`，Vue 侧在 hydration 期间读取该变量避免二次判断偏差。这保证了 Lighthouse、CI 静态预览与本地 `vitepress preview` 使用不同 BASE 时都能落到正确语言入口。
+- 新增 `docs/.vitepress/theme/base.ts` 负责读取 `<meta name="ling-atlas:base">`、`import.meta.env.BASE_URL` 与当前路径推断出的真实 BASE，并缓存到 `window.__LING_ATLAS_ACTIVE_BASE__`；
+  `LocaleToggleButton.vue`、`useLocaleMap`、`telemetry.ts` 与 Landing 页的 `<script setup>` 均复用该模块，避免不同入口下出现 BASE 判定分叉。
+- 扩充 `tests/pagegen/i18n-registry.test.mjs`，新增“仅存在英文聚合”与“聚合只属于单一语言”两种回归场景，验证 nav manifest 仅写入具备真实聚合页的语言，防止导航渲染空链，并确保 i18n-map 不会记录缺失目标语言的映射。
+- 提取 `Locale Toggle` 的聚合解析逻辑为 `locale-map-core`，并通过 `tests/locale-map/core.test.mjs` 验证当聚合缺失时会优雅退回 manifest 提供的入口或语言首页，覆盖 direct mapping、manifest fallback 与纯首页降级的分支。
+
 ### 4. 验证与守护
 
 - 新增一个脚本（或在 `scripts/check-links.mjs` 中扩展）来验证 manifest 中的 URL 均可读取文件，CI 失败时给出详细列表，并在 README 调整后同步更新守护脚本的“多语结构”提示。

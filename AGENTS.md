@@ -140,6 +140,9 @@ codex run audit   # 可选
 - ⏳ **模块与目录盘点**：计划逐步梳理 `schema/`、`scripts/`、`docs/zh/plans/` 与 `tests/` 中的核心资源，确认审查顺序并在相关文档中更新路线。
 - ⏳ **Pagegen 深入检查**：后续会针对 `scripts/pagegen/*.mjs`、`tests/pagegen.test.mjs` 与缓存/批量写入策略开展专项审查，输出补测与风险清单。
 - 🔁 **结果同步机制**：所有阶段性结论将同步回本文件与 `docs/zh/plans/pagegen-refactor-roadmap.md`，保持多代理协同一致性。
+- ✅ **Landing 入口 root 兼容**：`docs/index.md` 的预渲染脚本会写入 `__LING_ATLAS_ACTIVE_BASE__` 并在 Vue hydration 期间复用，确保 Lighthouse/本地 root 服务下的 locale 重定向保持一致；前端会通过 `docs/.vitepress/theme/base.ts` 统一读取与缓存该 BASE，Locale Toggle、导航 manifest 与 Telemetry 资产加载均复用同一逻辑。如需调整入口，请同步更新内联脚本、`base.ts` 与 `<script setup>` 内的调用。
+- ✅ **Nav manifest 回归测试**：`tests/pagegen/i18n-registry.test.mjs` 已覆盖“仅英文聚合”“聚合独占单语”等场景，确保 Pagegen 只为具备真实聚合页的语言写出 manifest；CI 若在该用例失败，请优先检查聚合目录与 i18n-map 是否缺失对应语言的内容。
+- ✅ **Locale 切换兜底测试**：`npm run test:theme` 会执行 `tests/locale-map/core.test.mjs`，验证当目标语言缺失聚合页时，Locale Toggle 会优雅降级到 manifest 提供的第一个入口或语言首页，确保不会出现空链跳转。
 
 ## 内容生产力守门
 
