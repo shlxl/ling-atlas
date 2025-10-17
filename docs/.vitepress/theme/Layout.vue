@@ -6,18 +6,22 @@ import SearchBox from './components/SearchBox.vue'
 import LocaleToggleButton from './components/LocaleToggleButton.vue'
 import { initTelemetry, setupTelemetryRouterHook } from './telemetry'
 import { useRegisterSW } from 'virtual:pwa-register/vue'
-import { useI18nRouting } from './i18n'
-import { getFallbackLocale, LocaleCode, SUPPORTED_LOCALES, normalizeLocalePath, routePrefix } from './locales'
-import { usePreferredLocale } from './composables/preferredLocale'
+import { getFallbackLocale, type LocaleCode } from './locales.mjs'
+import { usePreferredLocale } from './composables/preferredLocale.mjs'
+import {
+  detectLocaleFromPath,
+  getFallbackPath,
+  hasLocalePrefix,
+  normalizeRoutePath
+} from './composables/localeMap'
 
 const router = useRouter()
+const { theme } = useData()
 const offlineReady = ref(false)
 const needRefresh = ref(false)
 const chatOpen = ref(false)
 const activeLocale = ref<LocaleCode>(getFallbackLocale())
 const { preferredLocale, rememberLocale, refreshPreferredLocale } = usePreferredLocale()
-
-const { detectLocaleFromPath } = useI18nRouting()
 
 let updateServiceWorker: (reloadPage?: boolean) => Promise<void>
 
@@ -46,10 +50,7 @@ const chatLabels: Record<LocaleCode, string> = { zh: '知识问答', en: 'Knowle
 const chatButtonLabel = computed(() => chatLabels[activeLocale.value] || chatLabels[getFallbackLocale()])
 
 function normalizePath(path: string) {
-  if (!path) return routePrefix(getFallbackLocale())
-  const [pathname] = path.split(/[?#]/)
-  if (!pathname) return routePrefix(getFallbackLocale())
-  return normalizeLocalePath(pathname)
+  return normalizeRoutePath(path)
 }
 
 function closeBanner() {
@@ -70,7 +71,7 @@ onMounted(() => {
   let redirected = false
   if (!hasLocalePrefix(initialPath)) {
     const targetLocale = preferredLocale.value
-    const targetPath = routePrefix(targetLocale)
+    const targetPath = getFallbackPath(targetLocale)
     if (initialPath !== targetPath) {
       redirected = true
       activeLocale.value = targetLocale
@@ -97,10 +98,28 @@ function handleRouteChange(path: string) {
   rememberLocale(activeLocale.value)
 }
 
-function hasLocalePrefix(path: string) {
-  const normalized = normalizePath(path)
-  return SUPPORTED_LOCALES.some(locale => normalized.startsWith(routePrefix(locale.code as LocaleCode)))
-}
+watch(
+  brandLink,
+  link => {
+    if (!link) return
+    const current = theme.value.logoLink
+    if (typeof current === 'string') {
+      if (current !== link) {
+        theme.value.logoLink = link
+      }
+      return
+    }
+    if (current && typeof current === 'object') {
+      if (current.link !== link) {
+        theme.value.logoLink = { ...current, link }
+      }
+      return
+    }
+    theme.value.logoLink = link
+  },
+  { immediate: true }
+)
+
 </script>
 
 <template>
