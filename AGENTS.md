@@ -140,6 +140,7 @@ codex run audit   # 可选
 - ⏳ **模块与目录盘点**：计划逐步梳理 `schema/`、`scripts/`、`docs/zh/plans/` 与 `tests/` 中的核心资源，确认审查顺序并在相关文档中更新路线。
 - ⏳ **Pagegen 深入检查**：后续会针对 `scripts/pagegen/*.mjs`、`tests/pagegen.test.mjs` 与缓存/批量写入策略开展专项审查，输出补测与风险清单。
 - 🔁 **结果同步机制**：所有阶段性结论将同步回本文件与 `docs/zh/plans/pagegen-refactor-roadmap.md`，保持多代理协同一致性。
+- ✅ **Landing 入口 root 兼容**：`docs/index.md` 的预渲染脚本会写入 `__LING_ATLAS_ACTIVE_BASE__` 并在 Vue hydration 期间复用，确保 Lighthouse/本地 root 服务下的 locale 重定向保持一致；前端会通过 `docs/.vitepress/theme/base.ts` 统一读取与缓存该 BASE，Locale Toggle、导航 manifest 与 Telemetry 资产加载均复用同一逻辑。如需调整入口，请同步更新内联脚本、`base.ts` 与 `<script setup>` 内的调用。
 
 ## 内容生产力守门
 
