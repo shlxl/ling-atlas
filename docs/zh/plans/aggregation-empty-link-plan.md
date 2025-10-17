@@ -49,6 +49,7 @@
 - 新增 `docs/.vitepress/theme/base.ts` 负责读取 `<meta name="ling-atlas:base">`、`import.meta.env.BASE_URL` 与当前路径推断出的真实 BASE，并缓存到 `window.__LING_ATLAS_ACTIVE_BASE__`；
   `LocaleToggleButton.vue`、`useLocaleMap`、`telemetry.ts` 与 Landing 页的 `<script setup>` 均复用该模块，避免不同入口下出现 BASE 判定分叉。
 - 扩充 `tests/pagegen/i18n-registry.test.mjs`，新增“仅存在英文聚合”与“聚合只属于单一语言”两种回归场景，验证 nav manifest 仅写入具备真实聚合页的语言，防止导航渲染空链，并确保 i18n-map 不会记录缺失目标语言的映射。
+- 提取 `Locale Toggle` 的聚合解析逻辑为 `locale-map-core`，并通过 `tests/locale-map/core.test.mjs` 验证当聚合缺失时会优雅退回 manifest 提供的入口或语言首页，覆盖 direct mapping、manifest fallback 与纯首页降级的分支。
 
 ### 4. 验证与守护
 
