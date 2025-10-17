@@ -54,6 +54,7 @@
 - 扩展 `scripts/check-links.mjs`，在 Markdown 巡检时同步校验 `nav.manifest.<locale>.json` 与 `i18n-map.json` 的链接指向，CI 如发现缺失聚合或跨语言映射会直接报错。
 - `docs/.vitepress/theme/Layout.vue` 与 `i18n.ts` 已复用 `locale-map-core` 导出的 `normalizeRoutePath`、`getFallbackPath` 与 `hasLocalePrefix`，统一首页跳转、品牌链接与路由前缀检测的实现，避免与 Locale Toggle 的定位策略产生分叉。
 - `docs/index.md` 的首屏脚本改为直接复用 `docs/.vitepress/theme/composables/preferredLocale.mjs`，与 Layout 与 Locale Toggle 共用首选语言记忆与存储键，避免登陆页与主题逻辑分叉。
+- `LocaleToggleButton.vue` 会读取 `i18n.ui.localeToggleHint` 为每个语言选项追加“已翻译 / 聚合回退 / 首页跳转”等提示，提前告知读者切换后的落点；如需新增语言，请同步维护这段提示文本。
 
 ### 4. 验证与守护
 

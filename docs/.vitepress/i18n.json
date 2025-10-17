@@ -41,6 +41,20 @@
         "zh": "选择显示语言",
         "en": "Select display language"
       }
+    },
+    "localeToggleHint": {
+      "zh": {
+        "exact": "（已翻译）",
+        "manifest-match": "（聚合入口可用）",
+        "manifest-fallback": "（回退聚合索引）",
+        "home": "（将前往首页）"
+      },
+      "en": {
+        "exact": " (fully translated)",
+        "manifest-match": " (aggregate available)",
+        "manifest-fallback": " (falls back to aggregate index)",
+        "home": " (redirects to home)"
+      }
     }
   }
 }

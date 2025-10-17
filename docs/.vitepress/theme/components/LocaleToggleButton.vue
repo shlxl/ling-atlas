@@ -3,12 +3,15 @@ import { computed } from 'vue'
 import { useLocaleToggle } from '../composables/localeMap'
 import { usePreferredLocale } from '../composables/preferredLocale.mjs'
 import { getFallbackLocale, type LocaleCode } from '../locales.mjs'
+import type { ResolveTargetPathResult } from '../composables/locale-map-core.mjs'
 import i18n from '../../i18n.json'
 
 const { currentLocale, currentPath, availableLocales, destinations, goToLocale } = useLocaleToggle()
 const { rememberLocale } = usePreferredLocale()
 
 const fallbackLocale = getFallbackLocale()
+
+type ResolutionReason = ResolveTargetPathResult['reason']
 
 const localeLabels = computed<Record<LocaleCode, string>>(() => {
   const entries: Partial<Record<LocaleCode, string>> = {}
@@ -18,6 +21,15 @@ const localeLabels = computed<Record<LocaleCode, string>>(() => {
     entries[locale] = typeof label === 'string' && label ? label : locale.toUpperCase()
   }
   return entries as Record<LocaleCode, string>
+})
+
+const reasonSuffixes = computed<Partial<Record<ResolutionReason, string>>>(() => {
+  const hints = ((i18n as any)?.ui?.localeToggleHint ?? {}) as Record<
+    string,
+    Partial<Record<ResolutionReason, string>>
+  >
+  const localized = hints[currentLocale.value] || hints[fallbackLocale] || {}
+  return localized
 })
 
 function resolveUiString(key: 'label' | 'aria'): string {
@@ -40,17 +52,27 @@ const selectOptions = computed(() => {
   const list: Array<{
     code: LocaleCode
     label: string
+    displayLabel: string
     destination: string
     hasMapping: boolean
+    reason: ResolutionReason
+    suffix: string
   }> = []
   const destinationMap = destinations.value
   for (const locale of availableLocales.value) {
     const target = destinationMap[locale]
+    const baseLabel = localeLabels.value[locale] ?? locale.toUpperCase()
+    const reason = (target?.reason ?? 'home') as ResolutionReason
+    const suffix = reasonSuffixes.value?.[reason] ?? ''
+    const displayLabel = suffix ? `${baseLabel}${suffix}` : baseLabel
     list.push({
       code: locale,
-      label: localeLabels.value[locale] ?? locale.toUpperCase(),
+      label: baseLabel,
+      displayLabel,
       destination: target?.normalized ?? currentPath.value,
-      hasMapping: target?.hasMapping ?? false
+      hasMapping: target?.hasMapping ?? false,
+      reason,
+      suffix
     })
   }
   return list
@@ -82,8 +104,9 @@ function handleLocaleChange(event: Event) {
         :value="option.code"
         :data-destination="option.destination"
         :data-has-mapping="option.hasMapping"
+        :data-resolution="option.reason"
       >
-        {{ option.label }}
+        {{ option.displayLabel }}
       </option>
     </select>
   </div>
