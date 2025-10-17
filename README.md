@@ -73,7 +73,8 @@ npm run dev
 - **环境要求**：Node ≥ 22、npm ≥ 10、git ≥ 2.45，`.env` 需包含 `BASE=/ling-atlas/`、`SITE_ORIGIN=https://<user>.github.io/ling-atlas`、`GIT_REMOTE=origin`、`GIT_BRANCH=main`。
 - **首次初始化**：建议执行 `codex run setup --base "/ling-atlas/" --site "https://<user>.github.io/ling-atlas"`，完成依赖安装、预检、聚合页生成与首次构建。
 - **CI 守门**：默认 `npm ci` 安装依赖，持续运行 Pagegen 单测、前置校验、生成聚合页；体积预算与 Lighthouse 可按需开启（参考 `node .codex/budget.mjs` 与 `npx lhci autorun`）。
-- **内容生产力工具**：通过 `npm run md:lint`、`node scripts/check-links.mjs`、`node scripts/img-opt.mjs` 守门 Markdown、链接与图片质量，必要时可在 CI 中暂时调高阈值或跳过。
+- **内容生产力工具**：通过 `npm run md:lint`、`node scripts/check-links.mjs`、`node scripts/img-opt.mjs` 守门 Markdown、链接与图片质量；其中 `check-links` 会额外校验 `nav.manifest.<locale>.json` 与 `i18n-map.json` 内的目标路径，必要时可在 CI 中暂时调高阈值或跳过。
+- **Landing 入口 BASE 兜底**：`docs/index.md` 的内联重定向脚本会写入 `__LING_ATLAS_ACTIVE_BASE__` 并由 `<script setup>` 在 hydration 期间复用，确保 `/` 与 `/ling-atlas/` 等不同 BASE 下的首屏重定向一致；前端通过 `docs/.vitepress/theme/base.ts` 统一读取、缓存与复用该 BASE，Locale Toggle、导航 manifest 以及 Telemetry 资产加载都会依赖此模块。如需修改入口，请同步维护内联脚本、`base.ts` 与相关调用。
 
 ## 即将开展的审查路线
 
@@ -105,6 +106,10 @@ npm run dev
     1. **VitePress 默认下拉菜单**（`localeLinks`），负责跳转到当前页面的另一语言版本，但只在两侧都有对等文章时才安全；因此配置中默认关闭该下拉，以免聚合页落到缺失的 slug 导致 404。
     2. **自定义按钮**（`LocaleToggleButton.vue`），与亮/暗色主题开关类似，读取 `docs/public/i18n-map.json` 与 `nav.manifest.<locale>.json`；仅当目标语言存在对应 slug 或可用聚合页时展示，缺少映射则直接回退到语言首页。
   - 两者共享同一份语言配置，但逻辑完全独立；保留按钮、关闭下拉即可避免依赖关系导致的 404 问题。
+  - `tests/pagegen/i18n-registry.test.mjs` 已补充“仅英文聚合”与“聚合独占单语”等回归场景，确保 nav manifest 只暴露真实存在的聚合入口并避免 i18n-map 输出缺失语言的映射，CI 若失败请优先排查聚合产物。
+  - `node scripts/check-links.mjs` 会在链接巡检阶段同步验证 Markdown、`nav.manifest.<locale>.json` 与 `i18n-map.json` 的目标路径，阻止聚合入口与跨语言映射指向不存在的页面。
+  - `docs/.vitepress/theme/Layout.vue` 复用 `locale-map-core` 的 `normalizeRoutePath`、`getFallbackPath` 与 `hasLocalePrefix` 维护首页重定向与导航品牌跳转，保持与 Locale Toggle 的定位逻辑一致。
+- `npm run test:theme` 会执行 `tests/locale-map/core.test.mjs` 与 `tests/theme/nav-core.test.mjs`，既覆盖 Locale Toggle 的降级逻辑，也校验导航裁剪仅展示 manifest 已生成的聚合入口。
 - `scripts/postbuild-pwa.mjs` 会在 `npm run build` 结束后补全 Workbox 预缓存的 HTML 列表，确保 Service Worker 导航回退不会再触发 `non-precached-url` 错误。
 - 供应链：CI 默认 `npm ci` 安装，审计输出（`npm run audit`、`npm run license`）可追踪依赖风险；`npm run sbom` 及构建流程会生成 `docs/public/.well-known/sbom.json`，SRI 哈希变化需先更新 allowlist，否则脚本将阻断。
 
