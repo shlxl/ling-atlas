@@ -5,11 +5,11 @@ import { VitePWA } from 'vite-plugin-pwa'
 import {
   DEFAULT_LOCALE,
   SUPPORTED_LOCALES,
-  LocaleCode,
-  VitepressLocaleKey,
   manifestFileName,
-  normalizedRoutePrefix
+  normalizedRoutePrefix,
+  routePrefix
 } from './theme/locales'
+import type { LocaleCode, VitepressLocaleKey } from './theme/locales'
 
 function loadCspTemplate() {
   try {
@@ -101,6 +101,7 @@ const localizedLocaleConfigs = Object.fromEntries(
     const strings = localeCopy[code]
     const manifest = localeManifest[code] ?? null
     const meta = localeMeta[code]
+    const homeLink = routePrefix(code as LocaleCode)
     return [
       locale.vitepressKey,
       {
@@ -109,6 +110,7 @@ const localizedLocaleConfigs = Object.fromEntries(
         title: strings.title,
         description: strings.description,
         themeConfig: {
+          logoLink: homeLink,
           nav: navFromMeta(meta, manifest, code),
           sidebar: 'auto',
           lightModeSwitchTitle: strings.lightModeSwitchTitle,
@@ -341,6 +343,7 @@ export default defineConfig({
       title: 'Ling Atlas',
       description: 'Select your preferred language to continue.',
       themeConfig: {
+        logoLink: normalizedBase,
         nav: [],
         sidebar: false
       }
