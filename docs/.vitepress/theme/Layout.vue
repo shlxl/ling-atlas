@@ -1,23 +1,27 @@
 <script setup lang="ts">
-import { computed, defineAsyncComponent, onBeforeUnmount, onMounted, ref } from 'vue'
-import { useRouter } from 'vitepress'
+import { computed, defineAsyncComponent, onMounted, ref, watch } from 'vue'
+import { useData, useRouter } from 'vitepress'
 import DefaultTheme from 'vitepress/dist/client/theme-default/without-fonts'
 import SearchBox from './components/SearchBox.vue'
 import LocaleToggleButton from './components/LocaleToggleButton.vue'
 import { initTelemetry, setupTelemetryRouterHook } from './telemetry'
 import { useRegisterSW } from 'virtual:pwa-register/vue'
-import { useI18nRouting } from './i18n'
-import { getFallbackLocale, LocaleCode, SUPPORTED_LOCALES, normalizeLocalePath, routePrefix } from './locales'
-import { usePreferredLocale } from './composables/preferredLocale'
+import { getFallbackLocale, type LocaleCode } from './locales.mjs'
+import { usePreferredLocale } from './composables/preferredLocale.mjs'
+import {
+  detectLocaleFromPath,
+  getFallbackPath,
+  hasLocalePrefix,
+  normalizeRoutePath
+} from './composables/localeMap'
 
 const router = useRouter()
+const { theme } = useData()
 const offlineReady = ref(false)
 const needRefresh = ref(false)
 const chatOpen = ref(false)
 const activeLocale = ref<LocaleCode>(getFallbackLocale())
 const { preferredLocale, rememberLocale, refreshPreferredLocale } = usePreferredLocale()
-
-const { detectLocaleFromPath } = useI18nRouting()
 
 let updateServiceWorker: (reloadPage?: boolean) => Promise<void>
 
@@ -44,13 +48,10 @@ const ChatWidget = defineAsyncComponent(() => import('./components/ChatWidget.vu
 
 const chatLabels: Record<LocaleCode, string> = { zh: '知识问答', en: 'Knowledge Chat' }
 const chatButtonLabel = computed(() => chatLabels[activeLocale.value] || chatLabels[getFallbackLocale()])
-const brandLink = computed(() => routePrefix(activeLocale.value))
+const brandLink = computed(() => getFallbackPath(activeLocale.value))
 
 function normalizePath(path: string) {
-  if (!path) return routePrefix(getFallbackLocale())
-  const [pathname] = path.split(/[?#]/)
-  if (!pathname) return routePrefix(getFallbackLocale())
-  return normalizeLocalePath(pathname)
+  return normalizeRoutePath(path)
 }
 
 function closeBanner() {
@@ -63,49 +64,6 @@ function refreshNow() {
   closeBanner()
 }
 
-let navBrandEl: HTMLAnchorElement | null = null
-let stopBrandWatch: (() => void) | null = null
-
-function onBrandClick(event: MouseEvent) {
-  if (!navBrandEl) return
-  const target = brandLink.value
-  if (!target) return
-  event.preventDefault()
-  const current = normalizePath(router.route.path)
-  if (current === target) return
-  router.go(target)
-}
-
-function syncBrandLink() {
-  if (typeof document === 'undefined') return
-  const anchor = document.querySelector<HTMLAnchorElement>('.VPNavBarTitle .title')
-  if (!anchor) {
-    if (navBrandEl) {
-      navBrandEl.removeEventListener('click', onBrandClick)
-      navBrandEl = null
-    }
-    if (typeof requestAnimationFrame === 'function') {
-      requestAnimationFrame(() => {
-        syncBrandLink()
-      })
-    }
-    return
-  }
-  if (navBrandEl && navBrandEl !== anchor) {
-    navBrandEl.removeEventListener('click', onBrandClick)
-  }
-  navBrandEl = anchor
-  navBrandEl.href = brandLink.value
-  navBrandEl.addEventListener('click', onBrandClick, { once: false })
-}
-
-function teardownBrandLink() {
-  if (navBrandEl) {
-    navBrandEl.removeEventListener('click', onBrandClick)
-    navBrandEl = null
-  }
-}
-
 onMounted(() => {
   void initTelemetry()
   setupTelemetryRouterHook(router)
@@ -114,7 +72,7 @@ onMounted(() => {
   let redirected = false
   if (!hasLocalePrefix(initialPath)) {
     const targetLocale = preferredLocale.value
-    const targetPath = routePrefix(targetLocale)
+    const targetPath = getFallbackPath(targetLocale)
     if (initialPath !== targetPath) {
       redirected = true
       activeLocale.value = targetLocale
@@ -129,12 +87,6 @@ onMounted(() => {
   router.onAfterRouteChanged?.((to: string) => {
     handleRouteChange(to)
   })
-
-  syncBrandLink()
-})
-
-onBeforeUnmount(() => {
-  teardownBrandLink()
 })
 
 function updateLocale(path: string) {
@@ -145,17 +97,30 @@ function updateLocale(path: string) {
 function handleRouteChange(path: string) {
   updateLocale(path)
   rememberLocale(activeLocale.value)
-  if (navBrandEl) {
-    navBrandEl.href = brandLink.value
-  } else {
-    syncBrandLink()
-  }
 }
 
-function hasLocalePrefix(path: string) {
-  const normalized = normalizePath(path)
-  return SUPPORTED_LOCALES.some(locale => normalized.startsWith(routePrefix(locale.code as LocaleCode)))
-}
+watch(
+  brandLink,
+  link => {
+    if (!link) return
+    const current = theme.value.logoLink
+    if (typeof current === 'string') {
+      if (current !== link) {
+        theme.value.logoLink = link
+      }
+      return
+    }
+    if (current && typeof current === 'object') {
+      if (current.link !== link) {
+        theme.value.logoLink = { ...current, link }
+      }
+      return
+    }
+    theme.value.logoLink = link
+  },
+  { immediate: true }
+)
+
 </script>
 
 <template>
