@@ -69,6 +69,16 @@
         "manifest-fallback": "Falls back to this locale's aggregate index because the slug is missing.",
         "home": "Redirects to the locale home because this page has no translation."
       }
+    },
+    "searchLocaleBadge": {
+      "zh": {
+        "match": "中文内容",
+        "fallback": "英文结果"
+      },
+      "en": {
+        "match": "English result",
+        "fallback": "Chinese fallback"
+      }
     }
   }
 }

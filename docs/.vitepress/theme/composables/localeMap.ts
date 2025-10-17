@@ -50,6 +50,15 @@ export function detectLocaleFromPath(path: string): LocaleCode {
   return isLocaleCode(detected) ? detected : getFallbackLocale()
 }
 
+export function classifyLocaleForPath(path: string, currentLocale: LocaleCode) {
+  const result = localeMapCore.compareLocale(path, currentLocale)
+  const detected = isLocaleCode(result.locale) ? (result.locale as LocaleCode) : getFallbackLocale()
+  return {
+    locale: detected,
+    matches: detected === currentLocale
+  }
+}
+
 async function loadLocaleMap() {
   if (typeof window === 'undefined') return
   if (loadPromise) return loadPromise

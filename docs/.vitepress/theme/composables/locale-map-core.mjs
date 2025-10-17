@@ -62,6 +62,14 @@ export function createLocaleMapCore({
     return getFallbackLocale()
   }
 
+  function compareLocale(path, locale) {
+    const detected = detectLocaleFromPath(path)
+    return {
+      locale: detected,
+      matches: detected === locale
+    }
+  }
+
   function hasLocalePrefix(path) {
     const normalized = normalizeRoutePath(path)
     for (const locale of supportedLocales) {
@@ -138,6 +146,7 @@ export function createLocaleMapCore({
     normalizeRoutePath,
     getFallbackPath,
     detectLocaleFromPath,
+    compareLocale,
     parseAggregatePath,
     resolveTargetPath,
     hasLocalePrefix,

@@ -132,3 +132,14 @@ test('hasLocalePrefix flags supported locale segments', () => {
   assert.equal(localeMapCore.hasLocalePrefix('/unknown/path/'), false)
   assert.equal(localeMapCore.hasLocalePrefix('/'), false)
 })
+
+test('compareLocale reports detected locale and match status', () => {
+  const zhResult = localeMapCore.compareLocale('/zh/_generated/archive/2024/', 'zh')
+  assert.deepEqual(zhResult, { locale: 'zh', matches: true })
+
+  const enResult = localeMapCore.compareLocale('/en/content/example/', 'zh')
+  assert.deepEqual(enResult, { locale: 'en', matches: false })
+
+  const fallbackResult = localeMapCore.compareLocale('/non-localized/path/', 'en')
+  assert.deepEqual(fallbackResult, { locale: 'zh', matches: false })
+})
