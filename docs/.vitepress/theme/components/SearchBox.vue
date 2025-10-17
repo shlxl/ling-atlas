@@ -3,6 +3,7 @@ import { computed, onMounted, onBeforeUnmount, ref } from 'vue'
 import { useRouter } from 'vitepress'
 import { trackEvent, hashQuery, resolveAsset } from '../telemetry'
 import { classifyLocaleForPath, detectLocaleFromPath, normalizeRoutePath } from '../composables/localeMap'
+import { normalizeSearchResultHref } from '../search-path.mjs'
 import { getFallbackLocale, type LocaleCode } from '../locales.mjs'
 import i18n from '../../i18n.json'
 
@@ -91,12 +92,11 @@ function normalizeResultUrl(raw: string) {
   if (!raw) return rootPathPrefix
   if (/^https?:\/\//i.test(raw)) return raw
   try {
-    const normalized = raw.startsWith('/') ? raw : `/${raw}`
-    const url = resolveAsset(normalized)
-    return `${url.pathname}${url.search}${url.hash}`
+    const normalized = normalizeSearchResultHref(raw)
+    return normalized || rootPathPrefix
   } catch (err) {
     console.warn('[search] normalizeResultUrl failed', err)
-    return raw
+    return rootPathPrefix
   }
 }
 
