@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, defineAsyncComponent, onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, defineAsyncComponent, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vitepress'
 import DefaultTheme from 'vitepress/dist/client/theme-default/without-fonts'
 import SearchBox from './components/SearchBox.vue'
@@ -64,7 +64,6 @@ function refreshNow() {
 }
 
 let navBrandEl: HTMLAnchorElement | null = null
-let stopBrandWatch: (() => void) | null = null
 
 function onBrandClick(event: MouseEvent) {
   if (!navBrandEl) return
@@ -145,12 +144,31 @@ function updateLocale(path: string) {
 function handleRouteChange(path: string) {
   updateLocale(path)
   rememberLocale(activeLocale.value)
-  if (!navBrandEl || !navBrandEl.isConnected) {
-    syncBrandLink()
-    return
-  }
-  navBrandEl.href = brandLink.value
+  queueBrandSync()
 }
+
+function queueBrandSync() {
+  const schedule = typeof requestAnimationFrame === 'function' ? requestAnimationFrame : (cb: FrameRequestCallback) => setTimeout(cb, 0)
+  schedule(() => {
+    if (!navBrandEl || !navBrandEl.isConnected) {
+      syncBrandLink()
+      return
+    }
+    const target = brandLink.value
+    if (typeof target === 'string') {
+      navBrandEl.href = target
+    }
+  })
+}
+
+watch(
+  brandLink,
+  () => {
+    if (typeof document === 'undefined') return
+    queueBrandSync()
+  },
+  { immediate: true }
+)
 
 </script>
 
