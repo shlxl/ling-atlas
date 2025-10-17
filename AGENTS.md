@@ -141,11 +141,20 @@ codex run audit   # 可选
 - ⏳ **模块与目录盘点**：计划逐步梳理 `schema/`、`scripts/`、`docs/zh/plans/` 与 `tests/` 中的核心资源，确认审查顺序并在相关文档中更新路线。
 - ⏳ **Pagegen 深入检查**：后续会针对 `scripts/pagegen/*.mjs`、`tests/pagegen.test.mjs` 与缓存/批量写入策略开展专项审查，输出补测与风险清单。
 - 🔁 **结果同步机制**：所有阶段性结论将同步回本文件与 `docs/zh/plans/pagegen-refactor-roadmap.md`，保持多代理协同一致性。
+- ✅ **Landing 入口 root 兼容**：`docs/index.md` 的预渲染脚本会写入 `__LING_ATLAS_ACTIVE_BASE__` 并在 Vue hydration 期间复用，确保 Lighthouse/本地 root 服务下的 locale 重定向保持一致；前端会通过 `docs/.vitepress/theme/base.mjs` 统一读取与缓存该 BASE，Locale Toggle、导航 manifest 与 Telemetry 资产加载均复用同一逻辑。如需调整入口，请同步更新内联脚本、`base.mjs` 与 `<script setup>` 内的调用。
+  Layout.vue 已改用 `locale-map-core` 暴露的 `normalizeRoutePath`、`getFallbackPath` 与 `hasLocalePrefix` 判断首页跳转与导航品牌链接，避免与 Locale Toggle 的检测分叉。
+  Landing 页的 `usePreferredLocale` 现直接复用 `docs/.vitepress/theme/composables/preferredLocale.mjs`，保持与 Layout/Locale Toggle 共用的存储键与回忆逻辑；修改存储策略时需同步内联重定向脚本与该模块。
+  Locale Toggle 的选项文本会读取 `i18n.ui.localeToggleHint` 追加“已翻译 / 聚合回退 / 首页跳转”等标记，帮助读者理解切换结果；新语言若缺少对应翻译会出现空白后缀，提交前请补齐。选项的 `title` 与 `aria-label` 会使用 `i18n.ui.localeToggleDetail` 的文案提示最终跳转落点，如缺失会回退到默认语言，请同步维护。
+  搜索框的结果排序现在依赖 `docs/.vitepress/theme/composables/localeMap.ts` 输出的 `detectLocaleFromPath` 来判断条目语言，并沿用聚合兜底策略；结果列表会依据 `i18n.ui.searchLocaleBadge` 的文案展示“本语言/跨语言回退”徽标，帮助读者预判落点。调整搜索逻辑时请确保仍复用该模块并同步维护该段翻译，避免重新实现语言判定或遗漏 BASE 兼容处理。
+- ✅ **Nav manifest 回归测试**：`tests/pagegen/i18n-registry.test.mjs` 已覆盖“仅英文聚合”“聚合独占单语”等场景，确保 Pagegen 只为具备真实聚合页的语言写出 manifest；CI 若在该用例失败，请优先检查聚合目录与 i18n-map 是否缺失对应语言的内容。
+- ✅ **Nav manifest / i18n map 链接守门**：`node scripts/check-links.mjs` 会同时校验 Markdown 内部链接与 `nav.manifest.<locale>.json`、`i18n-map.json` 的目标路径，确保聚合入口与跨语言映射不会指向缺失页面。
+- ✅ **Locale 切换兜底测试**：`npm run test:theme` 会执行 `tests/locale-map/core.test.mjs` 与 `tests/theme/preferred-locale.test.mjs`，验证当目标语言缺失聚合页时的跳转降级，以及首选语言记忆是否与主题共享存储键，确保不会出现空链或偏离记忆的跳转。
+- ✅ **导航裁剪回归测试**：同一个命令也会跑 `tests/theme/nav-core.test.mjs`，覆盖 manifest 裁剪、归档兜底与缺失 manifest 时的遗留导航逻辑，确保导航栏仅呈现真实存在的聚合入口。
 
 ## 内容生产力守门
 
 - Markdown Lint：`npm run md:lint`（使用 markdownlint-cli2，可提前发现标题序号、行长等问题）。
-- 链接检查：`node scripts/check-links.mjs`（默认校验站内路径是否存在；如需校验外链，可自行扩展）。
+- 链接检查：`node scripts/check-links.mjs`（默认校验站内路径是否存在，并额外回归 nav manifest 与 `i18n-map.json` 的链接；如需校验外链，可自行扩展）。
 - 图片优化：`node scripts/img-opt.mjs`（扫描 `docs/public/images/`，生成 WebP 与缩放版本，后续可据此替换引用）。
 - 搜索索引：`npm run search:index` 会在执行 Pagefind 前调用 `scripts/ensure-dist.mjs`，若 `docs/.vitepress/dist` 中缺少 HTML，将自动触发
   `npm run build` 重新生成站点；若设置 `SEARCH_INDEX_SKIP_BUILD=1`，脚本会直接报错并终止，避免在 CI 中静默复建。

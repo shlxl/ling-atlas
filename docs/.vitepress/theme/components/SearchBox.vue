@@ -2,7 +2,10 @@
 import { computed, onMounted, onBeforeUnmount, ref } from 'vue'
 import { useRouter } from 'vitepress'
 import { trackEvent, hashQuery, resolveAsset } from '../telemetry'
-import { detectLocaleFromPath, getFallbackPath, normalizeRoutePath } from '../composables/localeMap'
+import { classifyLocaleForPath, detectLocaleFromPath, normalizeRoutePath } from '../composables/localeMap'
+import { normalizeSearchResultHref } from '../search-path.mjs'
+import { getFallbackLocale, type LocaleCode } from '../locales.mjs'
+import i18n from '../../i18n.json'
 
 type LexicalResult = { url: string; title: string; excerpt: string; rank: number }
 type SemanticCandidate = { url: string; score: number; vector: number[] | null; rank: number }
@@ -10,7 +13,12 @@ type TextItem = { url: string; title: string; text: string; lang?: 'zh' | 'en' }
 
 const isOpen = ref(false)
 const query = ref('')
-const results = ref<Array<{ url: string; title: string; excerpt: string }>>([])
+type BaseRankedItem = { url: string; title: string; excerpt: string }
+type LocaleBadgeReason = 'match' | 'fallback'
+type RankedItem = BaseRankedItem & { locale: LocaleCode; localeReason: LocaleBadgeReason }
+type DisplayResult = RankedItem & { badge: string }
+
+const results = ref<RankedItem[]>([])
 const loading = ref(false)
 const semanticPending = ref(false)
 const error = ref<string | null>(null)
@@ -30,10 +38,10 @@ let debounceTimer = 0
 const allowedVariants = new Set(['lex', 'rrf', 'rrf-mmr'])
 const activeVariant = ref<'none' | 'lex' | 'rrf' | 'rrf-mmr'>('none')
 let interleaveTeams: Record<string, 'control' | 'variant'> = {}
-const currentLocale = ref<'zh' | 'en'>('zh')
+const fallbackLocale = getFallbackLocale()
+const currentLocale = ref<LocaleCode>(fallbackLocale)
 const router = useRouter()
-const rootPathPrefix = resolveAsset('/').pathname
-const enPathPrefix = resolveAsset('/en/').pathname
+const rootPathPrefix = normalizeRoutePath('/')
 const SEARCH_I18N = {
   zh: {
     button: '搜索（Ctrl/⌘K）',
@@ -54,16 +62,41 @@ const SEARCH_I18N = {
 } as const
 const uiText = computed(() => SEARCH_I18N[currentLocale.value])
 
+const localeBadgeTexts = computed<Record<LocaleBadgeReason, string>>(() => {
+  const resources = ((i18n as any)?.ui?.searchLocaleBadge ?? {}) as Record<
+    string,
+    Partial<Record<LocaleBadgeReason, string>>
+  >
+  const localized = resources[currentLocale.value] || {}
+  const fallbackTexts = resources[fallbackLocale] || {}
+  return {
+    match:
+      localized.match ||
+      fallbackTexts.match ||
+      (currentLocale.value === 'en' ? 'English result' : '中文内容'),
+    fallback:
+      localized.fallback ||
+      fallbackTexts.fallback ||
+      (currentLocale.value === 'en' ? 'Chinese result' : '英文结果')
+  }
+})
+
+const displayResults = computed<DisplayResult[]>(() =>
+  results.value.map(item => ({
+    ...item,
+    badge: item.localeReason === 'match' ? localeBadgeTexts.value.match : localeBadgeTexts.value.fallback
+  }))
+)
+
 function normalizeResultUrl(raw: string) {
   if (!raw) return rootPathPrefix
   if (/^https?:\/\//i.test(raw)) return raw
   try {
-    const normalized = raw.startsWith('/') ? raw : `/${raw}`
-    const url = resolveAsset(normalized)
-    return `${url.pathname}${url.search}${url.hash}`
+    const normalized = normalizeSearchResultHref(raw)
+    return normalized || rootPathPrefix
   } catch (err) {
     console.warn('[search] normalizeResultUrl failed', err)
-    return raw
+    return rootPathPrefix
   }
 }
 
@@ -80,45 +113,37 @@ function detectVariantFromLocation() {
   }
 }
 
-function normalizePath(path: string) {
-  if (!path) return rootPathPrefix
-  const [pathname] = path.split(/[?#]/)
-  if (!pathname) return rootPathPrefix
-  return pathname
-}
-
 function updateLocaleFromPath(path: string) {
   if (!path) return
-  const normalized = normalizePath(path)
-  currentLocale.value = normalized.startsWith(enPathPrefix) ? 'en' : 'zh'
+  try {
+    const detected = detectLocaleFromPath(path)
+    currentLocale.value = detected
+  } catch (err) {
+    console.warn('[search] locale detection failed', err)
+    currentLocale.value = fallbackLocale
+  }
 }
 
-type RankedItem = { url: string; title: string; excerpt: string }
 type InterleaveEntry = { item: RankedItem; team: 'control' | 'variant' }
 
-function splitByLocale(items: RankedItem[]) {
+function prioritizeLocale(items: BaseRankedItem[]): RankedItem[] {
   const same: RankedItem[] = []
   const others: RankedItem[] = []
   for (const item of items) {
-    const isEn = isEnglishUrl(item.url)
-    if ((currentLocale.value === 'en' && isEn) || (currentLocale.value === 'zh' && !isEn)) {
-      same.push(item)
+    const { locale, matches } = classifyLocaleForPath(item.url, currentLocale.value)
+    const reason: LocaleBadgeReason = matches ? 'match' : 'fallback'
+    const annotated: RankedItem = {
+      ...item,
+      locale,
+      localeReason: reason
+    }
+    if (matches) {
+      same.push(annotated)
     } else {
-      others.push(item)
+      others.push(annotated)
     }
   }
   return same.length ? same.concat(others) : others
-}
-
-function isEnglishUrl(url: string) {
-  if (!url || /^https?:\/\//i.test(url)) return false
-  try {
-    const normalized = normalizeRoutePath(url)
-    return normalized.startsWith(enPathPrefix)
-  } catch (err) {
-    console.warn('[search] english detection failed', err)
-    return false
-  }
 }
 
 function teamDraftInterleave(control: RankedItem[], variant: RankedItem[], seed: string, limit = 20): InterleaveEntry[] {
@@ -462,8 +487,8 @@ async function runSearch(input: string) {
     lexical = await getLexicalResults(q)
     if (token !== searchToken) return
 
-    lexicalRanked = lexical.map(item => ({ url: item.url, title: item.title, excerpt: item.excerpt }))
-    lexicalRanked = splitByLocale(lexicalRanked)
+    const lexicalBase = lexical.map(item => ({ url: item.url, title: item.title, excerpt: item.excerpt }))
+    lexicalRanked = prioritizeLocale(lexicalBase)
 
     results.value = lexicalRanked.slice(0, 20)
 
@@ -497,14 +522,14 @@ async function runSearch(input: string) {
   const lexicalMap = new Map(lexical.map(item => [item.url, item]))
   const baseLexical = lexicalRanked.length
     ? lexicalRanked
-    : splitByLocale(lexical.map(item => ({ url: item.url, title: item.title, excerpt: item.excerpt })))
+    : prioritizeLocale(lexical.map(item => ({ url: item.url, title: item.title, excerpt: item.excerpt })))
 
   let rrfRanked: RankedItem[] = baseLexical
   let mmrRanked: RankedItem[] = baseLexical
 
   if (semantic && semantic.items.length) {
     const fused = rrfFuse(lexical, semantic.items)
-    rrfRanked = fused.map(entry => {
+    const rrfBase = fused.map(entry => {
       const lex = lexicalMap.get(entry.url)
       if (lex) return { url: lex.url, title: lex.title, excerpt: lex.excerpt }
       const fallback = textMap.get(entry.url)
@@ -514,9 +539,9 @@ async function runSearch(input: string) {
         excerpt: (fallback?.text || '').slice(0, 160)
       }
     })
-    rrfRanked = splitByLocale(rrfRanked)
+    rrfRanked = prioritizeLocale(rrfBase)
     const reranked = mmrSelect(fused, semantic.queryVec, 20)
-    mmrRanked = reranked.map(entry => {
+    const mmrBase = reranked.map(entry => {
       const lex = lexicalMap.get(entry.url)
       if (lex) return { url: lex.url, title: lex.title, excerpt: lex.excerpt }
       const fallback = textMap.get(entry.url)
@@ -526,7 +551,7 @@ async function runSearch(input: string) {
         excerpt: (fallback?.text || '').slice(0, 160)
       }
     })
-    mmrRanked = splitByLocale(mmrRanked)
+    mmrRanked = prioritizeLocale(mmrBase)
   }
 
   const controlList = semantic && semantic.items.length ? mmrRanked : baseLexical
@@ -598,10 +623,18 @@ function scheduleSearch() {
   }, 160)
 }
 
-function onResultClick(item: { url: string }, index: number) {
+function onResultClick(item: DisplayResult, index: number) {
   if (lastQueryHash.value) {
     const team = activeVariant.value !== 'none' ? interleaveTeams[item.url] ?? 'control' : 'control'
-    const payload: Record<string, any> = { qHash: lastQueryHash.value, rank: index + 1, url: item.url, team, locale: currentLocale.value }
+    const payload: Record<string, any> = {
+      qHash: lastQueryHash.value,
+      rank: index + 1,
+      url: item.url,
+      team,
+      locale: currentLocale.value,
+      resultLocale: item.locale,
+      resultMatches: item.localeReason === 'match'
+    }
     if (activeVariant.value !== 'none') payload.variant = activeVariant.value
     void trackEvent('search_click', payload)
     if (activeVariant.value !== 'none') {
@@ -611,7 +644,9 @@ function onResultClick(item: { url: string }, index: number) {
         team,
         rank: index + 1,
         url: item.url,
-        locale: currentLocale.value
+        locale: currentLocale.value,
+        resultLocale: item.locale,
+        resultMatches: item.localeReason === 'match'
       })
     }
   }
@@ -677,12 +712,22 @@ onBeforeUnmount(() => {
           <div v-if="error" class="la-error">{{ error }}</div>
           <div v-else-if="loading" class="la-loading">{{ uiText.loading }}</div>
           <div v-else class="la-results-wrapper">
-            <template v-if="results.length">
+            <template v-if="displayResults.length">
               <p v-if="semanticPending" class="la-semantic-hint">{{ uiText.semantic }}</p>
               <ul class="la-results">
-                <li v-for="(item, idx) in results" :key="item.url">
+                <li v-for="(item, idx) in displayResults" :key="item.url">
                   <a :href="item.url" @click="onResultClick(item, idx)">
-                    <div class="la-title">{{ item.title }}</div>
+                    <div class="la-title-row">
+                      <div class="la-title">{{ item.title }}</div>
+                      <span
+                        v-if="item.badge"
+                        class="la-locale-badge"
+                        :data-kind="item.localeReason"
+                        :data-locale="item.locale"
+                      >
+                        {{ item.badge }}
+                      </span>
+                    </div>
                     <div class="la-excerpt">{{ item.excerpt }}</div>
                   </a>
                 </li>
@@ -791,7 +836,36 @@ onBeforeUnmount(() => {
 .la-results { list-style: none; padding: 0; margin: 0; }
 .la-results li { border-bottom: 1px solid var(--vp-c-divider); }
 .la-results a { display: block; padding: 8px 12px; text-decoration: none; color: inherit; }
-.la-title { font-weight: 600; margin: 6px 0; }
+.la-title-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.la-title {
+  font-weight: 600;
+  margin: 6px 0;
+  flex: 1 1 auto;
+}
+
+.la-locale-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.1rem 0.45rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  background: color-mix(in srgb, var(--vp-c-brand-1) 20%, transparent);
+  color: var(--vp-c-brand-1);
+  border: 1px solid color-mix(in srgb, var(--vp-c-brand-1) 45%, transparent);
+}
+
+.la-locale-badge[data-kind='fallback'] {
+  background: color-mix(in srgb, var(--vp-c-warning-1) 18%, transparent);
+  color: var(--vp-c-warning-1);
+  border-color: color-mix(in srgb, var(--vp-c-warning-1) 45%, transparent);
+}
 .la-excerpt { font-size: 13px; color: var(--vp-c-text-2); margin-bottom: 10px; }
 .la-error, .la-loading { padding: 14px; }
 .la-empty { padding: 14px; font-size: 14px; color: var(--vp-c-text-2); text-align: center; }

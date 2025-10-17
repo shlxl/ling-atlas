@@ -49,16 +49,26 @@ function isNetworkError(error) {
 }
 
 async function fetchResource(url) {
-  const response = await fetch(url, {
-    redirect: 'follow',
-    cache: 'no-store',
-    referrerPolicy: 'no-referrer'
-  })
-  if (!response.ok) {
-    throw new Error(`Failed to fetch ${url} (${response.status} ${response.statusText})`)
+  try {
+    const response = await fetch(url, {
+      redirect: 'follow',
+      cache: 'no-store',
+      referrerPolicy: 'no-referrer'
+    })
+    if (!response.ok) {
+      throw new Error(`Failed to fetch ${url} (${response.status} ${response.statusText})`)
+    }
+    const arrayBuffer = await response.arrayBuffer()
+    return Buffer.from(arrayBuffer)
+  } catch (error) {
+    if (isNetworkError(error) || isNetworkError(error?.cause)) {
+      const offlineError = new Error(`Network request failed for ${url}`)
+      offlineError.cause = error
+      offlineError.code = 'OFFLINE'
+      throw offlineError
+    }
+    throw error
   }
-  const arrayBuffer = await response.arrayBuffer()
-  return Buffer.from(arrayBuffer)
 }
 
 async function buildManifest() {
