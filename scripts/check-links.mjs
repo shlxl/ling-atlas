@@ -72,6 +72,14 @@ function normalizeInternal(url) {
   return '/' + url.replace(/^\.\//, '')
 }
 
+function decodeMaybe(url) {
+  try {
+    return decodeURI(url)
+  } catch {
+    return url
+  }
+}
+
 function stripLocalePrefix(url) {
   for (const { locale, prefix } of localePrefixes) {
     if (!prefix) continue
@@ -178,6 +186,8 @@ async function main() {
   }
   const manifestErrors = await validateNavManifests(manifestInfos)
   errors.push(...manifestErrors)
+  const i18nMapErrors = await validateI18nMaps()
+  errors.push(...i18nMapErrors)
   if (errors.length) {
     console.error('Link check failed:')
     errors.forEach(err => console.error(' -', err))
@@ -410,4 +420,57 @@ async function getContentIndex(locale) {
 
   CONTENT_CACHE.set(locale, index)
   return index
+}
+
+async function validateI18nMaps() {
+  const files = await collectI18nMapFiles()
+  const errors = []
+
+  for (const file of files) {
+    let payload
+    try {
+      const raw = await fs.readFile(file, 'utf8')
+      payload = JSON.parse(raw)
+    } catch (error) {
+      console.warn(`[check-links] failed to read i18n map ${path.relative(ROOT, file)}`, error)
+      continue
+    }
+
+    if (!payload || typeof payload !== 'object') continue
+
+    for (const [sourcePath, entry] of Object.entries(payload)) {
+      if (!entry || typeof entry !== 'object') continue
+
+      const decodedSource = decodeMaybe(sourcePath)
+      const sourceResult = await validateInternalLink(decodedSource, `${path.relative(ROOT, file)} [source:${sourcePath}]`)
+      if (sourceResult !== true) errors.push(sourceResult)
+
+      for (const [localeKey, targetPath] of Object.entries(entry)) {
+        if (typeof targetPath !== 'string' || !targetPath) continue
+        const decodedTarget = decodeMaybe(targetPath)
+        const context = `${path.relative(ROOT, file)} [${sourcePath} -> ${localeKey}]`
+        const result = await validateInternalLink(decodedTarget, context)
+        if (result !== true) errors.push(result)
+      }
+    }
+  }
+
+  return errors
+}
+
+async function collectI18nMapFiles() {
+  const patterns = [
+    'docs/public/i18n-map.json',
+    'docs/_generated/i18n-map.json',
+    'docs/**/_generated/i18n-map.*.json'
+  ]
+  const matches = await globby(patterns, { cwd: ROOT, absolute: true })
+  const seen = new Set()
+  const files = []
+  for (const absolutePath of matches) {
+    if (seen.has(absolutePath)) continue
+    seen.add(absolutePath)
+    files.push(absolutePath)
+  }
+  return files
 }
