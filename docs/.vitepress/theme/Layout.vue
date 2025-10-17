@@ -145,11 +145,11 @@ function updateLocale(path: string) {
 function handleRouteChange(path: string) {
   updateLocale(path)
   rememberLocale(activeLocale.value)
-  if (navBrandEl) {
-    navBrandEl.href = brandLink.value
-  } else {
+  if (!navBrandEl || !navBrandEl.isConnected) {
     syncBrandLink()
+    return
   }
+  navBrandEl.href = brandLink.value
 }
 
 </script>
