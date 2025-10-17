@@ -43,6 +43,22 @@
 - 扩展 `docs/.vitepress/theme/composables/localeMap.ts` 与 `LocaleToggleButton.vue`，在解析目标路径时先检查 manifest 中是否存在对应 slug；若不存在则降级到语言首页或聚合主入口。
 - 该逻辑也可以复用在搜索结果或站内跳转中：当发现 URL 指向的聚合页在当前语言缺失时，提示“暂未翻译，切换到 XX 语言”。（可作为后续增强。）
 
+### 近期进展
+
+- 登陆页的内联重定向脚本会在检测 BASE 与当前路径不一致时回退到 `/`，并把解析结果写入 `window.__LING_ATLAS_ACTIVE_BASE__`，Vue 侧在 hydration 期间读取该变量避免二次判断偏差。这保证了 Lighthouse、CI 静态预览与本地 `vitepress preview` 使用不同 BASE 时都能落到正确语言入口。
+- 新增 `docs/.vitepress/theme/base.mjs` 负责读取 `<meta name="ling-atlas:base">`、`import.meta.env.BASE_URL` 与当前路径推断出的真实 BASE，并缓存到 `window.__LING_ATLAS_ACTIVE_BASE__`；
+  `LocaleToggleButton.vue`、`useLocaleMap`、`telemetry.ts` 与 Landing 页的 `<script setup>` 均复用该模块，避免不同入口下出现 BASE 判定分叉。
+- 扩充 `tests/pagegen/i18n-registry.test.mjs`，新增“仅存在英文聚合”与“聚合只属于单一语言”两种回归场景，验证 nav manifest 仅写入具备真实聚合页的语言，防止导航渲染空链，并确保 i18n-map 不会记录缺失目标语言的映射。
+- 提取 `Locale Toggle` 的聚合解析逻辑为 `locale-map-core`，并通过 `tests/locale-map/core.test.mjs` 验证当聚合缺失时会优雅退回 manifest 提供的入口或语言首页，覆盖 direct mapping、manifest fallback 与纯首页降级的分支。
+- 抽离导航构建逻辑为 `docs/.vitepress/theme/nav-core.mjs`，在 `docs/.vitepress/config.ts` 中复用同一实现，并以 `tests/theme/nav-core.test.mjs` 覆盖 manifest 裁剪、归档兜底与无 manifest 时的旧导航回退，确保导航入口与 pagegen 产物保持同步。
+- 扩展 `scripts/check-links.mjs`，在 Markdown 巡检时同步校验 `nav.manifest.<locale>.json` 与 `i18n-map.json` 的链接指向，CI 如发现缺失聚合或跨语言映射会直接报错。
+- `docs/.vitepress/theme/Layout.vue` 与 `i18n.ts` 已复用 `locale-map-core` 导出的 `normalizeRoutePath`、`getFallbackPath` 与 `hasLocalePrefix`，统一首页跳转、品牌链接与路由前缀检测的实现，避免与 Locale Toggle 的定位策略产生分叉。
+- `docs/index.md` 的首屏脚本改为直接复用 `docs/.vitepress/theme/composables/preferredLocale.mjs`，与 Layout 与 Locale Toggle 共用首选语言记忆与存储键，避免登陆页与主题逻辑分叉。
+- `LocaleToggleButton.vue` 会读取 `i18n.ui.localeToggleHint` 为每个语言选项追加“已翻译 / 聚合回退 / 首页跳转”等提示，提前告知读者切换后的落点；如需新增语言，请同步维护这段提示文本。
+- Locale Toggle 的 `<option>` 现会从 `i18n.ui.localeToggleDetail` 读取完整说明，写入 `title` 与 `aria-label`，便于读者与辅助技术在选择时了解最终落点；新增语言请同步补充提示文案。
+- 搜索面板的结果排序改为调用 `localeMap` 的 `detectLocaleFromPath` 判定条目语言，再按当前语言优先级排列；未知或缺失聚合映射的条目会沿用聚合兜底策略回退到默认语言，避免重新实现 BASE 兼容逻辑。
+- 搜索面板会依据 `i18n.ui.searchLocaleBadge` 展示“本语言/跨语言回退”徽标，并通过 locale-map 的 `classifyLocaleForPath` 匹配结果语言，帮助读者在跳转前预判落点并复用统一的前缀守门逻辑。
+
 ### 4. 验证与守护
 
 - 新增一个脚本（或在 `scripts/check-links.mjs` 中扩展）来验证 manifest 中的 URL 均可读取文件，CI 失败时给出详细列表，并在 README 调整后同步更新守护脚本的“多语结构”提示。
