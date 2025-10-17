@@ -118,6 +118,8 @@ type GlobalWindow = Window & {
   __LING_ATLAS_REDIRECT_DONE__?: boolean
 }
 
+type MutableGlobal = GlobalWindow & Record<string, unknown>
+
 function ensureTrailingSlash(path: string) {
   return path.endsWith('/') ? path : `${path}/`
 }
@@ -165,10 +167,11 @@ onMounted(() => {
   if (typeof window === 'undefined') return
 
   const globalWindow = window as GlobalWindow
+  const mutableWindow = globalWindow as MutableGlobal
 
-  const currentBase = (globalWindow as any)[ACTIVE_BASE_GLOBAL]
+  const currentBase = Reflect.get(mutableWindow, ACTIVE_BASE_GLOBAL)
   if (typeof currentBase !== 'string' || !currentBase.length) {
-    ;(globalWindow as any)[ACTIVE_BASE_GLOBAL] = activeBase
+    Reflect.set(mutableWindow, ACTIVE_BASE_GLOBAL, activeBase)
   }
   if (globalWindow.__LING_ATLAS_REDIRECT_DONE__) return
 
