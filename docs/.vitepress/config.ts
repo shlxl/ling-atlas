@@ -5,11 +5,11 @@ import { VitePWA } from 'vite-plugin-pwa'
 import {
   DEFAULT_LOCALE,
   SUPPORTED_LOCALES,
-  LocaleCode,
-  VitepressLocaleKey,
   manifestFileName,
-  normalizedRoutePrefix
+  normalizedRoutePrefix,
+  routePrefix
 } from './theme/locales'
+import type { LocaleCode, VitepressLocaleKey } from './theme/locales'
 
 function loadCspTemplate() {
   try {
@@ -95,12 +95,59 @@ const localeCopy: Record<LocaleCode, LocaleCopy> = {
   }
 }
 
+type NavCopy = {
+  latest: string
+  categories: string
+  series: string
+  tags: string
+  about: string
+  metrics: string
+  qa: string
+  guides: string
+  deploy: string
+  migration: string
+}
+
+const navFallback: Record<LocaleCode, NavCopy> = {
+  zh: {
+    latest: '最新',
+    categories: '分类',
+    series: '系列',
+    tags: '标签',
+    about: 'About',
+    metrics: '观测指标',
+    qa: '常见问答',
+    guides: '指南',
+    deploy: '部署指南',
+    migration: '迁移与重写'
+  },
+  en: {
+    latest: 'Latest',
+    categories: 'Categories',
+    series: 'Series',
+    tags: 'Tags',
+    about: 'About',
+    metrics: 'Metrics',
+    qa: 'FAQ',
+    guides: 'Guides',
+    deploy: 'Deployment',
+    migration: 'Migration'
+  }
+}
+
+function getNavCopy(locale: LocaleCode): NavCopy {
+  const fallback = navFallback[locale]
+  const overrides = (i18nMap?.nav?.[locale] ?? {}) as Partial<NavCopy>
+  return { ...fallback, ...overrides }
+}
+
 const localizedLocaleConfigs = Object.fromEntries(
   SUPPORTED_LOCALES.map(locale => {
     const code = locale.code
     const strings = localeCopy[code]
     const manifest = localeManifest[code] ?? null
     const meta = localeMeta[code]
+    const homeLink = routePrefix(code as LocaleCode)
     return [
       locale.vitepressKey,
       {
@@ -109,6 +156,7 @@ const localizedLocaleConfigs = Object.fromEntries(
         title: strings.title,
         description: strings.description,
         themeConfig: {
+          logoLink: homeLink,
           nav: navFromMeta(meta, manifest, code),
           sidebar: 'auto',
           lightModeSwitchTitle: strings.lightModeSwitchTitle,
@@ -150,7 +198,7 @@ type NavManifest = {
 function navFromMeta(meta: any, manifest: NavManifest | null, locale: LocaleCode) {
   if (!manifest) return legacyNavFromMeta(meta, locale)
 
-  const t = i18nMap.nav[locale]
+  const t = getNavCopy(locale)
   const routeRoot = normalizedRoutePrefix(locale).replace(/\/$/, '')
   const collator = new Intl.Collator(locale === 'en' ? 'en' : 'zh-CN')
 
@@ -228,7 +276,7 @@ function navFromMeta(meta: any, manifest: NavManifest | null, locale: LocaleCode
 }
 
 function legacyNavFromMeta(meta: any, locale: LocaleCode) {
-  const t = i18nMap.nav[locale]
+  const t = getNavCopy(locale)
   const prefix = normalizedRoutePrefix(locale).replace(/\/$/, '')
   const years = Object.keys(meta.byYear || {}).sort().reverse()
   const firstTag = Object.keys(meta.byTag || {})[0] || 'all'
@@ -341,6 +389,7 @@ export default defineConfig({
       title: 'Ling Atlas',
       description: 'Select your preferred language to continue.',
       themeConfig: {
+        logoLink: normalizedBase,
         nav: [],
         sidebar: false
       }
