@@ -1,9 +1,7 @@
 import fs from 'node:fs/promises'
 import path from 'node:path'
-import { globby } from 'globby'
-import matter from 'gray-matter'
-import { marked } from 'marked'
-import { fileURLToPath, pathToFileURL } from 'url'
+import { performance } from 'node:perf_hooks'
+import { fileURLToPath } from 'url'
 import {
   DOCS_DIR as DOCS,
   GENERATED_ROOT as GEN,
@@ -12,6 +10,12 @@ import {
   LANGUAGES,
   getPreferredLocale
 } from './pagegen.locales.mjs'
+import { collectPosts } from './pagegen/collect.mjs'
+import { syncLocaleContent } from './pagegen/sync.mjs'
+import { writeCollections } from './pagegen/collections.mjs'
+import { generateRss, generateSitemap } from './pagegen/feeds.mjs'
+import { createI18nRegistry } from './pagegen/i18n-registry.mjs'
+import { createWriter } from './pagegen/writer.mjs'
 
 export {
   LOCALE_REGISTRY,
@@ -35,6 +39,12 @@ await (async () => {
   await fs.mkdir(PUBLIC_DIR, { recursive: true })
 
   const LOCALE_CONFIG = LANGUAGES
+  const argv = process.argv.slice(2)
+  const forceFullSync = argv.includes('--full-sync') || process.env.PAGEGEN_FULL_SYNC === '1'
+  const disableCache = argv.includes('--no-cache') || process.env.PAGEGEN_DISABLE_CACHE === '1'
+  const batchingDisabled = argv.includes('--no-batch') || process.env.PAGEGEN_DISABLE_BATCH === '1'
+  const collectConcurrency = Number(process.env.PAGEGEN_CONCURRENCY || 8)
+  const writer = batchingDisabled ? null : createWriter()
 
   for (const lang of LOCALE_CONFIG) {
     if (lang.generatedDir) {
@@ -49,453 +59,204 @@ await (async () => {
   }
 
   const preferredLocaleCode = getPreferredLocale()
-  const i18nPairs = new Map()
-  const navManifest = new Map()
+  const stageTimings = []
+  const metricsLogPath = path.join(__dirname, '..', 'data', 'pagegen-metrics.json')
 
-  function manifestLocaleKeys(lang) {
-    const keys = new Set([lang.manifestLocale, ...(lang.aliasLocaleIds || [])])
-    return Array.from(keys)
+  function recordStage(name, durationMs) {
+    stageTimings.push({ name, durationMs })
+    console.log(`[pagegen] ${name} ${durationMs.toFixed(1)}ms`)
   }
 
-  const LOCALE_ALIAS_MAP = new Map(
-    LOCALE_CONFIG.map(lang => [lang.manifestLocale, lang.aliasLocaleIds || []])
-  )
-
-  function expandLocalePaths(localePaths) {
-    const next = { ...(localePaths || {}) }
-    for (const [locale, targetPath] of Object.entries(localePaths || {})) {
-      const aliases = LOCALE_ALIAS_MAP.get(locale) || []
-      for (const alias of aliases) {
-        if (!alias) continue
-        if (!(alias in next) && targetPath) {
-          next[alias] = targetPath
-        }
-      }
+  async function measureStage(name, fn) {
+    const start = performance.now()
+    try {
+      return await fn()
+    } finally {
+      recordStage(name, performance.now() - start)
     }
-    return next
   }
 
-  const TAXONOMY_TYPES = ['categories', 'series', 'archive']
+  function flushStageSummary() {
+    const total = stageTimings.reduce((sum, item) => sum + item.durationMs, 0)
+    console.log(`[pagegen] total ${total.toFixed(1)}ms`)
+    return total
+  }
 
-  const taxonomyGroups = Object.fromEntries(
-    TAXONOMY_TYPES.map(type => [type, { groups: new Set(), slugIndex: new Map(), postIndex: new Map() }])
+  const tagAlias = await loadTagAlias(__dirname)
+  const registry = createI18nRegistry(LOCALE_CONFIG, { tagAlias })
+
+  const syncMetrics = await measureStage('syncLocaleContent', () =>
+    syncLocaleContent(LOCALE_CONFIG, {
+      fullSync: forceFullSync,
+      cacheDir: path.join(__dirname, '..', 'data')
+    })
   )
-
-  const tagGroups = new Map()
-
-  const tagAlias = await loadTagAlias()
-
-  function canonicalTag(tag) {
-    if (!tag) return ''
-    const direct = tagAlias[tag]
-    if (direct) return slug(direct)
-    const lowered = tag.toLowerCase?.()
-    if (lowered && tagAlias[lowered]) return slug(tagAlias[lowered])
-    return slug(tag)
+  for (const metric of syncMetrics || []) {
+    const copied = metric.copied ? 'copied' : 'skipped'
+    const sizeMb = metric.bytes ? (metric.bytes / (1024 * 1024)).toFixed(2) : '0.00'
+    console.log(
+      `[pagegen] sync:${metric.locale} ${copied} mode=${metric.mode} files=${metric.files}` +
+        ` copied=${metric.copiedFiles} removed=${metric.removedFiles} size=${sizeMb}MB`
+    )
   }
-
-  await syncLocaleContent()
 
   const siteOrigin = process.env.SITE_ORIGIN || 'https://example.com'
+  const collectMetrics = {}
 
   for (const lang of LOCALE_CONFIG) {
-    ensureNavManifest(lang.manifestLocale)
-    const posts = await collectPosts(lang)
-    await fs.writeFile(lang.outMeta, JSON.stringify(posts.meta, null, 2))
+    const posts = await measureStage(`collect:${lang.manifestLocale}`, () =>
+      collectPosts(lang, {
+        cacheDir: path.join(__dirname, '..', 'data'),
+        disableCache,
+        concurrency: collectConcurrency
+      })
+    )
+    if (posts.stats) {
+      collectMetrics[lang.code || lang.manifestLocale] = posts.stats
+      console.log(
+        `[pagegen] cache:${lang.manifestLocale} hits=${posts.stats.cacheHits} misses=${posts.stats.cacheMisses}` +
+          ` parsed=${posts.stats.parsedFiles} total=${posts.stats.totalFiles}`
+      )
+    }
+    await measureStage(`meta:${lang.manifestLocale}`, async () => {
+      const payload = `${JSON.stringify(posts.meta, null, 2)}\n`
+      if (writer) {
+        writer.addFileTask({
+          stage: 'meta',
+          locale: lang.manifestLocale,
+          target: lang.outMeta,
+          content: payload
+        })
+      } else {
+        await fs.writeFile(lang.outMeta, payload)
+      }
+    })
 
-    await writeCollections(lang, posts.meta)
-    await genRSS(lang, posts.list)
-    await genSitemap(lang, posts.list)
-    collectI18nPairs(posts.list, lang)
+    const navEntries = await measureStage(`collections:${lang.manifestLocale}`, () =>
+      writeCollections(lang, posts.meta, writer)
+    )
+    registry.addNavEntries(lang, navEntries)
+    await measureStage(`rss:${lang.manifestLocale}`, () =>
+      generateRss(lang, posts.list, {
+        publicDir: PUBLIC_DIR,
+        siteOrigin,
+        preferredLocale: preferredLocaleCode,
+        writer
+      })
+    )
+    await measureStage(`sitemap:${lang.manifestLocale}`, () =>
+      generateSitemap(lang, posts.list, { publicDir: PUBLIC_DIR, siteOrigin, writer })
+    )
+
+    for (const post of posts.list) {
+      registry.registerPost(post, lang)
+    }
   }
 
-  flushTaxonomyGroups()
-  flushTagGroups()
-  await writeI18nMap()
-  await writeNavManifests()
+  const i18nMap = registry.getI18nMap()
+  await measureStage('scheduleI18nMap', () => writeI18nMap(i18nMap, writer))
+
+  const navPayloads = registry.getNavManifestPayloads()
+  await measureStage('scheduleNavManifests', () => writeNavManifests(navPayloads, writer))
+
+  let writeResults = {
+    total: 0,
+    written: 0,
+    skipped: 0,
+    failed: 0,
+    errors: [],
+    disabled: batchingDisabled
+  }
+
+  if (writer) {
+    writeResults = await measureStage('flushWrites', () => writer.flush())
+    if (writeResults.failed > 0) {
+      for (const err of writeResults.errors || []) {
+        console.error(
+          `[pagegen] write failed stage=${err.stage || 'unknown'} locale=${err.locale || 'n/a'} target=${err.target || 'n/a'}: ${
+            err.message || 'unknown error'
+          }`
+        )
+      }
+      throw new Error(`pagegen write failures: ${writeResults.failed}`)
+    }
+  }
+
+  const totalDuration = flushStageSummary()
 
   console.log('✔ pagegen 完成')
 
-  function toExcerpt(md) {
-    const html = marked.parse((md || '').split('\n\n')[0] || '')
-    return String(html).replace(/<[^>]+>/g, '').slice(0, 180)
-  }
+  await appendMetricsLog({
+    timestamp: new Date().toISOString(),
+    totalMs: Number(totalDuration.toFixed(3)),
+    sync: syncMetrics,
+    stages: stageTimings.map(item => ({
+      name: item.name,
+      ms: Number(item.durationMs.toFixed(3))
+    })),
+    collect: collectMetrics,
+    write: writeResults
+  })
 
-  function ymd(value) {
-    return value?.slice(0, 10) || ''
-  }
-
-  function slug(input) {
-    return String(input || '')
-      .normalize('NFKD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .replace(/[^\p{Letter}\p{Number}]+/gu, '-')
-      .replace(/(^-|-$)/g, '')
-      .toLowerCase()
-  }
-
-  async function exists(target) {
-    try {
-      await fs.access(target)
-      return true
-    } catch {
-      return false
-    }
-  }
-
-  async function syncLocaleContent() {
-    for (const lang of LOCALE_CONFIG) {
-      if (!(await exists(lang.contentDir))) continue
-      if (!lang.localizedContentDir) continue
-      const source = path.resolve(lang.contentDir)
-      const target = path.resolve(lang.localizedContentDir)
-      if (source === target) continue
-      await fs.mkdir(path.dirname(target), { recursive: true })
-      await fs.rm(target, { recursive: true, force: true })
-      await fs.mkdir(target, { recursive: true })
-      await fs.cp(lang.contentDir, target, { recursive: true })
-    }
-  }
-
-  async function collectPosts(lang) {
-    const list = []
-    const meta = { byCategory: {}, bySeries: {}, byTag: {}, byYear: {}, all: [] }
-    if (!(await exists(lang.contentDir))) return { list, meta }
-
-    const files = await globby('**/index.md', { cwd: lang.contentDir })
-    for (const file of files) {
-      const raw = await fs.readFile(path.join(lang.contentDir, file), 'utf8')
-      const { data, content } = matter(raw)
-      const status = pickField(lang.contentFields.status, data)?.toLowerCase?.()
-      if (status === 'draft') continue
-
-      const posix = file.replace(/\\/g, '/')
-      const without = posix.includes('/') ? posix.substring(0, posix.lastIndexOf('/')) : ''
-      const url = lang.basePath + (without ? `${without}/` : '')
-
-      const date = ymd(data.date)
-      const updated = ymd(data.updated)
-      const categoryValue = pickField(lang.contentFields.category, data) || 'Uncategorized'
-      const tagsValue = toArray(pickField(lang.contentFields.tags, data))
-      const seriesValue = pickField(lang.contentFields.series, data)
-      const seriesSlug = slug(pickField(lang.contentFields.seriesSlug, data) || seriesValue || '')
-      const categorySlug = slug(categoryValue)
-      const year = (updated || date)?.slice(0, 4) || ''
-
-      const entry = {
-        title: data.title,
-        date,
-        updated,
-        status: data.status,
-        category: categoryValue,
-        category_slug: categorySlug,
-        series: seriesValue,
-        series_slug: seriesSlug,
-        tags: tagsValue,
-        slug: data.slug,
-        path: url,
-        excerpt: data.excerpt || toExcerpt(content),
-        relative: without,
-        year
-      }
-
-      list.push(entry)
-    }
-
-    list.sort((a, b) => (b.updated || b.date).localeCompare(a.updated || a.date))
-    meta.all = list
-
-    for (const post of list) {
-      ;(meta.byCategory[post.category] ||= []).push(post)
-      if (post.series) (meta.bySeries[post.series_slug || slug(post.series)] ||= []).push(post)
-      for (const tag of post.tags) (meta.byTag[tag] ||= []).push(post)
-      const y = (post.updated || post.date).slice(0, 4)
-      if (y) (meta.byYear[y] ||= []).push(post)
-    }
-
-    return { list, meta }
-  }
-
-  function pickField(names, data) {
-    if (Array.isArray(names)) {
-      for (const key of names) {
-        if (key in data && data[key] != null) return data[key]
-      }
-      return null
-    }
-    return data[names]
-  }
-
-  function toArray(input) {
-    if (Array.isArray(input)) return input
-    if (!input) return []
-    if (typeof input === 'string') return input.split(/[,，]/).map(s => s.trim()).filter(Boolean)
-    return []
-  }
-
-  function mdList(items, lang) {
-    return items
-      .map(post => {
-        const updated = post.updated ? (lang.code === 'en' ? ` (updated: ${post.updated})` : `（更:${post.updated}）`) : ''
-        const excerptLine = post.excerpt ? `> ${post.excerpt}` : ''
-        const dateText = lang.code === 'en' ? ` · ${post.date || post.updated}` : ` · ${post.date}`
-        return `- [${post.title}](${post.path})${dateText}${updated}\n  ${excerptLine}`
+  async function writeI18nMap(map, currentWriter) {
+    const json = `${JSON.stringify(map, null, 2)}\n`
+    if (currentWriter) {
+      currentWriter.addFileTask({
+        stage: 'i18n-map',
+        locale: 'root',
+        target: path.join(PUBLIC_DIR, 'i18n-map.json'),
+        content: json
       })
-      .join('\n\n')
-  }
-
-  async function writeCollections(lang, meta) {
-    const write = async (subdir, name, title, items) => {
-      const outDir = path.join(lang.generatedDir, subdir, name)
-      await fs.mkdir(outDir, { recursive: true })
-      const md = `---\ntitle: ${title}\n---\n\n${mdList(items, lang)}\n`
-      await fs.writeFile(path.join(outDir, 'index.md'), md)
-    }
-
-    for (const [category, items] of Object.entries(meta.byCategory)) {
-      const categorySlug = slug(category)
-      await write('categories', categorySlug, lang.labels.category(category), items)
-      registerNavEntry('categories', lang, categorySlug)
-    }
-    for (const [series, items] of Object.entries(meta.bySeries)) {
-      await write('series', series, lang.labels.series(series), items)
-      registerNavEntry('series', lang, series)
-    }
-    for (const [tag, items] of Object.entries(meta.byTag)) {
-      const tagSlug = slug(tag)
-      await write('tags', tagSlug, lang.labels.tag(tag), items)
-      registerNavEntry('tags', lang, tagSlug)
-    }
-    for (const [year, items] of Object.entries(meta.byYear)) {
-      await write('archive', year, lang.labels.archive(year), items)
-      registerNavEntry('archive', lang, year)
+    } else {
+      await fs.writeFile(path.join(PUBLIC_DIR, 'i18n-map.json'), json)
     }
   }
 
-  async function genRSS(lang, items) {
-    if (!items.length) return
-    const homePath = lang.code === preferredLocaleCode ? '/' : lang.localeRoot
-    const feed = [
-      `<?xml version="1.0" encoding="UTF-8"?>`,
-      `<rss version="2.0"><channel>`,
-      `<title>${escapeXml(lang.labels.rssTitle)}</title>`,
-      `<link>${siteOrigin}${homePath}</link>`,
-      `<description>${escapeXml(lang.labels.rssDesc)}</description>`
-    ]
-
-    for (const post of items.slice(0, 50)) {
-      feed.push(
-        `<item><title>${escapeXml(post.title)}</title>` +
-          `<link>${siteOrigin}${post.path}</link>` +
-          `<pubDate>${new Date(post.updated || post.date).toUTCString()}</pubDate>` +
-          `<description>${escapeXml(post.excerpt || '')}</description></item>`
-      )
-    }
-    feed.push(`</channel></rss>`)
-    await fs.writeFile(path.join(PUBLIC_DIR, lang.rssFile), feed.join(''))
-  }
-
-  async function genSitemap(lang, items) {
-    if (!items.length) return
-    const urls = items
-      .map(post => `<url><loc>${siteOrigin}${post.path}</loc><lastmod>${post.updated || post.date}</lastmod></url>`)
-      .join('')
-    const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${urls}</urlset>`
-    await fs.writeFile(path.join(PUBLIC_DIR, lang.sitemapFile), xml)
-  }
-
-  function escapeXml(s) {
-    return String(s).replace(/[<>&"']/g, c => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;', "'": '&apos;' }[c]))
-  }
-
-  function collectI18nPairs(list, lang) {
-    for (const post of list) {
-      if (!post.relative) continue
-
-      for (const localeKey of manifestLocaleKeys(lang)) {
-        registerI18nEntry(post.relative, localeKey, post.path)
-      }
-
-      if (post.category_slug)
-        registerSingleTaxonomy('categories', lang, post.category_slug, post.relative)
-
-      if (post.series_slug)
-        registerSingleTaxonomy('series', lang, post.series_slug, post.relative)
-
-      if (post.year)
-        registerSingleTaxonomy('archive', lang, post.year, post.relative)
-
-      for (const tag of post.tags || []) {
-        const tagSlug = slug(tag)
-        if (!tagSlug) continue
-        const canonical = canonicalTag(tag)
-        registerTagGroup(canonical, {
-          localeId: lang.manifestLocale,
-          slug: tagSlug,
-          path: taxonomyPath('tags', tagSlug, lang)
+  async function writeNavManifests(entries, currentWriter) {
+    for (const { lang, payload } of entries) {
+      const json = `${JSON.stringify(payload, null, 2)}\n`
+      const file = lang.navManifestFile || `nav.manifest.${lang.manifestLocale}.json`
+      const generatedTarget = lang.navManifestPath || path.join(GENERATED_DIR, file)
+      if (currentWriter) {
+        currentWriter.addFileTask({
+          stage: 'nav-manifest',
+          locale: lang.manifestLocale,
+          target: generatedTarget,
+          content: json
         })
-      }
-    }
-  }
-
-  function registerI18nEntry(key, localeId, pathValue) {
-    if (!key || !localeId || !pathValue) return
-    const entry = i18nPairs.get(key) || {}
-    entry[localeId] = pathValue
-    i18nPairs.set(key, entry)
-  }
-
-  function taxonomyPath(type, slugValue, lang) {
-    if (!slugValue) return ''
-    const base = lang.localeRoot === '/' ? '' : lang.localeRoot.replace(/\/$/, '')
-    return `${base}/_generated/${type}/${slugValue}/`
-  }
-
-  function registerSingleTaxonomy(type, lang, slugValue, relative) {
-    if (!slugValue) return
-    const info = taxonomyGroups[type]
-    if (!info) return
-
-    const slugKey = `${lang.manifestLocale}|${slugValue}`
-    let group = info.slugIndex.get(slugKey)
-    if (!group) {
-      group = { entries: new Map() }
-      info.groups.add(group)
-      info.slugIndex.set(slugKey, group)
-    }
-
-    group.entries.set(lang.manifestLocale, {
-      slug: slugValue,
-      path: taxonomyPath(type, slugValue, lang)
-    })
-
-    if (relative != null) {
-      const postKey = `${relative}|${type}`
-      const existing = info.postIndex.get(postKey)
-      if (existing && existing !== group) {
-        mergeTaxonomyGroups(info, existing, group)
+        currentWriter.addFileTask({
+          stage: 'nav-manifest',
+          locale: lang.manifestLocale,
+          target: path.join(PUBLIC_DIR, file),
+          content: json
+        })
       } else {
-        info.postIndex.set(postKey, group)
+        await fs.mkdir(path.dirname(generatedTarget), { recursive: true })
+        await fs.writeFile(generatedTarget, json)
+        await fs.writeFile(path.join(PUBLIC_DIR, file), json)
       }
     }
   }
 
-  function mergeTaxonomyGroups(info, target, source) {
-    if (target === source) return target
-
-    for (const [localeId, value] of source.entries) {
-      if (!target.entries.has(localeId)) target.entries.set(localeId, value)
-      info.slugIndex.set(`${localeId}|${value.slug}`, target)
-    }
-
-    for (const [key, group] of info.postIndex.entries()) {
-      if (group === source) info.postIndex.set(key, target)
-    }
-
-    info.groups.delete(source)
-    return target
-  }
-
-  function registerTagGroup(canonicalId, { localeId, slug, path }) {
-    if (!canonicalId || !localeId || !slug || !path) return
-    let group = tagGroups.get(canonicalId)
-    if (!group) {
-      group = { entries: new Map() }
-      tagGroups.set(canonicalId, group)
-    }
-    group.entries.set(localeId, { slug, path })
-  }
-
-  function flushTaxonomyGroups() {
-    for (const type of TAXONOMY_TYPES) {
-      const info = taxonomyGroups[type]
-      if (!info) continue
-      for (const group of info.groups) {
-        const localePaths = Object.fromEntries([...group.entries].map(([loc, value]) => [loc, value.path]))
-        for (const [, value] of group.entries) {
-          registerI18nGroupEntry(`${type}/${value.slug}`, localePaths)
-        }
-      }
-    }
-  }
-
-  function flushTagGroups() {
-    for (const group of tagGroups.values()) {
-      const localePaths = Object.fromEntries([...group.entries].map(([loc, value]) => [loc, value.path]))
-      for (const [, value] of group.entries) {
-        registerI18nGroupEntry(`tags/${value.slug}`, localePaths)
-      }
-    }
-  }
-
-  function registerI18nGroupEntry(key, localePaths) {
-    if (!key) return
-    const expanded = expandLocalePaths(localePaths)
-    const existing = i18nPairs.get(key) || {}
-    for (const [loc, pathValue] of Object.entries(expanded)) {
-      if (pathValue) existing[loc] = pathValue
-    }
-    i18nPairs.set(key, existing)
-  }
-
-  async function writeI18nMap() {
-    const out = {}
-    for (const [key, value] of i18nPairs.entries()) {
-      const locales = Object.keys(value || {})
-      if (locales.length < 2) continue
-      out[key] = value
-    }
-    await fs.writeFile(path.join(PUBLIC_DIR, 'i18n-map.json'), JSON.stringify(out, null, 2))
-  }
-
-  async function loadTagAlias() {
+  async function loadTagAlias(baseDir) {
     try {
-      const raw = await fs.readFile(path.join(__dirname, '..', 'schema', 'tag-alias.json'), 'utf8')
+      const raw = await fs.readFile(path.join(baseDir, '..', 'schema', 'tag-alias.json'), 'utf8')
       return JSON.parse(raw)
     } catch {
       return {}
     }
   }
 
-  function ensureNavManifest(localeId) {
-    if (navManifest.has(localeId)) return navManifest.get(localeId)
-    const manifest = {
-      locale: localeId,
-      categories: new Map(),
-      series: new Map(),
-      tags: new Map(),
-      archive: new Map()
-    }
-    navManifest.set(localeId, manifest)
-    return manifest
-  }
-
-  function registerNavEntry(type, lang, slugValue) {
-    if (!slugValue) return
-    const manifest = ensureNavManifest(lang.manifestLocale)
-    const target = taxonomyPath(type, slugValue, lang)
-    if (!target) return
-    if (!manifest[type] || !(manifest[type] instanceof Map)) return
-    manifest[type].set(slugValue, target)
-  }
-
-  async function writeNavManifests() {
-    for (const lang of LOCALE_CONFIG) {
-      const manifest = ensureNavManifest(lang.manifestLocale)
-      const serialize = map => Object.fromEntries(map.entries())
-      const payload = {
-        locale: lang.manifestLocale,
-        categories: serialize(manifest.categories),
-        series: serialize(manifest.series),
-        tags: serialize(manifest.tags),
-        archive: serialize(manifest.archive)
-      }
-      const json = `${JSON.stringify(payload, null, 2)}\n`
-      const file = lang.navManifestFile || `nav.manifest.${lang.manifestLocale}.json`
-      const generatedTarget = lang.navManifestPath || path.join(GENERATED_DIR, file)
-      await fs.mkdir(path.dirname(generatedTarget), { recursive: true })
-      await fs.writeFile(generatedTarget, json)
-      await fs.writeFile(path.join(PUBLIC_DIR, file), json)
+  async function appendMetricsLog(entry) {
+    try {
+      await fs.mkdir(path.dirname(metricsLogPath), { recursive: true })
+      const existingRaw = await fs.readFile(metricsLogPath, 'utf8').catch(() => '[]')
+      const existing = JSON.parse(existingRaw || '[]')
+      existing.push(entry)
+      const limited = existing.slice(-100)
+      await fs.writeFile(metricsLogPath, JSON.stringify(limited, null, 2))
+    } catch (error) {
+      console.warn('[pagegen] failed to write metrics log:', error.message)
     }
   }
 })();

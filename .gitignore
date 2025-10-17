@@ -12,6 +12,9 @@ docs/public/sitemap.xml
 docs/public/sitemap-en.xml
 docs/public/embeddings-texts.json
 docs/public/i18n-map.json
+data/pagegen-metrics.json
+data/pagegen-cache.*.json
+data/pagegen-sync.*.json
 data/telemetry.tmp.json
 docs/public/pagefind/
 docs/public/.well-known/

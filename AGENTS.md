@@ -126,8 +126,13 @@ codex run audit   # 可选
 
 ## 9. 下一阶段任务：Pagegen 优化重构
 
-- 阅读 `docs/zh/plans/refactor-optimization.md`，按照提案拆分脚本职责、引入增量同步与并发解析等优化。
-- 输出实施路线图（阶段里程碑、风险评估、回滚策略），并在执行过程中同步更新本文件。
+- ✅ 阶段 0：已在 `docs/zh/plans/pagegen-baseline.md` 记录基线耗时与 `_generated` 文件数，并在脚本中加入阶段耗时日志。
+- ✅ 阶段 1（进行中）：完成内容采集与同步/聚合/RSS/Sitemap/i18n 的模块拆分（`scripts/pagegen/*.mjs`），并新增 `npm run test:pagegen` 覆盖采集、同步、聚合、Feed 与 i18n 注册逻辑。
+- ✅ CI 已在 `生成聚合页` 后新增 “Pagegen 单元测试” 步骤，确保模块化后的行为在流水线中持续受测。
+- ✅ 阶段 2（进行中）：`syncLocaleContent` 支持基于 mtime/size 的增量同步与缓存快照（`data/pagegen-sync.<locale>.json`）；`collectPosts` 增加缓存与并发解析（`data/pagegen-cache.<locale>.json`），可使用 `--no-cache`/`PAGEGEN_DISABLE_CACHE=1` 退回纯解析；相关指标写入 `data/pagegen-metrics.json`。
+- ✅ 阶段 3（推进中）：写入任务批处理 + 内容哈希已上线，可通过 `--no-batch`/`PAGEGEN_DISABLE_BATCH=1` 回退串行写入；`data/pagegen-metrics.json` 输出写入命中与失败统计。
+- ▶️ 阶段 1 后续：依据 `docs/zh/plans/pagegen-module-architecture.md` 补齐其余模块测试，整理 API 契约后更新 orchestrator。
+- 📌 规划文档：`docs/zh/plans/refactor-optimization.md`（提案）、`docs/zh/plans/pagegen-refactor-roadmap.md`（路线图）、`docs/zh/plans/pagegen-validation-checklist.md`（产物守门）。
 
 ## 内容生产力守门
 

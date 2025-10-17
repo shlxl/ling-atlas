@@ -39,6 +39,8 @@ jobs:
         run: node scripts/img-opt.mjs
       - name: 生成聚合页（pagegen）
         run: npm run gen
+      - name: Pagegen 单元测试
+        run: npm run test:pagegen
       - name: Build semantic texts
         run: npm run embeddings:build
       - name: Build knowledge chunks

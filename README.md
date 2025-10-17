@@ -42,11 +42,17 @@ npm run dev
 ├─ security/             # CSP/SRI 模板配置
 ├─ schema/               # Frontmatter schema 与 tag 别名
 ├─ scripts/              # 生成器与校验脚本
+│  └─ pagegen/           # Pagegen 模块化实现（collect/sync/feeds/i18n 等）
 └─ .github/workflows/    # CI
 ```
 
 ## 命令
 - `npm run gen`：生成分类/系列/标签/归档 + RSS/Sitemap
+- `npm run gen -- --full-sync`：强制全量同步内容目录（默认增量），也可通过设置环境变量 `PAGEGEN_FULL_SYNC=1` 达到同样效果
+- `npm run gen -- --no-cache`：禁用内容缓存重新解析 Markdown，亦可设置 `PAGEGEN_DISABLE_CACHE=1`
+- `npm run gen -- --no-batch`：回退到串行写入（禁用批量写入与哈希跳过），或设置 `PAGEGEN_DISABLE_BATCH=1`
+- `PAGEGEN_CONCURRENCY=<num>`：控制内容解析并发度（默认 8），可在 `npm run gen` 前临时指定
+- `npm run test:pagegen`：运行 Pagegen 模块单元测试（采集、聚合、i18n 注册）
 - `npm run precheck`：Frontmatter Schema 校验（阻断）
 - `npm run build`：构建站点（前置 `gen` + `knowledge:build`），自动生成中英双语 RSS/Sitemap
 - `npm run pwa:build`：独立构建 PWA 产物（`sw.js`、`manifest.webmanifest`、`icons/`）
