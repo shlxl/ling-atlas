@@ -87,6 +87,8 @@ export function createWriter(options = {}) {
       }
     }
 
+    tasks.length = 0
+
     return results
   }
 
