@@ -1,4 +1,4 @@
-import { resolveAsset } from './telemetry'
+import { getActiveBase } from './base'
 
 type LocaleDefinition<TCode extends string = string, TVitepressKey extends string = string> = {
   code: TCode
@@ -20,7 +20,7 @@ let cachedSiteBasePath: string | null = null
 
 export function getSiteBasePath(): string {
   if (cachedSiteBasePath) return cachedSiteBasePath
-  const resolved = resolveAsset('/').pathname
+  const resolved = getActiveBase()
   cachedSiteBasePath = ensureTrailingSlash(ensureLeadingSlash(resolved || '/'))
   return cachedSiteBasePath
 }
