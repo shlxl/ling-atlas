@@ -15,7 +15,7 @@
     "build:search": "npm run embeddings:build && npm run build && npm run search:index && node -e \"import('node:fs').then(fs=>fs.cpSync('docs/public/pagefind','docs/.vitepress/dist/pagefind',{recursive:true}))\" && node scripts/generate-headers.mjs && node scripts/sri.mjs",
     "check": "npm run precheck && npm run build",
     "preview": "vitepress preview docs",
-    "search:index": "pagefind --site docs/.vitepress/dist --output-path docs/public/pagefind --force-language zh",
+    "search:index": "node scripts/ensure-dist.mjs && pagefind --site docs/.vitepress/dist --output-path docs/public/pagefind --force-language zh",
     "embeddings:build": "node scripts/build-embeddings.mjs",
     "pwa:build": "vitepress build docs",
     "dev:search": "vitepress build docs && npm run search:index && npm run embeddings:build && node -e \"import('node:fs').then(fs=>fs.cpSync('docs/public/pagefind','docs/.vitepress/dist/pagefind',{recursive:true}))\" && vitepress dev docs --host 0.0.0.0 --port 5173",

@@ -95,7 +95,9 @@ npm run dev
 ## 安全与索引
 - `.well-known/security-headers.txt`：`npm run build:search` 会自动更新并同步到发布目录，同时在静态页面注入 CSP `<meta>`。
 - CSP `<meta>` 会跳过 `frame-ancestors` 指令（浏览器限制），构建时会输出警告，部署到生产环境时请通过服务器响应头追加该指令。
-- `.well-known/sri-manifest.json`：记录外部资源的 SRI；若 CDN 内容变更但未更新 `security/sri-allowlist.json`，CI 会直接失败。
+- `.well-known/sri-manifest.json`：记录外部资源的 SRI；若 CDN 内容变更但未更新 `security/sri-allowlist.json`，CI 会直接失败。离线环境下脚本会复用 allowlist 中的哈希并打印警告，待网络恢复后务必重新执行 `npm run build:search` 复检。
+- `npm run search:index`：在执行 Pagefind 前会调用 `scripts/ensure-dist.mjs` 检查 `docs/.vitepress/dist`，若缺少 HTML 会自动运行
+  `npm run build` 补建，或在设定 `SEARCH_INDEX_SKIP_BUILD=1` 时直接失败，提醒优先排查构建日志。
 - `docs/public/robots.txt`：默认禁止抓取 `/data/`、`/admin/`，并指向站点 `sitemap.xml`。
 - `docs/public/sitemap.xml`：由 PageGen 生成，保持与 robots 中链接一致。
 - AI 自演进产物：`docs/public/data/embeddings.json`、`summaries.json`、`qa.json`，CI/构建阶段自动刷新，失败不阻断主流程。
@@ -106,7 +108,7 @@ npm run dev
     2. **自定义按钮**（`LocaleToggleButton.vue`），与亮/暗色主题开关类似，读取 `docs/public/i18n-map.json` 与 `nav.manifest.<locale>.json`；仅当目标语言存在对应 slug 或可用聚合页时展示，缺少映射则直接回退到语言首页。
   - 两者共享同一份语言配置，但逻辑完全独立；保留按钮、关闭下拉即可避免依赖关系导致的 404 问题。
 - `scripts/postbuild-pwa.mjs` 会在 `npm run build` 结束后补全 Workbox 预缓存的 HTML 列表，确保 Service Worker 导航回退不会再触发 `non-precached-url` 错误。
-- 供应链：CI 默认 `npm ci` 安装，审计输出（`npm run audit`、`npm run license`）可追踪依赖风险；`npm run sbom` 及构建流程会生成 `docs/public/.well-known/sbom.json`，SRI 哈希变化需先更新 allowlist，否则脚本将阻断。
+- 供应链：CI 默认 `npm ci` 安装，审计输出（`npm run audit`、`npm run license`）可追踪依赖风险；`npm run sbom` 及构建流程会生成 `docs/public/.well-known/sbom.json`，SRI 哈希变化需先更新 allowlist，否则脚本将阻断；若在离线环境触发 `npm run build:search`，请在恢复网络后重新执行一次以确认 SRI 校验通过。
 
 ## 约定
 - 所有文章文件置于 `docs/<locale>/content/**/index.md`（例如 `docs/zh/content/**/index.md`）；Frontmatter 字段遵循 `schema/frontmatter.schema.json`。

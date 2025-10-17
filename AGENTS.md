@@ -123,6 +123,7 @@ codex run audit   # 可选
 - PR-L 多语/i18n：`docs/zh/content`（默认中文）与 `docs/en/content`（英文）双目录，`pagegen` 自动生成 `/zh/` 与 `/en/` 聚合页、RSS、Sitemap，并同步路径映射到 `docs/public/i18n-map.json`；Layout 注入语言切换按钮，搜索与 Chat 依据当前语言优先返回同语结果。
 - PR-M（待推进）：SEO / OpenGraph 优化与站点地图扩展，让知识库在搜索引擎中拥有更高可见度。
 - PR-M 供应链加固 2.0：CI 强制 `npm ci`；新增 `npm run audit`、`npm run license`、`npm run sbom`；`scripts/sri.mjs` 对外链哈希差异直接报错，`docs/public/.well-known/sbom.json` 输出 CycloneDX SBOM。
+- SRI 离线回退：若无法访问 CDN，`npm run build:search` 会复用 `security/sri-allowlist.json` 中的哈希并打印警告，网络恢复后务必重新执行命令确认哈希未漂移。
 
 ## 9. 下一阶段任务：Pagegen 优化重构
 
@@ -146,5 +147,7 @@ codex run audit   # 可选
 - Markdown Lint：`npm run md:lint`（使用 markdownlint-cli2，可提前发现标题序号、行长等问题）。
 - 链接检查：`node scripts/check-links.mjs`（默认校验站内路径是否存在；如需校验外链，可自行扩展）。
 - 图片优化：`node scripts/img-opt.mjs`（扫描 `docs/public/images/`，生成 WebP 与缩放版本，后续可据此替换引用）。
+- 搜索索引：`npm run search:index` 会在执行 Pagefind 前调用 `scripts/ensure-dist.mjs`，若 `docs/.vitepress/dist` 中缺少 HTML，将自动触发
+  `npm run build` 重新生成站点；若设置 `SEARCH_INDEX_SKIP_BUILD=1`，脚本会直接报错并终止，避免在 CI 中静默复建。
 - CI 已在 `precheck` 之后自动执行以上步骤，失败会阻断构建；若需临时跳过，可在工作流中注释对应命令。
 - 回滚策略：若短期无法达标，可临时提高环境变量阈值或注释相关步骤，但应尽快修复体积/性能问题。

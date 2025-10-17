@@ -46,6 +46,8 @@
 ### 4. 验证与守护
 
 - 新增一个脚本（或在 `scripts/check-links.mjs` 中扩展）来验证 manifest 中的 URL 均可读取文件，CI 失败时给出详细列表，并在 README 调整后同步更新守护脚本的“多语结构”提示。
+- `npm run search:index` 现已通过 `scripts/ensure-dist.mjs` 在 Pagefind 前确认 `docs/.vitepress/dist` 含有 HTML，缺失时自动触发
+  `npm run build` 或在禁用自动补建（`SEARCH_INDEX_SKIP_BUILD=1`）时直接终止，确保搜索索引的构建不会悄悄跳过页面。
 - 本地手动跑一次 `codex run gen` + `npm run build`，确认 manifest 生效且构建通过。
 - 编写回归测试：覆盖仅存在英文内容时的导航裁剪、分类只存在于单语时的 Locale 回退，以及 manifest 缺失场景下的兜底逻辑。
   - **仅有英文内容**：模拟只在 `docs/en/content` 下存在聚合数据时，确认中文导航不会生成空链。

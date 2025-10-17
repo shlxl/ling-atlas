@@ -30,6 +30,24 @@ function hashBuffer(buffer) {
   return crypto.createHash('sha384').update(buffer).digest('base64')
 }
 
+function isNetworkError(error) {
+  if (!error) return false
+  const networkCodes = new Set(['ENOTFOUND', 'EAI_AGAIN', 'ECONNREFUSED', 'ECONNRESET', 'ENETUNREACH', 'EHOSTUNREACH', 'ETIMEDOUT'])
+  if (typeof error.code === 'string' && networkCodes.has(error.code)) {
+    return true
+  }
+  if (error instanceof TypeError && typeof error.message === 'string' && error.message.includes('fetch failed')) {
+    return true
+  }
+  if (error.cause) {
+    return isNetworkError(error.cause)
+  }
+  if (Array.isArray(error.errors)) {
+    return error.errors.some(isNetworkError)
+  }
+  return false
+}
+
 async function fetchResource(url) {
   const response = await fetch(url, {
     redirect: 'follow',
@@ -46,6 +64,7 @@ async function fetchResource(url) {
 async function buildManifest() {
   const allowlist = await readAllowlist()
   const manifest = []
+  const degraded = []
   for (const entry of allowlist) {
     const url = entry?.url
     const expected = entry?.integrity
@@ -55,17 +74,28 @@ async function buildManifest() {
     if (!expected || typeof expected !== 'string') {
       throw new Error(`Missing integrity for ${url}. Update security/sri-allowlist.json.`)
     }
-    const buffer = await fetchResource(url)
-    const computed = `sha384-${hashBuffer(buffer)}`
-    if (computed !== expected) {
-      throw new Error(
-        `SRI mismatch for ${url}\n  expected: ${expected}\n  computed: ${computed}\n` +
-        'Update security/sri-allowlist.json with the new hash after validating the change.'
-      )
+    try {
+      const buffer = await fetchResource(url)
+      const computed = `sha384-${hashBuffer(buffer)}`
+      if (computed !== expected) {
+        throw new Error(
+          `SRI mismatch for ${url}\n  expected: ${expected}\n  computed: ${computed}\n` +
+          'Update security/sri-allowlist.json with the new hash after validating the change.'
+        )
+      }
+      manifest.push({ url, integrity: expected })
+    } catch (error) {
+      if (isNetworkError(error)) {
+        degraded.push({ url, reason: error })
+        console.warn(`[security] network error while fetching ${url}:`, error)
+        console.warn('[security] reused allowlist integrity. Restore network and rerun build:search to verify hashes.')
+        manifest.push({ url, integrity: expected })
+        continue
+      }
+      throw error
     }
-    manifest.push({ url, integrity: expected })
   }
-  return manifest
+  return { manifest, degraded }
 }
 
 function normalizeManifest(list) {
@@ -112,7 +142,7 @@ async function mirrorManifest() {
 
 async function main() {
   await ensureDir(WELL_KNOWN)
-  const manifest = await buildManifest()
+  const { manifest, degraded } = await buildManifest()
   const normalized = normalizeManifest(manifest)
   const previousRaw = await loadPreviousManifest()
   const previous = normalizeManifest(previousRaw || [])
@@ -139,6 +169,13 @@ async function main() {
   console.log('[security] SRI manifest entries:')
   for (const item of normalized) {
     console.log(`  - ${item.url} :: ${item.integrity}`)
+  }
+  if (degraded.length) {
+    console.warn('[security] SRI validation degraded due to network errors:')
+    for (const item of degraded) {
+      console.warn(`  - ${item.url}`)
+    }
+    console.warn('[security] 请在网络恢复后重新执行 npm run build:search，确认外部资源哈希未发生变化。')
   }
 }
 
