@@ -65,6 +65,27 @@ npm run dev
 - `npm run sbom`：生成 CycloneDX SBOM（输出到 `docs/public/.well-known/sbom.json` 并同步 dist）
 - 离线验证：`npm run build` → `npx vitepress preview docs --host 127.0.0.1 --port 4173`，在浏览器中访问站点、打开 DevTools → Application → Service Workers，勾选 “Offline” 后刷新确认最近访问页和搜索仍能使用缓存；同时观察底部“检测到新版本/已缓存”提示条触发刷新
 
+## 协作约束速查
+
+> 以下清单同步自仓库根部的 `AGENTS.md`，便于贡献者在不离开 README 的情况下快速了解约束与常用命令。
+
+- **角色与脚本管线**：通过 `codex run <task>` 调用 `.codex/*.mjs` 中的脚本，涵盖 `plan`、`precheck`、`gen`、`build`、`deploy`、`audit` 等角色；`publish` 会串联 tags 规范化 → precheck → gen → build → git 推送。
+- **环境要求**：Node ≥ 22、npm ≥ 10、git ≥ 2.45，`.env` 需包含 `BASE=/ling-atlas/`、`SITE_ORIGIN=https://<user>.github.io/ling-atlas`、`GIT_REMOTE=origin`、`GIT_BRANCH=main`。
+- **首次初始化**：建议执行 `codex run setup --base "/ling-atlas/" --site "https://<user>.github.io/ling-atlas"`，完成依赖安装、预检、聚合页生成与首次构建。
+- **CI 守门**：默认 `npm ci` 安装依赖，持续运行 Pagegen 单测、前置校验、生成聚合页；体积预算与 Lighthouse 可按需开启（参考 `node .codex/budget.mjs` 与 `npx lhci autorun`）。
+- **内容生产力工具**：通过 `npm run md:lint`、`node scripts/check-links.mjs`、`node scripts/img-opt.mjs` 守门 Markdown、链接与图片质量，必要时可在 CI 中暂时调高阈值或跳过。
+
+## 即将开展的审查路线
+
+本阶段聚焦于梳理工程协作约束与 Pagegen 重构进度，按照以下顺序逐步审查：
+
+1. **协作规约复核**（`AGENTS.md`、`README.md`、`.codex/`）——确认命令入口、环境变量与发布节奏，形成可执行清单。
+2. **目录与模块盘点**（`schema/`、`docs/zh/plans/`、`scripts/`、`tests/fixtures/`）——锁定需要重点巡检的脚本、配置与文档，更新路线图与计划文档。
+3. **Pagegen 模块深入检查**（`scripts/pagegen/*.mjs`、`tests/pagegen.test.mjs`）——核对模块化拆分、增量同步、批量写入与 i18n 逻辑，结合 `npm run test:pagegen` 覆盖范围制定补测方案。
+4. **配套守门脚本回顾**（`scripts/validate-frontmatter.mjs`、`scripts/check-links.mjs`、`node scripts/embed-build.mjs`）——确保与 Pagegen 输出一致且具备回滚/降级策略。
+
+每个步骤的审查结果会同步到 `docs/zh/plans/pagegen-refactor-roadmap.md` 与 `AGENTS.md` 的路线图章节，方便后续代理或贡献者继续推进。
+
 ## 部署（GitHub Pages）
 1. 打开 **Settings → Pages**，选择 **GitHub Actions**。
 2. 工作流文件在 `.github/workflows/deploy.yml`；首次 push 后会自动部署。
