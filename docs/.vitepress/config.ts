@@ -68,8 +68,10 @@ const themeComponent = (file: string) =>
 
 const navComponentOverrides = new Map(
   [
+    'VPNavBar.vue',
     'VPNavBarExtra.vue',
     'VPNavBarTranslations.vue',
+    'VPNavScreen.vue',
     'VPNavScreenTranslations.vue'
   ].map(name => [name, themeComponent(name)])
 )
@@ -80,7 +82,7 @@ const overrideNavComponentPlugin: Plugin = {
   resolveId(source: string, importer?: string) {
     if (!importer) return null
     const normalizedImporter = importer.replace(/\\/g, '/')
-    if (!normalizedImporter.includes('vitepress/dist/client/theme-default/components')) {
+    if (!normalizedImporter.includes('vitepress/dist/client/theme-default')) {
       return null
     }
     const normalizedSource = source.replace(/\\/g, '/')
@@ -305,11 +307,17 @@ export default defineConfig({
     ],
     resolve: {
       alias: {
+        'vitepress/dist/client/theme-default/components/VPNavBar.vue': themeComponent(
+          'VPNavBar.vue'
+        ),
         'vitepress/dist/client/theme-default/components/VPNavBarExtra.vue': themeComponent(
           'VPNavBarExtra.vue'
         ),
         'vitepress/dist/client/theme-default/components/VPNavBarTranslations.vue': themeComponent(
           'VPNavBarTranslations.vue'
+        ),
+        'vitepress/dist/client/theme-default/components/VPNavScreen.vue': themeComponent(
+          'VPNavScreen.vue'
         ),
         'vitepress/dist/client/theme-default/components/VPNavScreenTranslations.vue': themeComponent(
           'VPNavScreenTranslations.vue'
