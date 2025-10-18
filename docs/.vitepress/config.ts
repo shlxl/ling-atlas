@@ -142,13 +142,11 @@ head.push(['meta', { name: 'ling-atlas:base', content: normalizedBase }])
 if (cspContent) {
   head.unshift(['meta', { 'http-equiv': 'Content-Security-Policy', content: cspContent }])
 }
-const navigationFallbackAllowlist = [
-  new RegExp(`^${escapedBase}$`),
-  new RegExp('^' + escapedBase + 'index\\.html$')
+const pwaGlobPatterns = [
+  '**/*.{js,css,html,svg,png,ico,json,txt,xml}',
+  'pagefind/**/*',
+  'worker/**/*'
 ]
-const pagefindPattern = new RegExp(`^${escapedBase}pagefind/`)
-const embeddingsJsonPattern = /embeddings-texts\.json$/
-const embeddingsWorkerPattern = /worker\/embeddings\.worker\.js$/
 
 function loadNavManifest(localeId: LocaleCode): NavManifest | null {
   const baseFile = manifestFileName(localeId)
@@ -238,54 +236,12 @@ export default defineConfig({
       VitePWA({
         registerType: 'autoUpdate',
         base: normalizedBase,
-        filename: 'service-worker.js',
-        clientsClaim: true,
-        skipWaiting: true,
-        workbox: {
-          globPatterns: [
-            '**/*.{js,css,html,svg,png,ico,json,txt,xml}',
-            'pagefind/**/*',
-            'worker/**/*'
-          ],
-          navigateFallback: 'index.html',
-          navigateFallbackAllowlist: navigationFallbackAllowlist,
-          cleanupOutdatedCaches: true,
-          runtimeCaching: [
-            {
-              urlPattern: ({ request }: { request: { mode?: string } }) => request.mode === 'navigate',
-              handler: 'NetworkFirst',
-              options: {
-                cacheName: 'html-cache',
-                networkTimeoutSeconds: 5,
-                cacheableResponse: { statuses: [200] },
-                expiration: { maxEntries: 50, maxAgeSeconds: 60 * 60 * 24 }
-              }
-            },
-            {
-              urlPattern: pagefindPattern,
-              handler: 'StaleWhileRevalidate',
-              options: {
-                cacheName: 'pagefind-cache',
-                expiration: { maxEntries: 20, maxAgeSeconds: 60 * 60 * 24 * 7 }
-              }
-            },
-            {
-              urlPattern: embeddingsJsonPattern,
-              handler: 'StaleWhileRevalidate',
-              options: {
-                cacheName: 'embeddings-cache',
-                expiration: { maxEntries: 5, maxAgeSeconds: 60 * 60 * 24 * 3 }
-              }
-            },
-            {
-              urlPattern: embeddingsWorkerPattern,
-              handler: 'CacheFirst',
-              options: {
-                cacheName: 'embeddings-worker-cache',
-                expiration: { maxEntries: 5, maxAgeSeconds: 60 * 60 * 24 * 30 }
-              }
-            }
-          ]
+        filename: 'service-worker.ts',
+        srcDir: '.vitepress',
+        strategies: 'injectManifest',
+        injectManifest: {
+          globPatterns: pwaGlobPatterns,
+          globDirectory: 'docs/.vitepress/dist'
         },
         manifest: {
           name: 'Ling Atlas',
