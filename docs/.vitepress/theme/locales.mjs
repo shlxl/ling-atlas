@@ -21,9 +21,11 @@ function ensureTrailingSlash(path) {
 }
 
 export function getSiteBasePath() {
-  if (cachedSiteBasePath) return cachedSiteBasePath
   const resolved = getActiveBase()
-  cachedSiteBasePath = ensureTrailingSlash(ensureLeadingSlash(resolved || '/'))
+  const normalized = ensureTrailingSlash(ensureLeadingSlash(resolved || '/'))
+  if (cachedSiteBasePath !== normalized) {
+    cachedSiteBasePath = normalized
+  }
   return cachedSiteBasePath
 }
 

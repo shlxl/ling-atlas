@@ -34,14 +34,29 @@ function readSiteBase(globalWindow) {
   return null
 }
 
-function readEnvBase() {
-  const envBase = (import.meta?.env?.BASE_URL)
-  if (typeof envBase === 'string' && envBase.length) return envBase
+const PROCESS_ENV_BASE_KEYS = ['LING_ATLAS_BASE', 'BASE', 'VITE_BASE', 'VITEPRESS_BASE', 'BASE_URL']
+
+function readProcessEnvBase() {
+  if (typeof process === 'undefined') return null
+  for (const key of PROCESS_ENV_BASE_KEYS) {
+    const value = process.env?.[key]
+    if (typeof value === 'string' && value.length) return value
+  }
   return null
 }
 
+function readImportMetaBase() {
+  const metaBase = import.meta?.env?.BASE ?? import.meta?.env?.BASE_URL
+  if (typeof metaBase === 'string' && metaBase.length) return metaBase
+  return null
+}
+
+function readEnvBase() {
+  return readProcessEnvBase() ?? readImportMetaBase()
+}
+
 function readDeclaredBase(globalWindow) {
-  return readMetaBase() ?? readSiteBase(globalWindow) ?? readEnvBase() ?? '/'
+  return readEnvBase() ?? readMetaBase() ?? readSiteBase(globalWindow) ?? '/'
 }
 
 function computeActiveBase(globalWindow, declaredBase) {
