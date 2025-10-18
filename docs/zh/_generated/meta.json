@@ -43,26 +43,6 @@
     ],
     "管理与协作": [
       {
-        "title": "Ling Atlas 分类与元数据规范 v1.0",
-        "date": "2025-01-18",
-        "updated": "2025-01-18",
-        "status": "published",
-        "category": "管理与协作",
-        "category_slug": "管理与协作",
-        "series": null,
-        "series_slug": "",
-        "tags": [
-          "内容治理",
-          "分类体系",
-          "规范"
-        ],
-        "slug": "taxonomy-reference",
-        "path": "/zh/content/taxonomy-reference/",
-        "excerpt": "全量保留 TAXONOMY.md 的规范内容，方便在站点内直接查阅 Ling Atlas 的分类、元数据与变更流程。",
-        "relative": "taxonomy-reference",
-        "year": "2025"
-      },
-      {
         "title": "Ling Atlas 分类与元数据实战手册",
         "date": "2025-01-18",
         "updated": "2025-01-18",
@@ -80,6 +60,26 @@
         "path": "/zh/content/taxonomy-playbook/",
         "excerpt": "按照 TAXONOMY.md 给出的规范，落地一套可执行的分类与元数据流程，帮助内容团队把写作与自动化部署串起来。",
         "relative": "taxonomy-playbook",
+        "year": "2025"
+      },
+      {
+        "title": "Ling Atlas 分类与元数据规范 v1.0",
+        "date": "2025-01-18",
+        "updated": "2025-01-18",
+        "status": "published",
+        "category": "管理与协作",
+        "category_slug": "管理与协作",
+        "series": null,
+        "series_slug": "",
+        "tags": [
+          "内容治理",
+          "分类体系",
+          "规范"
+        ],
+        "slug": "taxonomy-reference",
+        "path": "/zh/content/taxonomy-reference/",
+        "excerpt": "全量保留 TAXONOMY.md 的规范内容，方便在站点内直接查阅 Ling Atlas 的分类、元数据与变更流程。",
+        "relative": "taxonomy-reference",
         "year": "2025"
       }
     ]
@@ -260,26 +260,6 @@
     ],
     "内容治理": [
       {
-        "title": "Ling Atlas 分类与元数据规范 v1.0",
-        "date": "2025-01-18",
-        "updated": "2025-01-18",
-        "status": "published",
-        "category": "管理与协作",
-        "category_slug": "管理与协作",
-        "series": null,
-        "series_slug": "",
-        "tags": [
-          "内容治理",
-          "分类体系",
-          "规范"
-        ],
-        "slug": "taxonomy-reference",
-        "path": "/zh/content/taxonomy-reference/",
-        "excerpt": "全量保留 TAXONOMY.md 的规范内容，方便在站点内直接查阅 Ling Atlas 的分类、元数据与变更流程。",
-        "relative": "taxonomy-reference",
-        "year": "2025"
-      },
-      {
         "title": "Ling Atlas 分类与元数据实战手册",
         "date": "2025-01-18",
         "updated": "2025-01-18",
@@ -297,31 +277,31 @@
         "path": "/zh/content/taxonomy-playbook/",
         "excerpt": "按照 TAXONOMY.md 给出的规范，落地一套可执行的分类与元数据流程，帮助内容团队把写作与自动化部署串起来。",
         "relative": "taxonomy-playbook",
+        "year": "2025"
+      },
+      {
+        "title": "Ling Atlas 分类与元数据规范 v1.0",
+        "date": "2025-01-18",
+        "updated": "2025-01-18",
+        "status": "published",
+        "category": "管理与协作",
+        "category_slug": "管理与协作",
+        "series": null,
+        "series_slug": "",
+        "tags": [
+          "内容治理",
+          "分类体系",
+          "规范"
+        ],
+        "slug": "taxonomy-reference",
+        "path": "/zh/content/taxonomy-reference/",
+        "excerpt": "全量保留 TAXONOMY.md 的规范内容，方便在站点内直接查阅 Ling Atlas 的分类、元数据与变更流程。",
+        "relative": "taxonomy-reference",
         "year": "2025"
       }
     ],
     "分类体系": [
       {
-        "title": "Ling Atlas 分类与元数据规范 v1.0",
-        "date": "2025-01-18",
-        "updated": "2025-01-18",
-        "status": "published",
-        "category": "管理与协作",
-        "category_slug": "管理与协作",
-        "series": null,
-        "series_slug": "",
-        "tags": [
-          "内容治理",
-          "分类体系",
-          "规范"
-        ],
-        "slug": "taxonomy-reference",
-        "path": "/zh/content/taxonomy-reference/",
-        "excerpt": "全量保留 TAXONOMY.md 的规范内容，方便在站点内直接查阅 Ling Atlas 的分类、元数据与变更流程。",
-        "relative": "taxonomy-reference",
-        "year": "2025"
-      },
-      {
         "title": "Ling Atlas 分类与元数据实战手册",
         "date": "2025-01-18",
         "updated": "2025-01-18",
@@ -339,6 +319,26 @@
         "path": "/zh/content/taxonomy-playbook/",
         "excerpt": "按照 TAXONOMY.md 给出的规范，落地一套可执行的分类与元数据流程，帮助内容团队把写作与自动化部署串起来。",
         "relative": "taxonomy-playbook",
+        "year": "2025"
+      },
+      {
+        "title": "Ling Atlas 分类与元数据规范 v1.0",
+        "date": "2025-01-18",
+        "updated": "2025-01-18",
+        "status": "published",
+        "category": "管理与协作",
+        "category_slug": "管理与协作",
+        "series": null,
+        "series_slug": "",
+        "tags": [
+          "内容治理",
+          "分类体系",
+          "规范"
+        ],
+        "slug": "taxonomy-reference",
+        "path": "/zh/content/taxonomy-reference/",
+        "excerpt": "全量保留 TAXONOMY.md 的规范内容，方便在站点内直接查阅 Ling Atlas 的分类、元数据与变更流程。",
+        "relative": "taxonomy-reference",
         "year": "2025"
       }
     ],
@@ -407,26 +407,6 @@
         "year": "2025"
       },
       {
-        "title": "Ling Atlas 分类与元数据规范 v1.0",
-        "date": "2025-01-18",
-        "updated": "2025-01-18",
-        "status": "published",
-        "category": "管理与协作",
-        "category_slug": "管理与协作",
-        "series": null,
-        "series_slug": "",
-        "tags": [
-          "内容治理",
-          "分类体系",
-          "规范"
-        ],
-        "slug": "taxonomy-reference",
-        "path": "/zh/content/taxonomy-reference/",
-        "excerpt": "全量保留 TAXONOMY.md 的规范内容，方便在站点内直接查阅 Ling Atlas 的分类、元数据与变更流程。",
-        "relative": "taxonomy-reference",
-        "year": "2025"
-      },
-      {
         "title": "Ling Atlas 分类与元数据实战手册",
         "date": "2025-01-18",
         "updated": "2025-01-18",
@@ -444,6 +424,26 @@
         "path": "/zh/content/taxonomy-playbook/",
         "excerpt": "按照 TAXONOMY.md 给出的规范，落地一套可执行的分类与元数据流程，帮助内容团队把写作与自动化部署串起来。",
         "relative": "taxonomy-playbook",
+        "year": "2025"
+      },
+      {
+        "title": "Ling Atlas 分类与元数据规范 v1.0",
+        "date": "2025-01-18",
+        "updated": "2025-01-18",
+        "status": "published",
+        "category": "管理与协作",
+        "category_slug": "管理与协作",
+        "series": null,
+        "series_slug": "",
+        "tags": [
+          "内容治理",
+          "分类体系",
+          "规范"
+        ],
+        "slug": "taxonomy-reference",
+        "path": "/zh/content/taxonomy-reference/",
+        "excerpt": "全量保留 TAXONOMY.md 的规范内容，方便在站点内直接查阅 Ling Atlas 的分类、元数据与变更流程。",
+        "relative": "taxonomy-reference",
         "year": "2025"
       }
     ]
@@ -489,26 +489,6 @@
       "year": "2025"
     },
     {
-      "title": "Ling Atlas 分类与元数据规范 v1.0",
-      "date": "2025-01-18",
-      "updated": "2025-01-18",
-      "status": "published",
-      "category": "管理与协作",
-      "category_slug": "管理与协作",
-      "series": null,
-      "series_slug": "",
-      "tags": [
-        "内容治理",
-        "分类体系",
-        "规范"
-      ],
-      "slug": "taxonomy-reference",
-      "path": "/zh/content/taxonomy-reference/",
-      "excerpt": "全量保留 TAXONOMY.md 的规范内容，方便在站点内直接查阅 Ling Atlas 的分类、元数据与变更流程。",
-      "relative": "taxonomy-reference",
-      "year": "2025"
-    },
-    {
       "title": "Ling Atlas 分类与元数据实战手册",
       "date": "2025-01-18",
       "updated": "2025-01-18",
@@ -526,6 +506,26 @@
       "path": "/zh/content/taxonomy-playbook/",
       "excerpt": "按照 TAXONOMY.md 给出的规范，落地一套可执行的分类与元数据流程，帮助内容团队把写作与自动化部署串起来。",
       "relative": "taxonomy-playbook",
+      "year": "2025"
+    },
+    {
+      "title": "Ling Atlas 分类与元数据规范 v1.0",
+      "date": "2025-01-18",
+      "updated": "2025-01-18",
+      "status": "published",
+      "category": "管理与协作",
+      "category_slug": "管理与协作",
+      "series": null,
+      "series_slug": "",
+      "tags": [
+        "内容治理",
+        "分类体系",
+        "规范"
+      ],
+      "slug": "taxonomy-reference",
+      "path": "/zh/content/taxonomy-reference/",
+      "excerpt": "全量保留 TAXONOMY.md 的规范内容，方便在站点内直接查阅 Ling Atlas 的分类、元数据与变更流程。",
+      "relative": "taxonomy-reference",
       "year": "2025"
     }
   ]
