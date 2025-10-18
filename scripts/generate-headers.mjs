@@ -93,18 +93,40 @@ async function mirrorWellKnown() {
   }
 }
 
+function filterCspForMeta(cspHeader) {
+  const unsupported = new Set(['frame-ancestors'])
+  const entries = cspHeader
+    .split(';')
+    .map((part) => part.trim())
+    .filter(Boolean)
+  const filtered = entries.filter((entry) => {
+    const [name] = entry.split(/\s+/)
+    return !unsupported.has(name)
+  })
+  if (filtered.length !== entries.length) {
+    const removed = entries
+      .filter((entry) => unsupported.has(entry.split(/\s+/)[0]))
+      .map((entry) => entry.split(/\s+/)[0])
+    console.warn(
+      `[security] dropped CSP directives not supported via <meta>: ${[...new Set(removed)].join(', ')}. Configure them via HTTP headers instead.`
+    )
+  }
+  return filtered.join('; ')
+}
+
 async function updateHtmlMeta(cspHeader) {
   const htmlFiles = await globby('**/*.html', { cwd: DIST })
   if (!htmlFiles.length) {
     console.warn('[security] no HTML files found under dist; skipped meta update')
     return
   }
+  const metaHeader = filterCspForMeta(cspHeader)
   const metaRegex = /<meta\s+http-equiv=["']Content-Security-Policy["'][^>]*>/i
   for (const file of htmlFiles) {
     const fullPath = path.join(DIST, file)
     const html = await fs.readFile(fullPath, 'utf8')
     if (!metaRegex.test(html)) continue
-    const replacement = `<meta http-equiv="Content-Security-Policy" content="${escapeHtmlAttr(cspHeader)}">`
+    const replacement = `<meta http-equiv="Content-Security-Policy" content="${escapeHtmlAttr(metaHeader)}">`
     const updated = html.replace(metaRegex, replacement)
     await fs.writeFile(fullPath, updated, 'utf8')
   }
