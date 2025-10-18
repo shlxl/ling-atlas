@@ -2,7 +2,9 @@
 
 ## 背景
 
-`scripts/pagegen.mjs` 经过多轮功能叠加，目前承担了目录同步、Markdown 解析、聚合页生成、RSS/Sitemap 输出以及跨语言映射等职责，整段逻辑集中在一个异步自执行函数内串行执行，使得每次运行都需要完整遍历所有语言与内容目录。【F:scripts/pagegen.mjs†L28-L117】配套的 `pagegen.locales.mjs` 曾内置大量语言配置常量，扩展时需要直接改动脚本源码，缺少数据驱动能力（现已迁移到 `schema/locales.json` 并由 JSON Schema 守门，同时提供给前端主题与 Landing 页面复用）。【F:scripts/pagegen.locales.mjs†L10-L199】
+`scripts/pagegen.mjs` 经过多轮功能叠加，目前承担了目录同步、Markdown 解析、聚合页生成、RSS/Sitemap 输出以及跨语言映射等职责。
+整段逻辑集中在一个异步自执行函数内串行执行，使得每次运行都需要完整遍历所有语言与内容目录。【F:scripts/pagegen.mjs†L28-L117】
+配套的 `pagegen.locales.mjs` 曾内置大量语言配置常量，扩展时需要直接改动脚本源码，缺少数据驱动能力（现已迁移到 `schema/locales.json` 并由 JSON Schema 守门，同时提供给前端主题与 Landing 页面复用）。【F:scripts/pagegen.locales.mjs†L10-L199】
 
 ## 现状痛点
 

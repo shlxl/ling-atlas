@@ -12,12 +12,14 @@ title: Pagegen · 导航配置 Schema 草案
 - `schema/nav.json`：实际配置文件，描述聚合类型、导航分区、固定链接等。
 
 同一配置将用于：
+
 1. Pagegen：决定 nav manifest 的结构（聚合类型、排序、兜底策略）。
 2. VitePress：构建顶部导航与侧边入口，并在缺失聚合时自动裁剪。
 
 ## Schema 要点
 
 ### `aggregates`
+
 - 每个键对应一种聚合入口（如 `latest`、`categories`、`series`）。
 - 需要声明：
   - `type`: `archive | category | series | tag`
@@ -26,6 +28,7 @@ title: Pagegen · 导航配置 Schema 草案
   - 可选：`sort`, `fallback`（是否可作为缺失时的兜底入口）。
 
 ### `sections`
+
 - 按显示顺序声明导航分区。
 - 字段：
   - `kind`: `aggregate | link | group`
@@ -34,9 +37,11 @@ title: Pagegen · 导航配置 Schema 草案
   - `items`: kind 为 `group` 时的子项列表。
 
 ### `links`
+
 - 约定固定链接路径（如 `/about/metrics.html`），并提供可选的 `labelKey`。
 
 ## 约束
+
 - Schema 使用 JSON Schema Draft 7。
 - `sections` 中的 `kind` 决定必填字段，通过 Schema 的 `if/then` 实现。
 - 后续可扩展 `aggregates` 的 `type` 支持更多聚合（作者、来源等）。
@@ -61,6 +66,7 @@ title: Pagegen · 导航配置 Schema 草案
    - CI 新增 `node scripts/validate-nav-config.mjs` 步骤，报错时提示缺漏字段或格式问题。
 
 ## 评估与风险
+
 - Schema 更新若与现有配置不一致，会在 Pagegen 加载阶段报错；建议在 CI 中加入独立 lint 步骤（`node scripts/validate-nav-config.mjs`）。
 - 需要确保在缺失配置时仍能使用合理的默认值，以免外部贡献者误删配置导致站点无法构建。
 - 未来可考虑把 `docs/.vitepress/i18n.json` 迁移到统一的 Schema，以减少重复。

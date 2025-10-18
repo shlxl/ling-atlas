@@ -106,6 +106,7 @@ head:
         })()
 ---
 
+<!-- markdownlint-disable MD011 -->
 <script setup lang="ts">
 import { onMounted } from 'vue'
 import { usePreferredLocale } from './.vitepress/composables/usePreferredLocale'
@@ -178,6 +179,7 @@ onMounted(() => {
   window.location.replace(targetPath)
 })
 </script>
+<!-- markdownlint-enable MD011 -->
 
 ## Choose your language
 
