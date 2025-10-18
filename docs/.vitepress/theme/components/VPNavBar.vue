@@ -4,7 +4,6 @@ import { ref, watchPostEffect } from 'vue'
 import { useData } from 'vitepress'
 import { useSidebar } from 'vitepress/dist/client/theme-default/composables/sidebar'
 import VPNavBarAppearance from 'vitepress/dist/client/theme-default/components/VPNavBarAppearance.vue'
-import VPNavBarExtra from './VPNavBarExtra.vue'
 import VPNavBarHamburger from 'vitepress/dist/client/theme-default/components/VPNavBarHamburger.vue'
 import VPNavBarMenu from 'vitepress/dist/client/theme-default/components/VPNavBarMenu.vue'
 import VPNavBarSearch from 'vitepress/dist/client/theme-default/components/VPNavBarSearch.vue'
@@ -53,7 +52,6 @@ watchPostEffect(() => {
             <VPNavBarMenu class="menu" />
             <VPNavBarAppearance class="appearance" />
             <VPNavBarSocialLinks class="social-links" />
-            <VPNavBarExtra class="extra" />
             <slot name="nav-bar-content-after" />
             <VPNavBarHamburger class="hamburger" :active="isScreenOpen" @click="$emit('toggle-screen')" />
           </div>
@@ -269,16 +267,6 @@ watchPostEffect(() => {
   }
 }
 
-.content-body > :deep(.extra) {
-  display: none;
-}
-
-@media (min-width: 1280px) {
-  .content-body > :deep(.extra) {
-    display: flex;
-  }
-}
-
 .content-body > :deep(.search) {
   display: none;
 }
@@ -305,14 +293,6 @@ watchPostEffect(() => {
   .content-body :deep(.VPSocialLinks) {
     padding-left: 0;
   }
-}
-
-.content-body > :deep(.appearance)+:deep(.social-links) {
-  margin-left: 4px;
-}
-
-.content-body > :deep(.social-links)+:deep(.extra) {
-  margin-left: 0;
 }
 
 @media (min-width: 960px) {
