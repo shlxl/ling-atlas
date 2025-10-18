@@ -114,7 +114,8 @@ npm run dev
   - Landing 页与主题共享 `docs/.vitepress/theme/composables/preferredLocale.mjs`，统一本地存储键、重定向与 Locale Toggle 的首选语言记忆；调整记忆策略时需同步更新内联重定向脚本与该模块。
   - 搜索面板（`SearchBox.vue`）的结果归类会调用 `localeMap` 的 `detectLocaleFromPath` 判断条目语言，并继承聚合页的兜底策略；结果列表会基于 `i18n.ui.searchLocaleBadge` 的翻译展示“本语言/跨语言回退”徽标，以便读者预判跳转落点。调整搜索排序或新建入口时请复用该模块，并同步维护该段翻译避免遗漏 BASE/语言判定。
 - `npm run test:theme` 会执行 `tests/locale-map/core.test.mjs`、`tests/theme/nav-core.test.mjs` 与 `tests/theme/preferred-locale.test.mjs`，既覆盖 Locale Toggle 的降级逻辑，也校验导航裁剪与首选语言记忆仅依赖真实存在的聚合与存储键。
-- `scripts/postbuild-pwa.mjs` 会在 `npm run build` 结束后补全 Workbox 预缓存的 HTML 列表，确保 Service Worker 导航回退不会再触发 `non-precached-url` 错误。
+- `docs/.vitepress/config.ts` 的 PWA 配置已将导航请求改为 `NetworkFirst` 策略并关闭默认的 `navigateFallback`，配合 `cleanupOutdatedCaches`/`skipWaiting`/`clientsClaim` 在激活阶段清理旧缓存，确保刷新时总能拿到最新的 `index.html`。
+- `scripts/postbuild-pwa.mjs` 会在 `npm run build` 结束后补全 Workbox 预缓存的 HTML 列表，并兼容 `service-worker.js` 与历史的 `sw.js` 命名，避免 Service Worker 导航回退触发 `non-precached-url` 错误。
 - 供应链：CI 默认 `npm ci` 安装，审计输出（`npm run audit`、`npm run license`）可追踪依赖风险；`npm run sbom` 及构建流程会生成 `docs/public/.well-known/sbom.json`，SRI 哈希变化需先更新 allowlist，否则脚本将阻断。
 
 ## 约定

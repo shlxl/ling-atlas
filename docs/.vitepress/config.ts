@@ -142,7 +142,10 @@ head.push(['meta', { name: 'ling-atlas:base', content: normalizedBase }])
 if (cspContent) {
   head.unshift(['meta', { 'http-equiv': 'Content-Security-Policy', content: cspContent }])
 }
-const navigationAllowlist = [new RegExp(`^${escapedBase}`)]
+const navigationFallbackAllowlist = [
+  new RegExp(`^${escapedBase}$`),
+  new RegExp('^' + escapedBase + 'index\\.html$')
+]
 const pagefindPattern = new RegExp(`^${escapedBase}pagefind/`)
 const embeddingsJsonPattern = /embeddings-texts\.json$/
 const embeddingsWorkerPattern = /worker\/embeddings\.worker\.js$/
@@ -235,6 +238,9 @@ export default defineConfig({
       VitePWA({
         registerType: 'autoUpdate',
         base: normalizedBase,
+        filename: 'service-worker.js',
+        clientsClaim: true,
+        skipWaiting: true,
         workbox: {
           globPatterns: [
             '**/*.{js,css,html,svg,png,ico,json,txt,xml}',
@@ -242,8 +248,19 @@ export default defineConfig({
             'worker/**/*'
           ],
           navigateFallback: 'index.html',
-          navigateFallbackAllowlist: navigationAllowlist,
+          navigateFallbackAllowlist: navigationFallbackAllowlist,
+          cleanupOutdatedCaches: true,
           runtimeCaching: [
+            {
+              urlPattern: ({ request }: { request: { mode?: string } }) => request.mode === 'navigate',
+              handler: 'NetworkFirst',
+              options: {
+                cacheName: 'html-cache',
+                networkTimeoutSeconds: 5,
+                cacheableResponse: { statuses: [200] },
+                expiration: { maxEntries: 50, maxAgeSeconds: 60 * 60 * 24 }
+              }
+            },
             {
               urlPattern: pagefindPattern,
               handler: 'StaleWhileRevalidate',

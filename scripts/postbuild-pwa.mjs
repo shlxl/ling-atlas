@@ -3,22 +3,27 @@ import path from 'node:path'
 import { createHash } from 'node:crypto'
 
 const distDir = path.resolve('docs/.vitepress/dist')
-const swPath = path.join(distDir, 'sw.js')
+const swCandidates = ['service-worker.js', 'sw.js']
+const swPath = swCandidates
+  .map(fileName => path.join(distDir, fileName))
+  .find(candidate => fs.existsSync(candidate))
+
+if (!swPath) {
+  console.warn(
+    `[pwa] skip precache patch: ${swCandidates.map(name => path.join(distDir, name)).join(', ')} not found`
+  )
+  process.exit(0)
+}
 const manifestStartToken = 'precacheAndRoute(['
 const manifestEndToken = '],{}),'
 const htmlEntries = ['index.html', 'en/index.html', '404.html']
-
-if (!fs.existsSync(swPath)) {
-  console.warn(`[pwa] skip precache patch: ${swPath} not found`)
-  process.exit(0)
-}
 
 const swSource = fs.readFileSync(swPath, 'utf8')
 const startIndex = swSource.indexOf(manifestStartToken)
 const endIndex = swSource.indexOf(manifestEndToken, startIndex)
 
 if (startIndex === -1 || endIndex === -1) {
-  console.warn('[pwa] unable to locate precache manifest in sw.js, skipping patch.')
+  console.warn('[pwa] unable to locate precache manifest in service worker, skipping patch.')
   process.exit(0)
 }
 
