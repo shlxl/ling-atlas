@@ -8,6 +8,7 @@ layout: doc
 
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
+import { withBase } from 'vitepress'
 
 interface TelemetryData {
   updatedAt: string
@@ -23,7 +24,8 @@ const error = ref<string | null>(null)
 
 onMounted(async () => {
   try {
-    const res = await fetch('/telemetry.json', { cache: 'no-store' })
+    const requestUrl = withBase('/telemetry.json')
+    const res = await fetch(requestUrl, { cache: 'no-store' })
     if (!res.ok) throw new Error(`HTTP ${res.status}`)
     telemetry.value = await res.json()
   } catch (err: any) {

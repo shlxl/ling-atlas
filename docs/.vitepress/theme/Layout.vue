@@ -235,14 +235,20 @@ watch(
   flex: 0 0 auto;
 }
 
+@media (min-width: 640px) {
+  .la-nav-bar-locale {
+    display: flex;
+    align-items: center;
+    padding-left: 16px;
+  }
+}
+
 @media (min-width: 960px) {
   .la-nav-bar-search {
     flex: 1 1 280px;
   }
 
   .la-nav-bar-locale {
-    display: flex;
-    align-items: center;
     padding-left: 24px;
   }
 }
