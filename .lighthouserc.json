@@ -8,7 +8,8 @@
       ],
       "numberOfRuns": 1,
       "settings": {
-        "preset": "desktop"
+        "preset": "desktop",
+        "throttlingMethod": "provided"
       }
     },
     "assert": {
