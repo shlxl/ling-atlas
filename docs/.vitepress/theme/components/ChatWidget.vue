@@ -83,9 +83,31 @@ function close() {
   emit('update:modelValue', false)
 }
 
+function encodeAnchor(anchor: string) {
+  if (!anchor) return ''
+  const trimmed = anchor.trim()
+  if (!trimmed) return ''
+  try {
+    const decoded = decodeURIComponent(trimmed)
+    return encodeURIComponent(decoded)
+  } catch {
+    return encodeURIComponent(trimmed)
+  }
+}
+
 function formatRefLink(item: KnowledgeItem) {
-  const anchor = item.anchor?.startsWith('#') ? item.anchor : `#${item.anchor || ''}`
-  return withBase(`${item.url}${anchor}`)
+  const baseTarget = withBase(item.url)
+  const sourceAnchor = (item.anchor ?? '').trim()
+  if (!sourceAnchor) return baseTarget
+
+  const rawAnchor = sourceAnchor.startsWith('#') ? sourceAnchor.slice(1) : sourceAnchor
+  if (!rawAnchor) return baseTarget
+
+  const encoded = encodeAnchor(rawAnchor)
+  if (!encoded) return baseTarget
+
+  const hashlessBase = baseTarget.includes('#') ? baseTarget.slice(0, baseTarget.indexOf('#')) : baseTarget
+  return `${hashlessBase}#${encoded}`
 }
 
 function updateLocale(path: string) {
