@@ -3,6 +3,7 @@ import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import { withBase, useRouter } from 'vitepress'
 import { resolveAsset } from '../telemetry'
 import { detectLocaleFromPath, normalizeRoutePath } from '../composables/localeMap'
+import { normalizeSearchResultHref } from '../search-path.mjs'
 
 interface KnowledgeItem {
   url: string
@@ -86,6 +87,21 @@ function close() {
 function formatRefLink(item: KnowledgeItem) {
   const anchor = item.anchor?.startsWith('#') ? item.anchor : `#${item.anchor || ''}`
   return withBase(`${item.url}${anchor}`)
+}
+
+function resolvePagefindUrl(rawUrl: string) {
+  if (!rawUrl) return ''
+  const normalized = normalizeSearchResultHref(rawUrl)
+  if (!normalized) return ''
+  if (/^[a-zA-Z][a-zA-Z\d+.-]*:/.test(normalized) || normalized.startsWith('//')) {
+    return normalized
+  }
+  const [pathWithQuery, hash = ''] = normalized.split('#')
+  const [path, query = ''] = pathWithQuery.split('?')
+  const normalizedPath = normalizeRoutePath(path || '/')
+  const queryPart = query ? `?${query}` : ''
+  const hashPart = hash ? `#${hash}` : ''
+  return `${normalizedPath}${queryPart}${hashPart}`
 }
 
 function updateLocale(path: string) {
@@ -175,7 +191,7 @@ async function fetchPagefindResults(query: string) {
       const rawUrl = data.url || entry?.url || ''
       return {
         title: data.meta?.title || rawUrl,
-        url: withBase(rawUrl),
+        url: resolvePagefindUrl(rawUrl),
         rawUrl,
         excerpt: data.excerpt || ''
       }
