@@ -200,4 +200,38 @@ function handleLocaleChange(event: Event) {
     width: 100%;
   }
 }
+
+.la-locale-toggle__label {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.85rem;
+  color: var(--vp-c-text-2);
+  margin-right: 0.5rem;
+  white-space: nowrap;
+}
+
+.la-locale-toggle__select {
+  width: 100%;
+  min-width: 0;
+  padding: 0.45rem 2.1rem 0.45rem 0.75rem;
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 999px;
+  background: var(--vp-c-bg);
+  color: var(--vp-c-text-1);
+  font-size: 0.9rem;
+  line-height: 1.2;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.la-locale-toggle__select:focus-visible {
+  outline: none;
+  border-color: var(--vp-c-brand-1);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--vp-c-brand-1) 35%, transparent);
+}
+
+@media (min-width: 641px) {
+  .la-locale-toggle__select {
+    width: auto;
+  }
+}
 </style>
