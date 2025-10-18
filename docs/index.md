@@ -109,7 +109,7 @@ head:
 <script setup lang="ts">
 import { onMounted } from 'vue'
 import { usePreferredLocale } from './.vitepress/composables/usePreferredLocale'
-import { SUPPORTED_LOCALES, type LocaleCode } from './.vitepress/theme/locales.mjs'
+import { SUPPORTED_LOCALES, LOCALE_UI, type LocaleCode } from './.vitepress/theme/locales.mjs'
 import { ACTIVE_BASE_GLOBAL, getActiveBase, withActiveBase } from './.vitepress/theme/base'
 
 const GLOBAL_REDIRECT_FLAG = '__LING_ATLAS_REDIRECT_DONE__'
@@ -126,17 +126,6 @@ function ensureTrailingSlash(path: string) {
 
 const activeBase = getActiveBase()
 
-const CARD_COPY: Record<string, { label: string; description: string }> = {
-  zh: {
-    label: '简体中文',
-    description: '进入中文知识库，获取完整的原始内容。'
-  },
-  en: {
-    label: 'English',
-    description: 'Read the English selection of Ling Atlas articles.'
-  }
-}
-
 function withBase(path: string, base: string = activeBase) {
   const sanitized = path.startsWith('/') ? path.slice(1) : path
   return withActiveBase(sanitized, base)
@@ -150,11 +139,11 @@ type LocaleCard = {
 }
 
 const localeEntries: LocaleCard[] = SUPPORTED_LOCALES.map(locale => {
-  const copy = CARD_COPY[locale.code] || { label: locale.code, description: '' }
+  const copy = (LOCALE_UI as Record<string, { cardLabel?: string; cardDescription?: string }>)[locale.code] || {}
   return {
     code: locale.code as LocaleCode,
-    label: copy.label,
-    description: copy.description,
+    label: copy.cardLabel || locale.code,
+    description: copy.cardDescription || '',
     href: withBase(`${locale.code}/`)
   }
 })

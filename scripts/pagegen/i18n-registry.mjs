@@ -1,14 +1,18 @@
 import { slug } from './collect.mjs'
 
-const TAXONOMY_TYPES = ['categories', 'series', 'archive']
-
-export function createI18nRegistry(locales, { tagAlias = {} } = {}) {
+export function createI18nRegistry(locales, { tagAlias = {}, navConfig } = {}) {
   const localeList = Array.isArray(locales) ? locales : Object.values(locales || {})
   const manifestAlias = new Map(localeList.map(lang => [lang.manifestLocale, lang.aliasLocaleIds || []]))
 
+  const aggregates = normalizeAggregates(navConfig?.aggregates)
+  const taxonomyTypes = aggregates.taxonomyKeys
+  const tagManifestKey = aggregates.tagKey
+  const manifestKeys = aggregates.manifestKeys
+  const manifestKeyList = Array.from(manifestKeys)
+
   const i18nPairs = new Map()
   const taxonomyGroups = Object.fromEntries(
-    TAXONOMY_TYPES.map(type => [type, { groups: new Set(), slugIndex: new Map(), postIndex: new Map() }])
+    taxonomyTypes.map(type => [type, { groups: new Set(), slugIndex: new Map(), postIndex: new Map() }])
   )
   const tagGroups = new Map()
   const navManifest = new Map()
@@ -123,20 +127,16 @@ export function createI18nRegistry(locales, { tagAlias = {} } = {}) {
 
   function ensureNavManifest(localeId) {
     if (navManifest.has(localeId)) return navManifest.get(localeId)
-    const manifest = {
-      locale: localeId,
-      categories: new Map(),
-      series: new Map(),
-      tags: new Map(),
-      archive: new Map()
+    const manifest = { locale: localeId }
+    for (const key of manifestKeyList) {
+      manifest[key] = new Map()
     }
     navManifest.set(localeId, manifest)
     return manifest
   }
 
   function flushTaxonomyGroups() {
-    for (const type of TAXONOMY_TYPES) {
-      const info = taxonomyGroups[type]
+    for (const [type, info] of Object.entries(taxonomyGroups)) {
       if (!info) continue
       for (const group of info.groups) {
         const localePaths = Object.fromEntries([...group.entries].map(([loc, value]) => [loc, value.path]))
@@ -151,7 +151,7 @@ export function createI18nRegistry(locales, { tagAlias = {} } = {}) {
     for (const group of tagGroups.values()) {
       const localePaths = Object.fromEntries([...group.entries].map(([loc, value]) => [loc, value.path]))
       for (const [, value] of group.entries) {
-        registerI18nGroupEntry(`tags/${value.slug}`, localePaths)
+        registerI18nGroupEntry(`${tagManifestKey}/${value.slug}`, localePaths)
       }
     }
   }
@@ -163,9 +163,13 @@ export function createI18nRegistry(locales, { tagAlias = {} } = {}) {
       registerI18nEntry(post.relative, localeKey, post.path)
     }
 
-    if (post.category_slug) registerSingleTaxonomy('categories', lang, post.category_slug, post.relative)
-    if (post.series_slug) registerSingleTaxonomy('series', lang, post.series_slug, post.relative)
-    if (post.year) registerSingleTaxonomy('archive', lang, post.year, post.relative)
+    const categoryKey = aggregates.typeToManifestKey.get('category')
+    const seriesKey = aggregates.typeToManifestKey.get('series')
+    const archiveKey = aggregates.typeToManifestKey.get('archive')
+
+    if (post.category_slug && categoryKey) registerSingleTaxonomy(categoryKey, lang, post.category_slug, post.relative)
+    if (post.series_slug && seriesKey) registerSingleTaxonomy(seriesKey, lang, post.series_slug, post.relative)
+    if (post.year && archiveKey) registerSingleTaxonomy(archiveKey, lang, post.year, post.relative)
 
     for (const tag of post.tags || []) {
       const tagSlug = slug(tag)
@@ -174,7 +178,7 @@ export function createI18nRegistry(locales, { tagAlias = {} } = {}) {
       registerTagGroup(canonical, {
         localeId: lang.manifestLocale,
         slug: tagSlug,
-        path: taxonomyPath('tags', tagSlug, lang)
+        path: taxonomyPath(tagManifestKey, tagSlug, lang)
       })
     }
   }
@@ -182,6 +186,7 @@ export function createI18nRegistry(locales, { tagAlias = {} } = {}) {
   function addNavEntries(lang, navEntries = {}) {
     const manifest = ensureNavManifest(lang.manifestLocale)
     for (const type of Object.keys(navEntries)) {
+      if (!manifestKeys.has(type)) continue
       const entries = navEntries[type]
       if (!entries || !(entries instanceof Map)) continue
       const bucket = manifest[type]
@@ -220,10 +225,7 @@ export function createI18nRegistry(locales, { tagAlias = {} } = {}) {
         lang,
         payload: {
           locale: lang.manifestLocale,
-          categories: serialize(manifest.categories),
-          series: serialize(manifest.series),
-          tags: serialize(manifest.tags),
-          archive: serialize(manifest.archive)
+          ...Object.fromEntries(manifestKeyList.map(key => [key, serialize(manifest[key] || new Map())]))
         }
       })
     }
@@ -235,5 +237,50 @@ export function createI18nRegistry(locales, { tagAlias = {} } = {}) {
     addNavEntries,
     getI18nMap,
     getNavManifestPayloads
+  }
+}
+
+function normalizeAggregates(rawAggregates) {
+  const defaultMap = new Map([
+    ['category', 'categories'],
+    ['series', 'series'],
+    ['archive', 'archive'],
+    ['tag', 'tags']
+  ])
+
+  const manifestKeys = new Set()
+  const typeToManifestKey = new Map(defaultMap)
+
+  if (rawAggregates && typeof rawAggregates === 'object') {
+    for (const value of Object.values(rawAggregates)) {
+      if (!value || typeof value !== 'object') continue
+      const type = value.type
+      const manifestKey = value.manifestKey || defaultMap.get(type)
+      if (!manifestKey) continue
+      manifestKeys.add(manifestKey)
+      if (type) typeToManifestKey.set(type, manifestKey)
+    }
+  }
+
+  for (const manifestKey of defaultMap.values()) {
+    manifestKeys.add(manifestKey)
+  }
+
+  const taxonomyKeys = ['category', 'series', 'archive']
+    .map(type => typeToManifestKey.get(type))
+    .filter(Boolean)
+
+  if (!taxonomyKeys.length) {
+    taxonomyKeys.push('categories', 'series', 'archive')
+  }
+
+  const tagKey = typeToManifestKey.get('tag') || 'tags'
+  manifestKeys.add(tagKey)
+
+  return {
+    taxonomyKeys: Array.from(new Set(taxonomyKeys)),
+    tagKey,
+    manifestKeys,
+    typeToManifestKey
   }
 }

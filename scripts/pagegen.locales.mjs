@@ -1,5 +1,12 @@
+import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
+import Ajv from 'ajv'
+
+const ajv = new Ajv({ allErrors: true, strict: false })
+
+let cachedValidateLocales = null
+let cachedValidateNav = null
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 export const ROOT_DIR = path.join(__dirname, '..')
@@ -7,70 +14,15 @@ export const DOCS_DIR = path.join(ROOT_DIR, 'docs')
 export const GENERATED_ROOT = path.join(DOCS_DIR, '_generated')
 export const PUBLIC_ROOT = path.join(DOCS_DIR, 'public')
 
-const RAW_LOCALES = {
-  zh: {
-    preferred: true,
-    vitepressLocaleKey: 'zh',
-    manifestLocale: 'zh',
-    docsRoot: path.join(DOCS_DIR, 'zh'),
-    generatedDir: path.join(DOCS_DIR, 'zh', '_generated'),
-    navManifestFile: 'nav.manifest.zh.json',
-    navManifestPath: path.join(DOCS_DIR, 'zh', '_generated', 'nav.manifest.zh.json'),
-    contentDir: path.join(DOCS_DIR, 'zh', 'content'),
-    localizedContentDir: path.join(DOCS_DIR, 'zh', 'content'),
-    outMeta: path.join(DOCS_DIR, 'zh', '_generated', 'meta.json'),
-    basePath: '/zh/content/',
-    generatedPathPrefix: '/zh/_generated',
-    rssFile: 'rss.xml',
-    sitemapFile: 'sitemap.xml',
-    labels: {
-      category: value => `分类 · ${value}`,
-      series: value => `连载 · ${value}`,
-      tag: value => `标签 · ${value}`,
-      archive: value => `归档 · ${value}`,
-      rssTitle: 'Ling Atlas',
-      rssDesc: '最新更新'
-    },
-    contentFields: {
-      category: ['category_zh', 'category'],
-      tags: ['tags_zh', 'tags'],
-      series: ['series'],
-      seriesSlug: ['series_slug'],
-      status: ['status']
-    }
-  },
-  en: {
-    preferred: false,
-    vitepressLocaleKey: 'en',
-    manifestLocale: 'en',
-    docsRoot: path.join(DOCS_DIR, 'en'),
-    generatedDir: path.join(DOCS_DIR, 'en', '_generated'),
-    navManifestFile: 'nav.manifest.en.json',
-    navManifestPath: path.join(DOCS_DIR, 'en', '_generated', 'nav.manifest.en.json'),
-    contentDir: path.join(DOCS_DIR, 'en', 'content'),
-    localizedContentDir: path.join(DOCS_DIR, 'en', 'content'),
-    outMeta: path.join(DOCS_DIR, 'en', '_generated', 'meta.json'),
-    basePath: '/en/content/',
-    generatedPathPrefix: '/en/_generated',
-    rssFile: 'rss-en.xml',
-    sitemapFile: 'sitemap-en.xml',
-    labels: {
-      category: value => `Category · ${value}`,
-      series: value => `Series · ${value}`,
-      tag: value => `Tag · ${value}`,
-      archive: value => `Archive · ${value}`,
-      rssTitle: 'Ling Atlas (EN)',
-      rssDesc: 'Latest updates'
-    },
-    contentFields: {
-      category: ['category_en', 'category'],
-      tags: ['tags_en', 'tags'],
-      series: ['series_en', 'series'],
-      seriesSlug: ['series_slug_en', 'series_slug', 'series_en', 'series'],
-      status: ['status']
-    }
-  }
-}
+const CONFIG_PATH = path.join(ROOT_DIR, 'schema', 'locales.json')
+const SCHEMA_PATH = path.join(ROOT_DIR, 'schema', 'locales.schema.json')
+const NAV_CONFIG_PATH = path.join(ROOT_DIR, 'schema', 'nav.json')
+const NAV_SCHEMA_PATH = path.join(ROOT_DIR, 'schema', 'nav.schema.json')
+const CACHE_DIR = path.join(ROOT_DIR, '.codex', 'cache')
+const CACHE_FILE = path.join(CACHE_DIR, 'pagegen-locales.cache.json')
+
+const RAW_LOCALES = Object.freeze(loadLocalesFromDisk())
+const NAV_CONFIG = Object.freeze(loadNavConfig())
 
 function uniq(paths) {
   const seen = new Set()
@@ -109,15 +61,37 @@ function finalizeLocale(code, config = {}) {
   const vitepressLocaleKey = config.vitepressLocaleKey || code
 
   const defaultRoutePrefix = mirrorContentToRoot ? '' : `/${code}`
-  const routePrefix = config.routePrefix ?? defaultRoutePrefix
+  const routePrefix = normalizeRoutePrefix(config.routePrefix ?? defaultRoutePrefix)
   const localeRoot = routePrefix ? ensureTrailingSlash(routePrefix) : '/'
   const normalizedRoutePrefix = ensureTrailingSlash(`/${code}`)
 
-  const docsRoot = config.docsRoot || (mirrorContentToRoot ? DOCS_DIR : path.join(DOCS_DIR, code))
-  const generatedDir = config.generatedDir || path.join(docsRoot, '_generated')
-  const contentDir = config.contentDir || path.join(DOCS_DIR, `content.${code}`)
+  const docsRoot = resolvePath(config.docsRoot, {
+    defaultValue: mirrorContentToRoot ? DOCS_DIR : path.join(DOCS_DIR, code)
+  })
+  const generatedDir = resolvePath(config.generatedDir, {
+    defaultValue: path.join(docsRoot, '_generated')
+  })
+  const contentDir = resolvePath(config.contentDir, {
+    defaultValue: path.join(docsRoot, 'content')
+  })
   const localizedContentDir =
-    config.localizedContentDir || (mirrorContentToRoot ? path.join(DOCS_DIR, 'content') : path.join(docsRoot, 'content'))
+    resolvePath(config.localizedContentDir, {
+      defaultValue: mirrorContentToRoot ? path.join(DOCS_DIR, 'content') : path.join(docsRoot, 'content')
+    })
+
+  const contentRoots = uniq([
+    localizedContentDir,
+    contentDir,
+    ...(Array.isArray(config.contentRoots) ? config.contentRoots.map(root => resolvePath(root)) : [])
+  ])
+
+  const searchRoots = uniq([
+    DOCS_DIR,
+    GENERATED_ROOT,
+    docsRoot,
+    generatedDir,
+    ...(Array.isArray(config.searchRoots) ? config.searchRoots.map(root => resolvePath(root)) : [])
+  ])
 
   const basePath = ensureTrailingSlash(config.basePath || `${localeRoot}content/`)
   const generatedPathPrefix = config.generatedPathPrefix
@@ -125,24 +99,15 @@ function finalizeLocale(code, config = {}) {
     : normalizeGeneratedPrefix(routePrefix)
 
   const navManifestFile = config.navManifestFile || `nav.manifest.${code}.json`
-  const navManifestPath = config.navManifestPath || path.join(GENERATED_ROOT, navManifestFile)
-
-  const searchRoots = uniq([
-    DOCS_DIR,
-    GENERATED_ROOT,
-    docsRoot,
-    generatedDir,
-    ...(Array.isArray(config.searchRoots) ? config.searchRoots : [])
-  ])
-
-  const contentRoots = uniq([
-    localizedContentDir,
-    contentDir,
-    ...(Array.isArray(config.contentRoots) ? config.contentRoots : [])
-  ])
+  const navManifestPath = resolvePath(config.navManifestPath, {
+    defaultValue: path.join(generatedDir, navManifestFile)
+  })
 
   const outMetaFile = config.outMetaFile || `meta.${code}.json`
-  const outMeta = config.outMeta || path.join(GENERATED_ROOT, outMetaFile)
+  const outMeta = resolvePath(config.outMeta, { defaultValue: path.join(generatedDir, outMetaFile) })
+
+  const labels = composeLabels(config.labels)
+  const contentFields = composeContentFields(config.contentFields)
 
   return {
     code,
@@ -164,20 +129,23 @@ function finalizeLocale(code, config = {}) {
     searchRoots,
     basePath,
     generatedPathPrefix,
-    labels: config.labels || {},
-    contentFields: config.contentFields || {},
+    labels,
+    contentFields,
     rssFile: config.rssFile,
     sitemapFile: config.sitemapFile,
-    outMeta
+    outMeta,
+    ui: config.ui || {}
   }
 }
 
 const localeEntries = Object.freeze(
-  Object.entries(RAW_LOCALES).map(([code, config]) => finalizeLocale(code, config))
+  RAW_LOCALES.map(entry => finalizeLocale(entry.code, entry))
 )
 
 export const LANG_CONFIG = Object.freeze(Object.fromEntries(localeEntries.map(locale => [locale.code, locale])))
 export const LANGUAGES = localeEntries
+
+export const NAVIGATION_CONFIG = NAV_CONFIG
 
 export const LOCALE_REGISTRY = Object.freeze(
   localeEntries.map(locale => ({
@@ -206,4 +174,185 @@ export function getLocaleConfig(localeCode) {
 export function getPreferredLocale() {
   const preferredLocale = localeEntries.find(locale => locale.preferred)
   return preferredLocale ? preferredLocale.code : localeEntries[0]?.code
+}
+
+export const __test__ = {
+  loadLocalesFromFiles,
+  loadNavConfigFromFiles
+}
+
+function loadLocalesFromDisk() {
+  return loadLocalesFromFiles({
+    configPath: CONFIG_PATH,
+    schemaPath: SCHEMA_PATH,
+    cachePath: CACHE_FILE,
+    useCache: true
+  })
+}
+
+function loadLocalesFromFiles({ configPath, schemaPath, cachePath, useCache = false }) {
+  const configStat = safeStat(configPath)
+  const schemaStat = safeStat(schemaPath)
+
+  let cached = null
+  if (useCache && cachePath) {
+    cached = readCache(cachePath)
+    if (
+      cached &&
+      cached.sourceMtimeMs === configStat?.mtimeMs &&
+      cached.schemaMtimeMs === schemaStat?.mtimeMs &&
+      Array.isArray(cached.locales)
+    ) {
+      return cached.locales
+    }
+  }
+
+  const schemaJson = JSON.parse(fs.readFileSync(schemaPath, 'utf8'))
+  const configJson = JSON.parse(fs.readFileSync(configPath, 'utf8'))
+
+  const validator = useCache
+    ? (cachedValidateLocales ||= ajv.compile(schemaJson))
+    : ajv.compile(schemaJson)
+
+  if (!validator(configJson)) {
+    const details = (validator.errors || [])
+      .map(err => `${err.instancePath || 'root'} ${err.message}`)
+      .join('; ')
+    throw new Error(`Invalid locales configuration: ${details}`)
+  }
+
+  const locales = Array.isArray(configJson.locales) ? configJson.locales.map(normalizeLocaleEntry) : []
+
+  if (useCache && cachePath) {
+    writeCache(cachePath, {
+      version: 1,
+      sourceMtimeMs: configStat?.mtimeMs ?? null,
+      schemaMtimeMs: schemaStat?.mtimeMs ?? null,
+      locales
+    })
+  }
+
+  return locales
+}
+
+function loadNavConfig() {
+  return loadNavConfigFromFiles({
+    configPath: NAV_CONFIG_PATH,
+    schemaPath: NAV_SCHEMA_PATH,
+    useCache: true
+  })
+}
+
+function loadNavConfigFromFiles({ configPath, schemaPath, useCache = false }) {
+  const schemaStat = safeStat(schemaPath)
+  const configStat = safeStat(configPath)
+  if (!schemaStat || !configStat) {
+    console.warn('[pagegen.locales] navigation schema or config missing; using defaults')
+    return { aggregates: {}, sections: [], links: {} }
+  }
+
+  const schemaJson = JSON.parse(fs.readFileSync(schemaPath, 'utf8'))
+  const configJson = JSON.parse(fs.readFileSync(configPath, 'utf8'))
+
+  const validator = useCache
+    ? (cachedValidateNav ||= ajv.compile(schemaJson))
+    : ajv.compile(schemaJson)
+
+  if (!validator(configJson)) {
+    const details = (validator.errors || [])
+      .map(err => `${err.instancePath || 'root'} ${err.message}`)
+      .join('; ')
+    throw new Error(`Invalid navigation configuration: ${details}`)
+  }
+
+  return configJson
+}
+
+function normalizeLocaleEntry(entry) {
+  if (!entry || typeof entry !== 'object') return {}
+  return {
+    ...entry,
+    code: entry.code
+  }
+}
+
+function resolvePath(target, { defaultValue } = {}) {
+  if (target == null || target === '') {
+    return defaultValue
+  }
+  if (path.isAbsolute(target)) {
+    return target
+  }
+  if (target.startsWith('./') || target.startsWith('../')) {
+    return path.join(ROOT_DIR, target)
+  }
+  return path.join(DOCS_DIR, target)
+}
+
+function normalizeRoutePrefix(input) {
+  if (!input) return ''
+  const trimmed = input.trim()
+  if (!trimmed || trimmed === '/') return ''
+  return ensureLeadingSlash(trimmed.replace(/\/+$/, ''))
+}
+
+function composeLabels(raw = {}) {
+  const template = typeof raw === 'object' && raw ? raw : {}
+  return {
+    category: createLabelFormatter(template.category),
+    series: createLabelFormatter(template.series),
+    tag: createLabelFormatter(template.tag),
+    archive: createLabelFormatter(template.archive),
+    rssTitle: template.rssTitle || '',
+    rssDesc: template.rssDesc || ''
+  }
+}
+
+function createLabelFormatter(template) {
+  if (typeof template === 'string' && template.length) {
+    if (template.includes('{value}')) {
+      return value => template.replaceAll('{value}', String(value ?? ''))
+    }
+    return value => `${template}${value != null ? String(value) : ''}`
+  }
+  return value => String(value ?? '')
+}
+
+function composeContentFields(raw = {}) {
+  if (!raw || typeof raw !== 'object') return {}
+  const normalized = {}
+  for (const [key, value] of Object.entries(raw)) {
+    if (Array.isArray(value)) {
+      normalized[key] = value.map(item => String(item))
+    } else if (typeof value === 'string') {
+      normalized[key] = [value]
+    }
+  }
+  return normalized
+}
+
+function safeStat(targetPath) {
+  try {
+    return fs.statSync(targetPath)
+  } catch {
+    return null
+  }
+}
+
+function readCache(cachePath) {
+  try {
+    const raw = fs.readFileSync(cachePath, 'utf8')
+    return JSON.parse(raw)
+  } catch {
+    return null
+  }
+}
+
+function writeCache(cachePath, payload) {
+  try {
+    fs.mkdirSync(path.dirname(cachePath), { recursive: true })
+    fs.writeFileSync(cachePath, JSON.stringify(payload, null, 2))
+  } catch (error) {
+    console.warn('[pagegen.locales] Failed to write cache:', error.message)
+  }
 }

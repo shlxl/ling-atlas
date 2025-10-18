@@ -1,0 +1,84 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Ling Atlas Pagegen Locales",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["locales"],
+  "properties": {
+    "$schema": { "type": "string" },
+    "locales": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["code", "labels"],
+        "properties": {
+          "code": { "type": "string", "minLength": 1 },
+          "preferred": { "type": "boolean" },
+          "manifestLocale": { "type": "string", "minLength": 1 },
+          "vitepressLocaleKey": { "type": "string", "minLength": 1 },
+          "aliasLocaleIds": {
+            "type": "array",
+            "items": { "type": "string", "minLength": 1 }
+          },
+        "mirrorContentToRoot": { "type": "boolean" },
+        "routePrefix": { "type": "string" },
+        "docsDir": { "type": "string", "minLength": 1 },
+        "generatedDir": { "type": "string", "minLength": 1 },
+        "contentDir": { "type": "string", "minLength": 1 },
+        "localizedContentDir": { "type": "string", "minLength": 1 },
+        "contentRoots": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "searchRoots": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "basePath": { "type": "string", "minLength": 1 },
+        "generatedPathPrefix": { "type": "string", "minLength": 1 },
+        "navManifestFile": { "type": "string", "minLength": 1 },
+        "navManifestPath": { "type": "string", "minLength": 1 },
+        "outMetaFile": { "type": "string", "minLength": 1 },
+        "outMeta": { "type": "string", "minLength": 1 },
+        "rssFile": { "type": "string", "minLength": 1 },
+        "sitemapFile": { "type": "string", "minLength": 1 },
+        "labels": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "category": { "type": "string" },
+            "series": { "type": "string" },
+            "tag": { "type": "string" },
+            "archive": { "type": "string" },
+            "rssTitle": { "type": "string" },
+            "rssDesc": { "type": "string" }
+          }
+        },
+        "contentFields": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "array",
+            "items": { "type": "string", "minLength": 1 }
+          }
+        },
+        "ui": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "label": { "type": "string" },
+            "lang": { "type": "string" },
+            "title": { "type": "string" },
+            "description": { "type": "string" },
+            "lightModeSwitchTitle": { "type": "string" },
+            "darkModeSwitchTitle": { "type": "string" },
+            "cardLabel": { "type": "string" },
+            "cardDescription": { "type": "string" }
+          }
+        }
+      }
+    }
+  }
+}
+}

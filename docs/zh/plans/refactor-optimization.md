@@ -2,7 +2,7 @@
 
 ## 背景
 
-`scripts/pagegen.mjs` 经过多轮功能叠加，目前承担了目录同步、Markdown 解析、聚合页生成、RSS/Sitemap 输出以及跨语言映射等职责，整段逻辑集中在一个异步自执行函数内串行执行，使得每次运行都需要完整遍历所有语言与内容目录。【F:scripts/pagegen.mjs†L28-L117】配套的 `pagegen.locales.mjs` 也内置了大量语言配置常量，扩展时需要直接改动脚本源码，缺少数据驱动能力。【F:scripts/pagegen.locales.mjs†L10-L199】
+`scripts/pagegen.mjs` 经过多轮功能叠加，目前承担了目录同步、Markdown 解析、聚合页生成、RSS/Sitemap 输出以及跨语言映射等职责，整段逻辑集中在一个异步自执行函数内串行执行，使得每次运行都需要完整遍历所有语言与内容目录。【F:scripts/pagegen.mjs†L28-L117】配套的 `pagegen.locales.mjs` 曾内置大量语言配置常量，扩展时需要直接改动脚本源码，缺少数据驱动能力（现已迁移到 `schema/locales.json` 并由 JSON Schema 守门，同时提供给前端主题与 Landing 页面复用）。【F:scripts/pagegen.locales.mjs†L10-L199】
 
 ## 现状痛点
 
@@ -10,7 +10,7 @@
 2. **无差异的目录同步**：`syncLocaleContent` 每次执行都会整目录删除再复制，即使内容没有变化也会做全量 I/O，放大了构建时间和磁盘写入成本。【F:scripts/pagegen.mjs†L146-L157】
 3. **文件读取缺乏并发与缓存**：文章元数据解析采用顺序 `for...of`，每个 Markdown 都独立 `readFile` 与 `gray-matter` 解析；随着文章规模扩大，该区域成为热点瓶颈，且没有缓存层复用解析结果。【F:scripts/pagegen.mjs†L165-L216】
 4. **写入阶段逐条 await**：聚合页、RSS、Sitemap 以及导航 manifest 都在语言循环内逐条写文件，缺乏批量调度和错误隔离机制，导致 I/O 次数偏高，失败时也无法快速定位具体阶段。【F:scripts/pagegen.mjs†L247-L305】【F:scripts/pagegen.mjs†L473-L499】
-5. **配置不可扩展**：语言定义与字段映射 hardcode 在 `pagegen.locales.mjs`，新增方言/地区配置需修改源码并重新部署，难以让内容团队独立维护配置表。【F:scripts/pagegen.locales.mjs†L10-L172】
+5. **配置不可扩展**：语言定义与字段映射曾 hardcode 在 `pagegen.locales.mjs`，新增方言/地区配置需修改源码并重新部署，难以让内容团队独立维护配置表（已迁移至 `schema/locales.json`，导航/标签配置仍待外置）。【F:scripts/pagegen.locales.mjs†L10-L172】
 
 ## 重构方向
 
@@ -31,8 +31,8 @@
    - 失败时输出结构化日志（模块名、语言、目标路径），便于排查，而不是只看到顶层脚本失败。
 
 5. **配置外置与 Schema 化**：
-   - 将 `RAW_LOCALES` 抽离到 `schema/locales.json` 或同类数据文件，利用 JSON Schema 校验字段完整性，让内容运营可在不触碰脚本的情况下增减语言。【F:scripts/pagegen.locales.mjs†L10-L172】
-   - 主脚本加载配置后可缓存到 `.codex/cache` 等目录，避免每次运行都重新解析。
+   - 将 `RAW_LOCALES` 抽离到 `schema/locales.json` 并通过 `schema/locales.schema.json` 校验字段完整性，让内容运营可在不触碰脚本的情况下增减语言；导航配置已迁移至 `schema/nav.json`（受 `schema/nav.schema.json` 守门），Pagegen nav manifest 与 VitePress 主题共用同一份定义，后续可继续将标签/固定链接等守门数据纳入该体系。
+   - 主脚本加载配置后可缓存到 `.codex/cache` 等目录，避免每次运行都重新解析；同时补充运维指南，告知如何通过配置文件扩展语言并同步到 README/AGENTS。
 
 6. **未来扩展与验证**：
    - 在拆分后的模块周围补充单元测试，尤其是分类聚合、i18n 映射合并、tag alias 归一化等逻辑，确保重构不破坏现有输出。【F:scripts/pagegen.mjs†L328-L439】

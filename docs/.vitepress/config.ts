@@ -1,14 +1,19 @@
 import { defineConfig, type HeadConfig } from 'vitepress'
 import type { Plugin } from 'vite'
 import { fileURLToPath } from 'node:url'
+import path from 'node:path'
 import cssnano from 'cssnano'
 import fs from 'node:fs'
 import { VitePWA } from 'vite-plugin-pwa'
 import { navFromMeta as buildNavFromMeta } from './theme/nav-core.mjs'
 import type { NavManifest, NavTranslations } from './theme/nav-core.mjs'
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
+const ROOT_DIR = path.resolve(__dirname, '..', '..')
+const NAV_CONFIG = loadNavConfig()
 import {
   DEFAULT_LOCALE,
   SUPPORTED_LOCALES,
+  LOCALE_UI,
   LocaleCode,
   VitepressLocaleKey,
   manifestFileName,
@@ -108,29 +113,36 @@ type LocaleCopy = {
   darkModeSwitchTitle: string
 }
 
-const localeCopy: Record<LocaleCode, LocaleCopy> = {
-  zh: {
-    label: '简体中文',
-    lang: 'zh-CN',
-    title: 'Ling Atlas · 知识库',
-    description: '现代化、可演进、可检索的知识库工程',
-    lightModeSwitchTitle: '切换到浅色模式',
-    darkModeSwitchTitle: '切换到深色模式'
-  },
-  en: {
-    label: 'English',
-    lang: 'en-US',
-    title: 'Ling Atlas · Knowledge',
-    description: 'A modern, evolvable, and searchable knowledge base project',
+function toLocaleCopy(locale: LocaleCode): LocaleCopy {
+  const fallback: LocaleCopy = {
+    label: locale.toUpperCase(),
+    lang: locale,
+    title: 'Ling Atlas',
+    description: '',
     lightModeSwitchTitle: 'Switch to light mode',
     darkModeSwitchTitle: 'Switch to dark mode'
   }
+
+  const ui = (LOCALE_UI as Record<string, Partial<LocaleCopy> | undefined>)[locale]
+  if (!ui) return fallback
+  return {
+    label: ui.label ?? fallback.label,
+    lang: ui.lang ?? fallback.lang,
+    title: ui.title ?? fallback.title,
+    description: ui.description ?? fallback.description,
+    lightModeSwitchTitle: ui.lightModeSwitchTitle ?? fallback.lightModeSwitchTitle,
+    darkModeSwitchTitle: ui.darkModeSwitchTitle ?? fallback.darkModeSwitchTitle
+  }
 }
+
+const localeCopy: Record<LocaleCode, LocaleCopy> = Object.fromEntries(
+  SUPPORTED_LOCALES.map(locale => [locale.code, toLocaleCopy(locale.code as LocaleCode)])
+) as Record<LocaleCode, LocaleCopy>
 
 const localizedLocaleConfigs = Object.fromEntries(
   SUPPORTED_LOCALES.map(locale => {
     const code = locale.code
-    const strings = localeCopy[code]
+    const strings = localeCopy[code as LocaleCode]
     const manifest = localeManifest[code] ?? null
     const meta = localeMeta[code]
     const translations = (i18nMap.nav?.[code] || i18nMap.nav?.[DEFAULT_LOCALE] || {}) as NavTranslations
@@ -147,7 +159,8 @@ const localizedLocaleConfigs = Object.fromEntries(
             locale: code,
             translations,
             routeRoot,
-            collator: new Intl.Collator(code === 'en' ? 'en' : 'zh-CN')
+            collator: new Intl.Collator(code === 'en' ? 'en' : 'zh-CN'),
+            config: NAV_CONFIG
           }),
           sidebar: 'auto',
           lightModeSwitchTitle: strings.lightModeSwitchTitle,
@@ -223,6 +236,16 @@ function loadNavManifest(localeId: LocaleCode): NavManifest | null {
   }
 
   return null
+}
+
+function loadNavConfig() {
+  try {
+    const configPath = path.join(ROOT_DIR, 'schema', 'nav.json')
+    return JSON.parse(fs.readFileSync(configPath, 'utf8'))
+  } catch (error) {
+    console.warn('[config] failed to load schema/nav.json:', error.message)
+    return {}
+  }
 }
 
 function loadLocaleMeta(localeId: LocaleCode) {

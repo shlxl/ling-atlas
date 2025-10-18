@@ -56,3 +56,37 @@ test('writeCollections writes markdown aggregates and nav entries', async t => {
   assert.ok(archiveFile.includes('归档 · 2025'))
   assert.ok(navEntries.archive.has('2025'))
 })
+
+test('writeCollections supports dry run without touching filesystem', async t => {
+  const root = await createTempDir()
+  t.after(async () => {
+    await fs.rm(root, { recursive: true, force: true })
+  })
+
+  const lang = {
+    code: 'zh',
+    manifestLocale: 'zh',
+    localeRoot: '/zh/',
+    generatedDir: root,
+    labels: {
+      category: value => `分类 · ${value}`,
+      series: value => `连载 · ${value}`,
+      tag: value => `标签 · ${value}`,
+      archive: value => `归档 · ${value}`
+    }
+  }
+
+  const meta = {
+    byCategory: { Guides: [{ title: 'Post', path: '/zh/content/post/', updated: '', date: '2025-01-01', excerpt: '' }] },
+    bySeries: { seriesA: [{ title: 'Post', path: '/zh/content/post/', updated: '', date: '2025-01-01', excerpt: '' }] },
+    byTag: { workflow: [{ title: 'Post', path: '/zh/content/post/', updated: '', date: '2025-01-01', excerpt: '' }] },
+    byYear: { '2025': [{ title: 'Post', path: '/zh/content/post/', updated: '', date: '2025-01-01', excerpt: '' }] }
+  }
+
+  const navEntries = await writeCollections(lang, meta, null, { dryRun: true })
+
+  assert.ok(navEntries.categories.has('guides'))
+  assert.equal(navEntries.categories.get('guides'), '/zh/_generated/categories/guides/')
+
+  await assert.rejects(() => fs.access(path.join(root, 'categories')), /ENOENT/)
+})

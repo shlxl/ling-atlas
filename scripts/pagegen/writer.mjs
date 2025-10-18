@@ -54,7 +54,8 @@ export function createWriter(options = {}) {
       written: 0,
       skipped: 0,
       failed: 0,
-      errors: []
+      errors: [],
+      skippedByReason: {}
     }
 
     if (!tasks.length) return results
@@ -75,7 +76,8 @@ export function createWriter(options = {}) {
           stage: task?.stage,
           locale: task?.locale,
           target: task?.target,
-          message: error?.message || 'Unknown write error'
+          message: error?.message || 'Unknown write error',
+          stack: error?.stack
         })
         continue
       }
@@ -84,6 +86,8 @@ export function createWriter(options = {}) {
         results.written += 1
       } else {
         results.skipped += 1
+        const reason = outcome?.reason || 'unknown'
+        results.skippedByReason[reason] = (results.skippedByReason[reason] || 0) + 1
       }
     }
 

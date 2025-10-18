@@ -8,6 +8,7 @@ import {
   PUBLIC_ROOT as PUB,
   LANG_CONFIG,
   LANGUAGES,
+  NAVIGATION_CONFIG,
   getPreferredLocale
 } from './pagegen.locales.mjs'
 import { collectPosts } from './pagegen/collect.mjs'
@@ -21,6 +22,7 @@ export {
   LOCALE_REGISTRY,
   LANG_CONFIG,
   LANGUAGES,
+  NAVIGATION_CONFIG,
   ROOT_DIR,
   DOCS_DIR,
   GENERATED_ROOT,
@@ -40,11 +42,42 @@ await (async () => {
 
   const LOCALE_CONFIG = LANGUAGES
   const argv = process.argv.slice(2)
+  const dryRunFlagIndex = argv.indexOf('--dry-run')
+  const dryRunEnv = process.env.PAGEGEN_DRY_RUN === '1'
+  const dryRun = dryRunFlagIndex !== -1 || dryRunEnv
+  if (dryRunFlagIndex !== -1) {
+    argv.splice(dryRunFlagIndex, 1)
+  }
+  const metricsOnlyFlagIndex = argv.indexOf('--metrics-only')
+  const metricsOnlyEnv = process.env.PAGEGEN_METRICS_ONLY === '1'
+  const metricsOnly = metricsOnlyFlagIndex !== -1 || metricsOnlyEnv
+  if (metricsOnlyFlagIndex !== -1) {
+    argv.splice(metricsOnlyFlagIndex, 1)
+  }
+  const metricsStdoutFlagIndex = argv.indexOf('--metrics-stdout')
+  const metricsStdoutEnv = process.env.PAGEGEN_METRICS_STDOUT === '1'
+  let metricsStdout = metricsStdoutFlagIndex !== -1 || metricsStdoutEnv
+  if (metricsStdoutFlagIndex !== -1) {
+    argv.splice(metricsStdoutFlagIndex, 1)
+  }
+  if (metricsOnly) metricsStdout = true
+  let metricsOutputPath = process.env.PAGEGEN_METRICS_OUTPUT
+  const metricsOutputFlagIndex = argv.indexOf('--metrics-output')
+  if (metricsOutputFlagIndex !== -1) {
+    const specified = argv[metricsOutputFlagIndex + 1]
+    if (!specified) {
+      console.error('pagegen: --metrics-output requires a file path')
+      process.exit(1)
+    }
+    metricsOutputPath = specified
+    argv.splice(metricsOutputFlagIndex, 2)
+  }
   const forceFullSync = argv.includes('--full-sync') || process.env.PAGEGEN_FULL_SYNC === '1'
   const disableCache = argv.includes('--no-cache') || process.env.PAGEGEN_DISABLE_CACHE === '1'
   const batchingDisabled = argv.includes('--no-batch') || process.env.PAGEGEN_DISABLE_BATCH === '1'
   const collectConcurrency = Number(process.env.PAGEGEN_CONCURRENCY || 8)
-  const writer = batchingDisabled ? null : createWriter()
+  const effectiveDryRun = dryRun || metricsOnly
+  const writer = effectiveDryRun || batchingDisabled ? null : createWriter()
 
   for (const lang of LOCALE_CONFIG) {
     if (lang.generatedDir) {
@@ -60,11 +93,16 @@ await (async () => {
 
   const preferredLocaleCode = getPreferredLocale()
   const stageTimings = []
-  const metricsLogPath = path.join(__dirname, '..', 'data', 'pagegen-metrics.json')
+  const defaultMetricsPath = path.join(__dirname, '..', 'data', 'pagegen-metrics.json')
+  const metricsLogPath = metricsOutputPath ? path.resolve(metricsOutputPath) : defaultMetricsPath
+
+  function logInfo(...args) {
+    if (!metricsOnly) console.log(...args)
+  }
 
   function recordStage(name, durationMs) {
     stageTimings.push({ name, durationMs })
-    console.log(`[pagegen] ${name} ${durationMs.toFixed(1)}ms`)
+    logInfo(`[pagegen] ${name} ${durationMs.toFixed(1)}ms`)
   }
 
   async function measureStage(name, fn) {
@@ -78,12 +116,26 @@ await (async () => {
 
   function flushStageSummary() {
     const total = stageTimings.reduce((sum, item) => sum + item.durationMs, 0)
-    console.log(`[pagegen] total ${total.toFixed(1)}ms`)
+    logInfo(`[pagegen] total ${total.toFixed(1)}ms`)
     return total
   }
 
   const tagAlias = await loadTagAlias(__dirname)
-  const registry = createI18nRegistry(LOCALE_CONFIG, { tagAlias })
+  const registry = createI18nRegistry(LOCALE_CONFIG, { tagAlias, navConfig: NAVIGATION_CONFIG })
+
+  function logInfo(...args) {
+    if (!metricsOnly) console.log(...args)
+  }
+
+  if (metricsOutputPath && !metricsOnly) {
+    logInfo(`[pagegen] metrics output: ${metricsLogPath}`)
+  }
+  if (effectiveDryRun) {
+    logInfo('[pagegen] dry-run mode: file writes will be skipped')
+  }
+  if (metricsStdout && metricsOutputPath && !metricsOnly) {
+    logInfo('[pagegen] metrics stdout mode enabled; file output will be skipped')
+  }
 
   const syncMetrics = await measureStage('syncLocaleContent', () =>
     syncLocaleContent(LOCALE_CONFIG, {
@@ -94,7 +146,7 @@ await (async () => {
   for (const metric of syncMetrics || []) {
     const copied = metric.copied ? 'copied' : 'skipped'
     const sizeMb = metric.bytes ? (metric.bytes / (1024 * 1024)).toFixed(2) : '0.00'
-    console.log(
+    logInfo(
       `[pagegen] sync:${metric.locale} ${copied} mode=${metric.mode} files=${metric.files}` +
         ` copied=${metric.copiedFiles} removed=${metric.removedFiles} size=${sizeMb}MB`
     )
@@ -113,12 +165,13 @@ await (async () => {
     )
     if (posts.stats) {
       collectMetrics[lang.code || lang.manifestLocale] = posts.stats
-      console.log(
+      logInfo(
         `[pagegen] cache:${lang.manifestLocale} hits=${posts.stats.cacheHits} misses=${posts.stats.cacheMisses}` +
           ` parsed=${posts.stats.parsedFiles} total=${posts.stats.totalFiles}`
       )
     }
     await measureStage(`meta:${lang.manifestLocale}`, async () => {
+      if (effectiveDryRun) return
       const payload = `${JSON.stringify(posts.meta, null, 2)}\n`
       if (writer) {
         writer.addFileTask({
@@ -133,7 +186,7 @@ await (async () => {
     })
 
     const navEntries = await measureStage(`collections:${lang.manifestLocale}`, () =>
-      writeCollections(lang, posts.meta, writer)
+      writeCollections(lang, posts.meta, writer, { dryRun: effectiveDryRun })
     )
     registry.addNavEntries(lang, navEntries)
     await measureStage(`rss:${lang.manifestLocale}`, () =>
@@ -141,11 +194,12 @@ await (async () => {
         publicDir: PUBLIC_DIR,
         siteOrigin,
         preferredLocale: preferredLocaleCode,
-        writer
+        writer,
+        dryRun: effectiveDryRun
       })
     )
     await measureStage(`sitemap:${lang.manifestLocale}`, () =>
-      generateSitemap(lang, posts.list, { publicDir: PUBLIC_DIR, siteOrigin, writer })
+      generateSitemap(lang, posts.list, { publicDir: PUBLIC_DIR, siteOrigin, writer, dryRun: effectiveDryRun })
     )
 
     for (const post of posts.list) {
@@ -165,7 +219,8 @@ await (async () => {
     skipped: 0,
     failed: 0,
     errors: [],
-    disabled: batchingDisabled
+    skippedByReason: {},
+    disabled: batchingDisabled || effectiveDryRun
   }
 
   if (writer) {
@@ -184,19 +239,36 @@ await (async () => {
 
   const totalDuration = flushStageSummary()
 
-  console.log('✔ pagegen 完成')
+  logInfo('✔ pagegen 完成')
 
-  await appendMetricsLog({
-    timestamp: new Date().toISOString(),
-    totalMs: Number(totalDuration.toFixed(3)),
-    sync: syncMetrics,
-    stages: stageTimings.map(item => ({
-      name: item.name,
-      ms: Number(item.durationMs.toFixed(3))
-    })),
-    collect: collectMetrics,
-    write: writeResults
+  const metricsEntry = buildMetricsEntry({
+    totalDuration,
+    stageTimings,
+    syncMetrics,
+    collectMetrics,
+    writeResults
   })
+
+  if (!metricsOnly) {
+    const collectSummary = metricsEntry.collect?.summary
+    if (collectSummary && (collectSummary.parseErrors > 0 || collectSummary.errorEntries > 0)) {
+      console.warn(
+        `[pagegen] collect warnings: parseErrors=${collectSummary.parseErrors} errorEntries=${collectSummary.errorEntries}`
+      )
+    }
+    const syncSummary = metricsEntry.sync?.summary
+    if (syncSummary && (syncSummary.failedCopies > 0 || syncSummary.failedRemovals > 0)) {
+      console.warn(
+        `[pagegen] sync warnings: failedCopies=${syncSummary.failedCopies} failedRemovals=${syncSummary.failedRemovals}`
+      )
+    }
+  }
+
+  if (metricsStdout) {
+    process.stdout.write(`${JSON.stringify(metricsEntry, null, 2)}\n`)
+  } else {
+    await appendMetricsLog(metricsEntry)
+  }
 
   async function writeI18nMap(map, currentWriter) {
     const json = `${JSON.stringify(map, null, 2)}\n`
@@ -257,6 +329,106 @@ await (async () => {
       await fs.writeFile(metricsLogPath, JSON.stringify(limited, null, 2))
     } catch (error) {
       console.warn('[pagegen] failed to write metrics log:', error.message)
+    }
+  }
+
+  function buildMetricsEntry({ totalDuration, stageTimings, syncMetrics, collectMetrics, writeResults }) {
+    const stages = stageTimings.map(item => ({
+      name: item.name,
+      ms: Number(item.durationMs.toFixed(3))
+    }))
+
+    return {
+      timestamp: new Date().toISOString(),
+      totalMs: Number(totalDuration.toFixed(3)),
+      stages,
+      stageSummary: Object.fromEntries(stages.map(item => [item.name, item.ms])),
+      sync: summarizeSyncMetrics(syncMetrics),
+      collect: summarizeCollectMetrics(collectMetrics),
+      write: summarizeWriteResults(writeResults)
+    }
+  }
+
+  function summarizeSyncMetrics(metrics = []) {
+    if (!Array.isArray(metrics)) return { summary: { locales: 0 }, locales: [] }
+    const summary = {
+      locales: metrics.length,
+      copiedLocales: metrics.filter(item => item?.copied).length,
+      totalFiles: metrics.reduce((sum, item) => sum + Number(item?.files || 0), 0),
+      copiedFiles: metrics.reduce((sum, item) => sum + Number(item?.copiedFiles || 0), 0),
+      removedFiles: metrics.reduce((sum, item) => sum + Number(item?.removedFiles || 0), 0),
+      bytes: metrics.reduce((sum, item) => sum + Number(item?.bytes || 0), 0),
+      failedCopies: metrics.reduce((sum, item) => sum + Number(item?.failedCopies || 0), 0),
+      failedRemovals: metrics.reduce((sum, item) => sum + Number(item?.failedRemovals || 0), 0),
+      errors: metrics.reduce((sum, item) => sum + Number((item?.errors || []).length), 0),
+      snapshotsUpdated: metrics.filter(item => item?.snapshotUpdated).length
+    }
+
+    const locales = metrics.map(item => ({
+      locale: item?.locale,
+      mode: item?.mode,
+      files: item?.files,
+      copiedFiles: item?.copiedFiles,
+      removedFiles: item?.removedFiles,
+      unchangedFiles: item?.unchangedFiles,
+      bytes: item?.bytes,
+      copied: item?.copied,
+      failedCopies: item?.failedCopies,
+      failedRemovals: item?.failedRemovals,
+      snapshotUpdated: item?.snapshotUpdated,
+      errors: item?.errors || []
+    }))
+
+    return { summary, locales }
+  }
+
+  function summarizeCollectMetrics(metrics = {}) {
+    const entries = Object.entries(metrics || {})
+    const summary = {
+      locales: entries.length,
+      totalFiles: entries.reduce((sum, [, stats]) => sum + Number(stats?.totalFiles || 0), 0),
+      parsedFiles: entries.reduce((sum, [, stats]) => sum + Number(stats?.parsedFiles || 0), 0),
+      cacheHits: entries.reduce((sum, [, stats]) => sum + Number(stats?.cacheHits || 0), 0),
+      cacheMisses: entries.reduce((sum, [, stats]) => sum + Number(stats?.cacheMisses || 0), 0),
+      parseErrors: entries.reduce((sum, [, stats]) => sum + Number(stats?.parseErrors || 0), 0),
+      errorEntries: entries.reduce((sum, [, stats]) => sum + Number((stats?.errors || []).length), 0)
+    }
+    const totalRequests = summary.cacheHits + summary.cacheMisses
+    summary.cacheHitRate = totalRequests ? Number((summary.cacheHits / totalRequests).toFixed(3)) : 0
+
+    const locales = entries.map(([locale, stats]) => ({
+      locale,
+      totalFiles: stats?.totalFiles || 0,
+      parsedFiles: stats?.parsedFiles || 0,
+      cacheHits: stats?.cacheHits || 0,
+      cacheMisses: stats?.cacheMisses || 0,
+      cacheDisabled: Boolean(stats?.cacheDisabled),
+      parseErrors: stats?.parseErrors || 0,
+      errors: stats?.errors || []
+    }))
+
+    return { summary, locales }
+  }
+
+  function summarizeWriteResults(results = {}) {
+    return {
+      summary: {
+        total: Number(results?.total || 0),
+        written: Number(results?.written || 0),
+        skipped: Number(results?.skipped || 0),
+        failed: Number(results?.failed || 0),
+        disabled: Boolean(results?.disabled),
+        skippedByReason: results?.skippedByReason || {}
+      },
+      errors: Array.isArray(results?.errors)
+        ? results.errors.map(err => ({
+            stage: err?.stage,
+            locale: err?.locale,
+            target: err?.target,
+            message: err?.message,
+            stack: err?.stack
+          }))
+        : []
     }
   }
 })();

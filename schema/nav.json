@@ -1,0 +1,92 @@
+{
+  "$schema": "./nav.schema.json",
+  "aggregates": {
+    "latest": {
+      "type": "archive",
+      "labelKey": "nav.latest",
+      "manifestKey": "archive",
+      "sort": "desc",
+      "fallback": true
+    },
+    "categories": {
+      "type": "category",
+      "labelKey": "nav.categories",
+      "manifestKey": "categories",
+      "sort": "asc"
+    },
+    "series": {
+      "type": "series",
+      "labelKey": "nav.series",
+      "manifestKey": "series",
+      "sort": "asc"
+    },
+    "tags": {
+      "type": "tag",
+      "labelKey": "nav.tags",
+      "manifestKey": "tags",
+      "sort": "asc"
+    }
+  },
+  "links": {
+    "about.metrics": {
+      "href": "{routeRoot}/about/metrics.html",
+      "labelKey": "nav.metrics"
+    },
+    "about.qa": {
+      "href": "{routeRoot}/about/qa.html",
+      "labelKey": "nav.qa"
+    },
+    "guides.deploy": {
+      "href": "{routeRoot}/DEPLOYMENT.html",
+      "labelKey": "nav.deploy"
+    },
+    "guides.migration": {
+      "href": "{routeRoot}/MIGRATION.html",
+      "labelKey": "nav.migration"
+    }
+  },
+  "sections": [
+    {
+      "key": "latest",
+      "kind": "aggregate",
+      "titleKey": "nav.latest",
+      "aggregateKey": "latest"
+    },
+    {
+      "key": "categories",
+      "kind": "aggregate",
+      "titleKey": "nav.categories",
+      "aggregateKey": "categories"
+    },
+    {
+      "key": "series",
+      "kind": "aggregate",
+      "titleKey": "nav.series",
+      "aggregateKey": "series"
+    },
+    {
+      "key": "tags",
+      "kind": "aggregate",
+      "titleKey": "nav.tags",
+      "aggregateKey": "tags"
+    },
+    {
+      "key": "about",
+      "kind": "group",
+      "titleKey": "nav.about",
+      "items": [
+        { "key": "about.metrics", "link": "{links.about.metrics}", "labelKey": "nav.metrics" },
+        { "key": "about.qa", "link": "{links.about.qa}", "labelKey": "nav.qa" }
+      ]
+    },
+    {
+      "key": "guides",
+      "kind": "group",
+      "titleKey": "nav.guides",
+      "items": [
+        { "key": "guides.deploy", "link": "{links.guides.deploy}", "labelKey": "nav.deploy" },
+        { "key": "guides.migration", "link": "{links.guides.migration}", "labelKey": "nav.migration" }
+      ]
+    }
+  ]
+}

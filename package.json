@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "precheck": "node scripts/validate-frontmatter.mjs",
+    "precheck": "node scripts/validate-frontmatter.mjs && npm run config:nav && npm run config:tags",
     "tags:normalize": "node scripts/normalize-tags.mjs",
     "stats:lint": "node scripts/stats-lint.mjs",
     "gen": "node scripts/pagegen.mjs && node scripts/telemetry-merge.mjs",
@@ -26,6 +26,8 @@
     "ai:all": "npm run ai:embed && (npm run ai:summary || true) && (npm run ai:qa || true)",
     "test:pagegen": "node --test tests/pagegen/*.test.mjs",
     "test:theme": "node --test tests/locale-map/*.test.mjs tests/theme/*.test.mjs",
+    "config:nav": "node scripts/validate-nav-config.mjs",
+    "config:tags": "node scripts/validate-tag-alias.mjs",
     "audit": "npm audit --omit=dev || true",
     "license": "license-checker --summary",
     "sbom": "node scripts/sbom.mjs"

@@ -125,7 +125,13 @@ npm run dev
 ## FAQ
 - **可以放在根仓库吗？** 可以，但推荐独立仓库，后续可用 subtree 回挂到旧仓 `docs/`。
 - **中文标题如何转 slug？** `scripts/slug.ts` 提供简版实现，优先手写 `slug` 字段。
-- **如何自定义默认语言？** 生成器默认以 `docs/zh/content` 作为首选语言，输出 `/zh/` 路由；如需调整，可在 `scripts/pagegen.locales.mjs` 中修改 `preferred`、`basePath` 与内容目录配置，并为新的默认语言补齐 `docs/<locale>/` 站点结构。
+- **如何自定义默认语言？** 生成器默认以 `docs/zh/content` 作为首选语言，输出 `/zh/` 路由；如需调整，请编辑 `schema/locales.json` 中对应语言的 `preferred`、`basePath` 与目录字段，并为新的默认语言补齐 `docs/<locale>/` 站点结构。保存后运行 `npm run gen` 或 `codex run gen` 校验生成结果；JSON 会依据 `schema/locales.schema.json` 自动校验并缓存至 `.codex/cache/`。
+- **导航栏入口如何维护？** 顶部导航与固定链接的结构在 `schema/nav.json` 中配置（受 `schema/nav.schema.json` 校验）。修改后无需动任何前端源码，Pagegen 与 VitePress 会在下一次 `npm run gen`/`npm run build` 时自动读取最新配置并裁剪导航入口。
+- **想了解目录现状和 TODO？** 参考 `docs/zh/plans/module-inventory.md`，该文档汇总了 `schema/`、`scripts/`、`docs/zh/plans/` 与 `tests/` 目录的资产与后续建议；Pagegen 模块的详细检查清单见 `docs/zh/plans/pagegen-deep-dive.md`。
+- **如何自定义 metrics 输出？** 默认写入 `data/pagegen-metrics.json`。也可以通过 `PAGEGEN_METRICS_OUTPUT=<path>` 或运行 `node scripts/pagegen.mjs --metrics-output <file>` 指定目标文件，便于在 CI 中收集统计。
+- **可以只观察指标不落盘吗？** 支持在运行 Pagegen 时加上 `--dry-run`（或设定 `PAGEGEN_DRY_RUN=1`）来跳过文件写入，配合 `--metrics-output` 可以在 CI 中快速收集指标而不改动仓库。
+- **只输出指标、不显示阶段日志？** 使用 `--metrics-only`（或 `PAGEGEN_METRICS_ONLY=1`）可将指标 JSON 直接写到 stdout，并自动启用 dry-run 写入保护；适合在 CI 中解析。
+- **Landing 语言卡片 / 主题文案在哪配置？** 同一份 `schema/locales.json` 也托管首页语言卡片文案与主题切换提示（`ui.*` 字段）。修改后无需调整前端源码，`npm run build` 会自动读取最新配置并同步到 VitePress 主题。
 
 ---
 

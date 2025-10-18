@@ -1,7 +1,7 @@
 import fs from 'node:fs/promises'
 import path from 'node:path'
 
-export async function generateRss(lang, items, { publicDir, siteOrigin, preferredLocale, writer }) {
+export async function generateRss(lang, items, { publicDir, siteOrigin, preferredLocale, writer, dryRun = false }) {
   if (!items.length) return
   const homePath = lang.code === preferredLocale ? '/' : lang.localeRoot
   const feed = [
@@ -22,6 +22,8 @@ export async function generateRss(lang, items, { publicDir, siteOrigin, preferre
   }
   feed.push(`</channel></rss>`)
 
+  if (dryRun) return
+
   if (writer) {
     writer.addFileTask({
       stage: 'rss',
@@ -34,12 +36,13 @@ export async function generateRss(lang, items, { publicDir, siteOrigin, preferre
   }
 }
 
-export async function generateSitemap(lang, items, { publicDir, siteOrigin, writer }) {
+export async function generateSitemap(lang, items, { publicDir, siteOrigin, writer, dryRun = false }) {
   if (!items.length) return
   const urls = items
     .map(post => `<url><loc>${siteOrigin}${post.path}</loc><lastmod>${post.updated || post.date}</lastmod></url>`)
     .join('')
   const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${urls}</urlset>`
+  if (dryRun) return
   if (writer) {
     writer.addFileTask({
       stage: 'sitemap',

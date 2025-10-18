@@ -2,7 +2,8 @@ import fs from 'node:fs/promises'
 import path from 'node:path'
 import { slug } from './collect.mjs'
 
-export async function writeCollections(lang, meta, writer) {
+export async function writeCollections(lang, meta, writer, options = {}) {
+  const dryRun = Boolean(options.dryRun)
   const navEntries = {
     categories: new Map(),
     series: new Map(),
@@ -15,7 +16,7 @@ export async function writeCollections(lang, meta, writer) {
   const write = async (subdir, name, title, items) => {
     const outDir = path.join(lang.generatedDir, subdir, name)
     const md = `---\ntitle: ${title}\n---\n\n${mdList(items, lang)}\n`
-    if (writer) {
+    if (writer && !dryRun) {
       writer.addFileTask({
         stage,
         locale: lang.manifestLocale,
@@ -23,7 +24,7 @@ export async function writeCollections(lang, meta, writer) {
         content: md
       })
     }
-    if (!writer) {
+    if (!writer && !dryRun) {
       await fs.mkdir(outDir, { recursive: true })
       await fs.writeFile(path.join(outDir, 'index.md'), md)
     }

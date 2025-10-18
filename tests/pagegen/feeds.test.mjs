@@ -78,3 +78,37 @@ test('generateSitemap outputs sitemap with lastmod dates', async t => {
   assert.ok(sitemap.includes('<loc>https://example.com/en/content/post/</loc>'))
   assert.ok(sitemap.includes('<lastmod>2025-02-05</lastmod>'))
 })
+
+test('feeds respect dry run flag', async t => {
+  const publicDir = await fs.mkdtemp(path.join(os.tmpdir(), TMP_PREFIX))
+  t.after(async () => {
+    await fs.rm(publicDir, { recursive: true, force: true })
+  })
+
+  const lang = {
+    code: 'zh',
+    localeRoot: '/zh/',
+    rssFile: 'rss.xml',
+    sitemapFile: 'sitemap.xml',
+    labels: { rssTitle: 'Ling Atlas', rssDesc: '最新更新' }
+  }
+
+  const posts = [
+    { title: 'Post', path: '/zh/content/post/', date: '2025-01-01', updated: '2025-01-02', excerpt: '' }
+  ]
+
+  await generateRss(lang, posts, {
+    publicDir,
+    siteOrigin: 'https://example.com',
+    preferredLocale: 'zh',
+    dryRun: true
+  })
+  await generateSitemap(lang, posts, {
+    publicDir,
+    siteOrigin: 'https://example.com',
+    dryRun: true
+  })
+
+  await assert.rejects(() => fs.readFile(path.join(publicDir, 'rss.xml')), /ENOENT/)
+  await assert.rejects(() => fs.readFile(path.join(publicDir, 'sitemap.xml')), /ENOENT/)
+})

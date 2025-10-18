@@ -34,9 +34,12 @@ Pagegen 当前为串行的单体脚本，承担同步内容、解析元数据、
 
 ### 阶段 4 · 配置外置与 Schema 化
 
-- 将语言、导航、标签等配置迁移至 `schema/` 目录的 JSON/JSONC 文件，引入 JSON Schema 校验。
-- 调整 `pagegen.locales.mjs`：改为加载外置配置并支持缓存至 `.codex/cache`，避免每次读取解析。
-- 编写运维指南：告知内容团队如何通过配置文件新增语言或更新标签映射，并更新 `AGENTS.md`。
+- ✅ 语言配置已迁移至 `schema/locales.json` 并由 `schema/locales.schema.json` 守门；提交后会缓存解析结果到 `.codex/cache/pagegen-locales.cache.json`。
+- ⏳ 标签别名配置尚未配置化（见《Pagegen 深入检查清单》），后续需对 `schema/tag-alias.json` 引入 Schema 校验与测试。导航配置已完成迁移。
+- ✅ `scripts/pagegen.locales.mjs` 改为读取外置 JSON，运行时自动校验 Schema 并输出详细错误，避免手动维护常量。
+- ✅ 运维指南：`README.md` FAQ 与 `AGENTS.md` 第 9 节已说明如何通过配置文件新增语言、切换默认语言与触发校验。
+- ✅ 导航配置 Schema (`schema/nav.schema.json`) 与默认配置 (`schema/nav.json`) 已落地，Pagegen nav manifest 与 VitePress 主题均从同一文件加载聚合/固定链接定义；导航结构更新无需改动源码，仅需调整 JSON 并重跑 `npm run gen`。
+- ✅ 前端主题（`docs/.vitepress/theme/locales.mjs`、`docs/index.md`、`docs/.vitepress/config.ts`）共享同一份 JSON，Landing 语言卡片与模式切换提示可通过配置直接更新。
 
 ### 阶段 5 · Telemetry 与后续拓展
 

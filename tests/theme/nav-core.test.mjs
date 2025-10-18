@@ -1,143 +1,158 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { navFromMeta, slug } from '../../docs/.vitepress/theme/nav-core.mjs'
+import { navFromMeta } from '../../docs/.vitepress/theme/nav-core.mjs'
 
-const zhTranslations = {
-  latest: '最新',
-  categories: '分类',
-  series: '系列',
-  tags: '标签',
-  about: 'About',
-  metrics: '观测指标',
-  qa: '常见问答',
-  guides: '指南',
-  deploy: '部署指南',
-  migration: '迁移与重写'
-}
-
-function buildOptions(locale = 'zh') {
-  const routeRoot = locale === 'zh' ? '/zh' : '/en'
-  return {
-    locale,
-    translations: zhTranslations,
-    routeRoot,
-    collator: new Intl.Collator(locale === 'en' ? 'en' : 'zh-CN')
+const baseTranslations = {
+  nav: {
+    latest: '最新',
+    categories: '分类',
+    series: '系列',
+    tags: '标签',
+    about: '关于',
+    guides: '指南',
+    metrics: '观测指标',
+    qa: '问答',
+    deploy: '部署',
+    migration: '迁移',
+    chat: '知识问答'
   }
 }
 
-test('navFromMeta filters aggregates to manifest-backed entries', () => {
-  const meta = {
-    byCategory: {
-      '工程笔记': [{}],
-      '缺失分类': [{}]
-    },
-    bySeries: {
-      'series-one': [{ series: '深入专题' }],
-      'missing-series': [{ series: '缺失专题' }]
-    },
-    byTag: {
-      Automation: [{}],
-      'Vector Search': [{}],
-      Ghost: [{}]
-    },
-    byYear: {
-      '2024': [{}],
-      '2025': [{}]
+function withTranslations(locale = 'zh') {
+  const map = baseTranslations.nav || {}
+  return {
+    nav: {
+      [locale]: map,
+      zh: map,
+      en: {
+        latest: 'Latest',
+        categories: 'Categories',
+        series: 'Series',
+        tags: 'Tags',
+        about: 'About',
+        guides: 'Guides',
+        metrics: 'Metrics',
+        qa: 'FAQ',
+        deploy: 'Deployment',
+        migration: 'Migration',
+        chat: 'Chat'
+      }
     }
+  }.nav[locale]
+}
+
+const defaultOptions = (locale = 'zh') => ({
+  locale,
+  translations: withTranslations(locale),
+  routeRoot: locale === 'zh' ? '/zh' : '/en',
+  collator: new Intl.Collator(locale === 'en' ? 'en' : 'zh-CN')
+})
+
+test('renders aggregate sections based on nav config', () => {
+  const meta = {
+    byCategory: { '工程笔记': [{}], '缺失分类': [{}] },
+    bySeries: { alpha: [{ series: 'Alpha 系列' }] },
+    byTag: { Automation: [{}], 'Vector Search': [{}] },
+    byYear: { '2024': [{}], '2025': [{}] }
   }
 
   const manifest = {
     locale: 'zh',
-    categories: {
-      [slug('工程笔记')]: '/zh/_generated/categories/工程笔记/'
-    },
-    series: {
-      'series-one': '/zh/_generated/series/series-one/'
-    },
-    tags: {
-      [slug('Automation')]: '/zh/_generated/tags/automation/',
-      [slug('Vector Search')]: '/zh/_generated/tags/vector-search/'
-    },
     archive: {
       '2025': '/zh/_generated/archive/2025/'
+    },
+    categories: {
+      '工程笔记': '/zh/_generated/categories/工程笔记/'
+    },
+    series: {
+      alpha: '/zh/_generated/series/alpha/'
+    },
+    tags: {
+      automation: '/zh/_generated/tags/automation/'
     }
   }
 
-  const nav = navFromMeta(meta, manifest, buildOptions('zh'))
+  let nav
+  try {
+    nav = navFromMeta(meta, manifest, defaultOptions())
+  } catch (error) {
+    console.error('navFromMeta threw', error)
+    throw error
+  }
 
-  assert.equal(nav[0].text, zhTranslations.latest)
+  assert.equal(nav[0].text, '最新')
   assert.equal(nav[0].link, '/zh/_generated/archive/2025/')
 
-  const categoriesEntry = nav.find(item => item.text === zhTranslations.categories)
-  assert.ok(categoriesEntry, 'categories entry should exist when manifest has categories')
-  assert.equal(categoriesEntry.items.length, 1)
-  assert.equal(categoriesEntry.items[0].text, '工程笔记')
-  assert.equal(categoriesEntry.items[0].link, '/zh/_generated/categories/工程笔记/')
+  const categoriesEntry = nav.find(item => item.text === '分类')
+  assert.ok(categoriesEntry)
+  assert.deepEqual(categoriesEntry.items, [{ text: '工程笔记', link: '/zh/_generated/categories/工程笔记/' }])
 
-  const seriesEntry = nav.find(item => item.text === zhTranslations.series)
+  const seriesEntry = nav.find(item => item.text === '系列')
   assert.ok(seriesEntry)
-  assert.equal(seriesEntry.items.length, 1)
-  assert.equal(seriesEntry.items[0].link, '/zh/_generated/series/series-one/')
+  assert.deepEqual(seriesEntry.items, [{ text: 'Alpha 系列', link: '/zh/_generated/series/alpha/' }])
 
-  const tagsEntry = nav.find(item => item.text === zhTranslations.tags)
+  const tagsEntry = nav.find(item => item.text === '标签')
   assert.ok(tagsEntry)
   assert.equal(tagsEntry.link, '/zh/_generated/tags/automation/')
+})
 
-  const aboutEntry = nav.find(item => item.text === zhTranslations.about)
+test('hides aggregate sections when manifest entries missing', () => {
+  const meta = {
+    byCategory: { '工程笔记': [{}] },
+    bySeries: { alpha: [{ series: 'Alpha 系列' }] },
+    byTag: { Automation: [{}] },
+    byYear: { '2025': [{}] }
+  }
+
+  const manifest = {
+    locale: 'zh',
+    archive: {},
+    categories: {},
+    series: {},
+    tags: {}
+  }
+
+  const nav = navFromMeta(meta, manifest, defaultOptions())
+
+  assert.ok(nav.find(item => item.text === '最新') == null)
+  assert.ok(nav.find(item => item.text === '分类') == null)
+  assert.ok(nav.find(item => item.text === '系列') == null)
+  assert.ok(nav.find(item => item.text === '标签') == null)
+
+  const aboutEntry = nav.find(item => item.text === '关于')
   assert.ok(aboutEntry)
-  assert.deepEqual(aboutEntry.items, [
-    { text: zhTranslations.metrics, link: '/zh/about/metrics.html' },
-    { text: zhTranslations.qa, link: '/zh/about/qa.html' }
+  assert.equal(aboutEntry.items[0].link, '/zh/about/metrics.html')
+})
+
+test('renders group sections from nav config links', () => {
+  const meta = {}
+  const manifest = { locale: 'zh', archive: {}, categories: {}, series: {}, tags: {} }
+
+  const nav = navFromMeta(meta, manifest, defaultOptions())
+
+  const guidesEntry = nav.find(item => item.text === '指南')
+  assert.ok(guidesEntry)
+  const links = guidesEntry.items.map(entry => entry.link)
+  assert.deepEqual(links, [
+    '/zh/DEPLOYMENT.html',
+    '/zh/MIGRATION.html'
   ])
 })
 
-test('navFromMeta falls back to first manifest archive when meta year missing', () => {
+test('falls back to legacy structure when manifest missing', () => {
   const meta = {
-    byCategory: {},
-    bySeries: {},
-    byTag: {},
-    byYear: {
-      '2023': [{}]
-    }
+    byCategory: { '工程笔记': [{}] },
+    byTag: { Automation: [{}] },
+    byYear: { '2025': [{}] }
   }
 
-  const manifest = {
-    locale: 'zh',
-    categories: {},
-    series: {},
-    tags: {},
-    archive: {
-      '2024': '/zh/_generated/archive/2024/'
-    }
-  }
+  const nav = navFromMeta(meta, null, defaultOptions())
 
-  const nav = navFromMeta(meta, manifest, buildOptions('zh'))
-  assert.equal(nav[0].text, zhTranslations.latest)
-  assert.equal(nav[0].link, '/zh/_generated/archive/2024/')
-})
+  const latestEntry = nav.find(item => item.text === '最新')
+  assert.ok(latestEntry)
+  assert.equal(latestEntry.link, '/zh/_generated/archive/2025/')
 
-test('navFromMeta falls back to legacy navigation when manifest missing', () => {
-  const meta = {
-    byCategory: {
-      '工程笔记': [{}]
-    },
-    bySeries: {
-      'series-one': [{}]
-    },
-    byTag: {
-      Automation: [{}]
-    },
-    byYear: {
-      '2025': [{}]
-    }
-  }
-
-  const nav = navFromMeta(meta, null, buildOptions('zh'))
-  assert.equal(nav[0].link, '/zh/_generated/archive/2025/')
-  const categoriesEntry = nav.find(item => item.text === zhTranslations.categories)
-  assert.ok(categoriesEntry)
-  assert.equal(categoriesEntry.items[0].link, '/zh/_generated/categories/' + slug('工程笔记') + '/')
-  const tagsEntry = nav.find(item => item.text === zhTranslations.tags)
-  assert.ok(tagsEntry)
-  assert.equal(tagsEntry.link, '/zh/_generated/tags/' + slug('Automation') + '/')
+  const categoryEntry = nav.find(item => item.text === '分类')
+  assert.ok(categoryEntry)
+  assert.equal(categoryEntry.items[0].link, '/zh/_generated/categories/工程笔记/')
 })

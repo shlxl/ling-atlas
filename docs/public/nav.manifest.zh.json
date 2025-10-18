@@ -1,5 +1,8 @@
 {
   "locale": "zh",
+  "archive": {
+    "2025": "/zh/_generated/archive/2025/"
+  },
   "categories": {
     "工程笔记": "/zh/_generated/categories/工程笔记/",
     "管理与协作": "/zh/_generated/categories/管理与协作/"
@@ -17,8 +20,5 @@
     "内容治理": "/zh/_generated/tags/内容治理/",
     "分类体系": "/zh/_generated/tags/分类体系/",
     "规范": "/zh/_generated/tags/规范/"
-  },
-  "archive": {
-    "2025": "/zh/_generated/archive/2025/"
   }
 }

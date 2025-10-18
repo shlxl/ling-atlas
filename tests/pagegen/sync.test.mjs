@@ -56,3 +56,46 @@ test('syncLocaleContent supports full and incremental modes', async t => {
     'old file should be removed from target'
   )
 })
+
+test('syncLocaleContent records copy errors without throwing', async t => {
+  const root = await fs.mkdtemp(path.join(os.tmpdir(), TMP_PREFIX))
+  const source = path.join(root, 'src')
+  const target = path.join(root, 'dst')
+  const cacheDir = path.join(root, 'cache')
+
+  await fs.mkdir(source, { recursive: true })
+  await fs.writeFile(path.join(source, 'file.md'), '# First\n')
+
+  t.after(async () => {
+    await fs.rm(root, { recursive: true, force: true })
+  })
+
+  const locale = {
+    code: 'zh',
+    manifestLocale: 'zh',
+    contentDir: source,
+    localizedContentDir: target
+  }
+
+  // 初次同步，生成快照
+  await syncLocaleContent([locale], { fullSync: true, cacheDir })
+
+  // 更新源文件，准备增量同步
+  await fs.writeFile(path.join(source, 'file.md'), '# Second\n')
+
+  const originalCopy = fs.copyFile
+  fs.copyFile = async () => {
+    throw new Error('simulated copy failure')
+  }
+
+  try {
+    const [result] = await syncLocaleContent([locale], { cacheDir })
+    assert.equal(result.failedCopies, 1)
+    assert.equal(result.copiedFiles, 0)
+    assert.equal(result.snapshotUpdated, false)
+    assert.equal(result.errors.length, 1)
+    assert.match(result.errors[0].message, /simulated copy failure/)
+  } finally {
+    fs.copyFile = originalCopy
+  }
+})

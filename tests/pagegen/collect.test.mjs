@@ -129,3 +129,34 @@ Content`,
   assert.equal(second.stats.cacheMisses, 0)
   assert.equal(second.stats.parsedFiles, 0)
 })
+
+test('collectPosts records parse errors', async t => {
+  const root = await setupFixture({
+    'content/broken/index.md': `---
+title: Broken Frontmatter
+tags: [unclosed
+`
+  })
+
+  t.after(async () => {
+    await fs.rm(root, { recursive: true, force: true })
+  })
+
+  const cacheDir = path.join(root, 'cache')
+  const lang = {
+    code: 'zh',
+    contentDir: path.join(root, 'content'),
+    basePath: '/zh/content/',
+    contentFields: {
+      category: ['category'],
+      tags: ['tags'],
+      status: ['status']
+    }
+  }
+
+  const result = await collectPosts(lang, { cacheDir })
+  assert.equal(result.list.length, 0)
+  assert.equal(result.stats.parseErrors, 1)
+  assert.equal(result.stats.errors.length, 1)
+  assert.match(result.stats.errors[0].file, /broken\/index\.md/)
+})

@@ -40,6 +40,7 @@ test('writer writes new content and skips identical content', async t => {
   assert.equal(result.written, 0)
   assert.equal(result.skipped, 1)
   assert.equal(result.failed, 0)
+  assert.equal(result.skippedByReason.hash, 1)
 })
 
 test('writer reports failures from task generators', async t => {
@@ -66,6 +67,7 @@ test('writer reports failures from task generators', async t => {
   assert.equal(result.skipped, 0)
   assert.equal(result.errors.length, 1)
   assert.match(result.errors[0].message, /boom/)
+  assert.ok(result.errors[0].stack.includes('Error: boom'))
 })
 
 test('writer clears tasks after flush to avoid duplicate writes', async t => {
@@ -94,6 +96,7 @@ test('writer clears tasks after flush to avoid duplicate writes', async t => {
   assert.equal(second.total, 0)
   assert.equal(second.written, 0)
   assert.equal(second.skipped, 0)
+  assert.deepEqual(second.skippedByReason, {})
 
   const content = await fs.readFile(target, 'utf8')
   assert.equal(content, 'second')

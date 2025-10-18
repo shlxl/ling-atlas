@@ -1,11 +1,48 @@
+import localeConfig from '../../../schema/locales.json' with { type: 'json' }
 import { getActiveBase } from './base.mjs'
 
-const RAW_SUPPORTED_LOCALES = [
-  { code: 'zh', vitepressKey: 'zh' },
-  { code: 'en', vitepressKey: 'en' }
-]
+/**
+ * @typedef {Object} LocaleUiCopy
+ * @property {string} label
+ * @property {string} lang
+ * @property {string} title
+ * @property {string} description
+ * @property {string} lightModeSwitchTitle
+ * @property {string} darkModeSwitchTitle
+ * @property {string} cardLabel
+ * @property {string} cardDescription
+ */
 
-export const SUPPORTED_LOCALES = RAW_SUPPORTED_LOCALES
+const localeEntries = Array.isArray(localeConfig?.locales) ? localeConfig.locales : []
+
+const RAW_SUPPORTED_LOCALES = localeEntries.map(entry => ({
+  code: entry.code,
+  vitepressKey: entry.vitepressLocaleKey || entry.code,
+  ui: entry.ui || {}
+}))
+
+export const SUPPORTED_LOCALES = RAW_SUPPORTED_LOCALES.map(({ code, vitepressKey }) => ({
+  code,
+  vitepressKey
+}))
+
+/** @type {Record<string, LocaleUiCopy>} */
+export const LOCALE_UI = Object.fromEntries(
+  RAW_SUPPORTED_LOCALES.map(entry => [
+    entry.code,
+    {
+      ...(entry.ui || {}),
+      label: entry.ui?.label || entry.code,
+      lang: entry.ui?.lang || entry.code,
+      title: entry.ui?.title || entry.code,
+      description: entry.ui?.description || '',
+      lightModeSwitchTitle: entry.ui?.lightModeSwitchTitle || '',
+      darkModeSwitchTitle: entry.ui?.darkModeSwitchTitle || '',
+      cardLabel: entry.ui?.cardLabel || entry.ui?.label || entry.code,
+      cardDescription: entry.ui?.cardDescription || ''
+    }
+  ])
+)
 
 let cachedSiteBasePath = null
 

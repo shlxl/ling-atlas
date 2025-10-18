@@ -1,0 +1,70 @@
+{
+  "$schema": "./locales.schema.json",
+  "locales": [
+    {
+      "code": "zh",
+      "preferred": true,
+      "manifestLocale": "zh",
+      "vitepressLocaleKey": "zh",
+      "labels": {
+        "category": "分类 · {value}",
+        "series": "连载 · {value}",
+        "tag": "标签 · {value}",
+        "archive": "归档 · {value}",
+        "rssTitle": "Ling Atlas",
+        "rssDesc": "最新更新"
+      },
+      "rssFile": "rss.xml",
+      "sitemapFile": "sitemap.xml",
+      "contentFields": {
+        "category": ["category_zh", "category"],
+        "tags": ["tags_zh", "tags"],
+        "series": ["series"],
+        "seriesSlug": ["series_slug"],
+        "status": ["status"]
+      },
+      "ui": {
+        "label": "简体中文",
+        "lang": "zh-CN",
+        "title": "Ling Atlas · 知识库",
+        "description": "现代化、可演进、可检索的知识库工程",
+        "lightModeSwitchTitle": "切换到浅色模式",
+        "darkModeSwitchTitle": "切换到深色模式",
+        "cardLabel": "简体中文",
+        "cardDescription": "进入中文知识库，获取完整的原始内容。"
+      }
+    },
+    {
+      "code": "en",
+      "manifestLocale": "en",
+      "vitepressLocaleKey": "en",
+      "labels": {
+        "category": "Category · {value}",
+        "series": "Series · {value}",
+        "tag": "Tag · {value}",
+        "archive": "Archive · {value}",
+        "rssTitle": "Ling Atlas (EN)",
+        "rssDesc": "Latest updates"
+      },
+      "rssFile": "rss-en.xml",
+      "sitemapFile": "sitemap-en.xml",
+      "contentFields": {
+        "category": ["category_en", "category"],
+        "tags": ["tags_en", "tags"],
+        "series": ["series_en", "series"],
+        "seriesSlug": ["series_slug_en", "series_slug", "series_en", "series"],
+        "status": ["status"]
+      },
+      "ui": {
+        "label": "English",
+        "lang": "en-US",
+        "title": "Ling Atlas · Knowledge",
+        "description": "A modern, evolvable, and searchable knowledge base project",
+        "lightModeSwitchTitle": "Switch to light mode",
+        "darkModeSwitchTitle": "Switch to dark mode",
+        "cardLabel": "English",
+        "cardDescription": "Read the English selection of Ling Atlas articles."
+      }
+    }
+  ]
+}

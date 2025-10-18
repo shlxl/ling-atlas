@@ -50,48 +50,59 @@ export async function collectPosts(lang, options = {}) {
   stats.parsedFiles = toParse.length
 
   await runWithConcurrency(concurrency, toParse, async item => {
-    const raw = await fs.readFile(item.absolute, 'utf8')
-    const { data, content } = matter(raw)
+    try {
+      const raw = await fs.readFile(item.absolute, 'utf8')
+      const { data, content } = matter(raw)
 
-    const status = pickField(lang.contentFields?.status, data)?.toLowerCase?.()
-    if (status === 'draft') {
-      nextCache[item.file] = { signature: item.signature, entry: { status: data.status } }
-      return
-    }
+      const status = pickField(lang.contentFields?.status, data)?.toLowerCase?.()
+      if (status === 'draft') {
+        nextCache[item.file] = { signature: item.signature, entry: { status: data.status } }
+        return
+      }
 
-    const posix = item.file.replace(/\\/g, '/')
-    const without = posix.includes('/') ? posix.substring(0, posix.lastIndexOf('/')) : ''
-    const url = (lang.basePath || '/') + (without ? `${without}/` : '')
+      const posix = item.file.replace(/\\/g, '/')
+      const without = posix.includes('/') ? posix.substring(0, posix.lastIndexOf('/')) : ''
+      const url = (lang.basePath || '/') + (without ? `${without}/` : '')
 
-    const date = ymd(data.date)
-    const updated = ymd(data.updated)
-    const categoryValue = pickField(lang.contentFields?.category, data) || 'Uncategorized'
-    const tagsValue = toArray(pickField(lang.contentFields?.tags, data))
-    const seriesValue = pickField(lang.contentFields?.series, data)
-    const seriesSlug = slug(pickField(lang.contentFields?.seriesSlug, data) || seriesValue || '')
-    const categorySlug = slug(categoryValue)
-    const year = (updated || date)?.slice(0, 4) || ''
+      const date = ymd(data.date)
+      const updated = ymd(data.updated)
+      const categoryValue = pickField(lang.contentFields?.category, data) || 'Uncategorized'
+      const tagsValue = toArray(pickField(lang.contentFields?.tags, data))
+      const seriesValue = pickField(lang.contentFields?.series, data)
+      const seriesSlug = slug(pickField(lang.contentFields?.seriesSlug, data) || seriesValue || '')
+      const categorySlug = slug(categoryValue)
+      const year = (updated || date)?.slice(0, 4) || ''
 
-    const entry = {
-      title: data.title,
-      date,
-      updated,
-      status: data.status,
-      category: categoryValue,
-      category_slug: categorySlug,
-      series: seriesValue,
-      series_slug: seriesSlug,
-      tags: tagsValue,
-      slug: data.slug,
-      path: url,
-      excerpt: data.excerpt || toExcerpt(content),
-      relative: without,
-      year
-    }
+      const entry = {
+        title: data.title,
+        date,
+        updated,
+        status: data.status,
+        category: categoryValue,
+        category_slug: categorySlug,
+        series: seriesValue,
+        series_slug: seriesSlug,
+        tags: tagsValue,
+        slug: data.slug,
+        path: url,
+        excerpt: data.excerpt || toExcerpt(content),
+        relative: without,
+        year
+      }
 
-    results[item.index] = entry
-    if (cacheEnabled) {
-      nextCache[item.file] = { signature: item.signature, entry }
+      results[item.index] = entry
+      if (cacheEnabled) {
+        nextCache[item.file] = { signature: item.signature, entry }
+      }
+    } catch (error) {
+      stats.parseErrors += 1
+      stats.errors.push({
+        file: item.file,
+        message: error?.message || 'collectPosts: failed to parse content'
+      })
+      if (cacheEnabled) {
+        nextCache[item.file] = { signature: item.signature, error: true }
+      }
     }
   })
 
@@ -216,7 +227,9 @@ function createStats(totalFiles) {
     parsedFiles: 0,
     cacheHits: 0,
     cacheMisses: 0,
-    cacheDisabled: false
+    cacheDisabled: false,
+    parseErrors: 0,
+    errors: []
   }
 }
 

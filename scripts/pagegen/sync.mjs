@@ -22,7 +22,11 @@ export async function syncLocaleContent(locales, options = {}) {
       mode: fullSync ? 'full' : 'incremental',
       copiedFiles: 0,
       removedFiles: 0,
-      unchangedFiles: 0
+      unchangedFiles: 0,
+      failedCopies: 0,
+      failedRemovals: 0,
+      errors: [],
+      snapshotUpdated: false
     }
 
     if (!lang?.contentDir || !lang.localizedContentDir) {
@@ -56,14 +60,20 @@ export async function syncLocaleContent(locales, options = {}) {
     metrics.bytes = bytes
 
     if (fullSync || !previousSnapshot.exists) {
-      await fs.rm(target, { recursive: true, force: true })
-      await fs.mkdir(target, { recursive: true })
-      await fs.cp(lang.contentDir, target, { recursive: true })
-      metrics.copiedFiles = files
-      metrics.unchangedFiles = 0
-      metrics.copied = files > 0
-      metrics.mode = 'full'
-      await writeSnapshot(manifestPath, snapshot)
+      try {
+        await fs.rm(target, { recursive: true, force: true })
+        await fs.mkdir(target, { recursive: true })
+        await fs.cp(lang.contentDir, target, { recursive: true })
+        metrics.copiedFiles = files
+        metrics.unchangedFiles = 0
+        metrics.copied = files > 0
+        metrics.mode = 'full'
+        await writeSnapshot(manifestPath, snapshot)
+        metrics.snapshotUpdated = true
+      } catch (error) {
+        metrics.failedCopies = files
+        metrics.errors.push({ type: 'cp', message: error?.message || 'sync: full copy failed' })
+      }
       results.push(metrics)
       continue
     }
@@ -71,28 +81,46 @@ export async function syncLocaleContent(locales, options = {}) {
     metrics.mode = 'incremental'
     const diff = diffSnapshots(previousSnapshot.files, snapshot.files)
 
+    let successfulCopies = 0
+    let successfulRemovals = 0
+
     for (const relative of diff.changed) {
       const sourceFile = path.join(source, relative)
       const targetFile = path.join(target, relative)
-      await fs.mkdir(path.dirname(targetFile), { recursive: true })
-      await fs.copyFile(sourceFile, targetFile)
+      try {
+        await fs.mkdir(path.dirname(targetFile), { recursive: true })
+        await fs.copyFile(sourceFile, targetFile)
+        successfulCopies++
+      } catch (error) {
+        metrics.failedCopies += 1
+        metrics.errors.push({ type: 'copy', file: relative, message: error?.message || 'sync: copy failed' })
+      }
     }
 
     for (const relative of diff.removed) {
       const targetFile = path.join(target, relative)
-      await fs.rm(targetFile, { force: true })
+      try {
+        await fs.rm(targetFile, { force: true })
+        successfulRemovals++
+      } catch (error) {
+        metrics.failedRemovals += 1
+        metrics.errors.push({ type: 'remove', file: relative, message: error?.message || 'sync: remove failed' })
+      }
     }
 
-    metrics.copiedFiles = diff.changed.length
-    metrics.removedFiles = diff.removed.length
+    metrics.copiedFiles = successfulCopies
+    metrics.removedFiles = successfulRemovals
     metrics.unchangedFiles = diff.unchanged.length
-    metrics.copied = diff.changed.length > 0 || diff.removed.length > 0
+    metrics.copied = successfulCopies > 0 || successfulRemovals > 0
 
     if (diff.changed.length === 0 && diff.removed.length === 0) {
       metrics.mode = 'incremental'
     }
 
-    await writeSnapshot(manifestPath, snapshot)
+    if (metrics.failedCopies === 0 && metrics.failedRemovals === 0) {
+      await writeSnapshot(manifestPath, snapshot)
+      metrics.snapshotUpdated = true
+    }
     results.push(metrics)
   }
 
