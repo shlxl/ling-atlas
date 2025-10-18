@@ -69,6 +69,7 @@ const selectOptions = computed(() => {
     detail: string
     ariaLabel: string
     title: string
+    summaryLabel: string
   }> = []
   const destinationMap = destinations.value
   for (const locale of availableLocales.value) {
@@ -77,9 +78,10 @@ const selectOptions = computed(() => {
     const reason = (target?.reason ?? 'home') as ResolutionReason
     const suffix = reasonSuffixes.value?.[reason] ?? ''
     const detail = reasonDetails.value?.[reason] ?? ''
-    const optionAriaLabel = detail ? `${baseLabel} · ${detail}` : baseLabel
-    const title = detail || ''
-    const displayLabel = suffix ? `${baseLabel}${suffix}` : baseLabel
+    const summaryLabel = suffix ? `${baseLabel}${suffix}` : baseLabel
+    const optionAriaLabel = detail ? `${baseLabel} · ${detail}` : summaryLabel
+    const title = detail || (suffix ? suffix.trim() : '')
+    const displayLabel = baseLabel
     list.push({
       code: locale,
       label: baseLabel,
@@ -90,7 +92,8 @@ const selectOptions = computed(() => {
       suffix,
       detail,
       ariaLabel: optionAriaLabel,
-      title
+      title,
+      summaryLabel
     })
   }
   return list
@@ -123,6 +126,7 @@ function handleLocaleChange(event: Event) {
         :data-destination="option.destination"
         :data-has-mapping="option.hasMapping"
         :data-resolution="option.reason"
+        :data-summary="option.summaryLabel"
         :aria-label="option.ariaLabel"
         :title="option.title || undefined"
       >
@@ -134,12 +138,66 @@ function handleLocaleChange(event: Event) {
 
 <style scoped>
 .la-locale-toggle {
-  width: 100%;
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  max-width: 100%;
 }
 
-@media (min-width: 641px) {
-  .la-locale-toggle {
-    width: auto;
+.la-locale-toggle__label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.la-locale-toggle__select {
+  appearance: none;
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 999px;
+  background-color: var(--vp-c-bg-soft);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='none' stroke='currentColor' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m1 2 5 4 5-4'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.6rem center;
+  background-size: 0.65rem auto;
+  color: var(--vp-c-text-1);
+  font-size: 0.85rem;
+  font-weight: 600;
+  line-height: 1.2;
+  padding: 0.35rem 1.7rem 0.35rem 0.75rem;
+  min-height: 2.25rem;
+  min-width: 0;
+  max-width: min(100%, 13.5rem);
+  white-space: nowrap;
+  cursor: pointer;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+}
+
+.la-locale-toggle__select:focus-visible {
+  outline: none;
+  border-color: var(--vp-c-brand-1);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--vp-c-brand-1) 38%, transparent);
+}
+
+.la-locale-toggle__select option {
+  color: var(--vp-c-text-1);
+  background: var(--vp-c-bg);
+}
+
+.dark .la-locale-toggle__select {
+  background-color: color-mix(in srgb, var(--vp-c-bg-soft) 75%, transparent);
+}
+
+@media (max-width: 640px) {
+  .la-locale-toggle,
+  .la-locale-toggle__select {
+    width: 100%;
   }
 }
 </style>

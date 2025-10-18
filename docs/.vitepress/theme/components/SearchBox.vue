@@ -45,6 +45,7 @@ const rootPathPrefix = normalizeRoutePath('/')
 const SEARCH_I18N = {
   zh: {
     button: '搜索（Ctrl/⌘K）',
+    buttonCompact: '搜索',
     placeholder: '输入关键词搜索...',
     loading: '正在搜索...',
     semantic: '正在融合语义结果...',
@@ -53,6 +54,7 @@ const SEARCH_I18N = {
   },
   en: {
     button: 'Search (Ctrl/⌘K)',
+    buttonCompact: 'Search',
     placeholder: 'Type keywords to search…',
     loading: 'Searching…',
     semantic: 'Merging semantic results…',
@@ -60,7 +62,7 @@ const SEARCH_I18N = {
     error: 'Search failed, please try again later.'
   }
 } as const
-const uiText = computed(() => SEARCH_I18N[currentLocale.value])
+const uiText = computed(() => SEARCH_I18N[currentLocale.value] || SEARCH_I18N[fallbackLocale])
 
 const localeBadgeTexts = computed<Record<LocaleBadgeReason, string>>(() => {
   const resources = ((i18n as any)?.ui?.searchLocaleBadge ?? {}) as Record<
@@ -685,7 +687,13 @@ onBeforeUnmount(() => {
 
 <template>
   <div class="la-search">
-    <button class="la-search-btn" type="button" :aria-label="uiText.button" @click="open">
+    <button
+      class="la-search-btn"
+      type="button"
+      :aria-label="uiText.button"
+      :title="uiText.button"
+      @click="open"
+    >
       <svg
         class="la-search-btn__icon"
         width="18"
@@ -699,7 +707,7 @@ onBeforeUnmount(() => {
           d="M11 4a7 7 0 0 1 5.61 11.28l3.55 3.56a1 1 0 0 1-1.42 1.42l-3.56-3.55A7 7 0 1 1 11 4m0 2a5 5 0 1 0 0 10a5 5 0 0 0 0-10"
         />
       </svg>
-      <span class="la-search-btn__label">{{ uiText.button }}</span>
+      <span class="la-search-btn__label">{{ uiText.buttonCompact }}</span>
     </button>
 
     <div v-if="isOpen" class="la-search-overlay" @click.self="close">
@@ -742,19 +750,36 @@ onBeforeUnmount(() => {
 </template>
 
 <style scoped>
+
 .la-search-btn {
   display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
-  font-size: 0.9rem;
-  padding: 0.5rem 0.75rem;
+  justify-content: center;
+  gap: 0.4rem;
+  font-size: 0.88rem;
+  padding: 0.4rem 0.65rem;
   border: 1px solid var(--vp-c-divider);
   border-radius: 999px;
   background: var(--vp-c-bg);
   color: var(--vp-c-text-1);
-  min-height: 2.75rem;
-  min-width: 2.75rem;
+  min-height: 2.35rem;
+  min-width: 2.35rem;
   transition: background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+@media (max-width: 959px) {
+  .la-search-btn {
+    font-size: 0.82rem;
+    gap: 0.3rem;
+    padding-inline: 0.6rem;
+  }
+}
+
+@media (max-width: 639px) {
+  .la-search-btn {
+    font-size: 0.8rem;
+    padding-inline: 0.55rem;
+  }
 }
 
 .la-search-btn:hover {
@@ -777,10 +802,11 @@ onBeforeUnmount(() => {
   line-height: 1;
 }
 
-@media (max-width: 640px) {
+@media (max-width: 860px) {
   .la-search-btn {
     justify-content: center;
-    padding-inline: 0.75rem;
+    min-width: 2.25rem;
+    padding-inline: 0.6rem;
   }
 
   .la-search-btn__label {

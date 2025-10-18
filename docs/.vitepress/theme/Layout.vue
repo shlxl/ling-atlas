@@ -210,41 +210,75 @@ watch(
   opacity: 0;
   transform: translate(-50%, 10px);
 }
+
 .la-nav-bar-actions {
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 0.5rem;
+  gap: clamp(0.2rem, 1vw, 0.45rem);
   min-width: 0;
-  flex: 1 1 auto;
+  flex: 0 1 auto;
+  flex-wrap: nowrap;
 }
 
 .la-nav-bar-search {
   display: flex;
   justify-content: flex-end;
-  flex: 1 1 240px;
+  flex: 0 1 clamp(150px, 38vw, 260px);
   min-width: 0;
+  max-width: 100%;
 }
 
 .la-nav-bar-search :deep(.la-search) {
-  width: min(420px, 100%);
+  width: 100%;
+  max-width: 100%;
+}
+
+.la-nav-bar-search :deep(.la-search-btn) {
+  width: 100%;
 }
 
 .la-nav-bar-locale {
   display: none;
   flex: 0 0 auto;
+  min-width: 0;
+}
+
+@media (max-width: 959px) {
+  .la-nav-bar-actions {
+    gap: clamp(0.2rem, 1vw, 0.35rem);
+  }
+
+  .la-nav-bar-search {
+    flex-basis: clamp(140px, 42vw, 220px);
+  }
+}
+
+@media (min-width: 640px) {
+  .la-nav-bar-locale {
+    display: flex;
+    align-items: center;
+    padding-left: 10px;
+  }
 }
 
 @media (min-width: 960px) {
   .la-nav-bar-search {
-    flex: 1 1 280px;
+    flex-basis: clamp(180px, 28vw, 280px);
   }
 
   .la-nav-bar-locale {
-    display: flex;
-    align-items: center;
-    padding-left: 24px;
+    padding-left: 16px;
   }
+}
+
+.la-nav-bar-locale :deep(.la-locale-toggle) {
+  min-width: 0;
+}
+
+.la-nav-bar-locale :deep(.la-locale-toggle__select) {
+  min-width: 0;
+  max-width: clamp(120px, 40vw, 180px);
 }
 
 .la-nav-screen-locale {
@@ -260,7 +294,7 @@ watch(
   }
 
   .la-nav-bar-search {
-    flex: 1 1 auto;
+    flex: 0 1 clamp(136px, 54vw, 210px);
   }
 
   .la-nav-bar-search :deep(.la-search) {
@@ -272,6 +306,16 @@ watch(
   }
 }
 
+@media (max-width: 639px) {
+  .la-nav-bar-search {
+    flex-basis: clamp(132px, 62vw, 200px);
+  }
+
+  .la-nav-bar-locale {
+    padding-left: 8px;
+  }
+}
+
 :deep(.VPNavBarTranslations),
 :deep(.VPNavScreenTranslations) {
   display: none !important;
@@ -279,7 +323,26 @@ watch(
 
 .la-nav-screen-locale :deep(.la-locale-toggle) {
   width: 100%;
-  justify-content: flex-end;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.5rem;
+}
+
+.la-nav-screen-locale :deep(.la-locale-toggle__label) {
+  position: static;
+  width: auto;
+  height: auto;
+  margin: 0;
+  clip: auto;
+  white-space: nowrap;
+  border: 0;
+  font-size: 0.85rem;
+  color: var(--vp-c-text-2);
+}
+
+.la-nav-screen-locale :deep(.la-locale-toggle__select) {
+  width: 100%;
+  max-width: none;
 }
 .chat-fab {
   position: fixed;
