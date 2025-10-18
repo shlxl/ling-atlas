@@ -745,16 +745,25 @@ onBeforeUnmount(() => {
 .la-search-btn {
   display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
+  justify-content: center;
+  gap: 0.45rem;
   font-size: 0.9rem;
-  padding: 0.5rem 0.75rem;
+  padding: 0.45rem 0.75rem;
   border: 1px solid var(--vp-c-divider);
   border-radius: 999px;
   background: var(--vp-c-bg);
   color: var(--vp-c-text-1);
-  min-height: 2.75rem;
-  min-width: 2.75rem;
+  min-height: 2.5rem;
+  min-width: 2.5rem;
   transition: background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+@media (max-width: 959px) {
+  .la-search-btn {
+    font-size: 0.85rem;
+    gap: 0.35rem;
+    padding-inline: 0.65rem;
+  }
 }
 
 .la-search-btn:hover {
