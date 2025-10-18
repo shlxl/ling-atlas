@@ -38,12 +38,15 @@ function isDraft(frontmatter) {
 }
 
 function slugify(input) {
-  return input
+  const base = input
     .normalize('NFKD')
     .replace(/[\u0300-\u036f]/g, '')
     .replace(/[^\p{Letter}\p{Number}\u4e00-\u9fff]+/gu, '-')
     .replace(/^-+|-+$/g, '')
     .toLowerCase()
+
+  if (!base) return ''
+  return /^[0-9]/.test(base) ? `_${base}` : base
 }
 
 function stripMarkdown(markdown) {
@@ -176,7 +179,9 @@ async function buildKnowledgeItems() {
         if (!plain) continue
         const chunks = chunkText(plain)
         chunks.forEach(chunk => {
-          const anchorSuffix = section.anchor || '#top'
+          const anchorSource = (section.anchor || '').trim()
+          const fallbackAnchor = '#top'
+          const anchorSuffix = anchorSource || fallbackAnchor
           const anchorValue = anchorSuffix.startsWith('#') ? anchorSuffix : `#${anchorSuffix}`
           items.push({
             url: baseUrl,
