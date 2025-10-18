@@ -1,8 +1,8 @@
 <script lang="ts" setup>
 import { useWindowScroll } from '@vueuse/core'
 import { ref, watchPostEffect } from 'vue'
-import { useData } from '../composables/data'
-import { useSidebar } from '../composables/sidebar'
+import { useData } from 'vitepress'
+import { useSidebar } from 'vitepress/dist/client/theme-default/composables/sidebar'
 import VPNavBarAppearance from 'vitepress/dist/client/theme-default/components/VPNavBarAppearance.vue'
 import VPNavBarExtra from './VPNavBarExtra.vue'
 import VPNavBarHamburger from 'vitepress/dist/client/theme-default/components/VPNavBarHamburger.vue'
