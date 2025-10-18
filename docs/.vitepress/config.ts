@@ -1,4 +1,6 @@
 import { defineConfig, type HeadConfig } from 'vitepress'
+import type { Plugin } from 'vite'
+import { fileURLToPath } from 'node:url'
 import cssnano from 'cssnano'
 import fs from 'node:fs'
 import { VitePWA } from 'vite-plugin-pwa'
@@ -60,6 +62,42 @@ const localeMeta = Object.fromEntries(
 const localeManifest = Object.fromEntries(
   SUPPORTED_LOCALES.map(locale => [locale.code, loadNavManifest(locale.code)])
 ) as Record<LocaleCode, NavManifest | null>
+
+const themeComponent = (file: string) =>
+  fileURLToPath(new URL(`./theme/components/${file}`, import.meta.url))
+
+const navComponentOverrides = new Map(
+  [
+    'VPNavBar.vue',
+    'VPNavBarExtra.vue',
+    'VPNavBarTranslations.vue',
+    'VPNavScreen.vue',
+    'VPNavScreenTranslations.vue'
+  ].map(name => [name, themeComponent(name)])
+)
+
+const overrideNavComponentPlugin: Plugin = {
+  name: 'ling-atlas:override-theme-nav-components',
+  enforce: 'pre' as const,
+  resolveId(source: string, importer?: string) {
+    if (!importer) return null
+    const normalizedImporter = importer.replace(/\\/g, '/')
+    if (!normalizedImporter.includes('vitepress/dist/client/theme-default')) {
+      return null
+    }
+    const normalizedSource = source.replace(/\\/g, '/')
+    const [bareSource] = normalizedSource.split('?')
+    for (const [name, replacement] of navComponentOverrides) {
+      if (
+        bareSource === `./${name}` ||
+        bareSource.endsWith(`/components/${name}`)
+      ) {
+        return replacement
+      }
+    }
+    return null
+  }
+}
 
 type LocaleCopy = {
   label: string
@@ -233,6 +271,7 @@ export default defineConfig({
   },
   vite: {
     plugins: [
+      overrideNavComponentPlugin,
       VitePWA({
         registerType: 'autoUpdate',
         base: normalizedBase,
@@ -266,6 +305,25 @@ export default defineConfig({
         }
       })
     ],
+    resolve: {
+      alias: {
+        'vitepress/dist/client/theme-default/components/VPNavBar.vue': themeComponent(
+          'VPNavBar.vue'
+        ),
+        'vitepress/dist/client/theme-default/components/VPNavBarExtra.vue': themeComponent(
+          'VPNavBarExtra.vue'
+        ),
+        'vitepress/dist/client/theme-default/components/VPNavBarTranslations.vue': themeComponent(
+          'VPNavBarTranslations.vue'
+        ),
+        'vitepress/dist/client/theme-default/components/VPNavScreen.vue': themeComponent(
+          'VPNavScreen.vue'
+        ),
+        'vitepress/dist/client/theme-default/components/VPNavScreenTranslations.vue': themeComponent(
+          'VPNavScreenTranslations.vue'
+        )
+      }
+    },
     server: { fs: { allow: ['..'] } },
     build: { cssMinify: 'lightningcss' },
     css: {
