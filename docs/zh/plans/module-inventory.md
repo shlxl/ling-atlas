@@ -22,7 +22,7 @@ title: 核心目录盘点（schema / scripts / plans / tests）
   - ✅ 模块化、缓存、批量写入、导航配置接入已完成，并新增阶段/语言/目标路径的结构化错误日志。
   - ✅ 深入检查：已按照 `docs/zh/plans/pagegen-module-architecture.md` / `pagegen-refactor-roadmap.md` 补齐 orchestrator 契约说明、导航/i18n 故障显式化与端到端测试。
 - **校验脚本**：`validate-frontmatter.mjs`、`validate-nav-config.mjs`、`validate-tag-alias.mjs`、`check-links.mjs`。
-  - ✅ 均已通过 `npm run precheck` 执行，`check-links` 仍缺少集成测试守门。
+  - ✅ 均已通过 `npm run precheck` 执行；`tests/pagegen/check-links.integration.test.mjs` 补齐 `check-links` 的临时目录与 nav/i18n 缺失场景守门。
 - **构建/运维脚本**：`build-embeddings.mjs`、`generate-headers.mjs`、`postbuild-*`、`sbom.mjs` 等。
   - ✅ 可正常使用，建议在 README/AGENTS 中补充触发方式（部分命令仅在 CI 使用）。
 - **评测与统计**：`eval/`、`stats-lint.mjs` 已接入 CI 并上传快照；夜间流程可复用 `npm run stats:diff`。
@@ -51,14 +51,13 @@ title: 核心目录盘点（schema / scripts / plans / tests）
 - `tests/theme/nav-core.test.mjs`：导航裁剪与回退，✅。
 - `tests/locale-map/*`：Locale toggle 与路径映射守门，✅。
 - 建议补充：
-  - 针对 `scripts/check-links.mjs` 的集成测试（可使用临时输出目录）。
-  - 当新增 Schema 校验脚本（如 tag alias）时，同步补充失败用例测试。
+  - 为 `validate-frontmatter.mjs`、`validate-tag-alias.mjs` 等脚本补齐失败用例测试，确保 CLI 提示有自动化守门。
+  - 当新增 AI/metrics 相关脚本时，同步提供夹具与回退测试，以支撑阶段 6 的质量守门计划。
 
 ## 5. 后续行动建议
 
-1. **Feeds 模板配置化**：将 RSS/Sitemap 模板迁移到 `schema/`，并补充校验脚本与示例（SEO 已完成 schema 化）。
-2. **运维文档**：根据 `nav-config-schema.md` 草案继续完善操作指南，覆盖 feeds/SEO 模板的修改流程与回滚策略。
-3. **Pagegen 守门**：维持缓存命中率与 stats diff 的回归观察，同时准备 `check-links` 集成测试以阻断配置缺失。
-4. **测试覆盖加固**：在现有导航/i18n 用例基础上，补充 feeds 模板、自定义配置与链接巡检的失败场景，避免 silent failure。
+1. **变更感知重建**：在 `scripts/pagegen/*.mjs` 中探索基于 Git diff/快照的局部重建策略，并提供显式回退 flag，减少无关目录的重跑开销。
+2. **指标时间序列**：扩展 telemetry/metrics 管线，将各阶段摘要写入时间序列快照，结合 README/站点“观测指标”页提供趋势与阈值告警指引。
+3. **AI 产出评测守门**：为 `scripts/ai/*` 引入基线数据与离线评测脚本，确保真实模型接入时可通过守门判定是否回退到占位实现。
 
 > 更新日志：2024-XX-XX 由自动化代理首次盘点，后续更新请在本文顶部追加日期。
