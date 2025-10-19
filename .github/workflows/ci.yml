@@ -48,6 +48,62 @@ jobs:
         with:
           name: stats-snapshot
           path: data/stats.snapshot.json
+      - name: 跳过 fork PR 的统计对比
+        if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository
+        run: |
+          echo 'Skip stats diff: forked pull requests do not have access to origin/main baseline.'
+      - name: 对比主干统计快照
+        id: stats_diff
+        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+        run: |
+          git fetch --depth=2 origin main
+          set +e
+          npm run stats:diff -- \
+            --baseline origin/main:data/stats.snapshot.json \
+            --current data/stats.snapshot.json \
+            --quiet \
+            --json \
+            > stats-diff.json
+          status=$?
+          set -e
+          echo "exit_code=${status}" >> "$GITHUB_OUTPUT"
+          if [ -f stats-diff.json ]; then
+            echo "has_report=true" >> "$GITHUB_OUTPUT"
+            node - <<'NODE'
+const fs = require('fs')
+const summaryPath = process.env.GITHUB_STEP_SUMMARY
+if (!summaryPath) process.exit(0)
+if (!fs.existsSync('stats-diff.json')) process.exit(0)
+const raw = fs.readFileSync('stats-diff.json', 'utf8').trim()
+if (!raw) process.exit(0)
+fs.appendFileSync(summaryPath, `### stats:diff 输出\n\n\`\`\`json\n${raw}\n\`\`\`\n`)
+NODE
+          fi
+          echo "stats:diff exit code: ${status}"
+          exit 0
+      - name: 上传统计对比报告
+        if: steps.stats_diff.outputs.has_report == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: stats-diff-report
+          path: stats-diff.json
+      - name: stats:diff 命令执行失败
+        if: steps.stats_diff.outputs.exit_code == '1'
+        run: |
+          echo "stats:diff command failed. Check previous logs for details." >&2
+          exit 1
+      - name: 统计差异超出阈值
+        if: steps.stats_diff.outputs.exit_code == '2'
+        run: |
+          echo "Detected stats snapshot differences exceeding fail threshold. See step summary or artifact for details." >&2
+          exit 2
+      - name: stats:diff 异常退出
+        if: steps.stats_diff.outputs.exit_code != '' && steps.stats_diff.outputs.exit_code != '0' && steps.stats_diff.outputs.exit_code != '1' && steps.stats_diff.outputs.exit_code != '2'
+        env:
+          STATS_DIFF_EXIT_CODE: ${{ steps.stats_diff.outputs.exit_code }}
+        run: |
+          echo "stats:diff exited with unexpected code ${STATS_DIFF_EXIT_CODE}." >&2
+          exit "${STATS_DIFF_EXIT_CODE}"
       - name: Build semantic texts
         run: npm run embeddings:build
       - name: Build knowledge chunks

@@ -66,10 +66,10 @@ npm run dev
 
 ## 当前进展与下一阶段
 - Pagegen 各阶段（collect/sync/collections/feeds/i18n/writer）已模块化并输出指标，CLI 会汇总缓存命中率与写入跳过原因，最新一轮指标会同步写入 telemetry 页面，便于运维直接观测。
-- 多语言内容统计脚本 `npm run stats:lint` 已上线，CI 会生成 `data/stats.snapshot.json` 工件；配套的 `npm run stats:diff` 支持对比主干快照或前一晚的基线，在异常差异出现时直接在控制台打标。
+- 多语言内容统计脚本 `npm run stats:lint` 已上线，CI 会生成 `data/stats.snapshot.json` 工件；配套的 `npm run stats:diff` 已接入 CI，自动抓取 `origin/main:data/stats.snapshot.json` 作为基线，对比结果会写入 Step Summary 与 `stats-diff-report` 工件，便于在 PR 审查阶段复核差异。
 - 下一阶段重点：
   1. ✅ 收敛 orchestrator 契约与日志上下文，`tests/pagegen/integration.test.mjs` 已覆盖 metrics-only、解析失败与写入异常场景。
-  2. 🔁 将 `stats:diff` 接入夜间与 PR 审查（必要时自动打标签/评论）。
+  2. ✅ 将 `stats:diff` 接入夜间与 PR 审查：CI 在上传快照后执行 `git fetch --depth=2 origin main` → `npm run stats:diff -- --baseline origin/main:data/stats.snapshot.json --current data/stats.snapshot.json --quiet --json`，并依据退出码 2 失败；结果写入 Step Summary 与 `stats-diff-report` 工件，可直接复用到 nightly 工作流。
   3. 🔁 评估语义检索管线（Transformers.js / onnxruntime）与占位 AI 脚本的落地方案。
 
 ## 协作约束速查
@@ -90,8 +90,8 @@ npm run dev
 
 - **Pagegen 指标出口**：运行 `npm run gen` 后，CLI 会额外打印 collect 缓存命中率与 writer 哈希跳过统计，最新一笔指标还会由 `node scripts/telemetry-merge.mjs` 同步到 `/telemetry.json`，可在站点的“观测指标”页面直接查看。
 - **快照采集**：`npm run stats:lint` 写入 `data/stats.snapshot.json` 并输出 TopN 排序，CI 会上传该文件作为工件，便于后续下载对比。
-- **自动对比与预警**：通过 `npm run stats:diff -- --baseline origin/main:data/stats.snapshot.json --current data/stats.snapshot.json` 在本地或 CI 中对比差异。命令会按默认阈值（warn≥30%、fail≥60%）输出告警，可搭配 `--json` 输出结构化结果，或在 GitHub Actions 中根据退出码（2 表示 fail）自动打标签/留言。
-- **夜间任务建议**：Nightly Workflow 可先拉取前一日工件为 baseline，再运行 `stats:diff -- --baseline <path> --current data/stats.snapshot.json --quiet`，将结果上传到日志或告警系统；如需邮件/IM 告警，可根据 JSON 输出过滤高优先级条目。
+- **自动对比与预警**：CI 在上传快照后执行 `git fetch --depth=2 origin main`，再运行 `npm run stats:diff -- --baseline origin/main:data/stats.snapshot.json --current data/stats.snapshot.json --quiet --json`，并根据退出码 2 判定失败。输出会同步写入 Step Summary 与 `stats-diff-report` 工件，便于审查差异明细。阈值与列表长度可通过环境变量 `STATS_WARN_THRESHOLD`、`STATS_FAIL_THRESHOLD`、`STATS_DIFF_LIMIT` 调整，必要时也可使用 `STATS_BASELINE`、`STATS_CURRENT` 自定义文件来源。
+- **夜间任务建议**：Nightly Workflow 可沿用同一命令，将 `--baseline` 指向前一日快照或外部存储：`npm run stats:diff -- --baseline <ref|path> --current data/stats.snapshot.json --quiet --json`。建议同样写入 Step Summary/日志并上传 JSON 工件，依靠退出码 2 触发告警系统或通知通道。
 
 ### 最小发布流程
 
