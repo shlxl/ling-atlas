@@ -53,3 +53,16 @@ test('formatDiff renders readable output', () => {
   assert.match(text, /delta=\+2/)
   assert.match(text, /100\.0%/)
 })
+
+test('gitObjectExists returns true for tracked files', async () => {
+  assert.equal(await statsDiff.gitObjectExists('HEAD:package.json'), true)
+})
+
+test('detectDefaultBaseline returns snapshot reference when discoverable', async () => {
+  const detected = await statsDiff.detectDefaultBaseline()
+  if (detected) {
+    assert.match(detected, /data\/stats\.snapshot\.json$/)
+  } else {
+    assert.equal(detected, undefined)
+  }
+})

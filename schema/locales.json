@@ -14,6 +14,7 @@
         "rssTitle": "Ling Atlas",
         "rssDesc": "最新更新"
       },
+      "collectionsTemplate": "zh-default",
       "rssFile": "rss.xml",
       "sitemapFile": "sitemap.xml",
       "contentFields": {
@@ -46,6 +47,7 @@
         "rssTitle": "Ling Atlas (EN)",
         "rssDesc": "Latest updates"
       },
+      "collectionsTemplate": "en-default",
       "rssFile": "rss-en.xml",
       "sitemapFile": "sitemap-en.xml",
       "contentFields": {

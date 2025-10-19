@@ -31,6 +31,35 @@ function parseArgs(argv) {
   return { baseline, current, warnThreshold, failThreshold, limit, json, quiet }
 }
 
+async function detectDefaultBaseline() {
+  const snapshotPath = 'data/stats.snapshot.json'
+  const candidateRefs = ['origin/main', 'origin/master', 'main', 'master']
+
+  for (const ref of candidateRefs) {
+    if (await gitObjectExists(`${ref}:${snapshotPath}`)) {
+      return `${ref}:${snapshotPath}`
+    }
+  }
+
+  const fallbackParents = ['HEAD^', 'HEAD~1']
+  for (const parent of fallbackParents) {
+    if (await gitObjectExists(`${parent}:${snapshotPath}`)) {
+      return `${parent}:${snapshotPath}`
+    }
+  }
+
+  return undefined
+}
+
+async function gitObjectExists(revision) {
+  try {
+    await execFileAsync('git', ['cat-file', '-e', revision])
+    return true
+  } catch {
+    return false
+  }
+}
+
 function parseNumber(value, fallback) {
   if (value === undefined || value === null || value === '') return fallback
   const num = Number(value)
@@ -190,7 +219,14 @@ function formatDiff(entry) {
 async function main() {
   try {
     const { baseline, current, warnThreshold, failThreshold, limit, json, quiet } = parseArgs(process.argv.slice(2))
-    const baselineSnapshot = await loadSnapshot(baseline)
+    const resolvedBaseline = baseline || await detectDefaultBaseline()
+    if (!resolvedBaseline) {
+      if (!quiet) {
+        console.warn('[stats-diff] baseline not provided and no default snapshot found; skipping diff')
+      }
+      return
+    }
+    const baselineSnapshot = await loadSnapshot(resolvedBaseline)
     const currentSnapshot = await loadSnapshot(current)
     const diffs = toDiffEntries(baselineSnapshot, currentSnapshot)
     const summary = classifyDiffs(diffs, { warnThreshold, failThreshold, limit })
@@ -199,7 +235,7 @@ async function main() {
       process.stdout.write(`${JSON.stringify(summary, null, 2)}\n`)
     } else {
       if (!quiet) {
-        console.log(`[stats-diff] compared baseline=${baseline} current=${current}`)
+        console.log(`[stats-diff] compared baseline=${resolvedBaseline} current=${current}`)
         console.log(`[stats-diff] thresholds warn=${warnThreshold} fail=${failThreshold}`)
       }
       for (const failure of summary.failures) {
@@ -231,6 +267,8 @@ if (executedDirectly) {
 
 export const __test__ = {
   parseArgs,
+  detectDefaultBaseline,
+  gitObjectExists,
   loadSnapshot,
   toDiffEntries,
   classifyDiffs,

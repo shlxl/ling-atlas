@@ -51,7 +51,7 @@ npm run dev
 - `PAGEGEN_CONCURRENCY=<num>`：控制内容解析并发度（默认 8），可在 `npm run gen` 前临时指定
 - `npm run test:pagegen`：运行 Pagegen 模块单元测试 + 集成测试（含 nav manifest 输出与聚合产物核对）
 - `npm run stats:lint`：按语言统计分类/标签，控制台输出 TopN 并写入 `data/stats.snapshot.json`，CI 会上传该快照方便历史对比
-- `npm run stats:diff -- --baseline <ref:path|file> [--current <file>]`：对比两份分类/标签快照，输出高于阈值的差异（默认 warn≥30%、fail≥60%），支持在夜间任务或 PR 中标注异常
+- `npm run stats:diff -- --baseline <ref:path|file> [--current <file>]`：对比两份分类/标签快照，输出高于阈值的差异（默认 warn≥30%、fail≥60%）；未显式指定时会尝试从 git 历史（`origin/main`、`HEAD^` 等）寻找 baseline，若无法定位则打印提示并跳过对比
 - `npm run precheck`：Frontmatter Schema 校验（阻断）
 - `npm run build`：构建站点（前置 `gen` + `knowledge:build`），自动生成中英双语 RSS/Sitemap
 - `npm run pwa:build`：独立构建 PWA 产物（`sw.js`、`manifest.webmanifest`、`icons/`）
@@ -90,7 +90,7 @@ npm run dev
 
 - **Pagegen 指标出口**：运行 `npm run gen` 后，CLI 会额外打印 collect 缓存命中率与 writer 哈希跳过统计，最新一笔指标还会由 `node scripts/telemetry-merge.mjs` 同步到 `/telemetry.json`，可在站点的“观测指标”页面直接查看。
 - **快照采集**：`npm run stats:lint` 写入 `data/stats.snapshot.json` 并输出 TopN 排序，CI 会上传该文件作为工件，便于后续下载对比。
-- **自动对比与预警**：通过 `npm run stats:diff -- --baseline origin/main:data/stats.snapshot.json --current data/stats.snapshot.json` 在本地或 CI 中对比差异。命令会按默认阈值（warn≥30%、fail≥60%）输出告警，可搭配 `--json` 输出结构化结果，或在 GitHub Actions 中根据退出码（2 表示 fail）自动打标签/留言。
+- **自动对比与预警**：通过 `npm run stats:diff -- --baseline origin/main:data/stats.snapshot.json --current data/stats.snapshot.json` 在本地或 CI 中对比差异。命令会按默认阈值（warn≥30%、fail≥60%）输出告警，可搭配 `--json` 输出结构化结果，或在 GitHub Actions 中根据退出码（2 表示 fail）自动打标签/留言；若未提供 baseline 且 git 历史中也无法找到快照，会输出提示并直接跳过对比，避免误报。
 - **夜间任务建议**：Nightly Workflow 可先拉取前一日工件为 baseline，再运行 `stats:diff -- --baseline <path> --current data/stats.snapshot.json --quiet`，将结果上传到日志或告警系统；如需邮件/IM 告警，可根据 JSON 输出过滤高优先级条目。
 
 ### 最小发布流程

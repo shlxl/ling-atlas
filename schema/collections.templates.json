@@ -1,0 +1,61 @@
+{
+  "$schema": "./collections.templates.schema.json",
+  "templates": {
+    "zh-default": {
+      "defaults": {
+        "markdown": "---\ntitle: {title}\n---\n\n{items}\n",
+        "item": "- [{title}]({path}){dateSuffix}{updatedSuffix}\n  {excerptBlock}",
+        "itemSeparator": "\n\n",
+        "placeholders": {
+          "dateSuffix": {
+            "fields": ["date", "updated"],
+            "format": " · {value}",
+            "whenEmpty": ""
+          },
+          "updatedSuffix": {
+            "fields": ["updated"],
+            "format": "（更:{value}）",
+            "whenEmpty": ""
+          },
+          "excerptBlock": {
+            "fields": ["excerpt"],
+            "format": "> {value}",
+            "whenEmpty": ""
+          }
+        },
+        "sort": [
+          { "fields": ["date", "updated"], "order": "desc" },
+          { "fields": ["title"], "order": "asc" }
+        ]
+      }
+    },
+    "en-default": {
+      "defaults": {
+        "markdown": "---\ntitle: {title}\n---\n\n{items}\n",
+        "item": "- [{title}]({path}){dateSuffix}{updatedSuffix}\n  {excerptBlock}",
+        "itemSeparator": "\n\n",
+        "placeholders": {
+          "dateSuffix": {
+            "fields": ["date", "updated"],
+            "format": " · {value}",
+            "whenEmpty": ""
+          },
+          "updatedSuffix": {
+            "fields": ["updated"],
+            "format": " (updated: {value})",
+            "whenEmpty": ""
+          },
+          "excerptBlock": {
+            "fields": ["excerpt"],
+            "format": "> {value}",
+            "whenEmpty": ""
+          }
+        },
+        "sort": [
+          { "fields": ["date", "updated"], "order": "desc" },
+          { "fields": ["title"], "order": "asc" }
+        ]
+      }
+    }
+  }
+}
