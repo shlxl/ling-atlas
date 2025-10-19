@@ -1,15 +1,17 @@
 #!/usr/bin/env node
 
-/**
- * 方案B（占位实现）：扫描内容并导出文本，供前端或后续任务生成向量。
- * 若未来接入本地编码器，只需在 `buildItems` 中补充向量生成逻辑，并更新输出结构。
- */
-
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { globby } from 'globby'
-import matter from 'gray-matter'
+import { collectEmbeddableItems } from './ai/content.mjs'
+import {
+  ensureDir,
+  flushAIEvents,
+  logStructured,
+  readJSONIfExists,
+  resolveAdapterSpec
+} from './ai/utils.mjs'
+import { loadEmbeddingAdapter } from './ai/adapters/index.mjs'
 import { LOCALE_REGISTRY, getPreferredLocale } from './pagegen.locales.mjs'
 import { createAiEventRecorder } from './ai/event-logger.mjs'
 
@@ -17,62 +19,75 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const ROOT = path.resolve(__dirname, '..')
 const OUTPUT_DIR = path.join(ROOT, 'docs', 'public', 'data')
 const OUTPUT_FILE = path.join(OUTPUT_DIR, 'embeddings.json')
-const preferredLocale = getPreferredLocale()
 
-const LANG_SOURCES = LOCALE_REGISTRY.map(locale => ({
-  code: locale.code,
-  dir: locale.contentDir,
-  basePath: locale.basePath
-})).sort((a, b) => {
-  if (a.code === preferredLocale) return -1
-  if (b.code === preferredLocale) return 1
-  return a.code.localeCompare(b.code)
-})
+async function main() {
+  const scriptStartedAt = Date.now()
+  const preferredLocale = getPreferredLocale()
+  const items = await collectEmbeddableItems(LOCALE_REGISTRY, preferredLocale)
+  await ensureDir(OUTPUT_DIR)
 
-function isDraft(frontmatter) {
-  const { status, draft } = frontmatter || {}
-  if (typeof draft === 'boolean') return draft
-  if (typeof status === 'string') return status.toLowerCase() === 'draft'
-  return false
-}
+  const spec = resolveAdapterSpec({ envKey: 'AI_EMBED_MODEL', cliFlag: 'adapter' })
+  const previous = await readJSONIfExists(OUTPUT_FILE)
 
-function toPlainText(markdown) {
-  return markdown
-    .replace(/^>\s+/gm, '') // blockquote
-    .replace(/`{1,3}[^`]*`{1,3}/g, '') // inline code
-    .replace(/```[\s\S]*?```/g, '') // fenced code blocks
-    .replace(/[*_~#>]/g, '') // emphasis/symbols
-    .replace(/\[(.*?)\]\((.*?)\)/g, '$1') // links
-    .replace(/!\[(.*?)\]\((.*?)\)/g, '$1') // images
-    .replace(/\r?\n+/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim()
-}
+  const events = []
 
-function extractText(frontmatter, body) {
-  if (frontmatter?.excerpt) return String(frontmatter.excerpt)
-  const normalized = body.trim()
-  if (!normalized) return ''
-  const segments = normalized.split(/\r?\n\r?\n/)
-  const firstBlock = segments.find(block => block.trim().length > 0) || ''
-  return toPlainText(firstBlock)
-}
+  events.push(
+    logStructured(
+      'ai.embed.start',
+      {
+        inputCount: items.length,
+        preferredLocale,
+        localeCount: LOCALE_REGISTRY.length,
+        requestedAdapter: spec || 'placeholder'
+      },
+      console
+    )
+  )
 
-function buildUrl(mdPath, source) {
-  const relative = path.relative(source.dir, mdPath)
-  const clean = relative.replace(/\\/g, '/')
-  const dir = clean.replace(/\/index\.md$/, '')
-  return dir ? `${source.basePath}${dir}/` : source.basePath
-}
+  const adapterInfo = await loadEmbeddingAdapter(spec, console)
+  events.push(
+    logStructured(
+      'ai.embed.adapter.resolved',
+      {
+        requested: spec || 'placeholder',
+        adapter: adapterInfo.adapterName,
+        model: adapterInfo.model,
+        fallback: adapterInfo.isFallback,
+        reason: adapterInfo.reason || null
+      },
+      console
+    )
+  )
 
-async function exists(target) {
+  let adapterModule = adapterInfo.adapter
+  let usedName = adapterInfo.adapterName
+  let usedModel = adapterInfo.model
+  let usedFallback = adapterInfo.isFallback
+  let result
+  let retries = 0
+
+  const inferenceStartedAt = Date.now()
+
   try {
-    await fs.access(target)
-    return true
-  } catch {
-    return false
+    result = await adapterModule.generateEmbeddings({ items, model: usedModel, logger: console })
+  } catch (error) {
+    const message = error?.message || String(error)
+    events.push(
+      logStructured(
+        'ai.embed.adapter.error',
+        { adapter: usedName, model: usedModel, message },
+        console
+      )
+    )
+    console.warn(`[embed-build] adapter "${usedName}" 执行失败：${message}，已降级至 placeholder`)
+    const fallback = await loadEmbeddingAdapter('placeholder', console)
+    adapterModule = fallback.adapter
+    usedName = 'placeholder'
+    usedModel = null
+    usedFallback = true
+    retries += 1
+    result = await adapterModule.generateEmbeddings({ items, model: null, logger: console })
   }
-}
 
 async function buildItems() {
   const items = []
@@ -114,9 +129,11 @@ async function buildItems() {
   }
 }
 
-async function ensureDir(dir) {
-  await fs.mkdir(dir, { recursive: true })
-}
+  if ((!Array.isArray(finalItems) || finalItems.length === 0) && Array.isArray(previous?.items) && previous.items.length > 0) {
+    finalItems = previous.items
+    reusedCache = true
+    console.warn('[embed-build] 本次生成为空，已沿用缓存文件中的向量结果')
+  }
 
 const EMBED_ADAPTER = process.env.AI_EMBED_ADAPTER || 'placeholder'
 

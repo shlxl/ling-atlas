@@ -12,7 +12,7 @@
 - PR-J 知识 API + Chat：导出段落级只读数据，前端提供带引用的轻量问答
 - PR-L 多语/i18n：`schema/locales.json` 统一描述所有语言的内容目录、导航文案与生成路径，Pagegen 会遍历配置生成各语言的聚合页 / RSS / Sitemap，并输出 `nav.manifest.<locale>.json`
 - PR-M 供应链加固 2.0：npm ci + Audit/License 审计、CycloneDX SBOM、SRI 哈希变更守门
-- PR-M（规划中）：SEO / OpenGraph 优化，使知识库更易被搜索引擎收录与展示
+- PR-M SEO/OpenGraph 配置：`schema/seo.json` + 主题 `<meta>` 注入，站点级元数据集中托管
 - PR-K 搜索评测：离线 nDCG/MRR/Recall 守门 + 线上查询参数 variant（lex / rrf / rrf-mmr）交替曝光
 
 ## 快速开始
@@ -50,23 +50,52 @@ npm run dev
 - `npm run gen -- --no-batch`：回退到串行写入（禁用批量写入与哈希跳过），或设置 `PAGEGEN_DISABLE_BATCH=1`
 - `PAGEGEN_CONCURRENCY=<num>`：控制内容解析并发度（默认 8），可在 `npm run gen` 前临时指定
 - `npm run test:pagegen`：运行 Pagegen 模块单元测试 + 集成测试（含 nav manifest 输出与聚合产物核对）
+- `npm run test:links`：基于临时站点夹具运行链接巡检，覆盖 Markdown、nav manifest、i18n map 成功与失败场景
 - `npm run stats:lint`：按语言统计分类/标签，控制台输出 TopN 并写入 `data/stats.snapshot.json`，CI 会上传该快照方便历史对比
 - `npm run stats:diff -- --baseline <ref:path|file> [--current <file>]`：对比两份分类/标签快照，输出高于阈值的差异（默认 warn≥30%、fail≥60%）；未显式指定时会尝试从 git 历史（`origin/main`、`HEAD^` 等）寻找 baseline，若无法定位则打印提示并跳过对比
-- `npm run precheck`：Frontmatter Schema 校验（阻断）
+- `npm run precheck`：Frontmatter 与导航/SEO/标签配置校验（阻断）
+- `npm run config:seo`：校验 SEO/OpenGraph 配置（Schema + 引用完整性）
 - `npm run build`：构建站点（前置 `gen` + `knowledge:build`），自动生成中英双语 RSS/Sitemap
 - `npm run pwa:build`：独立构建 PWA 产物（`sw.js`、`manifest.webmanifest`、`icons/`）
 - `npm run dev`：本地开发（前置 `gen`）
 - `npm run knowledge:build`：单独更新 `/api/knowledge.json`（段落级知识数据）
-- `npm run eval:offline`：基于 `data/gold.jsonl` 运行离线检索评测（nDCG/MRR/Recall），确保不低于 `scripts/eval/baseline.json`
+- `npm run ai:prepare`：读取 `data/models.json`、写入模型缓存目录（默认 `data/models/`），并校验 SHA256 与缓存状态
+- `npm run ai:smoke`：在已准备的缓存上运行最小推理验证，失败会写入结构化日志并将 manifest 回退到占位运行时；`AI_RUNTIME=placeholder` 或相关 `AI_*_DISABLE` 时自动跳过
 - `npm run ai:all`：执行 AI 自演进管线（文本嵌入 / 摘要 / 问答，占位实现）
 - `npm run audit`：运行 `npm audit --omit=dev`（不阻断，输出依赖安全告警）
 - `npm run license`：汇总第三方许可证（`license-checker --summary`）
 - `npm run sbom`：生成 CycloneDX SBOM（输出到 `docs/public/.well-known/sbom.json` 并同步 dist）
 - 离线验证：`npm run build` → `npx vitepress preview docs --host 127.0.0.1 --port 4173`，在浏览器中访问站点、打开 DevTools → Application → Service Workers，勾选 “Offline” 后刷新确认最近访问页和搜索仍能使用缓存；同时观察底部“检测到新版本/已缓存”提示条触发刷新
 
+### AI 管线配置与回滚
+
+- `AI_RUNTIME`：决定 `ai:prepare`/`ai:smoke` 的运行时（`placeholder`、`node`、`wasm` 等）。未设置时默认为 `placeholder` 并跳过真实模型下载。
+- `AI_EMBED_MODEL`：选择嵌入模型适配器，格式为 `<adapter>:<model>`，示例：`transformers-node:sentence-transformers/all-MiniLM-L6-v2`。未设置或显式指定 `placeholder` 时继续走占位文本导出。
+- `AI_SUMMARY_MODEL`：摘要生成的适配器配置，格式同上；问答脚本默认复用该值，可通过 `AI_QA_MODEL` 覆盖。
+- CLI 覆盖：所有 AI CLI（`scripts/embed-build.mjs`、`scripts/summary.mjs`、`scripts/qa-build.mjs`）均支持 `--adapter <spec>`，用于临时指定 `<adapter>:<model>`，优先级高于环境变量。
+- 已内置适配器：
+  - `placeholder`：延续现有占位逻辑，仅导出首段文本/Frontmatter 元信息，任何环境均可使用。
+  - `transformers-node`：基于 `@xenova/transformers` 的 Node 推理，需要先执行 `npm install @xenova/transformers` 并提供模型 ID。模型文件默认会缓存在 `~/.cache/huggingface/`，如需离线部署请提前下载并设置 `TRANSFORMERS_CACHE`。
+  - `onnxruntime`：预留 onnxruntime-node 加载入口，需 `npm install onnxruntime-node` 后按需扩展实现，并将 `.onnx` 模型放置在可读目录（可使用 `ORT_DYN_THREADS` 控制线程数）。
+- 适配器加载失败或执行异常时，脚本会记录结构化降级日志（`ai.*.adapter.*`）并自动回退到 placeholder 产出，同时尝试复用上一次生成的缓存文件，尽量保持前端体验。
+- 模型缓存：`data/models.json` 记录模型来源、校验哈希与缓存状态，`npm run ai:prepare` 会在默认目录（`data/models/`）或指定目录（见下）生成/覆盖模型文件。手动切换到全局缓存时，可设置 `AI_MODELS_SCOPE=global`，或通过 `AI_MODELS_DIR=<path>` 指向自定义目录。传入 `--clean` 或设置 `AI_MODELS_CLEAN=1` 会在准备阶段删除清单外的旧文件。
+- 冒烟记录：`npm run ai:smoke` 会更新每个模型的 `smoke` 字段与顶层 `smoke` 摘要，失败时会写入 `fallback` 节点记录原始运行时、失败模型，并把 manifest 的 `runtime` 重置为 `placeholder`，便于追踪与回滚。
+- 降级开关：`AI_EMBED_DISABLE=1`、`AI_SUMMARY_DISABLE=1`、`AI_QA_DISABLE=1` 可分别跳过对应模型；当运行时为 `placeholder` 时，`ai:prepare` 仍会生成占位模型并更新缓存状态，`ai:smoke` 会输出跳过日志。
+- 回滚策略：清空相关环境变量或设置为 `placeholder`，依次运行 `npm run ai:prepare`（刷新模型缓存与状态）和 `npm run ai:all` 即可恢复占位产物；如遇模型产出异常，可手动删除 `docs/public/data/*.json` 并重新执行命令。若需临时停止遥测事件写入，可设置 `AI_TELEMETRY_DISABLE=1`；需要将事件输出重定向到自定义目录（如测试夹具或沙箱）时，可设置 `AI_TELEMETRY_PATH=<dir>`。
+- 单测：`node --test tests/ai/*.test.mjs` 通过 mock 适配器覆盖默认回退、缓存命中与 CLI 解析逻辑。
+- CI 守门：主干推送与带 `ai-smoke` 标签的 PR 会先执行 `npm run ai:prepare` 再运行 `npm run ai:smoke`，确保缓存可用并在失败时自动降级到占位实现。
+
 ## 当前进展与下一阶段
 - Pagegen 各阶段（collect/sync/collections/feeds/i18n/writer）已模块化并输出指标，CLI 会汇总缓存命中率与写入跳过原因，最新一轮指标会同步写入 telemetry 页面，便于运维直接观测。
 - 多语言内容统计脚本 `npm run stats:lint` 已上线，CI 会生成 `data/stats.snapshot.json` 工件；配套的 `npm run stats:diff` 已接入 CI，自动抓取 `origin/main:data/stats.snapshot.json` 作为基线，对比结果会写入 Step Summary 与 `stats-diff-report` 工件，便于在 PR 审查阶段复核差异。
+- Feeds 模板配置化：`schema/feeds.templates.json` + `scripts/validate-feeds-template.mjs` 已用于管理 RSS/Sitemap 模板，`tests/pagegen/feeds.test.mjs` 覆盖自定义模板与限流分支。
+- 链接巡检守门补测：新增 `tests/pagegen/check-links.integration.test.mjs` 以覆盖临时目录与 nav/i18n 缺失路径，CI 现可直接阻断缺链提交。
+- 站点级 SEO/OpenGraph Schema：`schema/seo.json` + 主题 `<meta>` 注入与回滚指引已上线，运维手册同步更新。
+- AI 适配层：`scripts/ai/adapters/*` 支持 Transformers.js / onnxruntime-node，与占位实现共享降级路径，并将构建摘要写入 `docs/public/data/*.json`。
+- **近期交付摘要**：
+  - 🧩 局部重建实验：`scripts/pagegen/sync.mjs`、`scripts/pagegen/collect.mjs` 与 orchestrator 现联动 Git 快照与缓存命中率，默认增量流程在多语言目录下跑通，并补齐运行指引。
+  - 📈 指标时间序列基线：`node scripts/telemetry-merge.mjs` 已将阶段指标写入带时间戳的 `data/telemetry.json`，路线图与文档同步记录导出路径。
+  - 🤖 AI 质量评测蓝本：评测基准集写入 `data/gold.jsonl`，`npm run ai:smoke` 会读取基线并在 placeholder 模式输出跳过日志，形成后续守门的设计基础。
 - 下一阶段重点：
   1. 🧩 发布 Pagegen 插件 SDK 与样例：整理 `PagegenPluginRegistry`/`PagegenScheduler` 的使用指南，补充最小插件示例与回归测试，便于其他仓库复用。
   2. 🚦 并行调度压测与回退校验：新增串行/并行对比基准、`--max-parallel` 回退用例与超时监控，确保多语言站点在高并发下仍可稳定回滚。
@@ -86,11 +115,12 @@ npm run dev
 - **CI 守门**：流水线默认执行 `npm ci`、前置校验、Pagegen 单测、`node scripts/stats-lint.mjs` + `node scripts/stats-diff.mjs`、`node .codex/budget.mjs` 等步骤；主干推送会额外安装 Chrome 依赖并运行 `npx lhci autorun --collect.chromeFlags="--no-sandbox"`，PR 仅保留核心守门以控制耗时。
 - **内容生产力工具**：通过 `npm run md:lint`、`node scripts/check-links.mjs`、`node scripts/img-opt.mjs` 守门 Markdown、链接与图片质量；其中 `check-links` 会额外校验 `nav.manifest.<locale>.json` 与 `i18n-map.json` 内的目标路径，必要时可在 CI 中暂时调高阈值或跳过。
 - **Landing 入口 BASE 兜底**：`docs/index.md` 的内联重定向脚本会写入 `__LING_ATLAS_ACTIVE_BASE__` 并由 `<script setup>` 在 hydration 期间复用，确保 `/` 与 `/ling-atlas/` 等不同 BASE 下的首屏重定向一致；前端通过 `docs/.vitepress/theme/base.mjs` 统一读取、缓存与复用该 BASE，Locale Toggle、导航 manifest 以及 Telemetry 资产加载都会依赖此模块。如需修改入口，请同步维护内联脚本、`base.mjs` 与相关调用。
-- **导航与标签配置 Playbook**：在修改 `schema/nav.json`、`schema/tag-alias.json` 之前，务必阅读 `docs/zh/plans/nav-config-playbook.md`；文档提供配置步骤、守门命令与常见故障排查。
+- **导航/标签/SEO 配置 Playbook**：在修改 `schema/nav.json`、`schema/tag-alias.json` 或 `schema/seo.json` 之前，务必阅读 `docs/zh/plans/nav-config-playbook.md` 与 `docs/zh/plans/seo-config-playbook.md`；文档提供配置步骤、守门命令与常见故障排查。
 
 ## 统计监控与告警流程
 
 - **Pagegen 指标出口**：运行 `npm run gen` 后，CLI 会额外打印 collect 缓存命中率与 writer 哈希跳过统计，最新一笔指标还会由 `node scripts/telemetry-merge.mjs` 同步到 `/telemetry.json`，可在站点的“观测指标”页面直接查看。
+- **AI 构建遥测**：`scripts/embed-build.mjs`、`scripts/summary.mjs`、`scripts/qa-build.mjs` 会在 `data/ai-events/` 写入结构化事件（含批次数量、推理/写入耗时、成功率、目标路径等），`node scripts/telemetry-merge.mjs` 会清理已消费的事件文件，并将最新结果聚合为与 `build.pagegen` 对齐的 `build.ai` 节点输出到 `docs/public/telemetry.json`。可通过 `AI_TELEMETRY_DISABLE=1` 暂停事件写入，或设置 `AI_TELEMETRY_PATH=<dir>` 指定事件目录（便于测试与沙箱环境）。
 - **快照采集**：`npm run stats:lint` 写入 `data/stats.snapshot.json` 并输出 TopN 排序，CI 会上传该文件作为工件，便于后续下载对比。
 - **自动对比与预警**：通过 `npm run stats:diff -- --baseline origin/main:data/stats.snapshot.json --current data/stats.snapshot.json` 在本地或 CI 中对比差异。命令会按默认阈值（warn≥30%、fail≥60%）输出告警，可搭配 `--json` 输出结构化结果，或在 GitHub Actions 中根据退出码（2 表示 fail）自动打标签/留言；若未提供 baseline 且 git 历史中也无法找到快照，会输出提示并直接跳过对比，避免误报。
 - **夜间任务建议**：Nightly Workflow 可先拉取前一日工件为 baseline，再运行 `stats:diff -- --baseline <path> --current data/stats.snapshot.json --quiet`，将结果上传到日志或告警系统；如需邮件/IM 告警，可根据 JSON 输出过滤高优先级条目。
@@ -100,6 +130,7 @@ npm run dev
 1. 修改内容或配置后，依次执行：
    ```bash
    npm run config:nav   # 如涉及导航
+   npm run config:seo   # 如涉及站点级 SEO/OpenGraph
    npm run config:tags  # 如涉及标签
    node scripts/pagegen.mjs --dry-run --metrics-output /tmp/pagegen-metrics.json
    npm run test:pagegen && npm run test:theme
@@ -109,6 +140,10 @@ npm run dev
 
 ## 近期进展
 
+- 完成 feeds 模板配置化，CLI/metrics 会区分各语言模板的写入结果，`tests/pagegen/feeds.test.mjs` 已覆盖自定义与限流场景。
+- 新增 `tests/pagegen/check-links.integration.test.mjs`，对 `node scripts/check-links.mjs` 的 nav manifest/i18n 缺失路径进行回归，CI 现会立即阻断缺链提交。
+- 站点级 SEO/OpenGraph Schema (`schema/seo.json`) 与 README/运维指引同步落地，主题 `<meta>` 回归测试已补齐。
+- Transformers.js/onnxruntime-node 适配层上线，占位实现可回退；AI 构建脚本会将摘要/问答遥测写入 `docs/public/data/` 以便后续分析。
 - 完成导航配置引用守门：`scripts/validate-nav-config.mjs` 与 `pagegen.locales.mjs` 会校验 `aggregates`、`sections`、`links` 之间的引用关系，缺失键会在预检阶段即时报错。
 - Pagegen 指标与日志增强：collect 阶段输出缓存命中率、解析错误摘要，feeds 阶段汇总各语言 RSS/Sitemap 数量，指标同时写入 metrics JSON， dry-run/CI 更易观测。
 - 添补失败场景测试：`tests/pagegen/feeds.test.mjs`、`tests/pagegen/collections.failures.test.mjs` 验证写入异常会正确抛错，为生产环境提供兜底守门。

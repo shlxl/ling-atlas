@@ -111,6 +111,7 @@ function finalizeLocale(code, config = {}) {
   const collectionsTemplate = typeof config.collectionsTemplate === 'string'
     ? config.collectionsTemplate.trim()
     : ''
+  const feedsTemplate = typeof config.feedsTemplate === 'string' ? config.feedsTemplate.trim() : ''
   const contentFields = composeContentFields(config.contentFields)
 
   return {
@@ -135,6 +136,7 @@ function finalizeLocale(code, config = {}) {
     generatedPathPrefix,
     labels,
     collectionsTemplate: collectionsTemplate || undefined,
+    feedsTemplate: feedsTemplate || undefined,
     contentFields,
     rssFile: config.rssFile,
     sitemapFile: config.sitemapFile,

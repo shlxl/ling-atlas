@@ -33,6 +33,16 @@ export function defaultState() {
   }
 }
 
+function createPaths(root) {
+  return {
+    root,
+    tmpPath: path.join(root, 'data', 'telemetry.tmp.json'),
+    dataPath: path.join(root, 'data', 'telemetry.json'),
+    distPath: path.join(root, 'docs/.vitepress/dist/telemetry.json'),
+    publicPath: path.join(root, 'docs/public/telemetry.json')
+  }
+}
+
 async function loadJSON(file, fallback) {
   try {
     const content = await fs.readFile(file, 'utf8')
