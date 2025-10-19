@@ -90,3 +90,61 @@ test('writeCollections supports dry run without touching filesystem', async t =>
 
   await assert.rejects(() => fs.access(path.join(root, 'categories')), /ENOENT/)
 })
+
+test('writeCollections uses human-readable series label and falls back to updated date', async t => {
+  const root = await createTempDir()
+  t.after(async () => {
+    await fs.rm(root, { recursive: true, force: true })
+  })
+
+  const formatter = value => `系列 · ${value}`
+  const lang = {
+    code: 'zh',
+    manifestLocale: 'zh',
+    localeRoot: '/zh/',
+    generatedDir: root,
+    labels: {
+      category: formatter,
+      series: formatter,
+      tag: formatter,
+      archive: formatter
+    }
+  }
+
+  const post = {
+    title: '测试系列文章',
+    path: '/zh/content/series-post/',
+    date: '',
+    updated: '2025-01-02',
+    excerpt: '摘要',
+    series: '本地化系列',
+    series_slug: 'series-post',
+    tags: [],
+    slug: 'series-post'
+  }
+
+  const meta = {
+    byCategory: {},
+    bySeries: { 'series-post': [post] },
+    byTag: {},
+    byYear: {},
+    all: [post]
+  }
+
+  const tasks = []
+  const writer = {
+    addFileTask(task) {
+      tasks.push(task)
+    }
+  }
+
+  const navEntries = await writeCollections(lang, meta, writer, { dryRun: false })
+
+  assert.strictEqual(navEntries.series.get('series-post'), '/zh/_generated/series/series-post/')
+
+  const seriesTask = tasks.find(task => task.target.endsWith('series/series-post/index.md'))
+  assert.ok(seriesTask, 'series collection should schedule a write task')
+  assert.match(seriesTask.content, /title: 系列 · 本地化系列/)
+  assert.match(seriesTask.content, /· 2025-01-02/)
+  assert.ok(!seriesTask.content.includes('undefined'), 'date fallback should not emit undefined')
+})

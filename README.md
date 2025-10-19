@@ -53,6 +53,7 @@ npm run dev
 - `npm run gen -- --no-batch`：回退到串行写入（禁用批量写入与哈希跳过），或设置 `PAGEGEN_DISABLE_BATCH=1`
 - `PAGEGEN_CONCURRENCY=<num>`：控制内容解析并发度（默认 8），可在 `npm run gen` 前临时指定
 - `npm run test:pagegen`：运行 Pagegen 模块单元测试（采集、聚合、i18n 注册）
+- `npm run stats:lint`：按语言统计分类/标签，控制台输出 TopN 并写入 `data/stats.snapshot.json`，CI 会上传该快照方便历史对比
 - `npm run precheck`：Frontmatter Schema 校验（阻断）
 - `npm run build`：构建站点（前置 `gen` + `knowledge:build`），自动生成中英双语 RSS/Sitemap
 - `npm run pwa:build`：独立构建 PWA 产物（`sw.js`、`manifest.webmanifest`、`icons/`）
@@ -70,11 +71,31 @@ npm run dev
 > 以下清单同步自仓库根部的 `AGENTS.md`，便于贡献者在不离开 README 的情况下快速了解约束与常用命令。
 
 - **角色与脚本管线**：通过 `codex run <task>` 调用 `.codex/*.mjs` 中的脚本，涵盖 `plan`、`precheck`、`gen`、`build`、`deploy`、`audit` 等角色；`publish` 会串联 tags 规范化 → precheck → gen → build → git 推送。
+- **内容统计守门**：CI 在 `npm run test:pagegen` 后追加 `node scripts/stats-lint.mjs`，同时上传 `data/stats.snapshot.json` 作为工件，便于观察分类/标签分布的阶段变化。
 - **环境要求**：Node ≥ 22、npm ≥ 10、git ≥ 2.45，`.env` 需包含 `BASE=/ling-atlas/`、`SITE_ORIGIN=https://<user>.github.io/ling-atlas`、`GIT_REMOTE=origin`、`GIT_BRANCH=main`。
 - **首次初始化**：建议执行 `codex run setup --base "/ling-atlas/" --site "https://<user>.github.io/ling-atlas"`，完成依赖安装、预检、聚合页生成与首次构建。
 - **CI 守门**：默认 `npm ci` 安装依赖，持续运行 Pagegen 单测、前置校验、生成聚合页；体积预算与 Lighthouse 可按需开启（参考 `node .codex/budget.mjs` 与 `npx lhci autorun`）。
 - **内容生产力工具**：通过 `npm run md:lint`、`node scripts/check-links.mjs`、`node scripts/img-opt.mjs` 守门 Markdown、链接与图片质量；其中 `check-links` 会额外校验 `nav.manifest.<locale>.json` 与 `i18n-map.json` 内的目标路径，必要时可在 CI 中暂时调高阈值或跳过。
 - **Landing 入口 BASE 兜底**：`docs/index.md` 的内联重定向脚本会写入 `__LING_ATLAS_ACTIVE_BASE__` 并由 `<script setup>` 在 hydration 期间复用，确保 `/` 与 `/ling-atlas/` 等不同 BASE 下的首屏重定向一致；前端通过 `docs/.vitepress/theme/base.mjs` 统一读取、缓存与复用该 BASE，Locale Toggle、导航 manifest 以及 Telemetry 资产加载都会依赖此模块。如需修改入口，请同步维护内联脚本、`base.mjs` 与相关调用。
+- **导航与标签配置 Playbook**：在修改 `schema/nav.json`、`schema/tag-alias.json` 之前，务必阅读 `docs/zh/plans/nav-config-playbook.md`；文档提供配置步骤、守门命令与常见故障排查。
+
+### 最小发布流程
+
+1. 修改内容或配置后，依次执行：
+   ```bash
+   npm run config:nav   # 如涉及导航
+   npm run config:tags  # 如涉及标签
+   node scripts/pagegen.mjs --dry-run --metrics-output /tmp/pagegen-metrics.json
+   npm run test:pagegen && npm run test:theme
+   ```
+2. 确认 `npm run precheck` 通过，再运行 `codex run publish --message "<消息>"`，命令会自动串联 tags 归一化、precheck、gen、build 以及 push。
+3. 如需人工检查产物，可执行 `npm run gen` 并查看 `_generated/`、`docs/public/` 中的新文件；完成后清理临时文件避免误提交。
+
+## 近期进展
+
+- 完成导航配置引用守门：`scripts/validate-nav-config.mjs` 与 `pagegen.locales.mjs` 会校验 `aggregates`、`sections`、`links` 之间的引用关系，缺失键会在预检阶段即时报错。
+- Pagegen 指标与日志增强：collect 阶段输出缓存命中率、解析错误摘要，feeds 阶段汇总各语言 RSS/Sitemap 数量，指标同时写入 metrics JSON， dry-run/CI 更易观测。
+- 添补失败场景测试：`tests/pagegen/feeds.test.mjs`、`tests/pagegen/collections.failures.test.mjs` 验证写入异常会正确抛错，为生产环境提供兜底守门。
 
 ## 即将开展的审查路线
 

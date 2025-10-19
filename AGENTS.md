@@ -66,6 +66,11 @@ codex run publish --message "update: 新增文章 <title>"
 ```
 行为：`tags:normalize` → `precheck` → `gen` → `build` → `git commit & push`。
 
+### 导航与标签 Playbook
+
+- 在修改 `schema/nav.json`、`schema/tag-alias.json` 前，请先阅读 `docs/zh/plans/nav-config-playbook.md`。
+- Playbook 提供配置步骤、守门命令、dry run 验证与常见故障排查；执行完文档中的“最小验证”后再运行 `codex run publish`。
+
 ---
 
 ## 6. 常见故障的自动修复策略
@@ -85,6 +90,7 @@ codex run build
 codex run publish --message "chore: content update"
 codex run dev
 codex run audit   # 可选
+npm run stats:lint
 ```
 
 ---
@@ -141,6 +147,9 @@ codex run audit   # 可选
 - ✅ **协作约束清单**：已将 `AGENTS.md` 与 README 中的关键命令、环境与守门策略汇总到 README《协作约束速查》章节，方便快速查阅。
 - ✅ **模块与目录盘点**：已在 `docs/zh/plans/module-inventory.md` 汇总 `schema/`、`scripts/`、`docs/zh/plans/`、`tests/` 的现状与后续动作，后续如有更新请同步维护该文档。
 - ⏳ **Pagegen 深入检查**：已在 `docs/zh/plans/pagegen-deep-dive.md` 梳理模块契约、现有守门与待办；后续需按清单推进 metrics 补足、错误日志与集成测试。
+- ✅ **导航配置引用守门**：`scripts/validate-nav-config.mjs` 与 `scripts/pagegen.locales.mjs` 现会校验 `aggregates`、`sections`、`links` 的引用关系，运行前即可捕获缺失键，Pagegen orchestrator 中的 nav manifest 也会提示未映射的聚合键。
+- ✅ **Pagegen 指标可观测性**：collect 阶段输出缓存命中率、解析错误摘要；feeds 阶段记录各语言 RSS/Sitemap 数量并写入 metrics JSON，dry-run/CI 可直接观察。
+- ✅ **失败场景补测**：新增 `tests/pagegen/collections.failures.test.mjs` 与 feeds 写入失败用例，确保文件系统异常会被抛出并纳入守门。
 - 🔁 **结果同步机制**：所有阶段性结论将同步回本文件与 `docs/zh/plans/pagegen-refactor-roadmap.md`，保持多代理协同一致性。
 - ✅ **Landing 入口 root 兼容**：`docs/index.md` 的预渲染脚本会写入 `__LING_ATLAS_ACTIVE_BASE__` 并在 Vue hydration 期间复用，确保 Lighthouse/本地 root 服务下的 locale 重定向保持一致；前端会通过 `docs/.vitepress/theme/base.mjs` 统一读取与缓存该 BASE，Locale Toggle、导航 manifest 与 Telemetry 资产加载均复用同一逻辑。如需调整入口，请同步更新内联脚本、`base.mjs` 与 `<script setup>` 内的调用。
   Layout.vue 已改用 `locale-map-core` 暴露的 `normalizeRoutePath`、`getFallbackPath` 与 `hasLocalePrefix` 判断首页跳转与导航品牌链接，避免与 Locale Toggle 的检测分叉。
@@ -157,5 +166,6 @@ codex run audit   # 可选
 - Markdown Lint：`npm run md:lint`（使用 markdownlint-cli2，可提前发现标题序号、行长等问题）。
 - 链接检查：`node scripts/check-links.mjs`（默认校验站内路径是否存在，并额外回归 nav manifest 与 `i18n-map.json` 的链接；如需校验外链，可自行扩展）。
 - 图片优化：`node scripts/img-opt.mjs`（扫描 `docs/public/images/`，生成 WebP 与缩放版本，后续可据此替换引用）。
+- 内容统计：`npm run stats:lint`（按语言聚合分类/标签，输出 TopN 并写入 `data/stats.snapshot.json`，CI 会上传快照工件以便持续对比）。
 - CI 已在 `precheck` 之后自动执行以上步骤，失败会阻断构建；若需临时跳过，可在工作流中注释对应命令。
 - 回滚策略：若短期无法达标，可临时提高环境变量阈值或注释相关步骤，但应尽快修复体积/性能问题。

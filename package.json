@@ -30,7 +30,8 @@
     "config:tags": "node scripts/validate-tag-alias.mjs",
     "audit": "npm audit --omit=dev || true",
     "license": "license-checker --summary",
-    "sbom": "node scripts/sbom.mjs"
+    "sbom": "node scripts/sbom.mjs",
+    "chrome-devtools": "npx chrome-devtools-mcp@latest"
   },
   "devDependencies": {
     "@cyclonedx/bom": "^4.1.2",

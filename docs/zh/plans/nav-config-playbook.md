@@ -51,7 +51,36 @@ title: 导航与标签配置运维手册
 5. **必要时查看生成产物**（可选）
    - 执行 `npm run gen` 以生成 `_generated/` 与 `docs/public/` 产物，确认导航 manifest、RSS/Sitemap 内容。
 
-## 4. 常见问题排查
+## 4. 配置修改指引
+
+### 导航（`schema/nav.json`）
+
+1. 变更前先阅读 `schema/nav.schema.json`，确认新增字段是否已有 Schema 定义。
+2. 更新 `aggregates` 时，确保：
+   - 每个键都声明 `type`、`labelKey`、`manifestKey`。
+   - 若为兜底聚合（如最新或分类），补上 `fallback: true` 以便切换语言时回退。
+3. 更新 `sections` 时，逐项核对：
+   - `aggregate` 类型的分区，其 `aggregateKey` 必须存在于 `aggregates`。
+   - `group` 类型需补齐 `items`；子项中的 `aggregateKey`/`linkKey` 同样要存在。
+4. 固定链接写在 `links` 中，可使用 `{routeRoot}` 占位符；提交前运行 `node scripts/check-links.mjs` 确认路径有效。
+5. 编辑完成后执行 `npm run config:nav`，若报错，留意 `instancePath` 指向的字段，再对照 Schema 修复。
+
+### 标签别名（`schema/tag-alias.json`）
+
+1. 统一使用小写加连字符的格式；别名目标建议与聚合目录的命名保持一致。
+2. 避免出现循环引用或同一别名指向多个标签。
+3. 运行 `npm run config:tags` 确认 Schema 校验通过，再跑 `npm run precheck` 观察实际归一化的输出。
+
+### 变更后的最小验证
+
+1. `node scripts/pagegen.mjs --dry-run --metrics-output /tmp/pagegen-metrics.json`
+   - 检查 stdout 是否出现新的警告。
+   - 打开 metrics JSON，确认 `collect.warnings`、`sync.errors` 等数组为空或符合预期。
+2. `npm run test:pagegen` / `npm run test:theme`
+   - Pagegen 测试会覆盖 nav manifest、i18n map；Theme 测试会校验导航渲染与 locale fallback。
+3. 如需完整产物，执行 `npm run gen` 并检查 `_generated/nav.manifest.<locale>.json`、`docs/public/i18n-map.json` 是否包含新入口。
+
+## 5. 常见问题排查
 
 | 问题 | 可能原因 | 排查方法 |
 | --- | --- | --- |
@@ -59,14 +88,21 @@ title: 导航与标签配置运维手册
 | 导航入口 404 或空白 | 聚合目录未生成，manifest 缺少条目 | 运行 `npm run gen` 检查 `_generated/`；确认 `sections[*].aggregateKey` 是否匹配真实聚合 |
 | 标签归一化无效 | Frontmatter 标签与别名不一致 | 核实原始标签拼写，确认 `aliases` 是否覆盖 |
 | Pagegen dry run 提示 `collect warnings`/`sync warnings` | Frontmatter 解析失败或文件复制失败 | 按日志中的路径修复内容或权限，再次运行 dry run |
+| 导航 manifest 缺少新入口 | `aggregateKey` 或 `manifestKey` 配置有误 | 检查 metrics 中的 `i18nRegistry.warnings`，并对照 `schema/nav.json` 纠正键名 |
 
-## 5. 提交与 CI 注意事项
+## 6. 提交与 CI 注意事项
 
 - `npm run precheck` 会自动执行导航、标签与 Frontmatter 校验。
 - CI 中 `npm run test:pagegen` 与 `npm run test:theme` 必须通过；提交前建议本地跑一遍。
 - 若新增导航入口，请同步更新 README 或 AGENTS 相关说明，保持协作一致性。
 
-## 6. 参考资料
+## 7. 回滚与发布提醒
+
+- 若配置改动导致 CI/构建失败，可临时恢复上一版 `schema/nav.json` 或 `schema/tag-alias.json`，重新运行 `npm run precheck` 确认恢复。
+- 发布前推荐执行 `codex run publish --message "<message>"`，命令会自动跑标签归一化、导航校验与 Pagegen 生成。
+- 如果在 CI 中失败，查看构建日志中的 `validate-nav-config`、`pagegen`、`test:theme` 步骤，定位具体模块后对照本手册逐项排查。
+
+## 8. 参考资料
 
 - `docs/zh/plans/nav-config-schema.md`：导航配置 Schema 说明。
 - `docs/zh/plans/module-inventory.md`：核心目录盘点与守门状态。

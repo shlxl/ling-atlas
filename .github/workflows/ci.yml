@@ -41,6 +41,13 @@ jobs:
         run: npm run gen
       - name: Pagegen 单元测试
         run: npm run test:pagegen
+      - name: 统计聚合快照
+        run: node scripts/stats-lint.mjs
+      - name: 上传分类标签快照
+        uses: actions/upload-artifact@v4
+        with:
+          name: stats-snapshot
+          path: data/stats.snapshot.json
       - name: Build semantic texts
         run: npm run embeddings:build
       - name: Build knowledge chunks

@@ -123,10 +123,6 @@ await (async () => {
   const tagAlias = await loadTagAlias(__dirname)
   const registry = createI18nRegistry(LOCALE_CONFIG, { tagAlias, navConfig: NAVIGATION_CONFIG })
 
-  function logInfo(...args) {
-    if (!metricsOnly) console.log(...args)
-  }
-
   if (metricsOutputPath && !metricsOnly) {
     logInfo(`[pagegen] metrics output: ${metricsLogPath}`)
   }
@@ -154,6 +150,7 @@ await (async () => {
 
   const siteOrigin = process.env.SITE_ORIGIN || 'https://example.com'
   const collectMetrics = {}
+  const feedMetrics = []
 
   for (const lang of LOCALE_CONFIG) {
     const posts = await measureStage(`collect:${lang.manifestLocale}`, () =>
@@ -163,13 +160,32 @@ await (async () => {
         concurrency: collectConcurrency
       })
     )
-    if (posts.stats) {
-      collectMetrics[lang.code || lang.manifestLocale] = posts.stats
-      logInfo(
-        `[pagegen] cache:${lang.manifestLocale} hits=${posts.stats.cacheHits} misses=${posts.stats.cacheMisses}` +
-          ` parsed=${posts.stats.parsedFiles} total=${posts.stats.totalFiles}`
-      )
+    const stats = posts.stats || {}
+    collectMetrics[lang.code || lang.manifestLocale] = stats
+    const cacheHits = Number(stats.cacheHits || 0)
+    const cacheMisses = Number(stats.cacheMisses || 0)
+    const totalFiles = Number(stats.totalFiles || 0)
+    const parsedFiles = Number(stats.parsedFiles || 0)
+    const requests = cacheHits + cacheMisses
+    const cacheSummary = stats.cacheDisabled ? 'disabled' : `${cacheHits}/${requests}`
+    const hitRateText = stats.cacheDisabled
+      ? 'disabled'
+      : requests
+        ? `${((cacheHits / requests) * 100).toFixed(1)}%`
+        : 'n/a'
+    const parseErrors = Number(stats.parseErrors || 0)
+    logInfo(
+      `[pagegen] collect:${lang.manifestLocale} total=${totalFiles} parsed=${parsedFiles}` +
+        ` cache=${cacheSummary} hitRate=${hitRateText} errors=${parseErrors}`
+    )
+
+    const localeFeed = {
+      locale: lang.manifestLocale,
+      rssCount: 0,
+      rssLimited: false,
+      sitemapCount: 0
     }
+    feedMetrics.push(localeFeed)
     await measureStage(`meta:${lang.manifestLocale}`, async () => {
       if (effectiveDryRun) return
       const payload = `${JSON.stringify(posts.meta, null, 2)}\n`
@@ -189,7 +205,7 @@ await (async () => {
       writeCollections(lang, posts.meta, writer, { dryRun: effectiveDryRun })
     )
     registry.addNavEntries(lang, navEntries)
-    await measureStage(`rss:${lang.manifestLocale}`, () =>
+    const rssStats = await measureStage(`rss:${lang.manifestLocale}`, () =>
       generateRss(lang, posts.list, {
         publicDir: PUBLIC_DIR,
         siteOrigin,
@@ -198,8 +214,20 @@ await (async () => {
         dryRun: effectiveDryRun
       })
     )
-    await measureStage(`sitemap:${lang.manifestLocale}`, () =>
+    if (rssStats) {
+      localeFeed.rssCount = Number(rssStats.count || 0)
+      localeFeed.rssLimited = Boolean(rssStats.limited)
+    }
+    const sitemapStats = await measureStage(`sitemap:${lang.manifestLocale}`, () =>
       generateSitemap(lang, posts.list, { publicDir: PUBLIC_DIR, siteOrigin, writer, dryRun: effectiveDryRun })
+    )
+    if (sitemapStats) {
+      localeFeed.sitemapCount = Number(sitemapStats.count || 0)
+    }
+    logInfo(
+      `[pagegen] feeds:${lang.manifestLocale} rss=${localeFeed.rssCount}${
+        localeFeed.rssLimited ? ' (limited)' : ''
+      } sitemap=${localeFeed.sitemapCount}`
     )
 
     for (const post of posts.list) {
@@ -246,7 +274,8 @@ await (async () => {
     stageTimings,
     syncMetrics,
     collectMetrics,
-    writeResults
+    writeResults,
+    feedMetrics
   })
 
   if (!metricsOnly) {
@@ -332,7 +361,14 @@ await (async () => {
     }
   }
 
-  function buildMetricsEntry({ totalDuration, stageTimings, syncMetrics, collectMetrics, writeResults }) {
+  function buildMetricsEntry({
+    totalDuration,
+    stageTimings,
+    syncMetrics,
+    collectMetrics,
+    writeResults,
+    feedMetrics: feeds
+  }) {
     const stages = stageTimings.map(item => ({
       name: item.name,
       ms: Number(item.durationMs.toFixed(3))
@@ -345,6 +381,7 @@ await (async () => {
       stageSummary: Object.fromEntries(stages.map(item => [item.name, item.ms])),
       sync: summarizeSyncMetrics(syncMetrics),
       collect: summarizeCollectMetrics(collectMetrics),
+      feeds: summarizeFeedMetrics(feeds),
       write: summarizeWriteResults(writeResults)
     }
   }
@@ -405,6 +442,26 @@ await (async () => {
       cacheDisabled: Boolean(stats?.cacheDisabled),
       parseErrors: stats?.parseErrors || 0,
       errors: stats?.errors || []
+    }))
+
+    return { summary, locales }
+  }
+
+  function summarizeFeedMetrics(metrics = []) {
+    if (!Array.isArray(metrics)) return { summary: { locales: 0 }, locales: [] }
+    const summary = {
+      locales: metrics.length,
+      rssTotal: metrics.reduce((sum, item) => sum + Number(item?.rssCount || 0), 0),
+      rssLimitedLocales: metrics.filter(item => item?.rssLimited).length,
+      sitemapTotal: metrics.reduce((sum, item) => sum + Number(item?.sitemapCount || 0), 0),
+      emptyLocales: metrics.filter(item => Number(item?.rssCount || 0) + Number(item?.sitemapCount || 0) === 0).length
+    }
+
+    const locales = metrics.map(item => ({
+      locale: item?.locale,
+      rssCount: Number(item?.rssCount || 0),
+      rssLimited: Boolean(item?.rssLimited),
+      sitemapCount: Number(item?.sitemapCount || 0)
     }))
 
     return { summary, locales }

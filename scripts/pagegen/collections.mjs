@@ -37,9 +37,10 @@ export async function writeCollections(lang, meta, writer, options = {}) {
     navEntries.categories.set(categorySlug, taxonomyPath('categories', categorySlug, lang))
   }
 
-  for (const [series, items] of Object.entries(meta.bySeries || {})) {
-    const seriesSlug = series
-    await write('series', seriesSlug, lang.labels.series(series), items)
+  for (const [seriesSlug, items] of Object.entries(meta.bySeries || {})) {
+    const firstEntry = Array.isArray(items) ? items[0] : null
+    const seriesLabel = firstEntry?.series || seriesSlug
+    await write('series', seriesSlug, lang.labels.series(seriesLabel), items)
     navEntries.series.set(seriesSlug, taxonomyPath('series', seriesSlug, lang))
   }
 
@@ -62,7 +63,8 @@ function mdList(items = [], lang) {
     .map(post => {
       const updated = post.updated ? (lang.code === 'en' ? ` (updated: ${post.updated})` : `（更:${post.updated}）`) : ''
       const excerptLine = post.excerpt ? `> ${post.excerpt}` : ''
-      const dateText = lang.code === 'en' ? ` · ${post.date || post.updated}` : ` · ${post.date}`
+      const baseDate = post.date || post.updated
+      const dateText = baseDate ? ` · ${baseDate}` : ''
       return `- [${post.title}](${post.path})${dateText}${updated}\n  ${excerptLine}`
     })
     .join('\n\n')

@@ -20,7 +20,8 @@ function toExcerpt(md){
 }
 function toUrl(rel, source){
   const posix = rel.replace(/\\/g, '/')
-  const dir = posix.slice(0, posix.lastIndexOf('/'))
+  const index = posix.lastIndexOf('/')
+  const dir = index === -1 ? '' : posix.slice(0, index)
   return `${source.basePath}${dir ? dir + '/' : ''}`
 }
 
@@ -55,3 +56,5 @@ main().catch(err=>{
   console.error('build-embeddings failed:', err)
   process.exit(1)
 })
+
+export const __test__ = { toUrl }

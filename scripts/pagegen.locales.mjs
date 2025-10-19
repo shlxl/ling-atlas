@@ -2,6 +2,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import Ajv from 'ajv'
+import { validateNavIntegrity } from './pagegen/nav-validation.mjs'
 
 const ajv = new Ajv({ allErrors: true, strict: false })
 
@@ -263,6 +264,17 @@ function loadNavConfigFromFiles({ configPath, schemaPath, useCache = false }) {
       .map(err => `${err.instancePath || 'root'} ${err.message}`)
       .join('; ')
     throw new Error(`Invalid navigation configuration: ${details}`)
+  }
+
+  const { errors, warnings } = validateNavIntegrity(configJson)
+  if (warnings.length) {
+    for (const warning of warnings) {
+      console.warn(`[pagegen.locales] ${warning}`)
+    }
+  }
+  if (errors.length) {
+    const message = errors.map(item => ` - ${item}`).join('\n')
+    throw new Error(`Invalid navigation references:\n${message}`)
   }
 
   return configJson

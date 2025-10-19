@@ -1,8 +1,10 @@
 import fs from 'node:fs'
 import path from 'node:path'
+import { fileURLToPath } from 'node:url'
 import Ajv from 'ajv'
 
-const ROOT_DIR = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..')
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
+const ROOT_DIR = path.resolve(__dirname, '..')
 const schemaPath = path.join(ROOT_DIR, 'schema', 'tag-alias.schema.json')
 const configPath = path.join(ROOT_DIR, 'schema', 'tag-alias.json')
 

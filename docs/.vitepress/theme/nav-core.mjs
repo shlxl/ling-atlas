@@ -282,10 +282,17 @@ function legacyNavFromMeta(meta, options) {
     link: `${prefix}/_generated/categories/${slug(name)}/`
   }))
 
-  const seriesItems = sortByLocale(Object.keys(bySeries || {}), locale).map(key => ({
-    text: key,
-    link: `${prefix}/_generated/series/${key}/`
-  }))
+  const legacyCollator = getCollator(locale)
+  const seriesItems = Object.entries(bySeries || {})
+    .map(([slugValue, entries]) => {
+      const firstEntry = toArray(entries)[0]
+      const label =
+        firstEntry && typeof firstEntry === 'object' && 'series' in firstEntry && firstEntry.series
+          ? firstEntry.series
+          : slugValue
+      return { text: label, link: `${prefix}/_generated/series/${slugValue}/` }
+    })
+    .sort((a, b) => legacyCollator.compare(a.text, b.text))
 
   const tagKeys = Object.keys(byTag || {})
   const firstTag = tagKeys.length ? tagKeys[0] : 'all'

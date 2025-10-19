@@ -1,5 +1,12 @@
 import { slug } from './collect.mjs'
 
+const NAV_ENTRY_TYPE_MAP = new Map([
+  ['categories', 'category'],
+  ['series', 'series'],
+  ['tags', 'tag'],
+  ['archive', 'archive']
+])
+
 export function createI18nRegistry(locales, { tagAlias = {}, navConfig } = {}) {
   const localeList = Array.isArray(locales) ? locales : Object.values(locales || {})
   const manifestAlias = new Map(localeList.map(lang => [lang.manifestLocale, lang.aliasLocaleIds || []]))
@@ -9,6 +16,13 @@ export function createI18nRegistry(locales, { tagAlias = {}, navConfig } = {}) {
   const tagManifestKey = aggregates.tagKey
   const manifestKeys = aggregates.manifestKeys
   const manifestKeyList = Array.from(manifestKeys)
+  const navEntryToManifestKey = new Map()
+  for (const [entryKey, aggregateType] of NAV_ENTRY_TYPE_MAP) {
+    const manifestKey = aggregates.typeToManifestKey.get(aggregateType)
+    if (manifestKey) {
+      navEntryToManifestKey.set(entryKey, manifestKey)
+    }
+  }
 
   const i18nPairs = new Map()
   const taxonomyGroups = Object.fromEntries(
@@ -186,10 +200,16 @@ export function createI18nRegistry(locales, { tagAlias = {}, navConfig } = {}) {
   function addNavEntries(lang, navEntries = {}) {
     const manifest = ensureNavManifest(lang.manifestLocale)
     for (const type of Object.keys(navEntries)) {
-      if (!manifestKeys.has(type)) continue
+      const manifestKey = navEntryToManifestKey.get(type) || type
+      if (!manifestKeys.has(manifestKey)) {
+        console.warn(
+          `[pagegen.i18n-registry] nav entries "${type}" 忽略：nav manifest 未定义对应键 "${manifestKey}"，请检查 schema/nav.json`
+        )
+        continue
+      }
       const entries = navEntries[type]
       if (!entries || !(entries instanceof Map)) continue
-      const bucket = manifest[type]
+      const bucket = manifest[manifestKey]
       if (!bucket || !(bucket instanceof Map)) continue
       for (const [slugValue, target] of entries.entries()) {
         if (slugValue && target) bucket.set(slugValue, target)
