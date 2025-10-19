@@ -18,8 +18,8 @@ title: 核心目录盘点（schema / scripts / plans / tests）
 ## 2. `scripts/`（自动化脚本）
 
 - **pagegen 系列**：`pagegen.mjs` orchestrator、`pagegen/*.mjs` 拆分模块、`pagegen.locales.mjs` / `validate-nav-config.mjs` / `validate-tag-alias.mjs` 等配置加载脚本。
-  - ✅ 模块化、缓存、批量写入、导航配置接入已完成。
-  - ⏳ 深入检查：需要按照 `docs/zh/plans/pagegen-module-architecture.md` / `pagegen-refactor-roadmap.md` 继续补充契约说明与专项测试。
+  - ✅ 模块化、缓存、批量写入、导航配置接入已完成，并新增阶段/语言/目标路径的结构化错误日志。
+  - ✅ 深入检查：已按照 `docs/zh/plans/pagegen-module-architecture.md` / `pagegen-refactor-roadmap.md` 补齐 orchestrator 契约说明、导航/i18n 故障显式化与端到端测试。
 - **校验脚本**：`validate-frontmatter.mjs`、`validate-nav-config.mjs`、`validate-tag-alias.mjs`、`check-links.mjs`。
   - ✅ 均已通过 `npm run precheck` 执行。
 - **构建/运维脚本**：`build-embeddings.mjs`、`generate-headers.mjs`、`postbuild-*`、`sbom.mjs` 等。
@@ -31,8 +31,8 @@ title: 核心目录盘点（schema / scripts / plans / tests）
 | 文档 | 内容 | 状态 | 后续 |
 | --- | --- | --- | --- |
 | `pagegen-baseline.md` | Pagegen 基线指标 | ✅ 已记录 | 需要定期更新最新数据 |
-| `pagegen-module-architecture.md` | 模块拆分方案 | ⏳ 仍需补充契约说明 & 测试覆盖 | 完成后同步 AGENTS |
-| `pagegen-refactor-roadmap.md` | 路线图 | ✅ 更新至阶段 4 | 按阶段推进后续事项 |
+| `pagegen-module-architecture.md` | 模块拆分方案 | ✅ 已补写 orchestrator 契约说明与阶段依赖矩阵 | 继续回归测试覆盖与指标对齐 |
+| `pagegen-refactor-roadmap.md` | 路线图 | ✅ 更新至阶段 4 并同步阶段 1/3/5 完成项 | 按阶段推进后续事项 |
 | `pagegen-validation-checklist.md` | 产物守门清单 | ✅ | 结合新配置/脚本持续更新 |
 | `aggregation-empty-link-plan.md` | 聚合空链修复方案 | ✅ 已落地 | 若导航策略有大改需回顾 |
 | `nav-config-schema.md` | 导航配置 Schema 草案 | ✅ | 待写运维操作指引 & Best Practice |
@@ -43,7 +43,7 @@ title: 核心目录盘点（schema / scripts / plans / tests）
 
 ## 4. `tests/`（守门测试）
 
-- `tests/pagegen/*.test.mjs`：覆盖采集/同步/聚合/Feeds/写入逻辑，✅。
+- `tests/pagegen/*.test.mjs`：覆盖采集/同步/聚合/Feeds/写入逻辑，并新增导航/i18n 缺失、缓存指标与回滚路径用例，✅。
 - `tests/theme/nav-core.test.mjs`：导航裁剪与回退，✅。
 - `tests/locale-map/*`：Locale toggle 与路径映射守门，✅。
 - 建议补充：
@@ -54,7 +54,7 @@ title: 核心目录盘点（schema / scripts / plans / tests）
 
 1. **配置治理**：将标签别名、SEO/OpenGraph 等常量继续迁移到 `schema/`，并补充对应校验脚本。
 2. **运维文档**：根据 `nav-config-schema.md` 草案撰写操作指南，示例化修改流程（改 JSON → `npm run config:nav` → `npm run gen` → `npm run test:theme`）。
-3. **Pagegen 深入检查**：按路线图推进阶段 1/2 后续任务，完善模块契约测试与指标记录。
-4. **测试覆盖加固**：针对配置加载与守门脚本补充回归测试，确保配置驱动后不会出现“silent failure”。
+3. **Pagegen 入检查**：持续跟进阶段 2 缓存优化与阶段 5 统计快照告警，保持指标记录与契约文档同步。
+4. **测试覆盖加固**：在现有导航/i18n 故障用例基础上，继续补充配置加载与守门脚本的边界测试，防止“silent failure”。
 
 > 更新日志：2024-XX-XX 由自动化代理首次盘点，后续更新请在本文顶部追加日期。
