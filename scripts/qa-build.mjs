@@ -1,154 +1,185 @@
 #!/usr/bin/env node
 
-/**
- * 问答对占位实现：基于 frontmatter 元信息生成结构化 Q&A。
- * 后续可替换为真实的本地 LLM 生成逻辑。
- */
-
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { globby } from 'globby'
-import matter from 'gray-matter'
+import { collectLocaleDocuments } from './ai/content.mjs'
+import {
+  ensureDir,
+  flushAIEvents,
+  logStructured,
+  readJSONIfExists,
+  resolveAdapterSpec
+} from './ai/utils.mjs'
+import { loadQAAdapter } from './ai/adapters/index.mjs'
 import { LOCALE_REGISTRY, getPreferredLocale } from './pagegen.locales.mjs'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const ROOT = path.resolve(__dirname, '..')
-const preferredLocale = getPreferredLocale()
-const preferredLocaleConfig =
-  LOCALE_REGISTRY.find(locale => locale.code === preferredLocale) || LOCALE_REGISTRY[0]
-
-if (!preferredLocaleConfig) {
-  console.warn('[qa-build] no locale configuration available, skipping generation')
-  process.exit(0)
-}
-
-const CONTENT_DIR = preferredLocaleConfig.contentDir
-const BASE_PATH = preferredLocaleConfig.basePath
 const OUTPUT_DIR = path.join(ROOT, 'docs', 'public', 'data')
 const OUTPUT_FILE = path.join(OUTPUT_DIR, 'qa.json')
 
-function isDraft(frontmatter) {
-  const { status, draft } = frontmatter || {}
-  if (typeof draft === 'boolean') return draft
-  if (typeof status === 'string') return status.toLowerCase() === 'draft'
-  return false
-}
-
-function toPlainText(markdown) {
-  return markdown
-    .replace(/^>\s+/gm, '')
-    .replace(/`{1,3}[^`]*`{1,3}/g, '')
-    .replace(/```[\s\S]*?```/g, '')
-    .replace(/[*_~#>]/g, '')
-    .replace(/\[(.*?)\]\((.*?)\)/g, '$1')
-    .replace(/!\[(.*?)\]\((.*?)\)/g, '$1')
-    .replace(/\r?\n+/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim()
-}
-
-function getFirstParagraph(content) {
-  const normalized = content.trim()
-  if (!normalized) return ''
-  const segments = normalized.split(/\r?\n\r?\n/)
-  const firstBlock = segments.find(block => block.trim().length > 0) || ''
-  return toPlainText(firstBlock)
-}
-
-function buildUrl(mdPath) {
-  const relative = path.relative(CONTENT_DIR, mdPath).replace(/\\/g, '/')
-  const dir = relative.replace(/\/index\.md$/, '')
-  return dir ? `${BASE_PATH}${dir}/` : BASE_PATH
-}
-
-function buildQA(frontmatter, content) {
-  const qa = []
-  const title = String(frontmatter?.title || '').trim()
-  if (!title) return qa
-
-  const summary = frontmatter?.excerpt || getFirstParagraph(content)
-  if (summary) {
-    qa.push({
-      q: `${title} 主要讲述了什么内容？`,
-      a: summary.length > 160 ? summary.slice(0, 157) + '…' : summary
-    })
-  }
-
-  if (Array.isArray(frontmatter?.tags_zh) && frontmatter.tags_zh.length) {
-    qa.push({
-      q: `${title} 涉及了哪些关键主题或标签？`,
-      a: frontmatter.tags_zh.join('、')
-    })
-  }
-
-  if (frontmatter?.series) {
-    const text = frontmatter.series_slug
-      ? `${frontmatter.series}（slug: ${frontmatter.series_slug}）`
-      : frontmatter.series
-    qa.push({
-      q: `${title} 属于哪个系列？`,
-      a: String(text)
-    })
-  } else if (frontmatter?.category_zh) {
-    qa.push({
-      q: `${title} 被归类在哪个知识领域？`,
-      a: String(frontmatter.category_zh)
-    })
-  }
-
-  if (frontmatter?.date) {
-    qa.push({
-      q: `${title} 的发布日期是？`,
-      a: String(frontmatter.date)
-    })
-  }
-
-  if (frontmatter?.updated && frontmatter.updated !== frontmatter.date) {
-    qa.push({
-      q: `${title} 最近一次更新是什么时候？`,
-      a: String(frontmatter.updated)
-    })
-  }
-
-  return qa.slice(0, 5)
-}
-
-async function ensureDir(dir) {
-  await fs.mkdir(dir, { recursive: true })
-}
-
 async function main() {
-  const files = await globby('**/index.md', { cwd: CONTENT_DIR, absolute: true })
-  const items = []
+  const scriptStartedAt = Date.now()
+  const preferredLocale = getPreferredLocale()
+  const preferredLocaleConfig =
+    LOCALE_REGISTRY.find(locale => locale.code === preferredLocale) || LOCALE_REGISTRY[0]
 
-  for (const file of files) {
-    const raw = await fs.readFile(file, 'utf8')
-    const { data, content } = matter(raw)
-    if (isDraft(data)) continue
-    const qa = buildQA(data, content)
-    if (!qa.length) continue
-    items.push({
-      url: buildUrl(file),
-      title: String(data.title || '').trim(),
-      qa
-    })
+  if (!preferredLocaleConfig) {
+    console.warn('[qa-build] no locale configuration available, skipping generation')
+    return
   }
 
+  const documents = await collectLocaleDocuments(preferredLocaleConfig)
   await ensureDir(OUTPUT_DIR)
-  await fs.writeFile(
-    OUTPUT_FILE,
-    JSON.stringify(
+
+  const cliSpec = resolveAdapterSpec({ envKey: null, cliFlag: 'adapter' })
+  const spec = cliSpec || process.env.AI_QA_MODEL || process.env.AI_SUMMARY_MODEL
+  const previous = await readJSONIfExists(OUTPUT_FILE)
+
+  const events = []
+
+  events.push(
+    logStructured(
+      'ai.qa.start',
       {
-        generatedAt: new Date().toISOString(),
-        items: items.sort((a, b) => a.title.localeCompare(b.title, 'zh-CN'))
+        locale: preferredLocaleConfig.code,
+        inputCount: documents.length,
+        requestedAdapter: spec || 'placeholder'
       },
-      null,
-      2
-    ),
-    'utf8'
+      console
+    )
   )
-  console.log(`qa.json 写入 ${items.length} 篇文档的问答对`)
+
+  const adapterInfo = await loadQAAdapter(spec, console)
+  events.push(
+    logStructured(
+      'ai.qa.adapter.resolved',
+      {
+        requested: spec || 'placeholder',
+        adapter: adapterInfo.adapterName,
+        model: adapterInfo.model,
+        fallback: adapterInfo.isFallback,
+        reason: adapterInfo.reason || null
+      },
+      console
+    )
+  )
+
+  let adapterModule = adapterInfo.adapter
+  let usedName = adapterInfo.adapterName
+  let usedModel = adapterInfo.model
+  let usedFallback = adapterInfo.isFallback
+  let result
+  let retries = 0
+  const inferenceStartedAt = Date.now()
+
+  try {
+    result = await adapterModule.buildQA({ documents, model: usedModel, logger: console })
+  } catch (error) {
+    const message = error?.message || String(error)
+    events.push(
+      logStructured(
+        'ai.qa.adapter.error',
+        { adapter: usedName, model: usedModel, message },
+        console
+      )
+    )
+    console.warn(`[qa-build] adapter "${usedName}" 执行失败：${message}，已降级至 placeholder`)
+    const fallback = await loadQAAdapter('placeholder', console)
+    adapterModule = fallback.adapter
+    usedName = 'placeholder'
+    usedModel = null
+    usedFallback = true
+    retries += 1
+    result = await adapterModule.buildQA({ documents, model: null, logger: console })
+  }
+
+  const inferenceDurationMs = Date.now() - inferenceStartedAt
+
+  let finalItems = Array.isArray(result?.items) ? result.items : []
+  let reusedCache = false
+
+  if ((!Array.isArray(finalItems) || finalItems.length === 0) && Array.isArray(previous?.items) && previous.items.length > 0) {
+    finalItems = previous.items
+    reusedCache = true
+    console.warn('[qa-build] 本次未生成问答对，已沿用缓存结果')
+  }
+
+  const sortedItems = finalItems.sort((a, b) => a.title.localeCompare(b.title, 'zh-CN'))
+
+  const payload = {
+    generatedAt: new Date().toISOString(),
+    items: sortedItems
+  }
+  const serialized = JSON.stringify(payload, null, 2)
+  const writeStartedAt = Date.now()
+  await fs.writeFile(OUTPUT_FILE, serialized, 'utf8')
+  const writeDurationMs = Date.now() - writeStartedAt
+
+  const relativeTarget = path.relative(ROOT, OUTPUT_FILE)
+  const successRate = documents.length === 0 ? 1 : Number((sortedItems.length / documents.length).toFixed(4))
+  const batchCount = 1
+
+  events.push(
+    logStructured(
+      'ai.qa.batch',
+      {
+        index: 0,
+        durationMs: inferenceDurationMs,
+        inputCount: documents.length,
+        outputCount: sortedItems.length,
+        successRate,
+        adapter: usedName,
+        model: usedModel,
+        fallback: usedFallback,
+        retries
+      },
+      console
+    )
+  )
+
+  events.push(
+    logStructured(
+      'ai.qa.write',
+      {
+        target: relativeTarget,
+        bytes: Buffer.byteLength(serialized, 'utf8'),
+        durationMs: writeDurationMs,
+        items: sortedItems.length,
+        cacheReuse: reusedCache
+      },
+      console
+    )
+  )
+
+  const mode = usedFallback
+    ? '占位模式'
+    : `adapter: ${usedName}${usedModel ? ` (${usedModel})` : ''}`
+  events.push(
+    logStructured(
+      'ai.qa.complete',
+      {
+        adapter: usedName,
+        model: usedModel,
+        fallback: usedFallback,
+        cacheReuse: reusedCache,
+        count: sortedItems.length,
+        inputCount: documents.length,
+        outputCount: sortedItems.length,
+        successRate,
+        totalMs: Date.now() - scriptStartedAt,
+        inferenceMs: inferenceDurationMs,
+        writeMs: writeDurationMs,
+        batchCount,
+        target: relativeTarget,
+        retries
+      },
+      console
+    )
+  )
+  await flushAIEvents('qa', events, console)
+  console.log(`[qa-build] qa.json 写入 ${sortedItems.length} 篇文档的问答对（${mode}${reusedCache ? '，命中缓存' : ''}）`)
 }
 
 main().catch(err => {

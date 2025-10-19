@@ -66,9 +66,9 @@ codex run publish --message "update: 新增文章 <title>"
 ```
 行为：`tags:normalize` → `precheck` → `gen` → `build` → `git commit & push`。
 
-### 导航与标签 Playbook
+### 导航 / 标签 / SEO Playbook
 
-- 在修改 `schema/nav.json`、`schema/tag-alias.json` 前，请先阅读 `docs/zh/plans/nav-config-playbook.md`。
+- 在修改 `schema/nav.json`、`schema/tag-alias.json` 或 `schema/seo.json` 前，请先阅读 `docs/zh/plans/nav-config-playbook.md` 与 `docs/zh/plans/seo-config-playbook.md`。
 - Playbook 提供配置步骤、守门命令、dry run 验证与常见故障排查；执行完文档中的“最小验证”后再运行 `codex run publish`。
 
 ---
@@ -91,6 +91,8 @@ codex run publish --message "chore: content update"
 codex run dev
 codex run audit   # 可选
 npm run stats:lint
+npm run ai:prepare
+npm run ai:smoke
 ```
 
 ---
@@ -123,11 +125,21 @@ npm run stats:lint
 - 构建阶段新增脚本：`node scripts/embed-build.mjs`（必跑，占位文本）、`node scripts/summary.mjs || true`、`node scripts/qa-build.mjs || true`，产物输出到 `docs/public/data/`。
 - 如本地尚未接入模型，脚本会退化为文本/元信息导出，不会阻塞构建；后续可替换为 Transformers.js / onnxruntime-node 编码器。
 - 前端可按需读取 `embeddings.json`、`summaries.json`、`qa.json`（例如搜索框或专门的问答页）；缺失时不影响正常渲染。
+- 脚本会在 `data/ai-events/` 写入 `ai.embed.*`、`ai.summary.*`、`ai.qa.*` 遥测事件，记录批次数量、推理/写入耗时、成功率与产物路径等信息；`node scripts/telemetry-merge.mjs` 会清理已消费的事件文件，并将结果聚合为与 `build.pagegen` 对齐的 `build.ai` 节点同步到 `docs/public/telemetry.json`。可通过 `AI_TELEMETRY_DISABLE=1` 临时停写事件，或设置 `AI_TELEMETRY_PATH=<dir>` 将事件重定向至指定目录（测试/沙箱场景）。
+- 适配器配置：通过环境变量 `AI_EMBED_MODEL`、`AI_SUMMARY_MODEL`（问答可用 `AI_QA_MODEL` 覆盖）或命令行参数 `--adapter <adapter>:<model>` 选择实现；默认或显式设置 `placeholder` 时沿用占位逻辑。
+- 依赖提示：`transformers-node` 适配器需要 `npm install @xenova/transformers` 并提前准备模型（默认缓存到 `~/.cache/huggingface/`，离线部署可设置 `TRANSFORMERS_CACHE`）；`onnxruntime` 适配器需要 `npm install onnxruntime-node`，并手动下载 `.onnx` 模型至本地可读目录。
+- 降级与缓存：脚本会输出 `ai.*.adapter.*` 结构化日志，记录解析、失败与成功事件；若适配器执行失败或产出为空，会自动回退到 placeholder 并复用上一版 JSON 产物，保障前端体验。
+- 模型准备：`npm run ai:prepare` 读取 `data/models.json`，将所需模型写入默认缓存 `data/models/`（或通过 `AI_MODELS_SCOPE=global`、`AI_MODELS_DIR=<dir>` 指定位置），同时校验 SHA256 与缓存状态；传入 `--clean` 或设置 `AI_MODELS_CLEAN=1` 会清理清单外的旧缓存。
+- 冒烟结果写回：`ai:smoke` 会更新每个模型的 `smoke` 字段与 manifest 顶层的 `smoke` 概览，失败时会附带 `fallback` 节点记录原始运行时与失败列表，并把 `runtime` 重置为 `placeholder`，便于回滚与审计。
+- 最小验证：`npm run ai:smoke` 基于 manifest 中的 `smokeTest` 定义执行最小推理；当 `AI_RUNTIME=placeholder` 或显式设置 `AI_*_DISABLE=1` 时自动跳过，日志会写入 `ai.models.smoke.*` 事件，失败则触发占位降级并保留结构化错误信息。
+- 快速回滚：清空相关环境变量或改为 `placeholder`，依次运行 `npm run ai:prepare` 与 `npm run ai:all` 即可恢复占位产物；必要时可删除 `docs/public/data/embeddings.json`、`summaries.json`、`qa.json` 后再执行脚本。
+- 测试：`node --test tests/ai/*.test.mjs` 覆盖占位逻辑、CLI 解析与 mock 适配器注入，确保扩展实现可被安全替换。
+- CI 触发：主干推送或带 `ai-smoke` 标签的 PR 会串联 `npm run ai:prepare` → `npm run ai:smoke`，保障缓存与推理验证在流水线内完成，失败即回退到占位运行时。
 - 导航栏已包含 `About`（观测指标、常见问答）与 `指南`（部署指南、迁移与重写）入口，确保这些文档始终可见。
 - PR-J 知识 API + Chat：`node scripts/chunk-build.mjs` 生成 `/api/knowledge.json`，前端懒加载聊天组件并在知识不可用时回退到 Pagefind 结果。
 - PR-K 搜索评测：`node scripts/eval/offline.mjs` 守门 nDCG/MRR/Recall，`?variant=lex|rrf|rrf-mmr` 触发 Team Draft 交替曝光并写入匿名遥测。
 - PR-L 多语/i18n：`schema/locales.json` 驱动多语言目录与文案，`pagegen` 会按配置遍历每个语言目录生成聚合页、RSS、Sitemap，并同步路径映射到 `docs/public/i18n-map.json`；`npm run gen` 与 `npm run test:pagegen` 会自动依据最新配置执行。
-- PR-M（待推进）：SEO / OpenGraph 优化与站点地图扩展，让知识库在搜索引擎中拥有更高可见度。
+- PR-M SEO/OpenGraph 配置：`schema/seo.json` 驱动站点级元数据，主题已注入 `<meta>`/`<link rel="canonical">` 并提供回滚策略。
 - PR-M 供应链加固 2.0：CI 强制 `npm ci`；新增 `npm run audit`、`npm run license`、`npm run sbom`；`scripts/sri.mjs` 对外链哈希差异直接报错，`docs/public/.well-known/sbom.json` 输出 CycloneDX SBOM。离线或 CDN 无法访问时脚本会沿用 allowlist 的哈希并打印警告，不会阻断构建；联网后请重新执行确认哈希仍然匹配。
 
 ## 9. 下一阶段任务：Pagegen 优化重构
@@ -148,6 +160,9 @@ npm run stats:lint
 - ✅ **模块与目录盘点**：已在 `docs/zh/plans/module-inventory.md` 汇总 `schema/`、`scripts/`、`docs/zh/plans/`、`tests/` 的现状与后续动作，后续如有更新请同步维护该文档。
 - ✅ **Pagegen 深入检查**：`docs/zh/plans/pagegen-deep-dive.md` 与 orchestrator 契约说明已对齐，metrics/日志/集成测试缺口完成收敛，并补强导航与 i18n 预检用例。
 - ✅ **多语言内容统计**：`npm run stats:lint` 现按语言聚合分类/标签，CI 已提交 `data/stats.snapshot.json` 工件，可长期观察内容演进；README/协作清单已同步新增命令说明。
+- ✅ **局部重建实验完成**：`scripts/pagegen/sync.mjs`、`scripts/pagegen/collect.mjs` 与 orchestrator 串联 Git 快照与缓存命中信息，默认增量流程已在多语言目录验证通过，并补齐运行指引。
+- ✅ **指标时间序列基线已建立**：`node scripts/telemetry-merge.mjs` 会把最新阶段指标写入 `data/telemetry.json` 并带时间戳，README/路线图同步记录导出步骤，形成可追溯快照。
+- ✅ **AI 产出质量评测蓝本到位**：基准集整理于 `data/gold.jsonl`，`npm run ai:smoke` 在 placeholder 运行时会读取并输出跳过日志，评测指标方案写入规划文档供后续接入。
 - 📌 **下一阶段重点**：
   1. 扩充 AI 构建脚本的遥测事件（`ai.embed.*`/`ai.summary.*`/`ai.qa.*`），在 `scripts/telemetry-merge.mjs` 汇总为 `build.ai`，并补上对应集成测试。
   2. 将 `pagegen` orchestrator 插件化并引入可配置并行调度，提供回退 flag 并更新规划文档的阶段契约。
@@ -171,7 +186,7 @@ npm run stats:lint
 ## 内容生产力守门
 
 - Markdown Lint：`npm run md:lint`（使用 markdownlint-cli2，可提前发现标题序号、行长等问题）。
-- 链接检查：`node scripts/check-links.mjs`（默认校验站内路径是否存在，并额外回归 nav manifest 与 `i18n-map.json` 的链接；如需校验外链，可自行扩展）。
+- 链接检查：`node scripts/check-links.mjs`（默认校验站内路径是否存在，并额外回归 nav manifest 与 `i18n-map.json` 的链接；如需校验外链，可自行扩展）。`npm run test:links` 会基于临时站点夹具验证成功与失败场景，守门脚本行为未漂移。
 - 图片优化：`node scripts/img-opt.mjs`（扫描 `docs/public/images/`，生成 WebP 与缩放版本，后续可据此替换引用）。
 - 内容统计：`npm run stats:lint`（按语言聚合分类/标签，输出 TopN 并写入 `data/stats.snapshot.json`，CI 会上传快照工件以便持续对比）。
 - 本地守门钩子：项目安装依赖后会自动执行 `husky install`，`pre-commit` 钩子会通过 `lint-staged` 对暂存的 Markdown 执行 `npm run md:lint`；若需临时跳过，可使用 `HUSKY=0 git commit ...`。

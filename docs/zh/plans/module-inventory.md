@@ -9,7 +9,8 @@ title: 核心目录盘点（schema / scripts / plans / tests）
 | 文件 | 作用 | 现状 | 后续动作 |
 | --- | --- | --- | --- |
 | `locales.json` + `locales.schema.json` | 语言配置、主题文案、内容目录映射 | ✅ Pagegen 与主题均已接入；`npm run precheck` 守门 | 如新增语言，先更新 JSON，再跑 `npm run gen`；考虑补充文档示例 |
-| `nav.json` + `nav.schema.json` | 导航聚合/固定链接配置 | ✅ Pagegen/nav-core 共用；`npm run config:nav` 校验 | 待补运维说明（参考本文件）、如恢复 Chat 页面可在此增项 |
+| `nav.json` + `nav.schema.json` | 导航聚合/固定链接配置 | ✅ Pagegen/nav-core 共用；`npm run config:nav` 校验 | 运维说明已同步到 README/AGENTS；下一步结合局部重建默认化评估导航 diff 报警策略 |
+| `seo.json` + `seo.schema.json` | 站点级 meta/OG/Twitter/canonical | ✅ `npm run config:seo` 校验 + 主题注入 `<meta>`/canonical | 运维范例已写入 `seo-config-playbook.md`；后续关注多语言社交卡片差异化需求 |
 | `frontmatter.schema.json` | 内容 Frontmatter 校验 | ✅ `npm run precheck` 引用 | 持续对齐内容字段；视情况扩展可选字段 |
 | `tag-alias.json` + `tag-alias.schema.json` | 标签归一化 | ✅ Schema 与校验脚本 (`npm run config:tags`) 已接入 precheck | 继续完善文档示例与失败用例测试 |
 | `feeds.templates.json` + `feeds.templates.schema.json` | RSS/Sitemap 模板 | ✅ 已上线，可按语言映射模板；fallback 保留旧逻辑 | 观察多主题场景下的模板复用情况 |
@@ -37,7 +38,8 @@ title: 核心目录盘点（schema / scripts / plans / tests）
 | `pagegen-refactor-roadmap.md` | 路线图 | ✅ 更新至阶段 4 并同步阶段 1/3/5 完成项 | 按阶段推进后续事项 |
 | `pagegen-validation-checklist.md` | 产物守门清单 | ✅ | 结合新配置/脚本持续更新 |
 | `aggregation-empty-link-plan.md` | 聚合空链修复方案 | ✅ 已落地 | 若导航策略有大改需回顾 |
-| `nav-config-schema.md` | 导航配置 Schema 草案 | ✅ | 待写运维操作指引 & Best Practice |
+| `nav-config-schema.md` | 导航配置 Schema 草案 | ✅ | 持续补充最佳实践 |
+| `seo-config-playbook.md` | SEO/OpenGraph 配置运维手册 | ✅ 新增 | 根据新增字段及时更新示例与回滚策略 |
 | `refactor-optimization.md` | Pagegen 重构提案 | ✅ | 继续在此追踪风险与收益 |
 | `module-inventory.md` | （本文）核心目录盘点 | ✅ 最新 | 定期复盘补充 |
 
@@ -61,4 +63,17 @@ title: 核心目录盘点（schema / scripts / plans / tests）
 3. **模型生命周期守门**：实现 `ai:prepare`、`ai:smoke` 脚本与 CI 钩子，确保真实模型可下载、校验与最小推理通过。
 4. **运维手册同步**：完善 feeds/SEO/AI 配置的操作指南与回滚示例，保持 README、AGENTS 与规划文档一致。
 
-> 更新日志：2024-XX-XX 由自动化代理首次盘点，后续更新请在本文顶部追加日期。
+- 局部重建实验：增量同步与缓存命中率已在多语言目录验证，运行指引同步写入 README/AGENTS。
+- 指标时间序列基线：`node scripts/telemetry-merge.mjs` 输出带时间戳的 `data/telemetry.json`，形成快照累积方案。
+- AI 质量评测蓝本：`data/gold.jsonl` 汇总基准集，`npm run ai:smoke` 已能在 placeholder 模式读取并产生日志，评测指标设计完成评审。
+
+### 下一步
+
+1. **局部重建默认化**：在 CI 与 `codex run gen` 中启用增量模式并生成 Step Summary，提供 `--full-build` 回退流程。
+2. **指标可视化落地**：将 `data/telemetry.json` 时间序列搬运到站点“观测指标”页面，补充图表与阈值告警脚本并约定保留策略。
+3. **AI 守门自动化**：将 `data/gold.jsonl` 接入 `npm run ai:smoke` 打分与阈值判定，失败时自动回退到占位实现并记录结构化日志。
+
+> 更新日志：
+>
+> - 2025-10-19 完成局部重建实验、指标快照基线与 AI 质量评测蓝本；同步刷新下一步计划。
+> - 2024-XX-XX 由自动化代理首次盘点。

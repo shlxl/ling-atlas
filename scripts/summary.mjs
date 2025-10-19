@@ -1,111 +1,184 @@
 #!/usr/bin/env node
 
-/**
- * 摘要生成占位实现：优先使用 frontmatter.excerpt，其次使用正文首段。
- * 如需接入本地 LLM，可在 `generateSummary` 中替换逻辑。
- */
-
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { globby } from 'globby'
-import matter from 'gray-matter'
+import { collectLocaleDocuments } from './ai/content.mjs'
+import {
+  ensureDir,
+  flushAIEvents,
+  logStructured,
+  readJSONIfExists,
+  resolveAdapterSpec
+} from './ai/utils.mjs'
+import { loadSummaryAdapter } from './ai/adapters/index.mjs'
 import { LOCALE_REGISTRY, getPreferredLocale } from './pagegen.locales.mjs'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const ROOT = path.resolve(__dirname, '..')
-const preferredLocale = getPreferredLocale()
-const preferredLocaleConfig =
-  LOCALE_REGISTRY.find(locale => locale.code === preferredLocale) || LOCALE_REGISTRY[0]
-
-if (!preferredLocaleConfig) {
-  console.warn('[summary] no locale configuration available, skipping generation')
-  process.exit(0)
-}
-
-const CONTENT_DIR = preferredLocaleConfig.contentDir
-const BASE_PATH = preferredLocaleConfig.basePath
 const OUTPUT_DIR = path.join(ROOT, 'docs', 'public', 'data')
 const OUTPUT_FILE = path.join(OUTPUT_DIR, 'summaries.json')
 
-function isDraft(frontmatter) {
-  const { status, draft } = frontmatter || {}
-  if (typeof draft === 'boolean') return draft
-  if (typeof status === 'string') return status.toLowerCase() === 'draft'
-  return false
-}
-
-function toPlainText(markdown) {
-  return markdown
-    .replace(/^>\s+/gm, '')
-    .replace(/`{1,3}[^`]*`{1,3}/g, '')
-    .replace(/```[\s\S]*?```/g, '')
-    .replace(/[*_~#>]/g, '')
-    .replace(/\[(.*?)\]\((.*?)\)/g, '$1')
-    .replace(/!\[(.*?)\]\((.*?)\)/g, '$1')
-    .replace(/\r?\n+/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim()
-}
-
-function getFirstParagraph(content) {
-  const normalized = content.trim()
-  if (!normalized) return ''
-  const segments = normalized.split(/\r?\n\r?\n/)
-  const firstBlock = segments.find(block => block.trim().length > 0) || ''
-  return toPlainText(firstBlock)
-}
-
-function generateSummary(frontmatter, content) {
-  if (frontmatter?.excerpt) return String(frontmatter.excerpt)
-  const firstParagraph = getFirstParagraph(content)
-  if (!firstParagraph) return ''
-  const sentences = firstParagraph.split(/(?<=[。！？!?])/).map(s => s.trim()).filter(Boolean)
-  if (sentences.length === 0) return firstParagraph.slice(0, 120)
-  const summary = sentences.slice(0, 2).join(' ')
-  return summary.length > 160 ? summary.slice(0, 157) + '…' : summary
-}
-
-function buildUrl(mdPath) {
-  const relative = path.relative(CONTENT_DIR, mdPath).replace(/\\/g, '/')
-  const dir = relative.replace(/\/index\.md$/, '')
-  return dir ? `${BASE_PATH}${dir}/` : BASE_PATH
-}
-
-async function ensureDir(dir) {
-  await fs.mkdir(dir, { recursive: true })
-}
-
 async function main() {
-  const files = await globby('**/index.md', { cwd: CONTENT_DIR, absolute: true })
-  const items = []
+  const scriptStartedAt = Date.now()
+  const preferredLocale = getPreferredLocale()
+  const preferredLocaleConfig =
+    LOCALE_REGISTRY.find(locale => locale.code === preferredLocale) || LOCALE_REGISTRY[0]
 
-  for (const file of files) {
-    const raw = await fs.readFile(file, 'utf8')
-    const { data, content } = matter(raw)
-    if (isDraft(data)) continue
-    const summary = generateSummary(data, content)
-    if (!summary) continue
-    const title = String(data.title || '').trim()
-    if (!title) continue
-    const url = buildUrl(file)
-    items.push({ url, title, summary })
+  if (!preferredLocaleConfig) {
+    console.warn('[summary] no locale configuration available, skipping generation')
+    return
   }
 
+  const documents = await collectLocaleDocuments(preferredLocaleConfig)
   await ensureDir(OUTPUT_DIR)
-  await fs.writeFile(
-    OUTPUT_FILE,
-    JSON.stringify(
+
+  const spec = resolveAdapterSpec({ envKey: 'AI_SUMMARY_MODEL', cliFlag: 'adapter' })
+  const previous = await readJSONIfExists(OUTPUT_FILE)
+
+  const events = []
+
+  events.push(
+    logStructured(
+      'ai.summary.start',
       {
-        generatedAt: new Date().toISOString(),
-        items: items.sort((a, b) => a.title.localeCompare(b.title, 'zh-CN'))
+        locale: preferredLocaleConfig.code,
+        inputCount: documents.length,
+        requestedAdapter: spec || 'placeholder'
       },
-      null,
-      2
-    ),
-    'utf8'
+      console
+    )
   )
-  console.log(`summaries.json 写入 ${items.length} 条`)
+
+  const adapterInfo = await loadSummaryAdapter(spec, console)
+  events.push(
+    logStructured(
+      'ai.summary.adapter.resolved',
+      {
+        requested: spec || 'placeholder',
+        adapter: adapterInfo.adapterName,
+        model: adapterInfo.model,
+        fallback: adapterInfo.isFallback,
+        reason: adapterInfo.reason || null
+      },
+      console
+    )
+  )
+
+  let adapterModule = adapterInfo.adapter
+  let usedName = adapterInfo.adapterName
+  let usedModel = adapterInfo.model
+  let usedFallback = adapterInfo.isFallback
+  let result
+  let retries = 0
+  const inferenceStartedAt = Date.now()
+
+  try {
+    result = await adapterModule.summarize({ documents, model: usedModel, logger: console })
+  } catch (error) {
+    const message = error?.message || String(error)
+    events.push(
+      logStructured(
+        'ai.summary.adapter.error',
+        { adapter: usedName, model: usedModel, message },
+        console
+      )
+    )
+    console.warn(`[summary] adapter "${usedName}" 执行失败：${message}，已降级至 placeholder`)
+    const fallback = await loadSummaryAdapter('placeholder', console)
+    adapterModule = fallback.adapter
+    usedName = 'placeholder'
+    usedModel = null
+    usedFallback = true
+    retries += 1
+    result = await adapterModule.summarize({ documents, model: null, logger: console })
+  }
+
+  const inferenceDurationMs = Date.now() - inferenceStartedAt
+
+  let finalItems = Array.isArray(result?.items) ? result.items : []
+  let reusedCache = false
+
+  if ((!Array.isArray(finalItems) || finalItems.length === 0) && Array.isArray(previous?.items) && previous.items.length > 0) {
+    finalItems = previous.items
+    reusedCache = true
+    console.warn('[summary] 本次未生成摘要，已沿用缓存结果')
+  }
+
+  const sortedItems = finalItems.sort((a, b) => a.title.localeCompare(b.title, 'zh-CN'))
+
+  const payload = {
+    generatedAt: new Date().toISOString(),
+    items: sortedItems
+  }
+  const serialized = JSON.stringify(payload, null, 2)
+  const writeStartedAt = Date.now()
+  await fs.writeFile(OUTPUT_FILE, serialized, 'utf8')
+  const writeDurationMs = Date.now() - writeStartedAt
+
+  const relativeTarget = path.relative(ROOT, OUTPUT_FILE)
+  const successRate = documents.length === 0 ? 1 : Number((sortedItems.length / documents.length).toFixed(4))
+  const batchCount = 1
+
+  events.push(
+    logStructured(
+      'ai.summary.batch',
+      {
+        index: 0,
+        durationMs: inferenceDurationMs,
+        inputCount: documents.length,
+        outputCount: sortedItems.length,
+        successRate,
+        adapter: usedName,
+        model: usedModel,
+        fallback: usedFallback,
+        retries
+      },
+      console
+    )
+  )
+
+  events.push(
+    logStructured(
+      'ai.summary.write',
+      {
+        target: relativeTarget,
+        bytes: Buffer.byteLength(serialized, 'utf8'),
+        durationMs: writeDurationMs,
+        items: sortedItems.length,
+        cacheReuse: reusedCache
+      },
+      console
+    )
+  )
+
+  const mode = usedFallback
+    ? '占位模式'
+    : `adapter: ${usedName}${usedModel ? ` (${usedModel})` : ''}`
+  events.push(
+    logStructured(
+      'ai.summary.complete',
+      {
+        adapter: usedName,
+        model: usedModel,
+        fallback: usedFallback,
+        cacheReuse: reusedCache,
+        count: sortedItems.length,
+        inputCount: documents.length,
+        outputCount: sortedItems.length,
+        successRate,
+        totalMs: Date.now() - scriptStartedAt,
+        inferenceMs: inferenceDurationMs,
+        writeMs: writeDurationMs,
+        batchCount,
+        target: relativeTarget,
+        retries
+      },
+      console
+    )
+  )
+  await flushAIEvents('summary', events, console)
+  console.log(`[summary] summaries.json 写入 ${sortedItems.length} 条（${mode}${reusedCache ? '，命中缓存' : ''}）`)
 }
 
 main().catch(err => {

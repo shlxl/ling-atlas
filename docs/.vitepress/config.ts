@@ -10,6 +10,12 @@ import type { NavManifest, NavTranslations } from './theme/nav-core.mjs'
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const ROOT_DIR = path.resolve(__dirname, '..', '..')
 const NAV_CONFIG = loadNavConfig()
+const SEO_CONFIG = loadSeoConfig()
+const SEO_SITE_ORIGIN = resolveSeoSiteOrigin(SEO_CONFIG)
+const SEO_THEME_PAYLOAD = {
+  config: sanitizeSeoConfigForClient(SEO_CONFIG),
+  siteOrigin: SEO_SITE_ORIGIN
+}
 import {
   DEFAULT_LOCALE,
   SUPPORTED_LOCALES,
@@ -19,6 +25,12 @@ import {
   manifestFileName,
   normalizedRoutePrefix
 } from './theme/locales.mjs'
+import {
+  resolveSeoHead,
+  resolveRoutePathFromRelative,
+  normalizeRoutePath as normalizeSeoRoutePath,
+  detectLocaleFromPath as detectSeoLocaleFromPath
+} from './seo-head.mjs'
 
 function loadCspTemplate() {
   try {
@@ -248,6 +260,60 @@ function loadNavConfig() {
   }
 }
 
+function loadSeoConfig() {
+  try {
+    const configPath = path.join(ROOT_DIR, 'schema', 'seo.json')
+    return JSON.parse(fs.readFileSync(configPath, 'utf8'))
+  } catch (error) {
+    console.warn('[config] failed to load schema/seo.json:', error.message)
+    return {}
+  }
+}
+
+function resolveSeoSiteOrigin(seoConfig: any) {
+  const envOrigin = process.env.SITE_ORIGIN
+  if (typeof envOrigin === 'string' && envOrigin.trim()) {
+    return envOrigin.trim().replace(/\/+$/g, '')
+  }
+  const configOrigin = seoConfig?.defaults?.canonical?.base
+  if (typeof configOrigin === 'string' && configOrigin.trim()) {
+    return configOrigin.trim().replace(/\/+$/g, '')
+  }
+  return 'https://example.com'
+}
+
+function cloneSeoEntry(entry: any) {
+  if (!entry || typeof entry !== 'object') return {}
+  const result: Record<string, any> = {}
+  if (entry.meta && typeof entry.meta === 'object') {
+    result.meta = { ...entry.meta }
+  }
+  if (entry.openGraph && typeof entry.openGraph === 'object') {
+    result.openGraph = { ...entry.openGraph }
+  }
+  if (entry.twitter && typeof entry.twitter === 'object') {
+    result.twitter = { ...entry.twitter }
+  }
+  if (entry.canonical && typeof entry.canonical === 'object' && typeof entry.canonical.base === 'string') {
+    result.canonical = { base: entry.canonical.base }
+  }
+  return result
+}
+
+function sanitizeSeoConfigForClient(seoConfig: any) {
+  const defaults = cloneSeoEntry(seoConfig?.defaults)
+  const localesSource = seoConfig?.locales && typeof seoConfig.locales === 'object' ? seoConfig.locales : {}
+  const locales = Object.fromEntries(
+    Object.entries(localesSource).map(([locale, entry]) => [locale, cloneSeoEntry(entry)]).filter(([, entry]) =>
+      entry && typeof entry === 'object' && Object.keys(entry).length > 0
+    )
+  )
+  return {
+    defaults,
+    locales
+  }
+}
+
 function loadLocaleMeta(localeId: LocaleCode) {
   const candidates = [
     `docs/${localeId}/_generated/meta.json`,
@@ -272,12 +338,26 @@ export default defineConfig({
   base: baseFromEnv,
   rewrites: {},
   head,
+  transformHead({ pageData }) {
+    const relativePath = pageData?.relativePath || 'index.md'
+    const routePath = resolveRoutePathFromRelative(relativePath)
+    const normalizedPath = normalizeSeoRoutePath(routePath)
+    const locale = detectSeoLocaleFromPath(normalizedPath) as LocaleCode
+    const { head: seoHead } = resolveSeoHead({
+      seoConfig: SEO_CONFIG,
+      locale,
+      normalizedPath,
+      siteOrigin: SEO_SITE_ORIGIN
+    })
+    return seoHead as HeadConfig[]
+  },
   themeConfig: {
     socialLinks: [{ icon: 'github', link: 'https://github.com/shlxl/ling-atlas' }],
     // Disable the built-in locale dropdown to avoid linking to untranslated
     // aggregate pages (404). The inline LocaleToggleButton handles switching
     // with fallbacks to each locale's homepage instead.
-    localeLinks: false
+    localeLinks: false,
+    lingAtlasSeo: SEO_THEME_PAYLOAD
   },
   locales: {
     root: {

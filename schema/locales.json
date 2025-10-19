@@ -15,6 +15,7 @@
         "rssDesc": "最新更新"
       },
       "collectionsTemplate": "zh-default",
+      "feedsTemplate": "zh-default",
       "rssFile": "rss.xml",
       "sitemapFile": "sitemap.xml",
       "contentFields": {
@@ -48,6 +49,7 @@
         "rssDesc": "Latest updates"
       },
       "collectionsTemplate": "en-default",
+      "feedsTemplate": "en-default",
       "rssFile": "rss-en.xml",
       "sitemapFile": "sitemap-en.xml",
       "contentFields": {

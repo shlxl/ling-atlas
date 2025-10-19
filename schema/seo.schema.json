@@ -1,0 +1,47 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Ling Atlas SEO Configuration",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["defaults"],
+  "properties": {
+    "$schema": { "type": "string" },
+    "defaults": { "$ref": "#/definitions/seoEntry" },
+    "locales": {
+      "type": "object",
+      "propertyNames": { "pattern": "^[a-z0-9-]+$" },
+      "additionalProperties": { "$ref": "#/definitions/seoEntry" },
+      "default": {}
+    }
+  },
+  "definitions": {
+    "stringMap": {
+      "type": "object",
+      "additionalProperties": {
+        "anyOf": [
+          { "type": "string" },
+          {
+            "type": "array",
+            "items": { "type": "string" }
+          }
+        ]
+      }
+    },
+    "seoEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "meta": { "$ref": "#/definitions/stringMap" },
+        "openGraph": { "$ref": "#/definitions/stringMap" },
+        "twitter": { "$ref": "#/definitions/stringMap" },
+        "canonical": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "base": { "type": "string", "minLength": 1 }
+          }
+        }
+      }
+    }
+  }
+}

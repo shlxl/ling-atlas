@@ -17,7 +17,7 @@ title: Pagegen 深入检查清单
 | `writer.mjs` | 批量写入、内容哈希跳过、错误收集 | `tests/pagegen/writer.test.mjs` | ✅ 结果中已包含 `skippedByReason`，错误对象带 stack；仍可考虑暴露更多指标 | 1) 评估是否需要将 hash 命中率暴露到 CLI 输出 |
 | `pagegen.mjs` | orchestrator、metrics 汇总、命令行参数 | - `tests/pagegen/*` 间接覆盖<br>- Metrics JSON（手工检查） | ✅ `collect`/`sync`/`write` summary 已写入 metrics；端到端测试覆盖 `--metrics-only`、写入失败与 warn/error 日志上下文 | 持续观察 metrics stdout/metrics-only 的使用反馈，必要时再扩展导出选项 |
 | `pagegen.locales.mjs` | 读取语言、导航配置并校验 | 现有脚本校验 + `npm run precheck` + `tests/pagegen/locales-config.test.mjs` | ✅ 已覆盖缺字段/Schema 失败场景 | 后续可补缓存命中路径的快照测试 |
-| `scripts/validate-*.mjs` | 前置校验 | `npm run precheck` | - 没有单独测试 | 暂视为低优先；可在 CI 中新增“校验脚本必须成功” step |
+| `scripts/validate-*.mjs` | 前置校验 | `npm run precheck` | ✅ `tests/pagegen/check-links.integration.test.mjs` 覆盖 `check-links.mjs` 的缺链场景；其余校验脚本仍依赖 CLI 提示 | 后续视需求补充 frontmatter/tag alias 失败用例 |
 <!-- markdownlint-enable MD013 -->
 
 ## 模块细节
@@ -142,3 +142,4 @@ Pagegen 主脚本以串行 orchestrator 形式驱动各阶段，并在 `data/pag
 4. **协作手册同步**：更新 README、AGENTS、`docs/zh/plans/` 的操作指南，补充 feeds/SEO/AI 配置的回滚范例与常见故障排查。
 
 > 完成以上步骤后，请同步更新 `pagegen-refactor-roadmap.md`、`module-inventory.md` 与 AGENTS.md 的进度栏。
+> 更新：2025-10-19 汇总局部重建实验、指标时间序列基线与 AI 质量评测蓝本，并刷新下一阶段任务。

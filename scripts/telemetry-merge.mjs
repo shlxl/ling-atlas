@@ -1,11 +1,6 @@
 import fs from 'node:fs/promises'
 import path from 'node:path'
 
-const ROOT = process.cwd()
-const TMP_PATH = path.join(ROOT, 'data', 'telemetry.tmp.json')
-const DATA_PATH = path.join(ROOT, 'data', 'telemetry.json')
-const DIST_PATH = path.join(ROOT, 'docs/.vitepress/dist/telemetry.json')
-const PUBLIC_PATH = path.join(ROOT, 'docs/public/telemetry.json')
 const TOP_LIMIT = 100
 
 function defaultState() {
@@ -13,12 +8,22 @@ function defaultState() {
     updatedAt: new Date(0).toISOString(),
     pv: { total: 0, pathsTop: [] },
     search: { queriesTop: [], clicksTop: [] },
-    build: { pagegen: null },
+    build: { pagegen: null, ai: { embed: null, summary: null, qa: null } },
     _internal: {
       paths: {},
       queries: {}, // hash -> { count, lenSum }
       clicks: {}   // key -> { hash, url, count, rankSum }
     }
+  }
+}
+
+function createPaths(root) {
+  return {
+    root,
+    tmpPath: path.join(root, 'data', 'telemetry.tmp.json'),
+    dataPath: path.join(root, 'data', 'telemetry.json'),
+    distPath: path.join(root, 'docs/.vitepress/dist/telemetry.json'),
+    publicPath: path.join(root, 'docs/public/telemetry.json')
   }
 }
 
@@ -47,28 +52,28 @@ function sanitizeForPublic(state) {
   }
 }
 
-async function ensureDataFileExists() {
+async function ensureDataFileExists(paths) {
   try {
-    await fs.access(DATA_PATH)
+    await fs.access(paths.dataPath)
   } catch {
-    await fs.mkdir(path.dirname(DATA_PATH), { recursive: true })
-    await fs.writeFile(DATA_PATH, JSON.stringify(defaultState(), null, 2), 'utf8')
+    await fs.mkdir(path.dirname(paths.dataPath), { recursive: true })
+    await fs.writeFile(paths.dataPath, JSON.stringify(defaultState(), null, 2), 'utf8')
   }
 }
 
-async function writeOutputs(data) {
+async function writeOutputs(paths, data) {
   const payload = JSON.stringify(data, null, 2)
-  await fs.mkdir(path.dirname(PUBLIC_PATH), { recursive: true })
-  await fs.writeFile(PUBLIC_PATH, payload, 'utf8')
-  await fs.mkdir(path.dirname(DIST_PATH), { recursive: true })
-  await fs.writeFile(DIST_PATH, payload, 'utf8')
+  await fs.mkdir(path.dirname(paths.publicPath), { recursive: true })
+  await fs.writeFile(paths.publicPath, payload, 'utf8')
+  await fs.mkdir(path.dirname(paths.distPath), { recursive: true })
+  await fs.writeFile(paths.distPath, payload, 'utf8')
 }
 
 function updateDerivedSections(state) {
   const pathsEntries = Object.entries(state._internal.paths)
     .sort((a, b) => b[1] - a[1])
     .slice(0, TOP_LIMIT)
-    .map(([path, count]) => ({ path, count }))
+    .map(([pathKey, count]) => ({ path: pathKey, count }))
   const total = Object.values(state._internal.paths).reduce((sum, value) => sum + value, 0)
   state.pv = { total, pathsTop: pathsEntries }
 
@@ -94,63 +99,207 @@ function updateDerivedSections(state) {
   state.search.clicksTop = clicksTop
 }
 
-async function main(){
-  await ensureDataFileExists()
-  const state = await loadJSON(DATA_PATH, defaultState())
-  if (!state.build || typeof state.build !== 'object') {
-    state.build = { pagegen: null }
-  } else if (!Object.prototype.hasOwnProperty.call(state.build, 'pagegen')) {
-    state.build.pagegen = state.build.pagegen ?? null
+function resolveAIEventsDir(root) {
+  const override = process.env.AI_TELEMETRY_PATH
+  if (override) {
+    return path.isAbsolute(override) ? override : path.resolve(root, override)
   }
-  let tmp
-  try {
-    tmp = await loadJSON(TMP_PATH)
-  } catch {
-    // no tmp file, just ensure dist output exists
-    updateDerivedSections(state)
-    state.build.pagegen = await loadLatestPagegenSummary().catch(() => state.build.pagegen || null)
-    await writeOutputs(sanitizeForPublic(state))
-    return
-  }
-
-  mergeMaps(state._internal.paths, tmp?.pv?.paths || {}, (target, key, value) => {
-    target[key] = (target[key] || 0) + Number(value || 0)
-  })
-
-  mergeMaps(state._internal.queries, tmp?.search?.queries || {}, (target, hash, info) => {
-    const entry = target[hash] || { count: 0, lenSum: 0 }
-    entry.count += Number(info.count || 0)
-    entry.lenSum += Number(info.lenSum || 0)
-    target[hash] = entry
-  })
-
-  mergeMaps(state._internal.clicks, tmp?.search?.clicks || {}, (target, key, info) => {
-    const entry = target[key] || { hash: info.hash, url: info.url, count: 0, rankSum: 0 }
-    entry.count += Number(info.count || 0)
-    entry.rankSum += Number(info.rankSum || 0)
-    entry.hash = info.hash
-    entry.url = info.url
-    target[key] = entry
-  })
-
-  state.updatedAt = new Date().toISOString()
-  updateDerivedSections(state)
-  state.build.pagegen = await loadLatestPagegenSummary().catch(() => state.build.pagegen || null)
-
-  await fs.writeFile(DATA_PATH, JSON.stringify(state, null, 2), 'utf8')
-  await writeOutputs(sanitizeForPublic(state))
-
-  await fs.unlink(TMP_PATH).catch(() => {})
-  console.log('[telemetry] published telemetry snapshot')
+  return path.join(root, 'data', 'ai-events')
 }
 
-main().catch(err => {
-  console.error('[telemetry] merge failed:', err)
-  process.exit(1)
-})
+function detectDomainFromEvents(events = []) {
+  for (const entry of events) {
+    const name = typeof entry?.event === 'string' ? entry.event : ''
+    const segments = name.split('.')
+    if (segments.length >= 3 && segments[0] === 'ai') {
+      return segments[1]
+    }
+  }
+  return null
+}
 
-async function loadLatestPagegenSummary() {
-  const metricsPath = path.join(ROOT, 'data', 'pagegen-metrics.json')
+async function collectAIEvents({ root, logger }) {
+  const dir = resolveAIEventsDir(root)
+  let entries
+  try {
+    entries = await fs.readdir(dir, { withFileTypes: true })
+  } catch (error) {
+    if (error && (error.code === 'ENOENT' || error.code === 'ENOTDIR')) {
+      return new Map()
+    }
+    throw error
+  }
+
+  const grouped = new Map()
+  const processedFiles = []
+
+  for (const entry of entries) {
+    if (!entry.isFile() || !entry.name.endsWith('.json')) continue
+    const filePath = path.join(dir, entry.name)
+    let parsed
+    try {
+      const raw = await fs.readFile(filePath, 'utf8')
+      parsed = JSON.parse(raw)
+    } catch (error) {
+      logger?.warn?.(`[telemetry] skip invalid ai event file ${entry.name}: ${error?.message || error}`)
+      processedFiles.push(filePath)
+      continue
+    }
+
+    const events = Array.isArray(parsed?.events) ? parsed.events.filter(evt => evt && typeof evt === 'object') : []
+    if (!events.length) {
+      processedFiles.push(filePath)
+      continue
+    }
+
+    const domain = parsed?.domain || detectDomainFromEvents(events)
+    if (!domain) {
+      logger?.warn?.(`[telemetry] skip ai event file without domain: ${entry.name}`)
+      processedFiles.push(filePath)
+      continue
+    }
+
+    const list = grouped.get(domain) || []
+    list.push(...events)
+    grouped.set(domain, list)
+    processedFiles.push(filePath)
+  }
+
+  await Promise.all(
+    processedFiles.map(file => fs.unlink(file).catch(() => {}))
+  )
+
+  return grouped
+}
+
+function computeSuccessRate(outputCount, inputCount) {
+  if (!Number.isFinite(inputCount) || inputCount <= 0) return 1
+  if (!Number.isFinite(outputCount) || outputCount < 0) return 0
+  const rate = outputCount / inputCount
+  return Number.isFinite(rate) ? Number(rate.toFixed(4)) : 0
+}
+
+function normalizeAIState(existing = {}) {
+  return {
+    embed: existing?.embed ?? null,
+    summary: existing?.summary ?? null,
+    qa: existing?.qa ?? null
+  }
+}
+
+function summarizeAIDomain(domain, events = []) {
+  if (!events.length) return null
+  const sorted = events
+    .filter(event => event && typeof event === 'object')
+    .sort((a, b) => {
+      const aTime = Number(new Date(a.timestamp || 0))
+      const bTime = Number(new Date(b.timestamp || 0))
+      return aTime - bTime
+    })
+
+  const prefix = `ai.${domain}.`
+  const start = sorted.find(event => event.event === `${prefix}start`)
+  const complete = [...sorted].reverse().find(event => event.event === `${prefix}complete` || event.event === `${prefix}completed`)
+  const batches = sorted.filter(event => event.event === `${prefix}batch`)
+  const write = [...sorted].reverse().find(event => event.event === `${prefix}write`)
+  const adapter = sorted.find(event => event.event === `${prefix}adapter.resolved`)
+  const errors = sorted.filter(event => event.event === `${prefix}adapter.error`)
+
+  const batchCount = Number(complete?.batchCount ?? batches.length ?? 0)
+  const inputCount = Number(
+    complete?.inputCount ??
+      batches.at(-1)?.inputCount ??
+      start?.inputCount ?? 0
+  )
+  const outputCount = Number(
+    complete?.outputCount ??
+      batches.at(-1)?.outputCount ??
+      complete?.count ??
+      0
+  )
+  const retries = Number(complete?.retries ?? batches.reduce((sum, entry) => sum + Number(entry.retries || 0), 0) ?? 0)
+
+  const batchTotalMsRaw = batches.reduce((sum, entry) => sum + Number(entry.durationMs || 0), 0)
+  const inferenceTotalMs = batchTotalMsRaw || Number(complete?.inferenceMs || 0)
+  const batchTotalMs = inferenceTotalMs
+  const batchAvgMs = batchCount > 0 ? Number((batchTotalMs / batchCount).toFixed(2)) : 0
+
+  const successRate = Number(
+    complete?.successRate ?? computeSuccessRate(outputCount, inputCount)
+  )
+
+  const timestamp = complete?.timestamp || write?.timestamp || start?.timestamp || new Date().toISOString()
+  const totalMs = Number(
+    complete?.totalMs ??
+      (start && complete
+        ? Number(new Date(complete.timestamp)) - Number(new Date(start.timestamp))
+        : 0)
+  )
+
+  const writeSummary = write || complete
+    ? {
+        target: (write?.target ?? complete?.target) || null,
+        bytes: Number((write?.bytes ?? complete?.bytes) || 0),
+        durationMs: Number((write?.durationMs ?? complete?.writeMs) || 0),
+        items: Number((write?.items ?? complete?.outputCount ?? complete?.count) || 0),
+        cacheReuse: Boolean(write?.cacheReuse ?? complete?.cacheReuse ?? false)
+      }
+    : null
+
+  const adapterSummary = {
+    name: complete?.adapter ?? adapter?.adapter ?? null,
+    model: complete?.model ?? adapter?.model ?? null,
+    fallback: Boolean(
+      complete?.fallback ?? adapter?.fallback ?? false
+    )
+  }
+
+  const cacheReuse = Boolean(
+    complete?.cacheReuse ??
+      write?.cacheReuse ??
+      false
+  )
+
+  return {
+    timestamp,
+    totalMs,
+    adapter: adapterSummary,
+    inference: {
+      batches: batchCount,
+      totalMs: Number(batchTotalMs || 0),
+      avgMs: batchAvgMs,
+      inputCount,
+      outputCount,
+      successRate,
+      retries,
+      errors: errors.slice(0, 5).map(error => ({
+        adapter: error.adapter ?? adapterSummary.name,
+        model: error.model ?? adapterSummary.model,
+        message: error.message || null
+      }))
+    },
+    write: writeSummary,
+    cache: { reused: cacheReuse }
+  }
+}
+
+function mergeAIState(existing, grouped, logger) {
+  const normalized = normalizeAIState(existing)
+  for (const [domain, events] of grouped.entries()) {
+    if (!['embed', 'summary', 'qa'].includes(domain)) {
+      logger?.warn?.(`[telemetry] skip ai domain ${domain}`)
+      continue
+    }
+    const summary = summarizeAIDomain(domain, events)
+    if (summary) {
+      normalized[domain] = summary
+    }
+  }
+  return normalized
+}
+
+async function loadLatestPagegenSummary(root) {
+  const metricsPath = path.join(root, 'data', 'pagegen-metrics.json')
   let raw
   try {
     raw = await fs.readFile(metricsPath, 'utf8')
@@ -194,4 +343,77 @@ async function loadLatestPagegenSummary() {
       skippedByReason: writeSummary.skippedByReason || {}
     }
   }
+}
+
+export async function mergeTelemetry({ root = process.cwd(), logger = console } = {}) {
+  const paths = createPaths(root)
+  await ensureDataFileExists(paths)
+  const state = await loadJSON(paths.dataPath, defaultState())
+
+  if (!state.build || typeof state.build !== 'object') {
+    state.build = { pagegen: null, ai: { embed: null, summary: null, qa: null } }
+  } else {
+    if (!Object.prototype.hasOwnProperty.call(state.build, 'pagegen')) {
+      state.build.pagegen = state.build.pagegen ?? null
+    }
+    if (!Object.prototype.hasOwnProperty.call(state.build, 'ai')) {
+      state.build.ai = { embed: null, summary: null, qa: null }
+    } else {
+      state.build.ai = normalizeAIState(state.build.ai)
+    }
+  }
+
+  const aiGrouped = await collectAIEvents({ root, logger })
+  if (aiGrouped.size > 0) {
+    state.build.ai = mergeAIState(state.build.ai, aiGrouped, logger)
+  }
+
+  let tmp
+  try {
+    tmp = await loadJSON(paths.tmpPath)
+  } catch {
+    tmp = null
+  }
+
+  if (tmp) {
+    mergeMaps(state._internal.paths, tmp?.pv?.paths || {}, (target, key, value) => {
+      target[key] = (target[key] || 0) + Number(value || 0)
+    })
+
+    mergeMaps(state._internal.queries, tmp?.search?.queries || {}, (target, hash, info) => {
+      const entry = target[hash] || { count: 0, lenSum: 0 }
+      entry.count += Number(info.count || 0)
+      entry.lenSum += Number(info.lenSum || 0)
+      target[hash] = entry
+    })
+
+    mergeMaps(state._internal.clicks, tmp?.search?.clicks || {}, (target, key, info) => {
+      const entry = target[key] || { hash: info.hash, url: info.url, count: 0, rankSum: 0 }
+      entry.count += Number(info.count || 0)
+      entry.rankSum += Number(info.rankSum || 0)
+      entry.hash = info.hash
+      entry.url = info.url
+      target[key] = entry
+    })
+
+    state.updatedAt = new Date().toISOString()
+  }
+
+  updateDerivedSections(state)
+  state.build.pagegen = await loadLatestPagegenSummary(root).catch(() => state.build.pagegen || null)
+
+  await fs.writeFile(paths.dataPath, JSON.stringify(state, null, 2), 'utf8')
+  await writeOutputs(paths, sanitizeForPublic(state))
+
+  if (tmp) {
+    await fs.unlink(paths.tmpPath).catch(() => {})
+    logger?.log?.('[telemetry] published telemetry snapshot')
+  }
+}
+
+if (import.meta.main) {
+  mergeTelemetry().catch(err => {
+    console.error('[telemetry] merge failed:', err)
+    process.exit(1)
+  })
 }

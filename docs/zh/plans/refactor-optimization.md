@@ -46,3 +46,15 @@
 - 脚本模块化后，可针对单一功能（如 RSS）独立迭代，不必担心牵一发而动全身。
 - 配置外置降低跨职能协作门槛，使内容团队能够自行新增或调整语言策略。
 - 有了缓存与差异化同步后，重复运行 `pagegen` 将趋于增量化，为未来引入实时 watch 或增量构建打下基础。
+
+## 2025-10 状态摘要
+
+- 局部重建实验：`scripts/pagegen/sync.mjs` 与 `collect.mjs` 联动 Git 快照与缓存命中率，默认增量流程已在多语言目录验证，并在 README/AGENTS 补齐运行指引。
+- 指标时间序列基线：`node scripts/telemetry-merge.mjs` 将阶段指标追加到带时间戳的 `data/telemetry.json`，形成快照累积方案。
+- AI 质量评测蓝本：`data/gold.jsonl` 汇总基准集，`npm run ai:smoke` 能在 placeholder 模式读取并输出跳过日志，评测指标设计完成评审。
+
+## 下一阶段关注点
+
+1. **局部重建默认化**：在 CI 与 `codex run gen` 中启用增量模式，并输出结构化 Step Summary + `--full-build` 回退策略。
+2. **指标可视化落地**：将 `data/telemetry.json` 时间序列搬运到站点“观测指标”页面，补充可视化组件与阈值告警脚本。
+3. **AI 守门自动化**：将 `data/gold.jsonl` 接入 `npm run ai:smoke` 打分与阈值判定，失败时自动回退到占位实现并记录结构化日志。
