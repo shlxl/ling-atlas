@@ -107,6 +107,11 @@ async function main() {
   const writeStartedAt = Date.now()
   await fs.writeFile(OUTPUT_FILE, serialized, 'utf8')
   const writeDurationMs = Date.now() - writeStartedAt
+  const relativeTarget = path.relative(ROOT, OUTPUT_FILE)
+  const batchCount = 1
+  const successRate = items.length === 0
+    ? 1
+    : Number((finalItems.length / items.length).toFixed(4))
 
   events.push(
     logStructured(
@@ -116,7 +121,7 @@ async function main() {
         durationMs: inferenceDurationMs,
         inputCount: items.length,
         outputCount: finalItems.length,
-        successRate: items.length === 0 ? 1 : Number((finalItems.length / items.length).toFixed(4)),
+        successRate,
         adapter: usedName,
         model: usedModel,
         fallback: usedFallback,
@@ -130,7 +135,7 @@ async function main() {
     logStructured(
       'ai.embed.write',
       {
-        target: path.relative(ROOT, OUTPUT_FILE),
+        target: relativeTarget,
         bytes: Buffer.byteLength(serialized, 'utf8'),
         durationMs: writeDurationMs,
         items: finalItems.length,
@@ -154,9 +159,12 @@ async function main() {
         count: finalItems.length,
         inputCount: items.length,
         outputCount: finalItems.length,
-        successRate: items.length === 0 ? 1 : Number((finalItems.length / items.length).toFixed(4)),
+        successRate,
         totalMs: Date.now() - scriptStartedAt,
-        batchCount: 1,
+        inferenceMs: inferenceDurationMs,
+        writeMs: writeDurationMs,
+        batchCount,
+        target: relativeTarget,
         retries
       },
       console

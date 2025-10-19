@@ -117,7 +117,9 @@ async function main() {
   await fs.writeFile(OUTPUT_FILE, serialized, 'utf8')
   const writeDurationMs = Date.now() - writeStartedAt
 
+  const relativeTarget = path.relative(ROOT, OUTPUT_FILE)
   const successRate = documents.length === 0 ? 1 : Number((sortedItems.length / documents.length).toFixed(4))
+  const batchCount = 1
 
   events.push(
     logStructured(
@@ -141,7 +143,7 @@ async function main() {
     logStructured(
       'ai.qa.write',
       {
-        target: path.relative(ROOT, OUTPUT_FILE),
+        target: relativeTarget,
         bytes: Buffer.byteLength(serialized, 'utf8'),
         durationMs: writeDurationMs,
         items: sortedItems.length,
@@ -167,7 +169,10 @@ async function main() {
         outputCount: sortedItems.length,
         successRate,
         totalMs: Date.now() - scriptStartedAt,
-        batchCount: 1,
+        inferenceMs: inferenceDurationMs,
+        writeMs: writeDurationMs,
+        batchCount,
+        target: relativeTarget,
         retries
       },
       console

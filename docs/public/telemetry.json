@@ -9,6 +9,11 @@
     "clicksTop": []
   },
   "build": {
-    "pagegen": null
+    "pagegen": null,
+    "ai": {
+      "embed": null,
+      "summary": null,
+      "qa": null
+    }
   }
 }

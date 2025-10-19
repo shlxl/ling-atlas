@@ -219,7 +219,9 @@ function summarizeAIDomain(domain, events = []) {
   )
   const retries = Number(complete?.retries ?? batches.reduce((sum, entry) => sum + Number(entry.retries || 0), 0) ?? 0)
 
-  const batchTotalMs = batches.reduce((sum, entry) => sum + Number(entry.durationMs || 0), 0)
+  const batchTotalMsRaw = batches.reduce((sum, entry) => sum + Number(entry.durationMs || 0), 0)
+  const inferenceTotalMs = batchTotalMsRaw || Number(complete?.inferenceMs || 0)
+  const batchTotalMs = inferenceTotalMs
   const batchAvgMs = batchCount > 0 ? Number((batchTotalMs / batchCount).toFixed(2)) : 0
 
   const successRate = Number(
@@ -234,13 +236,13 @@ function summarizeAIDomain(domain, events = []) {
         : 0)
   )
 
-  const writeSummary = write
+  const writeSummary = write || complete
     ? {
-        target: write.target,
-        bytes: Number(write.bytes || 0),
-        durationMs: Number(write.durationMs || 0),
-        items: Number(write.items || 0),
-        cacheReuse: Boolean(write.cacheReuse)
+        target: (write?.target ?? complete?.target) || null,
+        bytes: Number((write?.bytes ?? complete?.bytes) || 0),
+        durationMs: Number((write?.durationMs ?? complete?.writeMs) || 0),
+        items: Number((write?.items ?? complete?.outputCount ?? complete?.count) || 0),
+        cacheReuse: Boolean(write?.cacheReuse ?? complete?.cacheReuse ?? false)
       }
     : null
 

@@ -68,6 +68,9 @@ test('ai events flushed and merged into telemetry snapshot', async t => {
         outputCount: 2,
         successRate: 1,
         totalMs: 60,
+        inferenceMs: 42,
+        writeMs: 6,
+        target: 'docs/public/data/embeddings.json',
         batchCount: 1,
         retries: 0
       }
@@ -114,6 +117,9 @@ test('ai events flushed and merged into telemetry snapshot', async t => {
         outputCount: 1,
         successRate: 1,
         totalMs: 40,
+        inferenceMs: 24,
+        writeMs: 4,
+        target: 'docs/public/data/summaries.json',
         batchCount: 1,
         retries: 0
       }
@@ -130,12 +136,16 @@ test('ai events flushed and merged into telemetry snapshot', async t => {
   assert.ok(telemetry.build?.ai?.embed, 'embed summary should exist')
   assert.equal(telemetry.build.ai.embed.inference.outputCount, 2)
   assert.equal(telemetry.build.ai.embed.inference.successRate, 1)
+  assert.equal(telemetry.build.ai.embed.inference.batches, 1)
+  assert.equal(telemetry.build.ai.embed.inference.totalMs, 42)
   assert.equal(telemetry.build.ai.embed.write.target, 'docs/public/data/embeddings.json')
+  assert.equal(telemetry.build.ai.embed.write.durationMs, 6)
   assert.equal(telemetry.build.ai.embed.adapter.name, 'placeholder')
   assert.equal(telemetry.build.ai.embed.cache.reused, false)
 
   assert.ok(telemetry.build.ai.summary, 'summary summary should exist')
   assert.equal(telemetry.build.ai.summary.inference.outputCount, 1)
+  assert.equal(telemetry.build.ai.summary.inference.totalMs, 24)
   assert.equal(telemetry.build.ai.summary.write.items, 1)
 
   assert.strictEqual(telemetry.build.ai.qa, null, 'qa summary should remain null when no events provided')
