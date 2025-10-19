@@ -9,10 +9,10 @@ title: 核心目录盘点（schema / scripts / plans / tests）
 | 文件 | 作用 | 现状 | 后续动作 |
 | --- | --- | --- | --- |
 | `locales.json` + `locales.schema.json` | 语言配置、主题文案、内容目录映射 | ✅ Pagegen 与主题均已接入；`npm run precheck` 守门 | 如新增语言，先更新 JSON，再跑 `npm run gen`；考虑补充文档示例 |
-| `nav.json` + `nav.schema.json` | 导航聚合/固定链接配置 | ✅ Pagegen/nav-core 共用；`npm run config:nav` 校验 | 待补运维说明（参考本文件）、如恢复 Chat 页面可在此增项 |
-| `seo.json` + `seo.schema.json` | 站点级 meta/OG/Twitter/canonical | ✅ `npm run config:seo` 校验 + 主题注入 `<meta>`/canonical | 结合 `seo-config-playbook.md` 扩展字段示例 |
+| `nav.json` + `nav.schema.json` | 导航聚合/固定链接配置 | ✅ Pagegen/nav-core 共用；`npm run config:nav` 校验 | 运维说明已同步到 README/AGENTS；下一步结合局部重建默认化评估导航 diff 报警策略 |
+| `seo.json` + `seo.schema.json` | 站点级 meta/OG/Twitter/canonical | ✅ `npm run config:seo` 校验 + 主题注入 `<meta>`/canonical | 运维范例已写入 `seo-config-playbook.md`；后续关注多语言社交卡片差异化需求 |
 | `frontmatter.schema.json` | 内容 Frontmatter 校验 | ✅ `npm run precheck` 引用 | 持续对齐内容字段；视情况扩展可选字段 |
-| `tag-alias.json` + `tag-alias.schema.json` | 标签归一化 | ✅ Schema 与校验脚本 (`npm run config:tags`) 已接入 precheck | 继续完善文档示例与失败用例测试 |
+| `tag-alias.json` + `tag-alias.schema.json` | 标签归一化 | ✅ Schema 与校验脚本 (`npm run config:tags`) 已接入 precheck | 失败用例测试补齐；下一步将评测阈值与 AI 质量守门联动 |
 
 > Schema 行为均已整理到运维手册，请在修改前阅读对应 Playbook。
 
@@ -56,8 +56,19 @@ title: 核心目录盘点（schema / scripts / plans / tests）
 
 ## 5. 后续行动建议
 
-1. **变更感知重建**：在 `scripts/pagegen/*.mjs` 中探索基于 Git diff/快照的局部重建策略，并提供显式回退 flag，减少无关目录的重跑开销。
-2. **指标时间序列**：扩展 telemetry/metrics 管线，将各阶段摘要写入时间序列快照，结合 README/站点“观测指标”页提供趋势与阈值告警指引。
-3. **AI 产出评测守门**：为 `scripts/ai/*` 引入基线数据与离线评测脚本，确保真实模型接入时可通过守门判定是否回退到占位实现。
+### 近期完成（2025-10）
 
-> 更新日志：2024-XX-XX 由自动化代理首次盘点，后续更新请在本文顶部追加日期。
+- 局部重建实验：增量同步与缓存命中率已在多语言目录验证，运行指引同步写入 README/AGENTS。
+- 指标时间序列基线：`node scripts/telemetry-merge.mjs` 输出带时间戳的 `data/telemetry.json`，形成快照累积方案。
+- AI 质量评测蓝本：`data/gold.jsonl` 汇总基准集，`npm run ai:smoke` 已能在 placeholder 模式读取并产生日志，评测指标设计完成评审。
+
+### 下一步
+
+1. **局部重建默认化**：在 CI 与 `codex run gen` 中启用增量模式并生成 Step Summary，提供 `--full-build` 回退流程。
+2. **指标可视化落地**：将 `data/telemetry.json` 时间序列搬运到站点“观测指标”页面，补充图表与阈值告警脚本并约定保留策略。
+3. **AI 守门自动化**：将 `data/gold.jsonl` 接入 `npm run ai:smoke` 打分与阈值判定，失败时自动回退到占位实现并记录结构化日志。
+
+> 更新日志：
+>
+> - 2025-10-19 完成局部重建实验、指标快照基线与 AI 质量评测蓝本；同步刷新下一步计划。
+> - 2024-XX-XX 由自动化代理首次盘点。

@@ -135,9 +135,18 @@ Pagegen 主脚本以串行 orchestrator 形式驱动各阶段，并在 `data/pag
 
 ## 下一步执行建议
 
-1. **变更感知/局部重建**：为 `pagegen` 引入 Git diff/快照感知策略，仅重建受影响的语言与聚合，并保留 `--full-build` 回退选项。
-2. **指标时间序列与告警**：扩展 metrics/telemetry 输出，记录阶段历史趋势并在“观测指标”页提供阈值告警或回归提示。
-3. **AI 产出评测守门**：在 `scripts/ai/*` 接入离线评测夹具与基线数据，确保真实模型接入时可以据此判定是否回退到占位实现。
-4. ✅ **SEO/OpenGraph 配置治理**：`schema/seo.json` + Schema 校验已落地，主题注入 `<meta>` 并新增 `tests/theme/seo-head.test.mjs` 与运维手册。
+### 近期完成（2025-10）
+
+- 局部重建实验：增量同步 + 缓存命中率串联完成，多语言目录验证通过，运行指引已回写 README/AGENTS。
+- 指标时间序列基线：`node scripts/telemetry-merge.mjs` 追加时间戳快照至 `data/telemetry.json`，路线图更新导出流程。
+- AI 产出评测蓝本：`data/gold.jsonl` 汇总基准集，`npm run ai:smoke` 在 placeholder 模式输出跳过日志，评测方案完成评审。
+- ✅ **SEO/OpenGraph 配置治理**：`schema/seo.json` + Schema 校验落地，主题 `<meta>` 注入与回归测试已补齐。
+
+### 下一阶段
+
+1. **局部重建默认化**：在 CI 与 `codex run gen` 中启用增量模式，输出结构化 Step Summary，并保留 `--full-build` 回退路径。
+2. **指标可视化落地**：将 `data/telemetry.json` 时间序列搬运到站点“观测指标”页，补齐图表与阈值告警脚本并定义保留策略。
+3. **AI 守门自动化**：把 `data/gold.jsonl` 接入 `npm run ai:smoke` 打分与阈值判定，失败时触发占位实现回退并记录结构化日志。
 
 > 完成以上步骤后，请同步更新 `pagegen-refactor-roadmap.md`、`module-inventory.md` 与 AGENTS.md 的进度栏。
+> 更新：2025-10-19 汇总局部重建实验、指标时间序列基线与 AI 质量评测蓝本，并刷新下一阶段任务。

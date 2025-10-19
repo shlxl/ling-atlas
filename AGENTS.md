@@ -158,10 +158,14 @@ npm run ai:smoke
 - ✅ **模块与目录盘点**：已在 `docs/zh/plans/module-inventory.md` 汇总 `schema/`、`scripts/`、`docs/zh/plans/`、`tests/` 的现状与后续动作，后续如有更新请同步维护该文档。
 - ✅ **Pagegen 深入检查**：`docs/zh/plans/pagegen-deep-dive.md` 与 orchestrator 契约说明已对齐，metrics/日志/集成测试缺口完成收敛，并补强导航与 i18n 预检用例。
 - ✅ **多语言内容统计**：`npm run stats:lint` 现按语言聚合分类/标签，CI 已提交 `data/stats.snapshot.json` 工件，可长期观察内容演进；README/协作清单已同步新增命令说明。
+- ✅ **局部重建实验完成**：`scripts/pagegen/sync.mjs`、`scripts/pagegen/collect.mjs` 与 orchestrator 串联 Git 快照与缓存命中信息，默认增量流程已在多语言目录验证通过，并补齐运行指引。
+- ✅ **指标时间序列基线已建立**：`node scripts/telemetry-merge.mjs` 会把最新阶段指标写入 `data/telemetry.json` 并带时间戳，README/路线图同步记录导出步骤，形成可追溯快照。
+- ✅ **AI 产出质量评测蓝本到位**：基准集整理于 `data/gold.jsonl`，`npm run ai:smoke` 在 placeholder 运行时会读取并输出跳过日志，评测指标方案写入规划文档供后续接入。
 - 📌 **下一阶段重点**：
-  1. 🧩 实验 `pagegen` 变更感知/局部重建：基于 Git diff 与快照仅重建受影响的语言或聚合目录，并评估对 metrics 的影响，必要时提供 `--full-build` 回退。
-  2. 📈 构建指标时间序列：扩展 telemetry/metrics 管线，将 `pagegen` 阶段指标追加至历史快照并在 README/站点“观测指标”页展示趋势或阈值告警策略。
-  3. 🤖 引入 AI 产出质量评测：在 `scripts/ai/*` 接入离线评测与基线用例，为摘要/嵌入等真实模型提供精度守门与失败回滚流程。
+  1. 🧪 在 CI 与 `codex run gen` 中默认启用局部重建，并提供结构化 Step Summary 与 `--full-build` 回退指令，确保增量失败时可自动切换全量模式。
+  2. 📊 将 `data/telemetry.json` 的时间序列搬运到站点“观测指标”页面，补充可视化与阈值告警脚本，并定义历史快照的保留与滚动策略。
+  3. 🤖 将 `data/gold.jsonl` 评测基线接入 `npm run ai:smoke`，输出分数与阈值判定，失败时触发占位实现回退并记录结构化日志。
+
 - ✅ **Feeds 模板配置化**：`schema/feeds.templates.json` 与 `scripts/validate-feeds-template.mjs` 已落地，Pagegen 按语言加载模板并在 `tests/pagegen/feeds.test.mjs` 覆盖自定义/限流场景。
 - ✅ **链接巡检守门补测**：`tests/pagegen/check-links.integration.test.mjs`（含临时目录）补齐 `node scripts/check-links.mjs` 的失败路径断言，CI 现可直接阻断缺失链接。
 - ✅ **SEO/OpenGraph Schema**：`schema/seo.json` + 主题 `<meta>` 注入已上线，运维流程同步收录在 README 与 `docs/zh/plans/seo-config-playbook.md`。

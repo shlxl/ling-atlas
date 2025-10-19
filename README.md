@@ -90,10 +90,14 @@ npm run dev
 - 链接巡检守门补测：新增 `tests/pagegen/check-links.integration.test.mjs` 以覆盖临时目录与 nav/i18n 缺失路径，CI 现可直接阻断缺链提交。
 - 站点级 SEO/OpenGraph Schema：`schema/seo.json` + 主题 `<meta>` 注入与回滚指引已上线，运维手册同步更新。
 - AI 适配层：`scripts/ai/adapters/*` 支持 Transformers.js / onnxruntime-node，与占位实现共享降级路径，并将构建摘要写入 `docs/public/data/*.json`。
+- **近期交付摘要**：
+  - 🧩 局部重建实验：`scripts/pagegen/sync.mjs`、`scripts/pagegen/collect.mjs` 与 orchestrator 现联动 Git 快照与缓存命中率，默认增量流程在多语言目录下跑通，并补齐运行指引。
+  - 📈 指标时间序列基线：`node scripts/telemetry-merge.mjs` 已将阶段指标写入带时间戳的 `data/telemetry.json`，路线图与文档同步记录导出路径。
+  - 🤖 AI 质量评测蓝本：评测基准集写入 `data/gold.jsonl`，`npm run ai:smoke` 会读取基线并在 placeholder 模式输出跳过日志，形成后续守门的设计基础。
 - 下一阶段重点：
-  1. 🧩 实验 `pagegen` 变更感知/局部重建：基于 Git diff 与快照仅重建受影响的语言或聚合目录，并提供 `--full-build` 回退以便快速切换策略。
-  2. 📈 构建指标时间序列：扩展 telemetry/metrics 管线，持续追踪 `pagegen` 阶段指标并在“观测指标”页展示趋势或阈值告警策略。
-  3. 🤖 引入 AI 产出质量评测：为摘要/嵌入等真实模型建立离线评测与基线用例，接入 `scripts/ai/*` 守门并同步记录降级路径。
+  1. 🧪 在 CI 与 `codex run gen` 中默认启用局部重建，同时输出结构化 Step Summary，并提供 `--full-build` 回退指令保障异常回滚。
+  2. 📊 将 `data/telemetry.json` 的时间序列搬运到站点“观测指标”页面，补充可视化组件与阈值告警脚本，明确历史快照保留策略。
+  3. 🤖 将 `data/gold.jsonl` 评测基线接入 `npm run ai:smoke` 打分与阈值判定，失败时触发占位实现回退并记录结构化日志。
 
 ## 协作约束速查
 
