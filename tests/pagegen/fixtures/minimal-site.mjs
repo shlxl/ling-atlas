@@ -22,6 +22,8 @@ export async function createMinimalSiteFixture(options = {}) {
   await copySchemaFile('locales.schema.json', schemaDir)
   await copySchemaFile('nav.schema.json', schemaDir)
   await copySchemaFile('tag-alias.schema.json', schemaDir)
+  await copySchemaFile('collections.templates.schema.json', schemaDir)
+  await copySchemaFile('collections.templates.json', schemaDir)
 
   const localesConfig = {
     $schema: './locales.schema.json',
@@ -39,6 +41,7 @@ export async function createMinimalSiteFixture(options = {}) {
           rssTitle: 'Ling Atlas',
           rssDesc: '最新更新'
         },
+        collectionsTemplate: 'zh-default',
         rssFile: 'rss.xml',
         sitemapFile: 'sitemap.xml',
         contentFields: {
@@ -61,6 +64,7 @@ export async function createMinimalSiteFixture(options = {}) {
           rssTitle: 'Ling Atlas (EN)',
           rssDesc: 'Latest updates'
         },
+        collectionsTemplate: 'en-default',
         rssFile: 'rss-en.xml',
         sitemapFile: 'sitemap-en.xml',
         contentFields: {
