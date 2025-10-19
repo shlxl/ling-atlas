@@ -29,6 +29,7 @@
     "ai:qa": "node scripts/qa-build.mjs",
     "ai:all": "npm run ai:embed && (npm run ai:summary || true) && (npm run ai:qa || true)",
     "test:pagegen": "node --test tests/pagegen/*.test.mjs",
+    "test:links": "node --test tests/check-links/*.test.mjs",
     "test:theme": "node --test tests/locale-map/*.test.mjs tests/theme/*.test.mjs",
     "config:collections": "node scripts/validate-collections-template.mjs",
     "config:feeds": "node scripts/validate-feeds-template.mjs",

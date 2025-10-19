@@ -50,6 +50,7 @@ npm run dev
 - `npm run gen -- --no-batch`：回退到串行写入（禁用批量写入与哈希跳过），或设置 `PAGEGEN_DISABLE_BATCH=1`
 - `PAGEGEN_CONCURRENCY=<num>`：控制内容解析并发度（默认 8），可在 `npm run gen` 前临时指定
 - `npm run test:pagegen`：运行 Pagegen 模块单元测试 + 集成测试（含 nav manifest 输出与聚合产物核对）
+- `npm run test:links`：基于临时站点夹具运行链接巡检，覆盖 Markdown、nav manifest、i18n map 成功与失败场景
 - `npm run stats:lint`：按语言统计分类/标签，控制台输出 TopN 并写入 `data/stats.snapshot.json`，CI 会上传该快照方便历史对比
 - `npm run stats:diff -- --baseline <ref:path|file> [--current <file>]`：对比两份分类/标签快照，输出高于阈值的差异（默认 warn≥30%、fail≥60%）；未显式指定时会尝试从 git 历史（`origin/main`、`HEAD^` 等）寻找 baseline，若无法定位则打印提示并跳过对比
 - `npm run precheck`：Frontmatter Schema 校验（阻断）
@@ -81,7 +82,7 @@ npm run dev
 - 多语言内容统计脚本 `npm run stats:lint` 已上线，CI 会生成 `data/stats.snapshot.json` 工件；配套的 `npm run stats:diff` 已接入 CI，自动抓取 `origin/main:data/stats.snapshot.json` 作为基线，对比结果会写入 Step Summary 与 `stats-diff-report` 工件，便于在 PR 审查阶段复核差异。
 - 下一阶段重点：
   1. 🗂️ 将 RSS/Sitemap 生成模板配置化（`schema/feeds.templates.json`），并在 `tests/pagegen/feeds.test.mjs` 增补自定义模板与限流覆盖。
-  2. 🔗 为 `scripts/check-links.mjs` 补充集成测试，确保临时目录/聚合缺失等场景能在 CI 中即时失败。
+  2. 🔗 链接巡检守门已上线（`npm run test:links`），在临时目录中覆盖缺失链接与聚合缺失文件场景，可继续拓展更多边界用例。
   3. 🧭 Schema 化站点级 SEO/OpenGraph 配置，更新 README/运维文档并在主题层快照验证 `<meta>` 输出。
   4. 🤖 推进 AI 管线适配层（Transformers.js / onnxruntime），在 `scripts/ai/*` 中提供可回退实现并记录遥测指标。
 
@@ -95,7 +96,7 @@ npm run dev
 - **环境要求**：Node ≥ 22、npm ≥ 10、git ≥ 2.45，`.env` 需包含 `BASE=/ling-atlas/`、`SITE_ORIGIN=https://<user>.github.io/ling-atlas`、`GIT_REMOTE=origin`、`GIT_BRANCH=main`。
 - **首次初始化**：建议执行 `codex run setup --base "/ling-atlas/" --site "https://<user>.github.io/ling-atlas"`，完成依赖安装、预检、聚合页生成与首次构建。
 - **CI 守门**：流水线默认执行 `npm ci`、前置校验、Pagegen 单测、`node scripts/stats-lint.mjs` + `node scripts/stats-diff.mjs`、`node .codex/budget.mjs` 等步骤；主干推送会额外安装 Chrome 依赖并运行 `npx lhci autorun --collect.chromeFlags="--no-sandbox"`，PR 仅保留核心守门以控制耗时。
-- **内容生产力工具**：通过 `npm run md:lint`、`node scripts/check-links.mjs`、`node scripts/img-opt.mjs` 守门 Markdown、链接与图片质量；其中 `check-links` 会额外校验 `nav.manifest.<locale>.json` 与 `i18n-map.json` 内的目标路径，必要时可在 CI 中暂时调高阈值或跳过。
+- **内容生产力工具**：通过 `npm run md:lint`、`node scripts/check-links.mjs`、`npm run test:links`、`node scripts/img-opt.mjs` 守门 Markdown、链接与图片质量；其中 `check-links` 会额外校验 `nav.manifest.<locale>.json` 与 `i18n-map.json` 内的目标路径，必要时可在 CI 中暂时调高阈值或跳过。
 - **Landing 入口 BASE 兜底**：`docs/index.md` 的内联重定向脚本会写入 `__LING_ATLAS_ACTIVE_BASE__` 并由 `<script setup>` 在 hydration 期间复用，确保 `/` 与 `/ling-atlas/` 等不同 BASE 下的首屏重定向一致；前端通过 `docs/.vitepress/theme/base.mjs` 统一读取、缓存与复用该 BASE，Locale Toggle、导航 manifest 以及 Telemetry 资产加载都会依赖此模块。如需修改入口，请同步维护内联脚本、`base.mjs` 与相关调用。
 - **导航与标签配置 Playbook**：在修改 `schema/nav.json`、`schema/tag-alias.json` 之前，务必阅读 `docs/zh/plans/nav-config-playbook.md`；文档提供配置步骤、守门命令与常见故障排查。
 
