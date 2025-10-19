@@ -16,9 +16,10 @@ Pagegen 当前为串行的单体脚本，承担同步内容、解析元数据、
 
 ### 阶段 1 · 模块拆分与契约定义
 
-- 拆分目录：按照内容采集、导航聚合、RSS/Sitemap、i18n 映射四个职能拆分为独立模块，并导出明确的输入/输出接口。
-- 新增单元测试：为内容解析、标签归一化、导航 manifest 生成等核心模块补充测试。
-- 保持行为兼容：临时 orchestrator 调用拆分后的模块，产物校验需通过阶段 0 的验证清单。
+- ✅ 拆分目录：按照内容采集、导航聚合、RSS/Sitemap、i18n 映射四个职能拆分为独立模块，并导出明确的输入/输出接口。
+- ✅ 新增单元测试：为内容解析、标签归一化、导航 manifest 生成等核心模块补充测试。
+- ✅ 保持行为兼容：临时 orchestrator 调用拆分后的模块，产物校验需通过阶段 0 的验证清单。
+- ✅ 契约说明：在规划文档中补写 orchestrator 各阶段的输入/输出、依赖与产物描述，并同步至端到端测试的断言项。
 
 ### 阶段 2 · 差异化同步与缓存
 
@@ -30,7 +31,7 @@ Pagegen 当前为串行的单体脚本，承担同步内容、解析元数据、
 
 - ✅ 聚合页、RSS/Sitemap、导航 manifest 的写入改为收集任务后批量执行，统一通过写入队列调度，失败时输出结构化日志。
 - ✅ 引入内容哈希：若产物内容未变化，则跳过写入并标记为 `skipped`，并在 metrics 中记录命中情况。
-- 针对失败路径提供错误汇总（模块、语言、文件路径），并配备最小回滚策略（回退至阶段 1 的稳定 orchestrator）。
+- ✅ 错误守门：针对失败路径输出结构化错误汇总（模块、阶段、语言、目标路径），并在 orchestrator 中落地最小回滚策略。
 
 ### 阶段 4 · 配置外置与 Schema 化
 
@@ -43,8 +44,9 @@ Pagegen 当前为串行的单体脚本，承担同步内容、解析元数据、
 
 ### 阶段 5 · Telemetry 与后续拓展
 
-- 将 `pagegen` 各阶段耗时、处理文件量、命中缓存率写入 telemetry（JSON 输出），供 `codex run audit` 或 CI 后续使用。
-- 预留 Hook：在 orchestrator 中暴露事件或插件机制，为后续接入 AI 摘要、索引构建等拓展提供接口。
+- ✅ 将 `pagegen` 各阶段耗时、处理文件量、命中缓存率写入 telemetry（JSON 输出），并在 CLI 摘要/metrics JSON 中展示缓存命中与写入跳过统计，供 `codex run audit` 或 CI 使用。
+- ✅ 预留 Hook：在 orchestrator 中暴露事件或插件机制，为后续接入 AI 摘要、索引构建等拓展提供接口，并整理 Transformers.js/onnxruntime 的接入评估、回滚策略与脚本清单。
+- 📌 统计快照：基于 `scripts/stats-lint.mjs` 设计 nightly/PR 对比任务与异常提示，持续追踪分类与标签变化。
 
 ## 风险与应对
 
@@ -61,6 +63,6 @@ Pagegen 当前为串行的单体脚本，承担同步内容、解析元数据、
 ## 当前审查行动（2024-XX）
 
 - **协作约束梳理**：完成 `AGENTS.md`、README 与 `.codex/` 指南的交叉检查，产出 README《协作约束速查》以便快速上手。
-- **模块盘点计划**：准备巡查 `schema/`（Frontmatter/导航 Schema）、`scripts/`（Pagegen、校验、守门脚本）、`docs/zh/plans/`（规划文档）与 `tests/`（Pagegen 单测/fixtures）等目录，确认后续检查顺序。
-- **Pagegen 深入检查筹备**：将在整理完成后集中复核 `scripts/pagegen/*.mjs` 的模块职责、缓存/批处理路径与 `tests/pagegen.test.mjs` 覆盖面，针对缺口输出补测提案。
+- **模块盘点回顾**：`schema/`、`scripts/`、`docs/zh/plans/` 与 `tests/` 的资产现已补写 orchestrator 契约说明与依赖矩阵，确保变更有据可查。
+- **Pagegen 深入检查跟进**：端到端测试现覆盖导航/i18n 故障、缓存命中指标与失败回滚路径；`npm run test:pagegen` 已模拟完整生成流程并对 metrics 导出做断言。
 - **反馈同步机制**：本节会随巡检推进持续更新，关键结论亦会同步至 `AGENTS.md` 第 10 节，确保多代理协作信息一致。

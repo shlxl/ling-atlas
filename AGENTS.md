@@ -139,21 +139,22 @@ npm run stats:lint
 - ✅ 阶段 3：写入任务批处理 + 内容哈希已上线，可通过 `--no-batch`/`PAGEGEN_DISABLE_BATCH=1` 回退串行写入；`data/pagegen-metrics.json` 输出写入命中与失败统计。
 - ✅ 阶段 4（进行中）：`schema/locales.json` + `schema/locales.schema.json` 已接管语言配置，`scripts/pagegen.locales.mjs` 运行时会读取并校验 JSON Schema，计算结果缓存到 `.codex/cache/pagegen-locales.cache.json`。前端主题的 Locale 列表、主题切换文案与 Landing 语言卡片同样复用该 JSON，确保 Pagegen / 主题保持一致；README/AGENTS 已补充运维指引。后续若新增语言，请编辑 JSON 配置并运行 `npm run gen` 验证。
 - ✅ 导航配置初稿上线：`schema/nav.json` + `schema/nav.schema.json` 描述聚合/固定链接/分组结构，Pagegen 在生成 nav manifest 时读取配置，VitePress 主题也会同步解析；如需增减导航入口，请先修改 JSON 再运行 `npm run gen` + `npm run test:theme` 校验。
-- ▶️ 阶段 1 后续：依据 `docs/zh/plans/pagegen-module-architecture.md` 补齐其余模块测试，整理 API 契约后更新 orchestrator。
+- ✅ 阶段 1 后续：已补齐 orchestrator 输入/输出契约说明，扩展 `npm run test:pagegen` 端到端用例并统一阶段/语言/目标路径错误日志格式。
 - 📌 规划文档：`docs/zh/plans/refactor-optimization.md`（提案）、`docs/zh/plans/pagegen-refactor-roadmap.md`（路线图）、`docs/zh/plans/pagegen-validation-checklist.md`（产物守门）。
 
 ## 10. 当前协作与审查计划（2024-XX）
 
 - ✅ **协作约束清单**：已将 `AGENTS.md` 与 README 中的关键命令、环境与守门策略汇总到 README《协作约束速查》章节，方便快速查阅。
 - ✅ **模块与目录盘点**：已在 `docs/zh/plans/module-inventory.md` 汇总 `schema/`、`scripts/`、`docs/zh/plans/`、`tests/` 的现状与后续动作，后续如有更新请同步维护该文档。
-- ⏳ **Pagegen 深入检查**：已在 `docs/zh/plans/pagegen-deep-dive.md` 梳理模块契约、现有守门与待办；后续需按清单推进 metrics 补足、错误日志与集成测试。
+- ✅ **Pagegen 深入检查**：`docs/zh/plans/pagegen-deep-dive.md` 与 orchestrator 契约说明已对齐，metrics/日志/集成测试缺口完成收敛，并补强导航与 i18n 预检用例。
 - ✅ **多语言内容统计**：`npm run stats:lint` 现按语言聚合分类/标签，CI 已提交 `data/stats.snapshot.json` 工件，可长期观察内容演进；README/协作清单已同步新增命令说明。
 - 📌 **下一阶段重点**：
-  1. 完成 `pagegen-deep-dive` 清单中的 orchestrator 契约说明、错误日志补强以及端到端集成测试。
-  2. 为 stats 快照建立对比/告警机制（nightly workflow 或 PR 提示），确保分类/标签剧烈变化可追踪。
-  3. 推进 AI 管线（Transformers.js / onnxruntime 等）落地方案评估，并记录在 Expansion 章节以便排期。
+  1. 跟进阶段 2 的缓存命中率调优与阶段 5 stats 快照对比/告警任务，实现 nightly/PR 差异提示。
+  2. 将 `scripts/stats-lint.mjs` 的快照对比方案落地到 CI，并在 README/运维文档补充监控与告警流程。
+  3. 继续推进 AI 管线（Transformers.js / onnxruntime 等）落地评估，细化脚本接口、模型托管与回滚策略。
 - ✅ **导航配置引用守门**：`scripts/validate-nav-config.mjs` 与 `scripts/pagegen.locales.mjs` 现会校验 `aggregates`、`sections`、`links` 的引用关系，运行前即可捕获缺失键，Pagegen orchestrator 中的 nav manifest 也会提示未映射的聚合键。
-- ✅ **Pagegen 指标可观测性**：collect 阶段输出缓存命中率、解析错误摘要；feeds 阶段记录各语言 RSS/Sitemap 数量并写入 metrics JSON，dry-run/CI 可直接观察。
+- ✅ **导航与 i18n 预检显式化**：i18n registry 与导航配置加载过程会在 manifestKey/slug 缺失时即时抛错，`normalizeAggregates` 等关键路径同步补强定位信息，对应单测已覆盖误删/拼写错误场景。
+- ✅ **Pagegen 指标可观测性**：collect 阶段输出缓存命中率、解析错误摘要；feeds 阶段记录各语言 RSS/Sitemap 数量并写入 metrics JSON，CLI/Telemetry 同步展示缓存命中与写入跳过统计，dry-run/CI 可直接观察。
 - ✅ **失败场景补测**：新增 `tests/pagegen/collections.failures.test.mjs` 与 feeds 写入失败用例，确保文件系统异常会被抛出并纳入守门。
 - 🔁 **结果同步机制**：所有阶段性结论将同步回本文件与 `docs/zh/plans/pagegen-refactor-roadmap.md`，保持多代理协同一致性。
 - ✅ **Landing 入口 root 兼容**：`docs/index.md` 的预渲染脚本会写入 `__LING_ATLAS_ACTIVE_BASE__` 并在 Vue hydration 期间复用，确保 Lighthouse/本地 root 服务下的 locale 重定向保持一致；前端会通过 `docs/.vitepress/theme/base.mjs` 统一读取与缓存该 BASE，Locale Toggle、导航 manifest 与 Telemetry 资产加载均复用同一逻辑。如需调整入口，请同步更新内联脚本、`base.mjs` 与 `<script setup>` 内的调用。
