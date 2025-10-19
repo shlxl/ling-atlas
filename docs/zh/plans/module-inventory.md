@@ -11,9 +11,9 @@ title: 核心目录盘点（schema / scripts / plans / tests）
 | `locales.json` + `locales.schema.json` | 语言配置、主题文案、内容目录映射 | ✅ Pagegen 与主题均已接入；`npm run precheck` 守门 | 如新增语言，先更新 JSON，再跑 `npm run gen`；考虑补充文档示例 |
 | `nav.json` + `nav.schema.json` | 导航聚合/固定链接配置 | ✅ Pagegen/nav-core 共用；`npm run config:nav` 校验 | 待补运维说明（参考本文件）、如恢复 Chat 页面可在此增项 |
 | `frontmatter.schema.json` | 内容 Frontmatter 校验 | ✅ `npm run precheck` 引用 | 持续对齐内容字段；视情况扩展可选字段 |
-| `tag-alias.json` + `tag-alias.schema.json` | 标签归一化 | ✅ Schema 与校验脚本 (`npm run config:tags`) 已接入 precheck | 后续可补充示例与失败用例测试 |
+| `tag-alias.json` + `tag-alias.schema.json` | 标签归一化 | ✅ Schema 与校验脚本 (`npm run config:tags`) 已接入 precheck | 继续完善文档示例与失败用例测试 |
 
-> TODO：将 `tag-alias.json`、SEO/OpenGraph 常量等也纳入 Schema 守门，保持“配置即事实”。
+> TODO：SEO/OpenGraph 常量仍待 Schema 化，保持“配置即事实”。
 
 ## 2. `scripts/`（自动化脚本）
 
@@ -21,10 +21,12 @@ title: 核心目录盘点（schema / scripts / plans / tests）
   - ✅ 模块化、缓存、批量写入、导航配置接入已完成，并新增阶段/语言/目标路径的结构化错误日志。
   - ✅ 深入检查：已按照 `docs/zh/plans/pagegen-module-architecture.md` / `pagegen-refactor-roadmap.md` 补齐 orchestrator 契约说明、导航/i18n 故障显式化与端到端测试。
 - **校验脚本**：`validate-frontmatter.mjs`、`validate-nav-config.mjs`、`validate-tag-alias.mjs`、`check-links.mjs`。
-  - ✅ 均已通过 `npm run precheck` 执行。
+  - ✅ 均已通过 `npm run precheck` 执行，`check-links` 仍缺少集成测试守门。
 - **构建/运维脚本**：`build-embeddings.mjs`、`generate-headers.mjs`、`postbuild-*`、`sbom.mjs` 等。
   - ✅ 可正常使用，建议在 README/AGENTS 中补充触发方式（部分命令仅在 CI 使用）。
-- **评测与统计**：`eval/`、`stats-lint.mjs` 等暂未完全接入日常流程，可根据优先级安排。
+- **评测与统计**：`eval/`、`stats-lint.mjs` 已接入 CI 并上传快照；夜间流程可复用 `npm run stats:diff`。
+  - CI 会在上传快照后执行 `node scripts/stats-diff.mjs --baseline origin/main:data/stats.snapshot.json --current data/stats.snapshot.json --quiet --json`，Step Summary 与工件会输出结构化对比结果，fork PR 自动跳过并给出提示。
+  - 主干推送额外安装 Chrome 依赖并运行 `npx lhci autorun --collect.chromeFlags="--no-sandbox"`，确保 Lighthouse 分数持续可见；PR 仍可跳过以控制时长。
 
 ## 3. `docs/zh/plans/`（规划文档）
 
@@ -52,9 +54,9 @@ title: 核心目录盘点（schema / scripts / plans / tests）
 
 ## 5. 后续行动建议
 
-1. **配置治理**：将标签别名、SEO/OpenGraph 等常量继续迁移到 `schema/`，并补充对应校验脚本。
-2. **运维文档**：根据 `nav-config-schema.md` 草案撰写操作指南，示例化修改流程（改 JSON → `npm run config:nav` → `npm run gen` → `npm run test:theme`）。
-3. **Pagegen 入检查**：持续跟进阶段 2 缓存优化与阶段 5 统计快照告警，保持指标记录与契约文档同步。
-4. **测试覆盖加固**：在现有导航/i18n 故障用例基础上，继续补充配置加载与守门脚本的边界测试，防止“silent failure”。
+1. **Feeds/SEO 配置治理**：将 RSS/Sitemap 模板与站点级 SEO/OpenGraph 常量迁移到 `schema/`，并补充校验脚本与示例。
+2. **运维文档**：根据 `nav-config-schema.md` 草案继续完善操作指南，覆盖 feeds/SEO 模板的修改流程与回滚策略。
+3. **Pagegen 守门**：维持缓存命中率与 stats diff 的回归观察，同时准备 `check-links` 集成测试以阻断配置缺失。
+4. **测试覆盖加固**：在现有导航/i18n 用例基础上，补充 feeds 模板、自定义配置与链接巡检的失败场景，避免 silent failure。
 
 > 更新日志：2024-XX-XX 由自动化代理首次盘点，后续更新请在本文顶部追加日期。
