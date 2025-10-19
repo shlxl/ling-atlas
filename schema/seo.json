@@ -1,0 +1,40 @@
+{
+  "$schema": "./seo.schema.json",
+  "defaults": {
+    "meta": {
+      "description": "Ling Atlas · 知识库：聚焦现代化、可演进、可检索的技术与工程实践。",
+      "keywords": ["Ling Atlas", "知识库", "VitePress"],
+      "robots": "index,follow"
+    },
+    "openGraph": {
+      "type": "website",
+      "site_name": "Ling Atlas",
+      "description": "Ling Atlas · 知识库：聚焦现代化、可演进、可检索的技术与工程实践。",
+      "image": "icons/icon-512.png",
+      "locale": "zh_CN"
+    },
+    "twitter": {
+      "card": "summary_large_image",
+      "creator": "@ling-atlas",
+      "image": "icons/icon-512.png"
+    },
+    "canonical": {
+      "base": "https://example.com"
+    }
+  },
+  "locales": {
+    "en": {
+      "meta": {
+        "description": "Ling Atlas is a modern, evolvable, and searchable knowledge base for engineering notes.",
+        "keywords": ["Ling Atlas", "knowledge base", "VitePress"]
+      },
+      "openGraph": {
+        "description": "Ling Atlas is a modern, evolvable, and searchable knowledge base for engineering notes.",
+        "locale": "en_US"
+      },
+      "twitter": {
+        "image": "icons/icon-512.png"
+      }
+    }
+  }
+}
