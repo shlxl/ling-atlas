@@ -32,6 +32,7 @@ Pagegen 当前为串行的单体脚本，承担同步内容、解析元数据、
 - ✅ 聚合页、RSS/Sitemap、导航 manifest 的写入改为收集任务后批量执行，统一通过写入队列调度，失败时输出结构化日志。
 - ✅ 引入内容哈希：若产物内容未变化，则跳过写入并标记为 `skipped`，并在 metrics 中记录命中情况。
 - ✅ 错误守门：针对失败路径输出结构化错误汇总（模块、阶段、语言、目标路径），并在 orchestrator 中落地最小回滚策略。
+- ✅ 日志契约：`logStageWarning`/`logStageError` 统一填充 `stage`/`locale`/`target`，`tests/pagegen/integration.test.mjs` 以解析异常、空导航与写入失败场景回归验证 stderr 格式。
 
 ### 阶段 4 · 配置外置与 Schema 化
 
