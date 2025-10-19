@@ -172,5 +172,6 @@ npm run stats:lint
 - 链接检查：`node scripts/check-links.mjs`（默认校验站内路径是否存在，并额外回归 nav manifest 与 `i18n-map.json` 的链接；如需校验外链，可自行扩展）。
 - 图片优化：`node scripts/img-opt.mjs`（扫描 `docs/public/images/`，生成 WebP 与缩放版本，后续可据此替换引用）。
 - 内容统计：`npm run stats:lint`（按语言聚合分类/标签，输出 TopN 并写入 `data/stats.snapshot.json`，CI 会上传快照工件以便持续对比）。
+- 本地守门钩子：项目安装依赖后会自动执行 `husky install`，`pre-commit` 钩子会通过 `lint-staged` 对暂存的 Markdown 执行 `npm run md:lint`；若需临时跳过，可使用 `HUSKY=0 git commit ...`。
 - CI 已在 `precheck` 之后自动执行以上步骤，失败会阻断构建；若需临时跳过，可在工作流中注释对应命令。
 - 回滚策略：若短期无法达标，可临时提高环境变量阈值或注释相关步骤，但应尽快修复体积/性能问题。

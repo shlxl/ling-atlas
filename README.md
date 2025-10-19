@@ -74,6 +74,7 @@ npm run dev
 
 - **角色与脚本管线**：通过 `codex run <task>` 调用 `.codex/*.mjs` 中的脚本，涵盖 `plan`、`precheck`、`gen`、`build`、`deploy`、`audit` 等角色；`publish` 会串联 tags 规范化 → precheck → gen → build → git 推送。
 - **内容统计守门**：CI 在 `npm run test:pagegen` 后追加 `node scripts/stats-lint.mjs`，同时上传 `data/stats.snapshot.json` 作为工件，便于观察分类/标签分布的阶段变化。
+- **本地预检**：安装依赖后会自动执行 `husky install`，现有的 `pre-commit` 钩子会调用 `lint-staged`，针对提交的 Markdown 运行 `npm run md:lint`。如需跳过，可在本地使用 `HUSKY=0 git commit ...`。
 - **环境要求**：Node ≥ 22、npm ≥ 10、git ≥ 2.45，`.env` 需包含 `BASE=/ling-atlas/`、`SITE_ORIGIN=https://<user>.github.io/ling-atlas`、`GIT_REMOTE=origin`、`GIT_BRANCH=main`。
 - **首次初始化**：建议执行 `codex run setup --base "/ling-atlas/" --site "https://<user>.github.io/ling-atlas"`，完成依赖安装、预检、聚合页生成与首次构建。
 - **CI 守门**：默认 `npm ci` 安装依赖，持续运行 Pagegen 单测、前置校验、生成聚合页；体积预算与 Lighthouse 可按需开启（参考 `node .codex/budget.mjs` 与 `npx lhci autorun`）。

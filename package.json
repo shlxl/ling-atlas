@@ -2,6 +2,9 @@
   "name": "ling-atlas",
   "private": true,
   "type": "module",
+  "lint-staged": {
+    "docs/**/*.md": "npm run md:lint"
+  },
   "scripts": {
     "precheck": "node scripts/validate-frontmatter.mjs && npm run config:nav && npm run config:tags",
     "tags:normalize": "node scripts/normalize-tags.mjs",
@@ -31,7 +34,8 @@
     "audit": "npm audit --omit=dev || true",
     "license": "license-checker --summary",
     "sbom": "node scripts/sbom.mjs",
-    "chrome-devtools": "npx chrome-devtools-mcp@latest"
+    "chrome-devtools": "npx chrome-devtools-mcp@latest",
+    "prepare": "husky"
   },
   "devDependencies": {
     "@cyclonedx/bom": "^4.1.2",
@@ -42,8 +46,10 @@
     "fast-xml-parser": "^4.4.1",
     "globby": "^14.0.1",
     "gray-matter": "^4.0.3",
+    "husky": "^9.1.7",
     "license-checker": "^25.0.1",
     "lightningcss": "^1.30.2",
+    "lint-staged": "^15.5.2",
     "markdown-link-check": "^3.14.1",
     "markdownlint-cli2": "^0.18.1",
     "marked": "^12.0.2",
