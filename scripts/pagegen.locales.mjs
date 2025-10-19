@@ -108,6 +108,9 @@ function finalizeLocale(code, config = {}) {
   const outMeta = resolvePath(config.outMeta, { defaultValue: path.join(generatedDir, outMetaFile) })
 
   const labels = composeLabels(config.labels)
+  const collectionsTemplate = typeof config.collectionsTemplate === 'string'
+    ? config.collectionsTemplate.trim()
+    : ''
   const contentFields = composeContentFields(config.contentFields)
 
   return {
@@ -131,6 +134,7 @@ function finalizeLocale(code, config = {}) {
     basePath,
     generatedPathPrefix,
     labels,
+    collectionsTemplate: collectionsTemplate || undefined,
     contentFields,
     rssFile: config.rssFile,
     sitemapFile: config.sitemapFile,
