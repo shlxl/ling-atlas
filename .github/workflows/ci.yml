@@ -123,6 +123,9 @@ jobs:
         run: node scripts/summary.mjs || true
       - name: Generate QA pairs (soft fail)
         run: node scripts/qa-build.mjs || true
+      - name: AI smoke test (optional)
+        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/'))
+        run: npm run ai:smoke
       - name: 构建 + 搜索索引（阻断）
         run: npm run build:search
       - name: Bundle budget check

@@ -17,6 +17,7 @@ data/pagegen-cache.*.json
 data/pagegen-sync.*.json
 data/telemetry.tmp.json
 data/stats.snapshot.json
+data/models/
 docs/public/pagefind/
 docs/public/.well-known/
 

@@ -1,0 +1,54 @@
+{
+  "version": 1,
+  "generatedAt": null,
+  "runtime": "placeholder",
+  "cache": {
+    "preferred": "local",
+    "directory": "./data/models"
+  },
+  "models": [
+    {
+      "id": "placeholder-embed-linear",
+      "name": "Placeholder Embedding Linear Model",
+      "description": "Deterministic 2x3 linear projection used for smoke tests and placeholder inference.",
+      "version": "0.1.0",
+      "tasks": ["embed"],
+      "runtime": ["placeholder", "node", "wasm"],
+      "disableEnv": "AI_EMBED_DISABLE",
+      "artifact": {
+        "type": "json",
+        "filename": "placeholder-linear.json",
+        "content": {
+          "id": "placeholder-embed-linear",
+          "version": "0.1.0",
+          "dims": 3,
+          "weights": [
+            [0.12, -0.04, 0.33],
+            [0.08, 0.15, -0.22]
+          ],
+          "bias": [0.01, -0.02, 0.05]
+        }
+      },
+      "checksum": {
+        "algorithm": "sha256",
+        "value": "9ff80e1569f657846dc98a0158d5c243a6cc3e1e9ec45de96ef782d14a0ce3e0"
+      },
+      "smokeTest": {
+        "type": "linear",
+        "input": [0.5, -0.3],
+        "expected": [0.046, -0.085, 0.281],
+        "tolerance": 1e-6
+      },
+      "cache": {
+        "status": "missing",
+        "verifiedAt": null,
+        "checksum": null,
+        "bytes": 0,
+        "location": {
+          "scope": "local",
+          "relativePath": "placeholder-embed-linear/placeholder-linear.json"
+        }
+      }
+    }
+  ]
+}
