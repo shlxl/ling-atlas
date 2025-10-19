@@ -11,8 +11,20 @@ try {
 
 export const runtime = ort
 
-export async function generateEmbeddings() {
-  throw new Error(
-    'onnxruntime adapter 尚未实现具体逻辑，请根据本地模型加载需求自行扩展 generateEmbeddings，并返回 { items } 结构。'
+function notImplemented(method) {
+  return new Error(
+    `onnxruntime adapter 尚未实现 ${method}，请根据本地模型加载需求扩展 ${method} 并返回 { items } 结构。`
   )
+}
+
+export async function generateEmbeddings() {
+  throw notImplemented('generateEmbeddings')
+}
+
+export async function summarize() {
+  throw notImplemented('summarize')
+}
+
+export async function buildQA() {
+  throw notImplemented('buildQA')
 }

@@ -1,3 +1,5 @@
+import { summarize as placeholderSummarize, buildQA as placeholderBuildQA } from './placeholder.mjs'
+
 let pipelineFactory
 try {
   ({ pipeline: pipelineFactory } = await import('@xenova/transformers'))
@@ -69,4 +71,18 @@ export async function generateEmbeddings({ items = [], model, logger, pipelineOp
     embedding: vectors[index] || []
   }))
   return { items: enriched, model }
+}
+
+export async function summarize(options = {}) {
+  const message =
+    'transformers-node adapter 当前仅实现嵌入生成功能，摘要功能已回退到 placeholder.summarize。若需接入具体模型，请扩展 summarize 实现。'
+  options?.logger?.info?.(`[transformers-node] ${message}`)
+  return placeholderSummarize(options)
+}
+
+export async function buildQA(options = {}) {
+  const message =
+    'transformers-node adapter 当前仅实现嵌入生成功能，问答生成已回退到 placeholder.buildQA。若需接入具体模型，请扩展 buildQA 实现。'
+  options?.logger?.info?.(`[transformers-node] ${message}`)
+  return placeholderBuildQA(options)
 }

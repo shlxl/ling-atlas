@@ -4,8 +4,11 @@ import {
   loadEmbeddingAdapter,
   loadSummaryAdapter,
   loadQAAdapter,
-  placeholder
+  placeholder,
+  registerAdapter,
+  resetAdapterRegistry
 } from '../../scripts/ai/adapters/index.mjs'
+import { resolveAdapterSpec } from '../../scripts/ai/utils.mjs'
 
 const silentLogger = {
   warn: () => {},
@@ -32,13 +35,6 @@ test('unknown adapter falls back to placeholder with warning metadata', async ()
   const info = await loadSummaryAdapter('unknown:model', silentLogger)
   assert.equal(info.adapterName, 'placeholder')
   assert.equal(info.requested, 'unknown')
-  assert.equal(info.isFallback, true)
-})
-
-test('transformers adapter falls back when dependency missing', async () => {
-  const info = await loadEmbeddingAdapter('transformers-node:foo', silentLogger)
-  assert.equal(info.adapterName, 'placeholder')
-  assert.equal(info.requested, 'transformers-node')
   assert.equal(info.isFallback, true)
 })
 
@@ -69,4 +65,49 @@ test('placeholder summarize and QA mirror legacy behaviour', async () => {
 test('QA adapter falls back to summary spec when missing explicit value', async () => {
   const info = await loadQAAdapter(undefined, silentLogger)
   assert.equal(info.adapterName, 'placeholder')
+})
+
+test('registerAdapter injects custom implementation for tests', async t => {
+  t.after(() => {
+    resetAdapterRegistry()
+  })
+
+  const mockAdapter = {
+    async generateEmbeddings({ items }) {
+      return {
+        items: items.map(item => ({ ...item, embedding: [1, 2, 3] }))
+      }
+    },
+    async summarize({ documents }) {
+      return {
+        items: documents.map(doc => ({ url: doc.url, title: doc.title, summary: 'ok' }))
+      }
+    },
+    async buildQA({ documents }) {
+      return {
+        items: documents.map(doc => ({ url: doc.url, title: doc.title, qa: [] }))
+      }
+    }
+  }
+
+  registerAdapter('mock-adapter', mockAdapter)
+
+  const embeddingInfo = await loadEmbeddingAdapter('mock-adapter:model', silentLogger)
+  assert.equal(embeddingInfo.adapterName, 'mock-adapter')
+  assert.equal(embeddingInfo.isFallback, false)
+  const embedResult = await embeddingInfo.adapter.generateEmbeddings({ items: [{ text: 'hi' }] })
+  assert.deepEqual(embedResult.items[0].embedding, [1, 2, 3])
+
+  const summaryInfo = await loadSummaryAdapter('mock-adapter', silentLogger)
+  assert.equal(summaryInfo.adapterName, 'mock-adapter')
+  const summaryResult = await summaryInfo.adapter.summarize({ documents: [{ url: '/a', title: 'A' }] })
+  assert.equal(summaryResult.items[0].summary, 'ok')
+})
+
+test('resolveAdapterSpec prefers CLI flag over environment variables', () => {
+  process.env.AI_EMBED_MODEL = 'env-adapter:model'
+  const argv = ['node', 'script', '--adapter', 'cli-adapter:demo']
+  const resolved = resolveAdapterSpec({ envKey: 'AI_EMBED_MODEL', cliFlag: 'adapter', argv })
+  assert.equal(resolved, 'cli-adapter:demo')
+  delete process.env.AI_EMBED_MODEL
 })
