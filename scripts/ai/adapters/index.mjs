@@ -1,9 +1,36 @@
 import * as placeholder from './placeholder.mjs'
 
-const ADAPTER_LOADERS = {
-  placeholder: async () => placeholder,
-  'transformers-node': () => import('./transformers-node.mjs'),
-  onnxruntime: () => import('./onnxruntime.mjs')
+const DEFAULT_LOADERS = new Map([
+  ['placeholder', async () => placeholder],
+  ['transformers-node', () => import('./transformers-node.mjs')],
+  ['onnxruntime', () => import('./onnxruntime.mjs')]
+])
+
+const ADAPTER_LOADERS = new Map(DEFAULT_LOADERS)
+
+export function registerAdapter(name, loader) {
+  if (!name || typeof name !== 'string') {
+    throw new Error('registerAdapter 需要提供字符串形式的名称')
+  }
+  if (!loader) {
+    throw new Error(`registerAdapter("${name}") 缺少 loader 或模块定义`)
+  }
+  if (typeof loader === 'function') {
+    ADAPTER_LOADERS.set(name, loader)
+  } else {
+    ADAPTER_LOADERS.set(name, async () => loader)
+  }
+}
+
+export function resetAdapterRegistry() {
+  ADAPTER_LOADERS.clear()
+  for (const [name, loader] of DEFAULT_LOADERS.entries()) {
+    ADAPTER_LOADERS.set(name, loader)
+  }
+}
+
+function getAdapterLoader(name) {
+  return ADAPTER_LOADERS.get(name)
 }
 
 function parseModelSpec(spec) {
@@ -28,7 +55,7 @@ async function resolveAdapter(method, spec, logger = console) {
     return { ...placeholderResult, isFallback: adapterName !== 'placeholder' }
   }
 
-  const loader = ADAPTER_LOADERS[adapterName]
+  const loader = getAdapterLoader(adapterName)
   if (!loader) {
     logger?.warn?.(`[ai] adapter "${adapterName}" is not registered, fallback到 placeholder`)
     return { ...placeholderResult, reason: 'not-registered' }

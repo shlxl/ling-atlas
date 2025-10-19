@@ -70,13 +70,14 @@ npm run dev
 
 - `AI_EMBED_MODEL`：选择嵌入模型适配器，格式为 `<adapter>:<model>`，示例：`transformers-node:sentence-transformers/all-MiniLM-L6-v2`。未设置或显式指定 `placeholder` 时继续走占位文本导出。
 - `AI_SUMMARY_MODEL`：摘要生成的适配器配置，格式同上；问答脚本默认复用该值，可通过 `AI_QA_MODEL` 覆盖。
+- CLI 覆盖：所有 AI CLI（`scripts/embed-build.mjs`、`scripts/summary.mjs`、`scripts/qa-build.mjs`）均支持 `--adapter <spec>`，用于临时指定 `<adapter>:<model>`，优先级高于环境变量。
 - 已内置适配器：
   - `placeholder`：延续现有占位逻辑，仅导出首段文本/Frontmatter 元信息，任何环境均可使用。
-  - `transformers-node`：基于 `@xenova/transformers` 的 Node 推理，需要先执行 `npm install @xenova/transformers` 并提供模型 ID。
-  - `onnxruntime`：预留 onnxruntime-node 加载入口，需 `npm install onnxruntime-node` 后按需扩展实现。
-- 适配器加载失败或执行异常时，脚本会记录降级日志并自动回退到 placeholder 产出，不会阻断构建。
-- 回滚策略：清空相关环境变量或设置为 `placeholder`，再次运行 `npm run ai:all` 即可恢复占位产物。
-- 单测：`node --test tests/ai/*.test.mjs` 通过 mock 适配器覆盖默认回退与占位逻辑。
+  - `transformers-node`：基于 `@xenova/transformers` 的 Node 推理，需要先执行 `npm install @xenova/transformers` 并提供模型 ID。模型文件默认会缓存在 `~/.cache/huggingface/`，如需离线部署请提前下载并设置 `TRANSFORMERS_CACHE`。
+  - `onnxruntime`：预留 onnxruntime-node 加载入口，需 `npm install onnxruntime-node` 后按需扩展实现，并将 `.onnx` 模型放置在可读目录（可使用 `ORT_DYN_THREADS` 控制线程数）。
+- 适配器加载失败或执行异常时，脚本会记录结构化降级日志（`ai.*.adapter.*`）并自动回退到 placeholder 产出，同时尝试复用上一次生成的缓存文件，尽量保持前端体验。
+- 回滚策略：清空相关环境变量或设置为 `placeholder`，再次运行 `npm run ai:all` 即可恢复占位产物；如遇模型产出异常，可手动删除 `docs/public/data/*.json` 并重新执行命令。
+- 单测：`node --test tests/ai/*.test.mjs` 通过 mock 适配器覆盖默认回退、缓存命中与 CLI 解析逻辑。
 
 ## 当前进展与下一阶段
 - Pagegen 各阶段（collect/sync/collections/feeds/i18n/writer）已模块化并输出指标，CLI 会汇总缓存命中率与写入跳过原因，最新一轮指标会同步写入 telemetry 页面，便于运维直接观测。
