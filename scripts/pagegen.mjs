@@ -17,6 +17,8 @@ import { writeCollections } from './pagegen/collections.mjs'
 import { generateRss, generateSitemap } from './pagegen/feeds.mjs'
 import { createI18nRegistry } from './pagegen/i18n-registry.mjs'
 import { createWriter } from './pagegen/writer.mjs'
+import { PagegenPluginRegistry } from './pagegen/plugin-registry.mjs'
+import { PagegenScheduler } from './pagegen/scheduler.mjs'
 
 export {
   LOCALE_REGISTRY,
@@ -75,9 +77,38 @@ await (async () => {
   const forceFullSync = argv.includes('--full-sync') || process.env.PAGEGEN_FULL_SYNC === '1'
   const disableCache = argv.includes('--no-cache') || process.env.PAGEGEN_DISABLE_CACHE === '1'
   const batchingDisabled = argv.includes('--no-batch') || process.env.PAGEGEN_DISABLE_BATCH === '1'
+  const noParallelIndex = argv.indexOf('--no-parallel')
+  const parallelDisabled = noParallelIndex !== -1 || process.env.PAGEGEN_DISABLE_PARALLEL === '1'
+  if (noParallelIndex !== -1) {
+    argv.splice(noParallelIndex, 1)
+  }
+  let maxParallel = Number(process.env.PAGEGEN_MAX_PARALLEL)
+  if (!Number.isFinite(maxParallel) || maxParallel < 1) {
+    maxParallel = undefined
+  } else {
+    maxParallel = Math.floor(maxParallel)
+  }
+  const maxParallelFlagIndex = argv.indexOf('--max-parallel')
+  if (maxParallelFlagIndex !== -1) {
+    const specified = Number(argv[maxParallelFlagIndex + 1])
+    if (!Number.isFinite(specified) || specified < 1) {
+      console.error('pagegen: --max-parallel requires a positive integer')
+      process.exit(1)
+    }
+    maxParallel = Math.floor(specified)
+    argv.splice(maxParallelFlagIndex, 2)
+  }
+  if (parallelDisabled) {
+    maxParallel = 1
+  }
+  if (!maxParallel) {
+    maxParallel = 2
+  }
   const collectConcurrency = Number(process.env.PAGEGEN_CONCURRENCY || 8)
   const effectiveDryRun = dryRun || metricsOnly
   const writer = effectiveDryRun || batchingDisabled ? null : createWriter()
+  const pluginRegistry = new PagegenPluginRegistry()
+  const scheduler = new PagegenScheduler({ maxParallel })
 
   for (const lang of LOCALE_CONFIG) {
     if (lang.generatedDir) {
@@ -129,15 +160,22 @@ await (async () => {
     logInfo(`[pagegen] ${name} ${durationMs.toFixed(1)}ms`)
   }
 
-  async function measureStage(name, fn, context) {
+  async function measureStage(name, fn, context = {}) {
+    const stageInfo = { name, ...context }
+    await pluginRegistry.runHook('beforeStage', stageInfo)
     const start = performance.now()
     try {
-      return await fn()
+      const result = await fn()
+      const duration = performance.now() - start
+      recordStage(name, duration)
+      await pluginRegistry.runHook('afterStage', stageInfo, { durationMs: duration, result })
+      return result
     } catch (error) {
+      const duration = performance.now() - start
+      recordStage(name, duration)
+      await pluginRegistry.runHook('onStageError', stageInfo, error)
       logStageError(name, context, error)
       throw error
-    } finally {
-      recordStage(name, performance.now() - start)
     }
   }
 
@@ -158,6 +196,9 @@ await (async () => {
   }
   if (metricsStdout && metricsOutputPath && !metricsOnly) {
     logInfo('[pagegen] metrics stdout mode enabled; file output will be skipped')
+  }
+  if (!metricsOnly && maxParallel > 1) {
+    logInfo(`[pagegen] locale pipeline parallelism enabled (max=${maxParallel})`)
   }
 
   const syncMetrics = await measureStage(
@@ -182,7 +223,7 @@ await (async () => {
   const collectMetrics = {}
   const feedMetrics = []
 
-  for (const lang of LOCALE_CONFIG) {
+  async function runLocalePipeline(lang) {
     const posts = await measureStage(
       `collect:${lang.manifestLocale}`,
       () =>
@@ -299,6 +340,8 @@ await (async () => {
       registry.registerPost(post, lang)
     }
   }
+
+  await scheduler.run(LOCALE_CONFIG.map(lang => () => runLocalePipeline(lang)))
 
   const i18nMap = registry.getI18nMap()
   await measureStage('scheduleI18nMap', () => writeI18nMap(i18nMap, writer), {
