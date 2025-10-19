@@ -77,7 +77,7 @@
 
 ## 实验环境规划
 
-1. **CI 预检**：新增 `codex run ai:smoke` 或 `npm run ai:smoke`，在 `ai:prepare` 成功后读取缓存并执行最小推理验证；`AI_RUNTIME=placeholder` 或 `AI_*_DISABLE` 时会输出降级日志并跳过。
+1. **CI 预检**：新增 `codex run ai:smoke` 或 `npm run ai:smoke`，在 `ai:prepare` 成功后读取缓存并执行最小推理验证；`AI_RUNTIME=placeholder` 或 `AI_*_DISABLE` 时会输出降级日志并跳过。主干推送与带 `ai-smoke` 标签的 PR 会自动运行 `ai:prepare` → `ai:smoke`，失败会写入结构化日志并触发占位回退。
 2. **本地实验矩阵**：
    - Node 22 + `onnxruntime-node`（CPU）。
    - Node 22 + `onnxruntime-web`（WASM，多线程）。
@@ -91,7 +91,7 @@
 - `AI_MODELS_SCOPE`：控制缓存目录作用域，`local`（默认）写入 `data/models/`，`global` 写入 `~/.cache/ling-atlas/models`。也可通过 `AI_MODELS_DIR=<absolute|relative>` 指定自定义目录。
 - `AI_MODELS_CLEAN=1` 或 `npm run ai:prepare -- --clean`：在准备阶段清除 manifest 未声明的旧缓存，便于切换模型或释放空间。
 - `AI_EMBED_DISABLE`、`AI_SUMMARY_DISABLE`、`AI_QA_DISABLE`：逐项关闭对应模型，`ai:smoke` 会输出降级日志，构建脚本自动回退到占位实现。
-- `data/models.json` 为模型清单的单一事实来源，包含校验哈希、缓存状态与 smoke 测试定义。扩充真实模型时请先更新该文件，再运行 `ai:prepare` 刷新缓存并提交。
+- `data/models.json` 为模型清单的单一事实来源，包含校验哈希、缓存状态、smoke 测试定义与最近一次推理结果。`ai:smoke` 会写入每个模型的 `smoke` 字段和顶层 `smoke` 摘要，失败时附加 `fallback` 节点记录原始运行时并把 manifest 的 `runtime` 改为 `placeholder`。
 
 ## 回滚策略
 
