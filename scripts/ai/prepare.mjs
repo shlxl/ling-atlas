@@ -164,10 +164,12 @@ function createEmptyManifest() {
     version: 1,
     generatedAt: null,
     runtime: 'placeholder',
+    fallback: null,
     cache: {
       preferred: 'local',
       directory: './data/models'
     },
+    smoke: null,
     models: []
   }
 }
@@ -231,6 +233,8 @@ async function main() {
     preferred: customDirectory ? 'custom' : scope,
     directory: formatDirectoryForManifest(scope, cacheDir, customDirectory)
   }
+  updatedManifest.fallback = manifest.fallback ?? null
+  updatedManifest.smoke = manifest.smoke ?? null
 
   const preparedModels = []
   let readyCount = 0

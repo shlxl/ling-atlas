@@ -130,9 +130,11 @@ npm run ai:smoke
 - 依赖提示：`transformers-node` 适配器需要 `npm install @xenova/transformers` 并提前准备模型（默认缓存到 `~/.cache/huggingface/`，离线部署可设置 `TRANSFORMERS_CACHE`）；`onnxruntime` 适配器需要 `npm install onnxruntime-node`，并手动下载 `.onnx` 模型至本地可读目录。
 - 降级与缓存：脚本会输出 `ai.*.adapter.*` 结构化日志，记录解析、失败与成功事件；若适配器执行失败或产出为空，会自动回退到 placeholder 并复用上一版 JSON 产物，保障前端体验。
 - 模型准备：`npm run ai:prepare` 读取 `data/models.json`，将所需模型写入默认缓存 `data/models/`（或通过 `AI_MODELS_SCOPE=global`、`AI_MODELS_DIR=<dir>` 指定位置），同时校验 SHA256 与缓存状态；传入 `--clean` 或设置 `AI_MODELS_CLEAN=1` 会清理清单外的旧缓存。
-- 最小验证：`npm run ai:smoke` 基于 manifest 中的 `smokeTest` 定义执行最小推理；当 `AI_RUNTIME=placeholder` 或显式设置 `AI_*_DISABLE=1` 时自动跳过，日志会写入 `ai.models.smoke.*` 事件。
+- 冒烟结果写回：`ai:smoke` 会更新每个模型的 `smoke` 字段与 manifest 顶层的 `smoke` 概览，失败时会附带 `fallback` 节点记录原始运行时与失败列表，并把 `runtime` 重置为 `placeholder`，便于回滚与审计。
+- 最小验证：`npm run ai:smoke` 基于 manifest 中的 `smokeTest` 定义执行最小推理；当 `AI_RUNTIME=placeholder` 或显式设置 `AI_*_DISABLE=1` 时自动跳过，日志会写入 `ai.models.smoke.*` 事件，失败则触发占位降级并保留结构化错误信息。
 - 快速回滚：清空相关环境变量或改为 `placeholder`，依次运行 `npm run ai:prepare` 与 `npm run ai:all` 即可恢复占位产物；必要时可删除 `docs/public/data/embeddings.json`、`summaries.json`、`qa.json` 后再执行脚本。
 - 测试：`node --test tests/ai/*.test.mjs` 覆盖占位逻辑、CLI 解析与 mock 适配器注入，确保扩展实现可被安全替换。
+- CI 触发：主干推送或带 `ai-smoke` 标签的 PR 会串联 `npm run ai:prepare` → `npm run ai:smoke`，保障缓存与推理验证在流水线内完成，失败即回退到占位运行时。
 - 导航栏已包含 `About`（观测指标、常见问答）与 `指南`（部署指南、迁移与重写）入口，确保这些文档始终可见。
 - PR-J 知识 API + Chat：`node scripts/chunk-build.mjs` 生成 `/api/knowledge.json`，前端懒加载聊天组件并在知识不可用时回退到 Pagefind 结果。
 - PR-K 搜索评测：`node scripts/eval/offline.mjs` 守门 nDCG/MRR/Recall，`?variant=lex|rrf|rrf-mmr` 触发 Team Draft 交替曝光并写入匿名遥测。

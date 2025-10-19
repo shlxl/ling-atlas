@@ -12,6 +12,17 @@ const DEFAULT_CACHE_DIRECTORIES = {
   global: path.join(os.homedir(), '.cache', 'ling-atlas', 'models')
 }
 
+function clone(value) {
+  if (typeof structuredClone === 'function') {
+    return structuredClone(value)
+  }
+  return JSON.parse(JSON.stringify(value))
+}
+
+function nowISO() {
+  return new Date().toISOString()
+}
+
 function parseArgs(argv = process.argv) {
   const args = Array.isArray(argv) ? argv.slice(2) : []
   const parsed = {}
@@ -136,20 +147,48 @@ async function main() {
   }
 
   const runtime = resolveRuntime(args.runtime, manifest)
+  const baseDir = resolveCacheBase(manifest, args)
+  const models = Array.isArray(manifest.models) ? manifest.models : []
+  const updatedManifest = clone(manifest)
+  const updatedModels = []
+
   if (runtime === 'placeholder' || runtime === 'none') {
+    const reason = 'Runtime set to placeholder; skipping inference checks.'
+    for (const model of models) {
+      const entry = clone(model)
+      entry.smoke = {
+        status: 'skipped',
+        reason,
+        verifiedAt: null
+      }
+      updatedModels.push(entry)
+    }
+
+    updatedManifest.models = updatedModels
+    updatedManifest.smoke = {
+      status: 'skipped',
+      runtime,
+      executed: 0,
+      skipped: models.length,
+      failed: 0,
+      verifiedAt: nowISO(),
+      reason
+    }
+
+    await fs.writeFile(MANIFEST_PATH, `${JSON.stringify(updatedManifest, null, 2)}\n`, 'utf8')
+
     logStructured('ai.models.smoke.skipped', {
       runtime,
-      reason: 'Runtime set to placeholder; skipping inference checks.'
+      reason
     })
     return
   }
 
-  const baseDir = resolveCacheBase(manifest, args)
-  const models = Array.isArray(manifest.models) ? manifest.models : []
   let executed = 0
   let skipped = 0
   let failed = 0
   const failedIds = []
+  const failureDetails = []
 
   logStructured('ai.models.smoke.start', {
     runtime,
@@ -157,43 +196,72 @@ async function main() {
   })
 
   for (const model of models) {
+    const entry = clone(model)
     const supportedRuntimes = Array.isArray(model.runtime) ? model.runtime : []
     if (!supportedRuntimes.includes(runtime)) {
       skipped += 1
+      const reason = `runtime ${runtime} unsupported`
+      entry.smoke = {
+        status: 'skipped',
+        reason,
+        verifiedAt: null
+      }
+      updatedModels.push(entry)
       logStructured('ai.models.smoke.model', {
         id: model.id,
         status: 'skipped',
-        reason: `runtime ${runtime} unsupported`
+        reason
       })
       continue
     }
 
     if (model.disableEnv && isTruthy(process.env[model.disableEnv])) {
       skipped += 1
+      const reason = `disabled via ${model.disableEnv}`
+      entry.smoke = {
+        status: 'skipped',
+        reason,
+        verifiedAt: null
+      }
+      updatedModels.push(entry)
       logStructured('ai.models.smoke.model', {
         id: model.id,
         status: 'skipped',
-        reason: `disabled via ${model.disableEnv}`
+        reason
       })
       continue
     }
 
     if (model.cache?.status !== 'ready') {
       skipped += 1
+      const reason = `cache status ${model.cache?.status ?? 'unknown'}`
+      entry.smoke = {
+        status: 'skipped',
+        reason,
+        verifiedAt: null
+      }
+      updatedModels.push(entry)
       logStructured('ai.models.smoke.model', {
         id: model.id,
         status: 'skipped',
-        reason: `cache status ${model.cache?.status ?? 'unknown'}`
+        reason
       })
       continue
     }
 
     if (!model.smokeTest) {
       skipped += 1
+      const reason = 'smokeTest definition missing'
+      entry.smoke = {
+        status: 'skipped',
+        reason,
+        verifiedAt: null
+      }
+      updatedModels.push(entry)
       logStructured('ai.models.smoke.model', {
         id: model.id,
         status: 'skipped',
-        reason: 'smokeTest definition missing'
+        reason
       })
       continue
     }
@@ -202,10 +270,18 @@ async function main() {
     if (!relativePath) {
       failed += 1
       failedIds.push(model.id)
+      const reason = 'cache location missing'
+      entry.smoke = {
+        status: 'failed',
+        reason,
+        verifiedAt: nowISO()
+      }
+      failureDetails.push({ id: model.id, reason })
+      updatedModels.push(entry)
       logStructured('ai.models.smoke.model', {
         id: model.id,
         status: 'failed',
-        reason: 'cache location missing'
+        reason
       })
       continue
     }
@@ -220,6 +296,12 @@ async function main() {
           throw new Error(`Unsupported smoke test type "${model.smokeTest.type}"`)
       }
       executed += 1
+      entry.smoke = {
+        status: 'passed',
+        reason: null,
+        verifiedAt: nowISO()
+      }
+      updatedModels.push(entry)
       logStructured('ai.models.smoke.model', {
         id: model.id,
         status: 'passed',
@@ -228,13 +310,23 @@ async function main() {
     } catch (error) {
       failed += 1
       failedIds.push(model.id)
+      const reason = error?.message || String(error)
+      entry.smoke = {
+        status: 'failed',
+        reason,
+        verifiedAt: nowISO()
+      }
+      failureDetails.push({ id: model.id, reason })
+      updatedModels.push(entry)
       logStructured('ai.models.smoke.model', {
         id: model.id,
         status: 'failed',
-        reason: error?.message || String(error)
+        reason
       })
     }
   }
+
+  updatedManifest.models = updatedModels
 
   logStructured('ai.models.smoke.complete', {
     runtime,
@@ -242,6 +334,37 @@ async function main() {
     skipped,
     failed
   })
+
+  const summary = {
+    status: failed > 0 ? 'failed' : 'passed',
+    runtime,
+    executed,
+    skipped,
+    failed,
+    verifiedAt: nowISO(),
+    failures: failureDetails
+  }
+
+  updatedManifest.smoke = summary
+
+  if (failed > 0 && runtime !== 'placeholder' && runtime !== 'none') {
+    const fallbackInfo = {
+      activatedAt: nowISO(),
+      fromRuntime: runtime,
+      reason: 'smoke-failed',
+      failedModels: failureDetails
+    }
+    updatedManifest.fallback = fallbackInfo
+    updatedManifest.runtime = 'placeholder'
+    logStructured('ai.models.smoke.rollback', {
+      ...fallbackInfo,
+      manifest: path.relative(ROOT, MANIFEST_PATH)
+    })
+  } else if (failed === 0 && updatedManifest?.fallback?.reason === 'smoke-failed') {
+    updatedManifest.fallback = null
+  }
+
+  await fs.writeFile(MANIFEST_PATH, `${JSON.stringify(updatedManifest, null, 2)}\n`, 'utf8')
 
   if (failed > 0) {
     throw new Error(`Smoke tests failed for: ${failedIds.join(', ')}`)
