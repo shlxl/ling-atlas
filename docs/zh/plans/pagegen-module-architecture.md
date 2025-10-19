@@ -27,6 +27,15 @@ title: Pagegen 模块拆分草案（阶段 1）
 - `scripts/pagegen/i18n.mjs`
 - `scripts/pagegen/telemetry.mjs`
 
+## 插件调度契约（阶段 4 更新）
+
+- 新增 `scripts/pagegen/plugin-registry.mjs`，提供 `createPluginRegistry()` 与 `lifecycleEvents`。每个阶段需通过 `registerStage({ name, run })` 或 `registerStage({ name, iterator, task })` 注册，注册顺序即执行顺序。
+- 阶段可选择实现 `run(shared)`（一次性任务）或 `iterator(shared) → task(item, shared)`（批处理任务）。当 `parallel: true` 且调度器未被禁用时，`task` 会在受控并发池中执行，默认并发度为 4，可通过 `--parallel-limit <n>` 或 `PAGEGEN_PARALLEL_LIMIT` 调整。
+- 支持的生命周期事件为 `beforeAll`、`afterAll`、`beforeStage`、`afterStage`、`stageError`。插件可通过 `registry.on(lifecycleEvents.<HOOK>, handler)` 注入额外逻辑，例如记录指标或自定义日志。
+- 调度器实现位于 `scripts/pagegen/scheduler.mjs`，构造时可传入 `{ parallel: false }` 停用并发；CLI 也提供 `--no-parallel` 或环境变量 `PAGEGEN_DISABLE_PARALLEL=1` 作为快速回退开关。
+- 现有 orchestrator 已通过调度器串联 `sync → collect → meta → collections → feeds → i18n-map → nav-manifest → write`，其中 `feeds` 阶段在默认配置下会并发生成各语言的 RSS 与 Sitemap 并写入 i18n registry。
+- `tests/pagegen/plugins.test.mjs` 覆盖阶段执行顺序、并发幂等性与错误传播，后续新增插件时可参考该文件补充更多契约测试。
+
 ## 测试策略
 
 - 引入 `vitest` 或 Node 18+ 原生 `node:test`，完成以下单元测试（✅ 当前使用 `node:test` 已覆盖）：
