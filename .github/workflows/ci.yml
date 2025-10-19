@@ -57,6 +57,13 @@ jobs:
         if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
         run: |
           git fetch --depth=2 origin main
+          if ! git cat-file -e origin/main:data/stats.snapshot.json 2>/dev/null; then
+            echo 'Skip stats diff: baseline snapshot not found on origin/main.' >&2
+            echo "exit_code=0" >> "$GITHUB_OUTPUT"
+            echo "has_report=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          rm -f stats-diff.json
           set +e
           npm run stats:diff -- \
             --baseline origin/main:data/stats.snapshot.json \
@@ -70,14 +77,14 @@ jobs:
           if [ -f stats-diff.json ]; then
             echo "has_report=true" >> "$GITHUB_OUTPUT"
             node - <<'NODE'
-const fs = require('fs')
-const summaryPath = process.env.GITHUB_STEP_SUMMARY
-if (!summaryPath) process.exit(0)
-if (!fs.existsSync('stats-diff.json')) process.exit(0)
-const raw = fs.readFileSync('stats-diff.json', 'utf8').trim()
-if (!raw) process.exit(0)
-fs.appendFileSync(summaryPath, `### stats:diff 输出\n\n\`\`\`json\n${raw}\n\`\`\`\n`)
-NODE
+              const fs = require('fs')
+              const summaryPath = process.env.GITHUB_STEP_SUMMARY
+              if (!summaryPath) process.exit(0)
+              if (!fs.existsSync('stats-diff.json')) process.exit(0)
+              const raw = fs.readFileSync('stats-diff.json', 'utf8').trim()
+              if (!raw) process.exit(0)
+              fs.appendFileSync(summaryPath, `### stats:diff 输出\n\n\`\`\`json\n${raw}\n\`\`\`\n`)
+            NODE
           fi
           echo "stats:diff exit code: ${status}"
           exit 0
