@@ -91,6 +91,8 @@ codex run publish --message "chore: content update"
 codex run dev
 codex run audit   # 可选
 npm run stats:lint
+npm run ai:prepare
+npm run ai:smoke
 ```
 
 ---
@@ -127,7 +129,9 @@ npm run stats:lint
 - 适配器配置：通过环境变量 `AI_EMBED_MODEL`、`AI_SUMMARY_MODEL`（问答可用 `AI_QA_MODEL` 覆盖）或命令行参数 `--adapter <adapter>:<model>` 选择实现；默认或显式设置 `placeholder` 时沿用占位逻辑。
 - 依赖提示：`transformers-node` 适配器需要 `npm install @xenova/transformers` 并提前准备模型（默认缓存到 `~/.cache/huggingface/`，离线部署可设置 `TRANSFORMERS_CACHE`）；`onnxruntime` 适配器需要 `npm install onnxruntime-node`，并手动下载 `.onnx` 模型至本地可读目录。
 - 降级与缓存：脚本会输出 `ai.*.adapter.*` 结构化日志，记录解析、失败与成功事件；若适配器执行失败或产出为空，会自动回退到 placeholder 并复用上一版 JSON 产物，保障前端体验。
-- 快速回滚：清空相关环境变量或改为 `placeholder`，重新运行 `npm run ai:all` 即可恢复占位产物；必要时可删除 `docs/public/data/embeddings.json`、`summaries.json`、`qa.json` 后再执行脚本。
+- 模型准备：`npm run ai:prepare` 读取 `data/models.json`，将所需模型写入默认缓存 `data/models/`（或通过 `AI_MODELS_SCOPE=global`、`AI_MODELS_DIR=<dir>` 指定位置），同时校验 SHA256 与缓存状态；传入 `--clean` 或设置 `AI_MODELS_CLEAN=1` 会清理清单外的旧缓存。
+- 最小验证：`npm run ai:smoke` 基于 manifest 中的 `smokeTest` 定义执行最小推理；当 `AI_RUNTIME=placeholder` 或显式设置 `AI_*_DISABLE=1` 时自动跳过，日志会写入 `ai.models.smoke.*` 事件。
+- 快速回滚：清空相关环境变量或改为 `placeholder`，依次运行 `npm run ai:prepare` 与 `npm run ai:all` 即可恢复占位产物；必要时可删除 `docs/public/data/embeddings.json`、`summaries.json`、`qa.json` 后再执行脚本。
 - 测试：`node --test tests/ai/*.test.mjs` 覆盖占位逻辑、CLI 解析与 mock 适配器注入，确保扩展实现可被安全替换。
 - 导航栏已包含 `About`（观测指标、常见问答）与 `指南`（部署指南、迁移与重写）入口，确保这些文档始终可见。
 - PR-J 知识 API + Chat：`node scripts/chunk-build.mjs` 生成 `/api/knowledge.json`，前端懒加载聊天组件并在知识不可用时回退到 Pagefind 结果。

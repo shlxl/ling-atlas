@@ -27,6 +27,8 @@
     "ai:embed": "node scripts/embed-build.mjs",
     "ai:summary": "node scripts/summary.mjs",
     "ai:qa": "node scripts/qa-build.mjs",
+    "ai:prepare": "node scripts/ai/prepare.mjs",
+    "ai:smoke": "node scripts/ai/smoke.mjs",
     "ai:all": "npm run ai:embed && (npm run ai:summary || true) && (npm run ai:qa || true)",
     "test:pagegen": "node --test tests/pagegen/*.test.mjs",
     "test:links": "node --test tests/check-links/*.test.mjs",

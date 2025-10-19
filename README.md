@@ -59,7 +59,8 @@ npm run dev
 - `npm run pwa:build`：独立构建 PWA 产物（`sw.js`、`manifest.webmanifest`、`icons/`）
 - `npm run dev`：本地开发（前置 `gen`）
 - `npm run knowledge:build`：单独更新 `/api/knowledge.json`（段落级知识数据）
-- `npm run eval:offline`：基于 `data/gold.jsonl` 运行离线检索评测（nDCG/MRR/Recall），确保不低于 `scripts/eval/baseline.json`
+- `npm run ai:prepare`：读取 `data/models.json`、写入模型缓存目录（默认 `data/models/`），并校验 SHA256 与缓存状态
+- `npm run ai:smoke`：在已准备的缓存上运行最小推理验证；`AI_RUNTIME=placeholder` 或相关 `AI_*_DISABLE` 时自动跳过
 - `npm run ai:all`：执行 AI 自演进管线（文本嵌入 / 摘要 / 问答，占位实现）
 - `npm run audit`：运行 `npm audit --omit=dev`（不阻断，输出依赖安全告警）
 - `npm run license`：汇总第三方许可证（`license-checker --summary`）
@@ -68,6 +69,7 @@ npm run dev
 
 ### AI 管线配置与回滚
 
+- `AI_RUNTIME`：决定 `ai:prepare`/`ai:smoke` 的运行时（`placeholder`、`node`、`wasm` 等）。未设置时默认为 `placeholder` 并跳过真实模型下载。
 - `AI_EMBED_MODEL`：选择嵌入模型适配器，格式为 `<adapter>:<model>`，示例：`transformers-node:sentence-transformers/all-MiniLM-L6-v2`。未设置或显式指定 `placeholder` 时继续走占位文本导出。
 - `AI_SUMMARY_MODEL`：摘要生成的适配器配置，格式同上；问答脚本默认复用该值，可通过 `AI_QA_MODEL` 覆盖。
 - CLI 覆盖：所有 AI CLI（`scripts/embed-build.mjs`、`scripts/summary.mjs`、`scripts/qa-build.mjs`）均支持 `--adapter <spec>`，用于临时指定 `<adapter>:<model>`，优先级高于环境变量。
@@ -76,7 +78,9 @@ npm run dev
   - `transformers-node`：基于 `@xenova/transformers` 的 Node 推理，需要先执行 `npm install @xenova/transformers` 并提供模型 ID。模型文件默认会缓存在 `~/.cache/huggingface/`，如需离线部署请提前下载并设置 `TRANSFORMERS_CACHE`。
   - `onnxruntime`：预留 onnxruntime-node 加载入口，需 `npm install onnxruntime-node` 后按需扩展实现，并将 `.onnx` 模型放置在可读目录（可使用 `ORT_DYN_THREADS` 控制线程数）。
 - 适配器加载失败或执行异常时，脚本会记录结构化降级日志（`ai.*.adapter.*`）并自动回退到 placeholder 产出，同时尝试复用上一次生成的缓存文件，尽量保持前端体验。
-- 回滚策略：清空相关环境变量或设置为 `placeholder`，再次运行 `npm run ai:all` 即可恢复占位产物；如遇模型产出异常，可手动删除 `docs/public/data/*.json` 并重新执行命令。若需临时停止遥测事件写入，可设置 `AI_TELEMETRY_DISABLE=1`。
+- 模型缓存：`data/models.json` 记录模型来源、校验哈希与缓存状态，`npm run ai:prepare` 会在默认目录（`data/models/`）或指定目录（见下）生成/覆盖模型文件。手动切换到全局缓存时，可设置 `AI_MODELS_SCOPE=global`，或通过 `AI_MODELS_DIR=<path>` 指向自定义目录。传入 `--clean` 或设置 `AI_MODELS_CLEAN=1` 会在准备阶段删除清单外的旧文件。
+- 降级开关：`AI_EMBED_DISABLE=1`、`AI_SUMMARY_DISABLE=1`、`AI_QA_DISABLE=1` 可分别跳过对应模型；当运行时为 `placeholder` 时，`ai:prepare` 仍会生成占位模型并更新缓存状态，`ai:smoke` 会输出跳过日志。
+- 回滚策略：清空相关环境变量或设置为 `placeholder`，依次运行 `npm run ai:prepare`（刷新模型缓存与状态）和 `npm run ai:all` 即可恢复占位产物；如遇模型产出异常，可手动删除 `docs/public/data/*.json` 并重新执行命令。若需临时停止遥测事件写入，可设置 `AI_TELEMETRY_DISABLE=1`。
 - 单测：`node --test tests/ai/*.test.mjs` 通过 mock 适配器覆盖默认回退、缓存命中与 CLI 解析逻辑。
 
 ## 当前进展与下一阶段
