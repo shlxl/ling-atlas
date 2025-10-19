@@ -4,7 +4,13 @@ import fs from 'node:fs/promises'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { collectLocaleDocuments } from './ai/content.mjs'
-import { ensureDir, logStructured, readJSONIfExists, resolveAdapterSpec } from './ai/utils.mjs'
+import {
+  ensureDir,
+  flushAIEvents,
+  logStructured,
+  readJSONIfExists,
+  resolveAdapterSpec
+} from './ai/utils.mjs'
 import { loadSummaryAdapter } from './ai/adapters/index.mjs'
 import { LOCALE_REGISTRY, getPreferredLocale } from './pagegen.locales.mjs'
 
@@ -14,6 +20,7 @@ const OUTPUT_DIR = path.join(ROOT, 'docs', 'public', 'data')
 const OUTPUT_FILE = path.join(OUTPUT_DIR, 'summaries.json')
 
 async function main() {
+  const scriptStartedAt = Date.now()
   const preferredLocale = getPreferredLocale()
   const preferredLocaleConfig =
     LOCALE_REGISTRY.find(locale => locale.code === preferredLocale) || LOCALE_REGISTRY[0]
@@ -29,17 +36,33 @@ async function main() {
   const spec = resolveAdapterSpec({ envKey: 'AI_SUMMARY_MODEL', cliFlag: 'adapter' })
   const previous = await readJSONIfExists(OUTPUT_FILE)
 
+  const events = []
+
+  events.push(
+    logStructured(
+      'ai.summary.start',
+      {
+        locale: preferredLocaleConfig.code,
+        inputCount: documents.length,
+        requestedAdapter: spec || 'placeholder'
+      },
+      console
+    )
+  )
+
   const adapterInfo = await loadSummaryAdapter(spec, console)
-  logStructured(
-    'ai.summary.adapter.resolved',
-    {
-      requested: spec || 'placeholder',
-      adapter: adapterInfo.adapterName,
-      model: adapterInfo.model,
-      fallback: adapterInfo.isFallback,
-      reason: adapterInfo.reason || null
-    },
-    console
+  events.push(
+    logStructured(
+      'ai.summary.adapter.resolved',
+      {
+        requested: spec || 'placeholder',
+        adapter: adapterInfo.adapterName,
+        model: adapterInfo.model,
+        fallback: adapterInfo.isFallback,
+        reason: adapterInfo.reason || null
+      },
+      console
+    )
   )
 
   let adapterModule = adapterInfo.adapter
@@ -47,15 +70,19 @@ async function main() {
   let usedModel = adapterInfo.model
   let usedFallback = adapterInfo.isFallback
   let result
+  let retries = 0
+  const inferenceStartedAt = Date.now()
 
   try {
     result = await adapterModule.summarize({ documents, model: usedModel, logger: console })
   } catch (error) {
     const message = error?.message || String(error)
-    logStructured(
-      'ai.summary.adapter.error',
-      { adapter: usedName, model: usedModel, message },
-      console
+    events.push(
+      logStructured(
+        'ai.summary.adapter.error',
+        { adapter: usedName, model: usedModel, message },
+        console
+      )
     )
     console.warn(`[summary] adapter "${usedName}" 执行失败：${message}，已降级至 placeholder`)
     const fallback = await loadSummaryAdapter('placeholder', console)
@@ -63,8 +90,11 @@ async function main() {
     usedName = 'placeholder'
     usedModel = null
     usedFallback = true
+    retries += 1
     result = await adapterModule.summarize({ documents, model: null, logger: console })
   }
+
+  const inferenceDurationMs = Date.now() - inferenceStartedAt
 
   let finalItems = Array.isArray(result?.items) ? result.items : []
   let reusedCache = false
@@ -77,33 +107,72 @@ async function main() {
 
   const sortedItems = finalItems.sort((a, b) => a.title.localeCompare(b.title, 'zh-CN'))
 
-  await fs.writeFile(
-    OUTPUT_FILE,
-    JSON.stringify(
+  const payload = {
+    generatedAt: new Date().toISOString(),
+    items: sortedItems
+  }
+  const serialized = JSON.stringify(payload, null, 2)
+  const writeStartedAt = Date.now()
+  await fs.writeFile(OUTPUT_FILE, serialized, 'utf8')
+  const writeDurationMs = Date.now() - writeStartedAt
+
+  const successRate = documents.length === 0 ? 1 : Number((sortedItems.length / documents.length).toFixed(4))
+
+  events.push(
+    logStructured(
+      'ai.summary.batch',
       {
-        generatedAt: new Date().toISOString(),
-        items: sortedItems
+        index: 0,
+        durationMs: inferenceDurationMs,
+        inputCount: documents.length,
+        outputCount: sortedItems.length,
+        successRate,
+        adapter: usedName,
+        model: usedModel,
+        fallback: usedFallback,
+        retries
       },
-      null,
-      2
-    ),
-    'utf8'
+      console
+    )
+  )
+
+  events.push(
+    logStructured(
+      'ai.summary.write',
+      {
+        target: path.relative(ROOT, OUTPUT_FILE),
+        bytes: Buffer.byteLength(serialized, 'utf8'),
+        durationMs: writeDurationMs,
+        items: sortedItems.length,
+        cacheReuse: reusedCache
+      },
+      console
+    )
   )
 
   const mode = usedFallback
     ? '占位模式'
     : `adapter: ${usedName}${usedModel ? ` (${usedModel})` : ''}`
-  logStructured(
-    'ai.summary.completed',
-    {
-      adapter: usedName,
-      model: usedModel,
-      fallback: usedFallback,
-      cacheReuse: reusedCache,
-      count: sortedItems.length
-    },
-    console
+  events.push(
+    logStructured(
+      'ai.summary.complete',
+      {
+        adapter: usedName,
+        model: usedModel,
+        fallback: usedFallback,
+        cacheReuse: reusedCache,
+        count: sortedItems.length,
+        inputCount: documents.length,
+        outputCount: sortedItems.length,
+        successRate,
+        totalMs: Date.now() - scriptStartedAt,
+        batchCount: 1,
+        retries
+      },
+      console
+    )
   )
+  await flushAIEvents('summary', events, console)
   console.log(`[summary] summaries.json 写入 ${sortedItems.length} 条（${mode}${reusedCache ? '，命中缓存' : ''}）`)
 }
 
