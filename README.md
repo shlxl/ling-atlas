@@ -12,7 +12,7 @@
 - PR-J 知识 API + Chat：导出段落级只读数据，前端提供带引用的轻量问答
 - PR-L 多语/i18n：`schema/locales.json` 统一描述所有语言的内容目录、导航文案与生成路径，Pagegen 会遍历配置生成各语言的聚合页 / RSS / Sitemap，并输出 `nav.manifest.<locale>.json`
 - PR-M 供应链加固 2.0：npm ci + Audit/License 审计、CycloneDX SBOM、SRI 哈希变更守门
-- PR-M（规划中）：SEO / OpenGraph 优化，使知识库更易被搜索引擎收录与展示
+- PR-M SEO/OpenGraph 配置：`schema/seo.json` + 主题 `<meta>` 注入，站点级元数据集中托管
 - PR-K 搜索评测：离线 nDCG/MRR/Recall 守门 + 线上查询参数 variant（lex / rrf / rrf-mmr）交替曝光
 
 ## 快速开始
@@ -53,7 +53,8 @@ npm run dev
 - `npm run test:links`：基于临时站点夹具运行链接巡检，覆盖 Markdown、nav manifest、i18n map 成功与失败场景
 - `npm run stats:lint`：按语言统计分类/标签，控制台输出 TopN 并写入 `data/stats.snapshot.json`，CI 会上传该快照方便历史对比
 - `npm run stats:diff -- --baseline <ref:path|file> [--current <file>]`：对比两份分类/标签快照，输出高于阈值的差异（默认 warn≥30%、fail≥60%）；未显式指定时会尝试从 git 历史（`origin/main`、`HEAD^` 等）寻找 baseline，若无法定位则打印提示并跳过对比
-- `npm run precheck`：Frontmatter Schema 校验（阻断）
+- `npm run precheck`：Frontmatter 与导航/SEO/标签配置校验（阻断）
+- `npm run config:seo`：校验 SEO/OpenGraph 配置（Schema + 引用完整性）
 - `npm run build`：构建站点（前置 `gen` + `knowledge:build`），自动生成中英双语 RSS/Sitemap
 - `npm run pwa:build`：独立构建 PWA 产物（`sw.js`、`manifest.webmanifest`、`icons/`）
 - `npm run dev`：本地开发（前置 `gen`）
@@ -83,7 +84,7 @@ npm run dev
 - 下一阶段重点：
   1. 🗂️ 将 RSS/Sitemap 生成模板配置化（`schema/feeds.templates.json`），并在 `tests/pagegen/feeds.test.mjs` 增补自定义模板与限流覆盖。
   2. 🔗 链接巡检守门已上线（`npm run test:links`），在临时目录中覆盖缺失链接与聚合缺失文件场景，可继续拓展更多边界用例。
-  3. 🧭 Schema 化站点级 SEO/OpenGraph 配置，更新 README/运维文档并在主题层快照验证 `<meta>` 输出。
+  3. ✅ Schema 化站点级 SEO/OpenGraph 配置，新增 `schema/seo.json` + `<meta>` 测试与运维回滚指引。
   4. 🤖 推进 AI 管线适配层（Transformers.js / onnxruntime），在 `scripts/ai/*` 中提供可回退实现并记录遥测指标。
 
 ## 协作约束速查
@@ -98,7 +99,7 @@ npm run dev
 - **CI 守门**：流水线默认执行 `npm ci`、前置校验、Pagegen 单测、`node scripts/stats-lint.mjs` + `node scripts/stats-diff.mjs`、`node .codex/budget.mjs` 等步骤；主干推送会额外安装 Chrome 依赖并运行 `npx lhci autorun --collect.chromeFlags="--no-sandbox"`，PR 仅保留核心守门以控制耗时。
 - **内容生产力工具**：通过 `npm run md:lint`、`node scripts/check-links.mjs`、`npm run test:links`、`node scripts/img-opt.mjs` 守门 Markdown、链接与图片质量；其中 `check-links` 会额外校验 `nav.manifest.<locale>.json` 与 `i18n-map.json` 内的目标路径，必要时可在 CI 中暂时调高阈值或跳过。
 - **Landing 入口 BASE 兜底**：`docs/index.md` 的内联重定向脚本会写入 `__LING_ATLAS_ACTIVE_BASE__` 并由 `<script setup>` 在 hydration 期间复用，确保 `/` 与 `/ling-atlas/` 等不同 BASE 下的首屏重定向一致；前端通过 `docs/.vitepress/theme/base.mjs` 统一读取、缓存与复用该 BASE，Locale Toggle、导航 manifest 以及 Telemetry 资产加载都会依赖此模块。如需修改入口，请同步维护内联脚本、`base.mjs` 与相关调用。
-- **导航与标签配置 Playbook**：在修改 `schema/nav.json`、`schema/tag-alias.json` 之前，务必阅读 `docs/zh/plans/nav-config-playbook.md`；文档提供配置步骤、守门命令与常见故障排查。
+- **导航/标签/SEO 配置 Playbook**：在修改 `schema/nav.json`、`schema/tag-alias.json` 或 `schema/seo.json` 之前，务必阅读 `docs/zh/plans/nav-config-playbook.md` 与 `docs/zh/plans/seo-config-playbook.md`；文档提供配置步骤、守门命令与常见故障排查。
 
 ## 统计监控与告警流程
 
@@ -112,6 +113,7 @@ npm run dev
 1. 修改内容或配置后，依次执行：
    ```bash
    npm run config:nav   # 如涉及导航
+   npm run config:seo   # 如涉及站点级 SEO/OpenGraph
    npm run config:tags  # 如涉及标签
    node scripts/pagegen.mjs --dry-run --metrics-output /tmp/pagegen-metrics.json
    npm run test:pagegen && npm run test:theme

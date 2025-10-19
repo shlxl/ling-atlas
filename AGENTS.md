@@ -66,9 +66,9 @@ codex run publish --message "update: 新增文章 <title>"
 ```
 行为：`tags:normalize` → `precheck` → `gen` → `build` → `git commit & push`。
 
-### 导航与标签 Playbook
+### 导航 / 标签 / SEO Playbook
 
-- 在修改 `schema/nav.json`、`schema/tag-alias.json` 前，请先阅读 `docs/zh/plans/nav-config-playbook.md`。
+- 在修改 `schema/nav.json`、`schema/tag-alias.json` 或 `schema/seo.json` 前，请先阅读 `docs/zh/plans/nav-config-playbook.md` 与 `docs/zh/plans/seo-config-playbook.md`。
 - Playbook 提供配置步骤、守门命令、dry run 验证与常见故障排查；执行完文档中的“最小验证”后再运行 `codex run publish`。
 
 ---
@@ -130,7 +130,7 @@ npm run stats:lint
 - PR-J 知识 API + Chat：`node scripts/chunk-build.mjs` 生成 `/api/knowledge.json`，前端懒加载聊天组件并在知识不可用时回退到 Pagefind 结果。
 - PR-K 搜索评测：`node scripts/eval/offline.mjs` 守门 nDCG/MRR/Recall，`?variant=lex|rrf|rrf-mmr` 触发 Team Draft 交替曝光并写入匿名遥测。
 - PR-L 多语/i18n：`schema/locales.json` 驱动多语言目录与文案，`pagegen` 会按配置遍历每个语言目录生成聚合页、RSS、Sitemap，并同步路径映射到 `docs/public/i18n-map.json`；`npm run gen` 与 `npm run test:pagegen` 会自动依据最新配置执行。
-- PR-M（待推进）：SEO / OpenGraph 优化与站点地图扩展，让知识库在搜索引擎中拥有更高可见度。
+- PR-M SEO/OpenGraph 配置：`schema/seo.json` 驱动站点级元数据，主题已注入 `<meta>`/`<link rel="canonical">` 并提供回滚策略。
 - PR-M 供应链加固 2.0：CI 强制 `npm ci`；新增 `npm run audit`、`npm run license`、`npm run sbom`；`scripts/sri.mjs` 对外链哈希差异直接报错，`docs/public/.well-known/sbom.json` 输出 CycloneDX SBOM。离线或 CDN 无法访问时脚本会沿用 allowlist 的哈希并打印警告，不会阻断构建；联网后请重新执行确认哈希仍然匹配。
 
 ## 9. 下一阶段任务：Pagegen 优化重构
@@ -154,7 +154,7 @@ npm run stats:lint
 - 📌 **下一阶段重点**：
   1. 将 RSS/Sitemap 生成逻辑配置化（`schema/feeds.templates.json`），并在 `tests/pagegen/feeds.test.mjs` 覆盖自定义模板与限流场景。
   2. 链接巡检守门已上线：`npm run test:links` 会在临时目录中验证 Markdown 缺失链接与聚合文件缺失场景，持续扩展更多边界用例。
-  3. 梳理 SEO/OpenGraph 配置 Schema，补充 README/运维指引，并在主题层验证 `<meta>` 输出。
+  3. ✅ 已上线 SEO/OpenGraph Schema（`schema/seo.json`），同步更新 README/运维指引与主题 `<meta>` 测试。
   4. 持续推进 AI 管线（Transformers.js / onnxruntime 等）适配层，确保真实模型接入具备回退路径与结构化遥测。
 - ✅ **导航配置引用守门**：`scripts/validate-nav-config.mjs` 与 `scripts/pagegen.locales.mjs` 现会校验 `aggregates`、`sections`、`links` 的引用关系，运行前即可捕获缺失键，Pagegen orchestrator 中的 nav manifest 也会提示未映射的聚合键。
 - ✅ **导航与 i18n 预检显式化**：i18n registry 与导航配置加载过程会在 manifestKey/slug 缺失时即时抛错，`normalizeAggregates` 等关键路径同步补强定位信息，对应单测已覆盖误删/拼写错误场景。
