@@ -50,14 +50,20 @@ jobs:
           path: data/stats.snapshot.json
       - name: 跳过 fork PR 的统计对比
         if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository
-        run: echo 'Skip stats diff: forked pull requests do not have access to origin/main baseline.'
+        run: |
+          echo 'Skip stats diff: forked pull requests do not have access to origin/main baseline.'
       - name: 对比主干统计快照
         id: stats_diff
         if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
         run: |
           git fetch --depth=2 origin main
           set +e
-          npm run stats:diff -- --baseline origin/main:data/stats.snapshot.json --current data/stats.snapshot.json --quiet --json > stats-diff.json
+          npm run stats:diff -- \
+            --baseline origin/main:data/stats.snapshot.json \
+            --current data/stats.snapshot.json \
+            --quiet \
+            --json \
+            > stats-diff.json
           status=$?
           set -e
           echo "exit_code=${status}" >> "$GITHUB_OUTPUT"
