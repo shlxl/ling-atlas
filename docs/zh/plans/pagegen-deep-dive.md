@@ -146,16 +146,7 @@ Pagegen 主脚本以串行 orchestrator 形式驱动各阶段，并在 `data/pag
 
 1. **Orchestrator 契约与日志**：整理 `pagegen.mjs` 阶段契约文档，补充端到端集成测试，并在错误输出中追加阶段/locale/target 等上下文。
 2. **导航/i18n 失败显式化**：在 `i18n-registry` 与 nav 校验阶段直接抛出 manifestKey/slug 命中异常，并为错误日志补足 locale/slug 信息。
-3. **统计与监控**：✅ Pagegen CLI 已输出 collect 缓存命中率与 writer 哈希跳过摘要，最新指标会同步写入 telemetry。
-   - CI：上传 `data/stats.snapshot.json` 后依次执行：
-
-     ```bash
-     git fetch --depth=2 origin main
-     npm run stats:diff -- --baseline origin/main:data/stats.snapshot.json --current data/stats.snapshot.json --quiet --json
-     ```
-
-     输出会同步写入 Step Summary 与 `stats-diff-report` 工件，并依据退出码 2 阻断流水线。
-   - 配置：通过 `STATS_WARN_THRESHOLD`、`STATS_FAIL_THRESHOLD`、`STATS_DIFF_LIMIT` 调整阈值或列表长度，nightly 任务沿用同一命令即可比对外部快照。
+3. **统计与监控**：✅ Pagegen CLI 已输出 collect 缓存命中率与 writer 哈希跳过摘要，最新指标会同步写入 telemetry；`npm run stats:diff` 支持在 nightly/PR 中对比 `stats.snapshot.json` 并按阈值告警，若缺少 baseline 则会尝试读取 `origin/main` 或上一提交的快照，均不可得时会记录提示并跳过，以免阻断流程。
 4. **模板与可配置性**（次优先）：研判 collections/feeds Markdown 模板是否需要抽象化，避免未来多主题场景重新实现。
 
 > 完成以上步骤后，请同步更新 `pagegen-refactor-roadmap.md`、`module-inventory.md` 与 AGENTS.md 的进度栏。
