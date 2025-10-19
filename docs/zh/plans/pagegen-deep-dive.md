@@ -24,17 +24,35 @@ title: Pagegen 深入检查清单
 
 ### orchestrator 契约概览
 
-Pagegen 主脚本按照以下顺序 orchestrate 各阶段，并在 `data/pagegen-metrics.json` 写入对应摘要：
+Pagegen 主脚本以串行 orchestrator 形式驱动各阶段，并在 `data/pagegen-metrics.json` 追加快照。每个阶段的输入、依赖与产出约定如下：
 
-1. **syncLocaleContent**：按语言同步 `docs/<locale>/content` → `docs/<locale>/content` / `docs/content`，支持快照缓存、全量/增量模式，输出复制/删除统计。
-2. **collect**：逐语言解析 Markdown（带缓存与并发），生成文章列表与 `meta` 聚合索引；解析/缓存命中率、错误都会写入 metrics。
-3. **meta 写入**：将 `meta.<locale>.json` 写入 `docs/<locale>/_generated/`，并通过 writer 统一管理写入任务。
-4. **collections**：基于 `meta` 生成分类 / 系列 / 标签 / 年份聚合 Markdown，返回 nav entries，供后续 i18n registry 使用。
-5. **feeds**：输出多语言 RSS 与 Sitemap（受 `SITE_ORIGIN`、首选语言影响），同时记录条目数量。
-6. **i18n + nav**：注册跨语言映射，写入 `docs/public/i18n-map.json` 与 `nav.manifest.<locale>.json`（同步输出到 `docs/<locale>/_generated`、`docs/public`）。
-   metrics 中新增 `nav.summary` 汇总各语言的 categories / series / tags / archive 数量；若某语言全部为空会在 CLI 发出警告，提醒检视配置或聚合产物。
-7. **writer.flush**：集中写盘并收集错误，若存在失败会带 stage/locale/target 详细信息，脚本立即退出。
-8. **metrics**：汇总阶段耗时、collect/sync/feed/nav/write 摘要，追加到 `data/pagegen-metrics.json`，并允许通过 `--metrics-output` 或 `--metrics-only` 导出 JSON。
+<!-- markdownlint-disable MD013 -->
+| 阶段 | 前置 / 依赖 | 主要输入 | 产物 / 副作用 | Metrics 摘要键 | 失败处理与回滚 |
+| --- | --- | --- | --- | --- | --- |
+| `syncLocaleContent` | 语言配置、内容快照 | `schema/locales.json`、`docs/<locale>/content` | 增量同步到 `docs/<locale>/content` / `docs/content`，更新 `data/pagegen-sync.<locale>.json` | `sync.summary`（复制/删除统计、失败数） | 捕获失败的文件操作并保留原快照，返回 `errors[]`，CLI 以 `warn` 提示 |
+| `collect` | 已同步内容 | `docs/<locale>/content/index.md` | 解析文章列表、`meta` 索引、缓存写入 `data/pagegen-cache.<locale>.json` | `collect.summary`（命中率、解析错误） | 解析失败记录在 `stats.errors[]`，后续阶段可见；命中缓存则跳过 |
+| `meta` 写入 | `collect` 结果 | `posts.meta` | 生成 `docs/<locale>/_generated/meta.<locale>.json` | 计入 `write.summary`（写入/跳过数） | 统一通过 writer 计划写入；直写模式失败会抛出带 stage/locale/target 的异常 |
+| `collections` | `meta` | `posts.meta`、导航配置 | 生成分类/系列/标签/归档 Markdown，返回导航条目 | `nav.summary` 的基础数据 | 任何生成失败会抛出异常，阻断后续阶段 |
+| `feeds` (`rss`/`sitemap`) | `collect` 列表、首选语言 | `posts.list`、`SITE_ORIGIN` | `docs/public/<rss\|sitemap>` 及 locale 下 `_generated` RSS/Sitemap | `feeds.summary`（条目数、限流状态） | 写入失败会携带 locale/target 抛出异常 |
+| `i18n-map` / `nav-manifest` | `collections` 产出的导航条目 | `registry.getI18nMap()`、导航 manifest payload | 写入 `docs/public/i18n-map.json`、`docs/<locale>/_generated/nav.manifest.<locale>.json` 与 `docs/public/nav.manifest.<locale>.json` | `nav.summary`（各语言聚合数） | 缺失聚合时在 CLI 发出 `warn`；写入失败同样携带上下文抛出 |
+| `flushWrites` | writer 队列 | batched file tasks | 批量落盘 / 跳过 | `write.summary`（written/skipped/failed） | 任何任务失败立即终止流程，错误对象带 stage/locale/target |
+| `metrics append` | 前述阶段成功 | 阶段耗时、阶段 metrics | 追加到 `data/pagegen-metrics.json` 或 stdout（`--metrics-only`） | 整体 `totalMs`、`stageSummary` | 写入失败降级为 `warn`，不会终止主流程 |
+<!-- markdownlint-enable MD013 -->
+
+> CLI 通过 `--metrics-only` 输出单条 JSON（无文件写入），`--metrics-output` 追加到指定文件；两者均复用上述契约。
+
+#### 错误与警告日志格式
+
+- 失败日志统一输出为：`[pagegen] error stage=<stage> locale=<locale> target=<target>: <message>`，用于 CI 解析与可观测性聚合。
+- 非致命告警统一输出为：`[pagegen] warn stage=<stage> locale=<locale> target=<target>: <message>`，例如导航聚合为空或 metrics 汇总出现异常指标。
+- writer 产生的错误会带上原任务的 `stage`/`locale`/`target`，便于与 metrics 中的错误条目交叉定位。
+
+#### 端到端守门补充
+
+- `tests/pagegen/integration.test.mjs` 新增两个场景：
+  1. `--metrics-only` 跑完整 orchestrator，解析 stdout JSON 并校验阶段摘要；
+  2. 元数据文件被设为只读时，验证 `[pagegen] error stage=meta locale=… target=…` 的日志格式，以及 metrics 文件不会落盘。
+- `tests/pagegen/nav-manifest.integration.test.mjs` 复用最小多语言夹具，确保 nav/i18n 产物与 metrics 汇总契合上述契约。
 
 ### collect.mjs
 
