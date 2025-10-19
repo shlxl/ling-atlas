@@ -9,11 +9,11 @@ title: Pagegen 深入检查清单
 <!-- markdownlint-disable MD013 -->
 | 模块 | 主要职责 | 现有守门 | 遗留风险 / TODO | 建议动作 |
 | --- | --- | --- | --- | --- |
-| `collect.mjs` | 采集内容、解析 frontmatter、生成 meta 索引、缓存 | `tests/pagegen/collect.test.mjs`（缓存命中/解析） | ✅ 解析失败与缓存命中率已写入 metrics；仍缺少 CLI 或 telemetry 层面的可读汇总 | 继续评估是否在 `pagegen.mjs` stdout/metrics 中追加命中率摘要 |
+| `collect.mjs` | 采集内容、解析 frontmatter、生成 meta 索引、缓存 | `tests/pagegen/collect.test.mjs`（缓存命中/解析） | ✅ 解析失败与缓存命中率写入 metrics，CLI 亦输出 cache hit/miss 摘要 | 关注长期命中率走势，必要时追加慢查询日志 |
 | `sync.mjs` | 多语言内容增量同步、快照对比 | `tests/pagegen/sync.test.mjs` | ✅ metrics 已包含失败统计和错误列表；`pagegen.mjs` 会在存在失败时输出警告 | 如需更多上下文，可在错误日志中加入路径、权限提示（低优先） |
 | `collections.mjs` | 生成分类/系列/标签/归档聚合 Markdown | `tests/pagegen/collections.test.mjs`、`tests/pagegen/collections.failures.test.mjs` | ✅ 模板/排序由 `schema/collections.templates.json` 配置，可按语言覆盖；若缺失则回退默认 Markdown | 继续观察自定义模板在多语言场景下的落盘表现，并补充复杂排序/占位符示例 |
-| `feeds.mjs` | RSS/Sitemap 输出 | `tests/pagegen/feeds.test.mjs` | - 未记录 feed 输出量在 telemetry 中<br>- RSS/Sitemap 模板未配置化 | 在 `pagegen.mjs` 中汇总 feed 数量（已纳入 metrics.summary）；模板配置仍列为低优先 |
-| `i18n-registry.mjs` | i18n 映射、导航 manifest、标签 canonical | `tests/pagegen/i18n-registry.test.mjs` | - 依赖 nav 配置；缺少 manifestKey 缺失的高亮提示<br>- 错误日志仍偏粗糙 | 在加载 nav 配置时直接抛出 manifestKey 缺失异常；补充包含 locale/slug 的错误详情 |
+| `feeds.mjs` | RSS/Sitemap 输出 | `tests/pagegen/feeds.test.mjs` | ✅ 模板改由 `schema/feeds.templates.json` 驱动，支持语言映射与 fallback；CLI/metrics 记录条目与限流标记 | 继续观察复杂模板与多主题需求，必要时补写示例 |
+| `i18n-registry.mjs` | i18n 映射、导航 manifest、标签 canonical | `tests/pagegen/i18n-registry.test.mjs` | ✅ nav manifest/manifestKey 缺失会即时抛错并带 locale/slug；错误日志复用统一上下文 | 继续观察导航配置调整带来的回归，必要时追加快照 |
 | `writer.mjs` | 批量写入、内容哈希跳过、错误收集 | `tests/pagegen/writer.test.mjs` | ✅ 结果中已包含 `skippedByReason`，错误对象带 stack；仍可考虑暴露更多指标 | 1) 评估是否需要将 hash 命中率暴露到 CLI 输出 |
 | `pagegen.mjs` | orchestrator、metrics 汇总、命令行参数 | - `tests/pagegen/*` 间接覆盖<br>- Metrics JSON（手工检查） | ✅ `collect`/`sync`/`write` summary 已写入 metrics；端到端测试覆盖 `--metrics-only`、写入失败与 warn/error 日志上下文 | 持续观察 metrics stdout/metrics-only 的使用反馈，必要时再扩展导出选项 |
 | `pagegen.locales.mjs` | 读取语言、导航配置并校验 | 现有脚本校验 + `npm run precheck` + `tests/pagegen/locales-config.test.mjs` | ✅ 已覆盖缺字段/Schema 失败场景 | 后续可补缓存命中路径的快照测试 |
@@ -64,18 +64,13 @@ Pagegen 主脚本以串行 orchestrator 形式驱动各阶段，并在 `data/pag
 ### collect.mjs
 
 - **契约**：输入语言配置（含 `contentDir`、`contentFields`），输出 `{ list, meta, stats }`。
-- **现状**：具备缓存（mtime/size）与并发解析。
-- **缺口**：
-  1. 缓存命中率仅通过日志输出，缺少脚本读取的方式。
-  2. `gray-matter` 解析失败时未统一捕获（可能直接抛错）。
-- **建议**：
-  - 在 `collectPosts` catch 块中捕获解析错误并输出 `{ file, error.message }`，同时继续聚合 statistics。
-  - 将 stats 写入 `pagegen-metrics.json` 的 `collect` 字段，便于观察。
+- **现状**：具备缓存（mtime/size）与并发解析，解析失败与缓存命中率写入 metrics/CLI 摘要。
+- **后续观察**：可继续在长期运行中记录慢解析文件名单，为后续调优提供数据。
 
 ### sync.mjs
 
 - ✅ metrics 已包含 `failedCopies`、`failedRemovals`、`errors[]`，且 `pagegen.mjs` 会聚合统计；当出现错误时不写入快照，确保下次重试。
-- TODO：若需要更友好的日志，可在错误记录中加入提示，例如建议检查权限/磁盘空间。
+- 后续可按需在错误记录中加入环境提示（如权限/磁盘空间），目前标记为低优先。
 
 ### collections.mjs / feeds.mjs
 
@@ -88,7 +83,8 @@ Pagegen 主脚本以串行 orchestrator 形式驱动各阶段，并在 `data/pag
 - ✅ 单测覆盖：
   - `tests/pagegen/collections.test.mjs` 验证模板排序、占位符、fallback 与临时注册的自定义模板；
   - `tests/pagegen/collections.failures.test.mjs` 新增错误模板抛错用例，确保缺少必填字段时能立即反馈。
-- feeds 模板仍保持默认实现，可在后续需要时仿照 collections 方案配置化。
+- `schema/feeds.templates.json` + `schema/feeds.templates.schema.json` 描述 channel/item 模板、条目限制等配置，可按语言通过 `feedsTemplate` 覆盖；缺失模板会回退默认实现。
+- 配套校验命令已接入 `npm run precheck`，确保模板引用有效；`tests/pagegen/feeds.test.mjs` 覆盖自定义模板、限流、fallback 与错误场景。
 
 #### collections 模板格式速览
 
@@ -122,8 +118,8 @@ Pagegen 主脚本以串行 orchestrator 形式驱动各阶段，并在 `data/pag
 
 ### i18n-registry.mjs
 
-- 与 nav 配置结合后，需要确保 manifestKey 缺失时能够即时报错。
-- Action：在 normalizeAggregates 时，如未找到某 `aggregateKey` 对应的 manifestKey，抛出异常并提示配置文件；测试中模拟不匹配配置。
+- ✅ 已与导航配置联动：manifestKey 缺失或未初始化会即时抛错，并携带 locale/slug/manifestKey 便于定位。
+- 后续可继续扩展快照测试，覆盖导航配置变动后的 diff 提示。
 
 ### writer.mjs
 
@@ -131,22 +127,19 @@ Pagegen 主脚本以串行 orchestrator 形式驱动各阶段，并在 `data/pag
 
 ### pagegen.mjs
 
-- ✅ 已在 metrics 记录 `collect`、`sync`、`write` 的 summary；支持 `--metrics-output`/`PAGEGEN_METRICS_OUTPUT`、`--dry-run`/`PAGEGEN_DRY_RUN=1` 以及 `--metrics-only`（stdout JSON）。
-- TODO：提供 `--metrics-only` 或 `--output <file>` 选项，直接输出 JSON 到 stdout。
+- ✅ 已在 metrics 记录 `collect`、`sync`、`write` 的 summary；支持 `--metrics-output`/`PAGEGEN_METRICS_OUTPUT`、`--dry-run`/`PAGEGEN_DRY_RUN=1`、`--metrics-only` 与 `--metrics-stdout` 直接输出 JSON。
+- 后续可考虑为 metrics 追加版本号或 schema 说明，方便外部工具解析。
 
 ### 配置加载（pagegen.locales.mjs）
 
-- 虽在运行时使用 Ajv 校验，但缺少单测确保错误信息准确。
-- Action：新增 `tests/pagegen/locales-config.test.mjs`，模拟：
-  - 缺少 `$schema` 或必填字段；
-  - nav 配置缺 manifestKey；
-  - 缓存命中/失效逻辑。
+- Ajv 校验与运行时缓存已上线，仍可考虑新增 `tests/pagegen/locales-config.test.mjs` 覆盖缺字段、缓存命中等路径。
 
 ## 下一步执行建议
 
-1. **Orchestrator 契约与日志**：整理 `pagegen.mjs` 阶段契约文档，补充端到端集成测试，并在错误输出中追加阶段/locale/target 等上下文。
-2. **导航/i18n 失败显式化**：在 `i18n-registry` 与 nav 校验阶段直接抛出 manifestKey/slug 命中异常，并为错误日志补足 locale/slug 信息。
-3. **统计与监控**：✅ Pagegen CLI 已输出 collect 缓存命中率与 writer 哈希跳过摘要，最新指标会同步写入 telemetry；`npm run stats:diff` 支持在 nightly/PR 中对比 `stats.snapshot.json` 并按阈值告警，若缺少 baseline 则会尝试读取 `origin/main` 或上一提交的快照，均不可得时会记录提示并跳过，以免阻断流程。
-4. **模板与可配置性**（次优先）：研判 collections/feeds Markdown 模板是否需要抽象化，避免未来多主题场景重新实现。
+1. **插件 SDK 与示例**：提炼 `PagegenPluginRegistry`/`PagegenScheduler` 的扩展点，补充最小插件 demo、回归测试与文档片段，方便外部代理接入。
+2. **并行调度压测与回退**：编写串行/并行耗时基准，记录 `--max-parallel` 不同取值的性能差异，并在测试中覆盖 `--no-parallel` 回退路径。
+3. **AI 遥测可视化**：在 telemetry 页面与 CI Step Summary 展示 `build.ai` 摘要（耗时、适配器、处理条目），同步运维指南说明排障方法。
+4. **模型配置 Schema 与手册**：设计 `schema/models.json`、编写校验脚本与 `ai:prepare`/`ai:smoke` 操作手册，明确缓存目录与回滚策略。
 
+> 顺序建议：优先完成插件 SDK（1）稳定扩展契约，再开展并行压测（2）；并行行为确认后，可并行推进遥测可视化（3）与模型 Schema/手册（4）。
 > 完成以上步骤后，请同步更新 `pagegen-refactor-roadmap.md`、`module-inventory.md` 与 AGENTS.md 的进度栏。
