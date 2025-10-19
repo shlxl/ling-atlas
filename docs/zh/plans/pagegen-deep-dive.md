@@ -31,7 +31,8 @@ Pagegen 主脚本按照以下顺序 orchestrate 各阶段，并在 `data/pagegen
 3. **meta 写入**：将 `meta.<locale>.json` 写入 `docs/<locale>/_generated/`，并通过 writer 统一管理写入任务。
 4. **collections**：基于 `meta` 生成分类 / 系列 / 标签 / 年份聚合 Markdown，返回 nav entries，供后续 i18n registry 使用。
 5. **feeds**：输出多语言 RSS 与 Sitemap（受 `SITE_ORIGIN`、首选语言影响），同时记录条目数量。
-6. **i18n + nav**：注册跨语言映射，写入 `docs/public/i18n-map.json` 与 `nav.manifest.<locale>.json`（同步输出到 `docs/<locale>/_generated`、`docs/public`）。metrics 中新增 `nav.summary` 汇总各语言的 categories / series / tags / archive 数量；若某语言全部为空会在 CLI 发出警告，提醒检视配置或聚合产物。
+6. **i18n + nav**：注册跨语言映射，写入 `docs/public/i18n-map.json` 与 `nav.manifest.<locale>.json`（同步输出到 `docs/<locale>/_generated`、`docs/public`）。
+   metrics 中新增 `nav.summary` 汇总各语言的 categories / series / tags / archive 数量；若某语言全部为空会在 CLI 发出警告，提醒检视配置或聚合产物。
 7. **writer.flush**：集中写盘并收集错误，若存在失败会带 stage/locale/target 详细信息，脚本立即退出。
 8. **metrics**：汇总阶段耗时、collect/sync/feed/nav/write 摘要，追加到 `data/pagegen-metrics.json`，并允许通过 `--metrics-output` 或 `--metrics-only` 导出 JSON。
 
