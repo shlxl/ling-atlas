@@ -11,7 +11,7 @@ title: Pagegen 深入检查清单
 | --- | --- | --- | --- | --- |
 | `collect.mjs` | 采集内容、解析 frontmatter、生成 meta 索引、缓存 | `tests/pagegen/collect.test.mjs`（缓存命中/解析） | ✅ 解析失败与缓存命中率已写入 metrics；仍缺少 CLI 或 telemetry 层面的可读汇总 | 继续评估是否在 `pagegen.mjs` stdout/metrics 中追加命中率摘要 |
 | `sync.mjs` | 多语言内容增量同步、快照对比 | `tests/pagegen/sync.test.mjs` | ✅ metrics 已包含失败统计和错误列表；`pagegen.mjs` 会在存在失败时输出警告 | 如需更多上下文，可在错误日志中加入路径、权限提示（低优先） |
-| `collections.mjs` | 生成分类/系列/标签/归档聚合 Markdown | `tests/pagegen/collections.test.mjs`、`tests/pagegen/collections.failures.test.mjs` | Markdown 模板仍固定；nav manifest 命中依赖后续脚本发现 | 评估是否允许自定义模板/排序；与 `i18n-registry` 联动进行 slug 命中校验 |
+| `collections.mjs` | 生成分类/系列/标签/归档聚合 Markdown | `tests/pagegen/collections.test.mjs`、`tests/pagegen/collections.failures.test.mjs` | ✅ 模板/排序由 `schema/collections.templates.json` 配置，可按语言覆盖；若缺失则回退默认 Markdown | 继续观察自定义模板在多语言场景下的落盘表现，并补充复杂排序/占位符示例 |
 | `feeds.mjs` | RSS/Sitemap 输出 | `tests/pagegen/feeds.test.mjs` | - 未记录 feed 输出量在 telemetry 中<br>- RSS/Sitemap 模板未配置化 | 在 `pagegen.mjs` 中汇总 feed 数量（已纳入 metrics.summary）；模板配置仍列为低优先 |
 | `i18n-registry.mjs` | i18n 映射、导航 manifest、标签 canonical | `tests/pagegen/i18n-registry.test.mjs` | - 依赖 nav 配置；缺少 manifestKey 缺失的高亮提示<br>- 错误日志仍偏粗糙 | 在加载 nav 配置时直接抛出 manifestKey 缺失异常；补充包含 locale/slug 的错误详情 |
 | `writer.mjs` | 批量写入、内容哈希跳过、错误收集 | `tests/pagegen/writer.test.mjs` | ✅ 结果中已包含 `skippedByReason`，错误对象带 stack；仍可考虑暴露更多指标 | 1) 评估是否需要将 hash 命中率暴露到 CLI 输出 |
@@ -79,8 +79,46 @@ Pagegen 主脚本以串行 orchestrator 形式驱动各阶段，并在 `data/pag
 
 ### collections.mjs / feeds.mjs
 
-- 已有基本守门，但缺少失败场景（例如目录不可写、模板缺字段）的测试。
-- 可考虑在 writer 层统一处理失败并写 telemetry。
+- ✅ `schema/collections.templates.json` + `schema/collections.templates.schema.json` 描述各聚合类型的 Markdown 模板、排序与占位符：
+  - `defaults` 块定义通用 `markdown`、`item`、`itemSeparator`，并允许通过 `placeholders` 映射（`fields`/`format`/`whenEmpty`）重写日期、摘要等片段；
+  - `aggregates.<type>` 可以按 `category`/`series`/`tag`/`archive` 覆盖局部配置；
+  - `sort` 数组接受 `{ fields: ['date', 'updated'], order: 'desc' }`，写入前会复制并排序，未配置时保持原顺序。
+- ✅ `scripts/pagegen/collections.mjs` 会根据语言的 `collectionsTemplate` 键加载模板；找不到模板时自动回退至旧版 `mdList` 行为，避免阻塞生成。
+- ✅ 新增 `scripts/validate-collections-template.mjs` 校验模板 Schema，并比对 `schema/locales.json` 的引用是否存在；已通过 `npm run config:collections` 接入 `precheck`。
+- ✅ 单测覆盖：
+  - `tests/pagegen/collections.test.mjs` 验证模板排序、占位符、fallback 与临时注册的自定义模板；
+  - `tests/pagegen/collections.failures.test.mjs` 新增错误模板抛错用例，确保缺少必填字段时能立即反馈。
+- feeds 模板仍保持默认实现，可在后续需要时仿照 collections 方案配置化。
+
+#### collections 模板格式速览
+
+```jsonc
+{
+  "$schema": "./collections.templates.schema.json",
+  "templates": {
+    "zh-default": {
+      "defaults": {
+        "markdown": "---\\ntitle: {title}\\n---\\n\\n{items}\\n",
+        "item": "- [{title}]({path}){dateSuffix}{updatedSuffix}\\n  {excerptBlock}",
+        "itemSeparator": "\\n\\n",
+        "placeholders": {
+          "dateSuffix": { "fields": ["date", "updated"], "format": " · {value}" },
+          "updatedSuffix": { "fields": ["updated"], "format": "（更:{value}）", "whenEmpty": "" },
+          "excerptBlock": { "fields": ["excerpt"], "format": "> {value}", "whenEmpty": "" }
+        },
+        "sort": [
+          { "fields": ["date", "updated"], "order": "desc" },
+          { "fields": ["title"], "order": "asc" }
+        ]
+      }
+    }
+  }
+}
+```
+
+- `collectionsTemplate` 会在 `schema/locales.json` 内声明语言到模板键的映射，例如 `zh` → `zh-default`、`en` → `en-default`；也可以通过 `__test__.registerTemplate()` 在单测中注入临时模板。
+- `renderCollectionWithTemplate` 会注入 `{count, index, locale}` 等上下文，便于模板追加统计信息或本地化提示；占位符未命中时会使用 `whenEmpty` 回退。
+- 自定义模板在缺少 `markdown`/`item` 时会抛出 `Invalid collections template`，确保问题尽早浮现。
 
 ### i18n-registry.mjs
 

@@ -3,7 +3,7 @@ import path from 'node:path'
 import os from 'node:os'
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { writeCollections } from '../../scripts/pagegen/collections.mjs'
+import { writeCollections, __test__ } from '../../scripts/pagegen/collections.mjs'
 
 const TMP_PREFIX = 'pagegen-collections-fail-'
 
@@ -13,6 +13,7 @@ function createLangConfig(rootDir) {
     code: 'zh',
     manifestLocale: 'zh',
     generatedDir: rootDir,
+    collectionsTemplate: undefined,
     labels: {
       category: identity,
       series: identity,
@@ -51,4 +52,41 @@ test('writeCollections propagates fs write failures', async t => {
 
   await assert.rejects(() => writeCollections(lang, meta, null, { dryRun: false }), /mock collection failure/)
   assert.ok(writeSpy.mock.callCount() >= 1)
+})
+
+test('writeCollections throws when configured template is invalid', async t => {
+  const generatedDir = await fs.mkdtemp(path.join(os.tmpdir(), TMP_PREFIX))
+  t.after(async () => {
+    await fs.rm(generatedDir, { recursive: true, force: true })
+    __test__.unregisterTemplate('broken-template')
+  })
+
+  __test__.registerTemplate('broken-template', {
+    defaults: {
+      markdown: '---\ntitle: {title}\n---\n',
+      // missing item string on purpose
+    }
+  })
+
+  const lang = createLangConfig(generatedDir)
+  lang.collectionsTemplate = 'broken-template'
+
+  const post = {
+    title: '测试文章',
+    path: '/zh/content/test/',
+    date: '2025-01-01'
+  }
+
+  const meta = {
+    byCategory: { 分类: [post] },
+    bySeries: {},
+    byTag: {},
+    byYear: {},
+    all: [post]
+  }
+
+  await assert.rejects(
+    () => writeCollections(lang, meta, null, { dryRun: false }),
+    /defaults\.markdown and defaults\.item must be strings/
+  )
 })
