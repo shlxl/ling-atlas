@@ -13,6 +13,7 @@ function defaultState() {
     updatedAt: new Date(0).toISOString(),
     pv: { total: 0, pathsTop: [] },
     search: { queriesTop: [], clicksTop: [] },
+    build: { pagegen: null },
     _internal: {
       paths: {},
       queries: {}, // hash -> { count, lenSum }
@@ -41,7 +42,8 @@ function sanitizeForPublic(state) {
   return {
     updatedAt: state.updatedAt,
     pv: state.pv,
-    search: state.search
+    search: state.search,
+    build: state.build
   }
 }
 
@@ -95,12 +97,18 @@ function updateDerivedSections(state) {
 async function main(){
   await ensureDataFileExists()
   const state = await loadJSON(DATA_PATH, defaultState())
+  if (!state.build || typeof state.build !== 'object') {
+    state.build = { pagegen: null }
+  } else if (!Object.prototype.hasOwnProperty.call(state.build, 'pagegen')) {
+    state.build.pagegen = state.build.pagegen ?? null
+  }
   let tmp
   try {
     tmp = await loadJSON(TMP_PATH)
   } catch {
     // no tmp file, just ensure dist output exists
     updateDerivedSections(state)
+    state.build.pagegen = await loadLatestPagegenSummary().catch(() => state.build.pagegen || null)
     await writeOutputs(sanitizeForPublic(state))
     return
   }
@@ -127,6 +135,7 @@ async function main(){
 
   state.updatedAt = new Date().toISOString()
   updateDerivedSections(state)
+  state.build.pagegen = await loadLatestPagegenSummary().catch(() => state.build.pagegen || null)
 
   await fs.writeFile(DATA_PATH, JSON.stringify(state, null, 2), 'utf8')
   await writeOutputs(sanitizeForPublic(state))
@@ -139,3 +148,50 @@ main().catch(err => {
   console.error('[telemetry] merge failed:', err)
   process.exit(1)
 })
+
+async function loadLatestPagegenSummary() {
+  const metricsPath = path.join(ROOT, 'data', 'pagegen-metrics.json')
+  let raw
+  try {
+    raw = await fs.readFile(metricsPath, 'utf8')
+  } catch {
+    return null
+  }
+  if (!raw) return null
+  let parsed
+  try {
+    parsed = JSON.parse(raw)
+  } catch (error) {
+    console.warn('[telemetry] skip invalid pagegen metrics:', error?.message || error)
+    return null
+  }
+  if (!Array.isArray(parsed) || !parsed.length) return null
+  const latest = parsed.at(-1)
+  if (!latest) return null
+  const collectSummary = latest.collect?.summary || {}
+  const writeSummary = latest.write?.summary || {}
+  return {
+    timestamp: latest.timestamp,
+    totalMs: latest.totalMs,
+    collect: {
+      locales: collectSummary.locales,
+      cacheHitRate: collectSummary.cacheHitRate,
+      cacheHits: collectSummary.cacheHits,
+      cacheMisses: collectSummary.cacheMisses,
+      cacheDisabledLocales: collectSummary.cacheDisabledLocales,
+      parsedFiles: collectSummary.parsedFiles,
+      totalFiles: collectSummary.totalFiles,
+      parseErrors: collectSummary.parseErrors,
+      errorEntries: collectSummary.errorEntries
+    },
+    write: {
+      total: writeSummary.total,
+      written: writeSummary.written,
+      skipped: writeSummary.skipped,
+      failed: writeSummary.failed,
+      hashMatches: writeSummary.hashMatches,
+      disabled: writeSummary.disabled,
+      skippedByReason: writeSummary.skippedByReason || {}
+    }
+  }
+}

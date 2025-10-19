@@ -7,5 +7,8 @@
   "search": {
     "queriesTop": [],
     "clicksTop": []
+  },
+  "build": {
+    "pagegen": null
   }
 }

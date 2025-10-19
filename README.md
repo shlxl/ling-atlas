@@ -51,6 +51,7 @@ npm run dev
 - `PAGEGEN_CONCURRENCY=<num>`：控制内容解析并发度（默认 8），可在 `npm run gen` 前临时指定
 - `npm run test:pagegen`：运行 Pagegen 模块单元测试 + 集成测试（含 nav manifest 输出与聚合产物核对）
 - `npm run stats:lint`：按语言统计分类/标签，控制台输出 TopN 并写入 `data/stats.snapshot.json`，CI 会上传该快照方便历史对比
+- `npm run stats:diff -- --baseline <ref:path|file> [--current <file>]`：对比两份分类/标签快照，输出高于阈值的差异（默认 warn≥30%、fail≥60%），支持在夜间任务或 PR 中标注异常
 - `npm run precheck`：Frontmatter Schema 校验（阻断）
 - `npm run build`：构建站点（前置 `gen` + `knowledge:build`），自动生成中英双语 RSS/Sitemap
 - `npm run pwa:build`：独立构建 PWA 产物（`sw.js`、`manifest.webmanifest`、`icons/`）
@@ -64,9 +65,9 @@ npm run dev
 - 离线验证：`npm run build` → `npx vitepress preview docs --host 127.0.0.1 --port 4173`，在浏览器中访问站点、打开 DevTools → Application → Service Workers，勾选 “Offline” 后刷新确认最近访问页和搜索仍能使用缓存；同时观察底部“检测到新版本/已缓存”提示条触发刷新
 
 ## 当前进展与下一阶段
-- Pagegen 各阶段（collect/sync/collections/feeds/i18n/writer）已模块化并输出指标，`npm run test:pagegen` 覆盖增量同步、缓存命中、写入失败等核心路径；导航/i18n 配置均在生成前即校验。
-- 多语言内容统计脚本 `npm run stats:lint` 已上线，CI 会生成 `data/stats.snapshot.json` 工件，可长期跟踪分类/标签分布，同时 README/AGENTS 同步列出命令。
-- 下一阶段重点：① 完成 `docs/zh/plans/pagegen-deep-dive.md` 中 orchestrator 契约、错误日志与集成测试的 TODO；② 建立 stats 快照的对比/告警机制（夜间任务或 PR 提示）；③ 评估语义检索管线（Transformers.js / onnxruntime）与占位 AI 脚本的落地方案。
+- Pagegen 各阶段（collect/sync/collections/feeds/i18n/writer）已模块化并输出指标，CLI 会汇总缓存命中率与写入跳过原因，最新一轮指标会同步写入 telemetry 页面，便于运维直接观测。
+- 多语言内容统计脚本 `npm run stats:lint` 已上线，CI 会生成 `data/stats.snapshot.json` 工件；配套的 `npm run stats:diff` 支持对比主干快照或前一晚的基线，在异常差异出现时直接在控制台打标。
+- 下一阶段重点：① 完成 `docs/zh/plans/pagegen-deep-dive.md` 中 orchestrator 契约、错误日志与集成测试的 TODO；② 将 `stats:diff` 接入夜间与 PR 审查（必要时自动打标签/评论）；③ 评估语义检索管线（Transformers.js / onnxruntime）与占位 AI 脚本的落地方案。
 
 ## 协作约束速查
 
@@ -81,6 +82,13 @@ npm run dev
 - **内容生产力工具**：通过 `npm run md:lint`、`node scripts/check-links.mjs`、`node scripts/img-opt.mjs` 守门 Markdown、链接与图片质量；其中 `check-links` 会额外校验 `nav.manifest.<locale>.json` 与 `i18n-map.json` 内的目标路径，必要时可在 CI 中暂时调高阈值或跳过。
 - **Landing 入口 BASE 兜底**：`docs/index.md` 的内联重定向脚本会写入 `__LING_ATLAS_ACTIVE_BASE__` 并由 `<script setup>` 在 hydration 期间复用，确保 `/` 与 `/ling-atlas/` 等不同 BASE 下的首屏重定向一致；前端通过 `docs/.vitepress/theme/base.mjs` 统一读取、缓存与复用该 BASE，Locale Toggle、导航 manifest 以及 Telemetry 资产加载都会依赖此模块。如需修改入口，请同步维护内联脚本、`base.mjs` 与相关调用。
 - **导航与标签配置 Playbook**：在修改 `schema/nav.json`、`schema/tag-alias.json` 之前，务必阅读 `docs/zh/plans/nav-config-playbook.md`；文档提供配置步骤、守门命令与常见故障排查。
+
+## 统计监控与告警流程
+
+- **Pagegen 指标出口**：运行 `npm run gen` 后，CLI 会额外打印 collect 缓存命中率与 writer 哈希跳过统计，最新一笔指标还会由 `node scripts/telemetry-merge.mjs` 同步到 `/telemetry.json`，可在站点的“观测指标”页面直接查看。
+- **快照采集**：`npm run stats:lint` 写入 `data/stats.snapshot.json` 并输出 TopN 排序，CI 会上传该文件作为工件，便于后续下载对比。
+- **自动对比与预警**：通过 `npm run stats:diff -- --baseline origin/main:data/stats.snapshot.json --current data/stats.snapshot.json` 在本地或 CI 中对比差异。命令会按默认阈值（warn≥30%、fail≥60%）输出告警，可搭配 `--json` 输出结构化结果，或在 GitHub Actions 中根据退出码（2 表示 fail）自动打标签/留言。
+- **夜间任务建议**：Nightly Workflow 可先拉取前一日工件为 baseline，再运行 `stats:diff -- --baseline <path> --current data/stats.snapshot.json --quiet`，将结果上传到日志或告警系统；如需邮件/IM 告警，可根据 JSON 输出过滤高优先级条目。
 
 ### 最小发布流程
 
