@@ -1,4 +1,17 @@
 import fs from 'node:fs/promises'
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
+const ROOT = path.resolve(__dirname, '..', '..')
+
+function resolveAIEventsDir() {
+  const override = process.env.AI_TELEMETRY_PATH
+  if (override) {
+    return path.isAbsolute(override) ? override : path.resolve(ROOT, override)
+  }
+  return path.join(ROOT, 'data', 'ai-events')
+}
 
 export async function ensureDir(dir) {
   await fs.mkdir(dir, { recursive: true })
@@ -46,6 +59,44 @@ export function logStructured(event, details = {}, logger = console) {
   const message = JSON.stringify(payload)
   logger?.log?.(message)
   return payload
+}
+
+export function getAIEventsDirectory() {
+  return resolveAIEventsDir()
+}
+
+export async function flushAIEvents(domain, events = [], logger = console) {
+  if (!domain || !Array.isArray(events) || events.length === 0) {
+    return null
+  }
+
+  const disabledFlag = String(process.env.AI_TELEMETRY_DISABLE || '').toLowerCase()
+  if (disabledFlag === '1' || disabledFlag === 'true') {
+    logStructured(
+      `ai.${domain}.events.skipped`,
+      { reason: 'AI telemetry disabled via AI_TELEMETRY_DISABLE' },
+      logger
+    )
+    return null
+  }
+
+  const dir = resolveAIEventsDir()
+  await ensureDir(dir)
+
+  const timestamp = new Date().toISOString().replace(/[:.]/g, '-')
+  const fileName = `${domain}-${timestamp}-${Math.random().toString(36).slice(2, 8)}.json`
+  const filePath = path.join(dir, fileName)
+  const payload = { domain, events }
+
+  await fs.writeFile(filePath, JSON.stringify(payload, null, 2), 'utf8')
+
+  logStructured(
+    `ai.${domain}.events.flushed`,
+    { file: filePath, count: events.length },
+    logger
+  )
+
+  return filePath
 }
 
 export function isDraft(frontmatter) {

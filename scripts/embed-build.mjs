@@ -4,7 +4,13 @@ import fs from 'node:fs/promises'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { collectEmbeddableItems } from './ai/content.mjs'
-import { ensureDir, logStructured, readJSONIfExists, resolveAdapterSpec } from './ai/utils.mjs'
+import {
+  ensureDir,
+  flushAIEvents,
+  logStructured,
+  readJSONIfExists,
+  resolveAdapterSpec
+} from './ai/utils.mjs'
 import { loadEmbeddingAdapter } from './ai/adapters/index.mjs'
 import { LOCALE_REGISTRY, getPreferredLocale } from './pagegen.locales.mjs'
 
@@ -14,6 +20,7 @@ const OUTPUT_DIR = path.join(ROOT, 'docs', 'public', 'data')
 const OUTPUT_FILE = path.join(OUTPUT_DIR, 'embeddings.json')
 
 async function main() {
+  const scriptStartedAt = Date.now()
   const preferredLocale = getPreferredLocale()
   const items = await collectEmbeddableItems(LOCALE_REGISTRY, preferredLocale)
   await ensureDir(OUTPUT_DIR)
@@ -21,17 +28,34 @@ async function main() {
   const spec = resolveAdapterSpec({ envKey: 'AI_EMBED_MODEL', cliFlag: 'adapter' })
   const previous = await readJSONIfExists(OUTPUT_FILE)
 
+  const events = []
+
+  events.push(
+    logStructured(
+      'ai.embed.start',
+      {
+        inputCount: items.length,
+        preferredLocale,
+        localeCount: LOCALE_REGISTRY.length,
+        requestedAdapter: spec || 'placeholder'
+      },
+      console
+    )
+  )
+
   const adapterInfo = await loadEmbeddingAdapter(spec, console)
-  logStructured(
-    'ai.embed.adapter.resolved',
-    {
-      requested: spec || 'placeholder',
-      adapter: adapterInfo.adapterName,
-      model: adapterInfo.model,
-      fallback: adapterInfo.isFallback,
-      reason: adapterInfo.reason || null
-    },
-    console
+  events.push(
+    logStructured(
+      'ai.embed.adapter.resolved',
+      {
+        requested: spec || 'placeholder',
+        adapter: adapterInfo.adapterName,
+        model: adapterInfo.model,
+        fallback: adapterInfo.isFallback,
+        reason: adapterInfo.reason || null
+      },
+      console
+    )
   )
 
   let adapterModule = adapterInfo.adapter
@@ -39,15 +63,20 @@ async function main() {
   let usedModel = adapterInfo.model
   let usedFallback = adapterInfo.isFallback
   let result
+  let retries = 0
+
+  const inferenceStartedAt = Date.now()
 
   try {
     result = await adapterModule.generateEmbeddings({ items, model: usedModel, logger: console })
   } catch (error) {
     const message = error?.message || String(error)
-    logStructured(
-      'ai.embed.adapter.error',
-      { adapter: usedName, model: usedModel, message },
-      console
+    events.push(
+      logStructured(
+        'ai.embed.adapter.error',
+        { adapter: usedName, model: usedModel, message },
+        console
+      )
     )
     console.warn(`[embed-build] adapter "${usedName}" 执行失败：${message}，已降级至 placeholder`)
     const fallback = await loadEmbeddingAdapter('placeholder', console)
@@ -55,8 +84,11 @@ async function main() {
     usedName = 'placeholder'
     usedModel = null
     usedFallback = true
+    retries += 1
     result = await adapterModule.generateEmbeddings({ items, model: null, logger: console })
   }
+
+  const inferenceDurationMs = Date.now() - inferenceStartedAt
 
   let finalItems = Array.isArray(result?.items) ? result.items : items
   let reusedCache = false
@@ -71,22 +103,66 @@ async function main() {
     generatedAt: new Date().toISOString(),
     items: finalItems
   }
-  await fs.writeFile(OUTPUT_FILE, JSON.stringify(payload, null, 2), 'utf8')
+  const serialized = JSON.stringify(payload, null, 2)
+  const writeStartedAt = Date.now()
+  await fs.writeFile(OUTPUT_FILE, serialized, 'utf8')
+  const writeDurationMs = Date.now() - writeStartedAt
+
+  events.push(
+    logStructured(
+      'ai.embed.batch',
+      {
+        index: 0,
+        durationMs: inferenceDurationMs,
+        inputCount: items.length,
+        outputCount: finalItems.length,
+        successRate: items.length === 0 ? 1 : Number((finalItems.length / items.length).toFixed(4)),
+        adapter: usedName,
+        model: usedModel,
+        fallback: usedFallback,
+        retries
+      },
+      console
+    )
+  )
+
+  events.push(
+    logStructured(
+      'ai.embed.write',
+      {
+        target: path.relative(ROOT, OUTPUT_FILE),
+        bytes: Buffer.byteLength(serialized, 'utf8'),
+        durationMs: writeDurationMs,
+        items: finalItems.length,
+        cacheReuse: reusedCache
+      },
+      console
+    )
+  )
 
   const mode = usedFallback
     ? '占位文本模式'
     : `adapter: ${usedName}${usedModel ? ` (${usedModel})` : ''}`
-  logStructured(
-    'ai.embed.completed',
-    {
-      adapter: usedName,
-      model: usedModel,
-      fallback: usedFallback,
-      cacheReuse: reusedCache,
-      count: finalItems.length
-    },
-    console
+  events.push(
+    logStructured(
+      'ai.embed.complete',
+      {
+        adapter: usedName,
+        model: usedModel,
+        fallback: usedFallback,
+        cacheReuse: reusedCache,
+        count: finalItems.length,
+        inputCount: items.length,
+        outputCount: finalItems.length,
+        successRate: items.length === 0 ? 1 : Number((finalItems.length / items.length).toFixed(4)),
+        totalMs: Date.now() - scriptStartedAt,
+        batchCount: 1,
+        retries
+      },
+      console
+    )
   )
+  await flushAIEvents('embed', events, console)
   console.log(`[embed-build] embeddings.json 写入 ${finalItems.length} 条（${mode}${reusedCache ? '，命中缓存' : ''}）`)
 }
 

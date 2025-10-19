@@ -76,7 +76,7 @@ npm run dev
   - `transformers-node`：基于 `@xenova/transformers` 的 Node 推理，需要先执行 `npm install @xenova/transformers` 并提供模型 ID。模型文件默认会缓存在 `~/.cache/huggingface/`，如需离线部署请提前下载并设置 `TRANSFORMERS_CACHE`。
   - `onnxruntime`：预留 onnxruntime-node 加载入口，需 `npm install onnxruntime-node` 后按需扩展实现，并将 `.onnx` 模型放置在可读目录（可使用 `ORT_DYN_THREADS` 控制线程数）。
 - 适配器加载失败或执行异常时，脚本会记录结构化降级日志（`ai.*.adapter.*`）并自动回退到 placeholder 产出，同时尝试复用上一次生成的缓存文件，尽量保持前端体验。
-- 回滚策略：清空相关环境变量或设置为 `placeholder`，再次运行 `npm run ai:all` 即可恢复占位产物；如遇模型产出异常，可手动删除 `docs/public/data/*.json` 并重新执行命令。
+- 回滚策略：清空相关环境变量或设置为 `placeholder`，再次运行 `npm run ai:all` 即可恢复占位产物；如遇模型产出异常，可手动删除 `docs/public/data/*.json` 并重新执行命令。若需临时停止遥测事件写入，可设置 `AI_TELEMETRY_DISABLE=1`。
 - 单测：`node --test tests/ai/*.test.mjs` 通过 mock 适配器覆盖默认回退、缓存命中与 CLI 解析逻辑。
 
 ## 当前进展与下一阶段
@@ -108,6 +108,7 @@ npm run dev
 ## 统计监控与告警流程
 
 - **Pagegen 指标出口**：运行 `npm run gen` 后，CLI 会额外打印 collect 缓存命中率与 writer 哈希跳过统计，最新一笔指标还会由 `node scripts/telemetry-merge.mjs` 同步到 `/telemetry.json`，可在站点的“观测指标”页面直接查看。
+- **AI 构建遥测**：`scripts/embed-build.mjs`、`scripts/summary.mjs`、`scripts/qa-build.mjs` 会在 `data/ai-events/` 写入 `ai.embed.*`、`ai.summary.*`、`ai.qa.*` 事件，`node scripts/telemetry-merge.mjs` 会将其聚合成 `build.ai` 节点并输出到 `docs/public/telemetry.json`。可通过 `AI_TELEMETRY_DISABLE=1` 暂停事件写入，或设置 `AI_TELEMETRY_PATH=<dir>` 指定事件目录（便于测试与沙箱环境）。
 - **快照采集**：`npm run stats:lint` 写入 `data/stats.snapshot.json` 并输出 TopN 排序，CI 会上传该文件作为工件，便于后续下载对比。
 - **自动对比与预警**：通过 `npm run stats:diff -- --baseline origin/main:data/stats.snapshot.json --current data/stats.snapshot.json` 在本地或 CI 中对比差异。命令会按默认阈值（warn≥30%、fail≥60%）输出告警，可搭配 `--json` 输出结构化结果，或在 GitHub Actions 中根据退出码（2 表示 fail）自动打标签/留言；若未提供 baseline 且 git 历史中也无法找到快照，会输出提示并直接跳过对比，避免误报。
 - **夜间任务建议**：Nightly Workflow 可先拉取前一日工件为 baseline，再运行 `stats:diff -- --baseline <path> --current data/stats.snapshot.json --quiet`，将结果上传到日志或告警系统；如需邮件/IM 告警，可根据 JSON 输出过滤高优先级条目。
