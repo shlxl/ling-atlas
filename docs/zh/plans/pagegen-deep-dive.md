@@ -12,12 +12,12 @@ title: Pagegen 深入检查清单
 | `collect.mjs` | 采集内容、解析 frontmatter、生成 meta 索引、缓存 | `tests/pagegen/collect.test.mjs`（缓存命中/解析） | ✅ 解析失败与缓存命中率写入 metrics，CLI 亦输出 cache hit/miss 摘要 | 关注长期命中率走势，必要时追加慢查询日志 |
 | `sync.mjs` | 多语言内容增量同步、快照对比 | `tests/pagegen/sync.test.mjs` | ✅ metrics 已包含失败统计和错误列表；`pagegen.mjs` 会在存在失败时输出警告 | 如需更多上下文，可在错误日志中加入路径、权限提示（低优先） |
 | `collections.mjs` | 生成分类/系列/标签/归档聚合 Markdown | `tests/pagegen/collections.test.mjs`、`tests/pagegen/collections.failures.test.mjs` | ✅ 模板/排序由 `schema/collections.templates.json` 配置，可按语言覆盖；若缺失则回退默认 Markdown | 继续观察自定义模板在多语言场景下的落盘表现，并补充复杂排序/占位符示例 |
-| `feeds.mjs` | RSS/Sitemap 输出 | `tests/pagegen/feeds.test.mjs` | ✅ CLI/metrics 已记录各语言 RSS/Sitemap 条目与限流标记；模板仍为硬编码字符串 | 评估将模板配置化，便于多主题或多语言自定义 |
+| `feeds.mjs` | RSS/Sitemap 输出 | `tests/pagegen/feeds.test.mjs` | ✅ `schema/feeds.templates.json` + `scripts/validate-feeds-template.mjs` 提供模板配置，metrics 输出限流/模板命中摘要 | 结合局部重建实验，评估模板缓存与按需写入策略 |
 | `i18n-registry.mjs` | i18n 映射、导航 manifest、标签 canonical | `tests/pagegen/i18n-registry.test.mjs` | ✅ nav manifest/manifestKey 缺失会即时抛错并带 locale/slug；错误日志复用统一上下文 | 继续观察导航配置调整带来的回归，必要时追加快照 |
 | `writer.mjs` | 批量写入、内容哈希跳过、错误收集 | `tests/pagegen/writer.test.mjs` | ✅ 结果中已包含 `skippedByReason`，错误对象带 stack；仍可考虑暴露更多指标 | 1) 评估是否需要将 hash 命中率暴露到 CLI 输出 |
 | `pagegen.mjs` | orchestrator、metrics 汇总、命令行参数 | - `tests/pagegen/*` 间接覆盖<br>- Metrics JSON（手工检查） | ✅ `collect`/`sync`/`write` summary 已写入 metrics；端到端测试覆盖 `--metrics-only`、写入失败与 warn/error 日志上下文 | 持续观察 metrics stdout/metrics-only 的使用反馈，必要时再扩展导出选项 |
 | `pagegen.locales.mjs` | 读取语言、导航配置并校验 | 现有脚本校验 + `npm run precheck` + `tests/pagegen/locales-config.test.mjs` | ✅ 已覆盖缺字段/Schema 失败场景 | 后续可补缓存命中路径的快照测试 |
-| `scripts/validate-*.mjs` | 前置校验 | `npm run precheck` | - 没有单独测试 | 暂视为低优先；可在 CI 中新增“校验脚本必须成功” step |
+| `scripts/validate-*.mjs` | 前置校验 | `npm run precheck` | ✅ `tests/pagegen/check-links.integration.test.mjs` 覆盖 `check-links.mjs` 的缺链场景；其余校验脚本仍依赖 CLI 提示 | 后续视需求补充 frontmatter/tag alias 失败用例 |
 <!-- markdownlint-enable MD013 -->
 
 ## 模块细节
@@ -83,7 +83,7 @@ Pagegen 主脚本以串行 orchestrator 形式驱动各阶段，并在 `data/pag
 - ✅ 单测覆盖：
   - `tests/pagegen/collections.test.mjs` 验证模板排序、占位符、fallback 与临时注册的自定义模板；
   - `tests/pagegen/collections.failures.test.mjs` 新增错误模板抛错用例，确保缺少必填字段时能立即反馈。
-- feeds 模板仍保持默认实现，可在后续需要时仿照 collections 方案配置化。
+- ✅ `schema/feeds.templates.json` + `schema/feeds.templates.schema.json` 描述 RSS/Sitemap 模板，`scripts/validate-feeds-template.mjs` 接入 `npm run precheck`，并在 `tests/pagegen/feeds.test.mjs` 覆盖自定义/限流与模板缺失场景；后续需要结合局部重建实验评估模板缓存与按需写入策略。
 
 #### collections 模板格式速览
 
@@ -135,9 +135,9 @@ Pagegen 主脚本以串行 orchestrator 形式驱动各阶段，并在 `data/pag
 
 ## 下一步执行建议
 
-1. **Feeds 模板配置化**：仿照 collections 模板，在 `schema/feeds.templates.json` 描述 RSS/Sitemap 结构，并在 `tests/pagegen/feeds.test.mjs` 覆盖自定义模板/限流场景。
-2. **链接巡检集成测试**：为 `scripts/check-links.mjs` 新增临时目录用例，验证 nav manifest/i18n map 链接缺失时会立即失败，并纳入 CI 守门。
-3. ✅ **SEO/OpenGraph 配置治理**：`schema/seo.json` + Schema 校验已落地，主题注入 `<meta>` 并新增 `tests/theme/seo-head.test.mjs` 与运维手册。
-4. **AI 管线适配层**：设计 `scripts/ai/adapters/*`，支持 Transformers.js/onnxruntime，可通过环境变量回退占位实现，同时记录遥测指标与失败降级。
+1. **变更感知/局部重建**：为 `pagegen` 引入 Git diff/快照感知策略，仅重建受影响的语言与聚合，并保留 `--full-build` 回退选项。
+2. **指标时间序列与告警**：扩展 metrics/telemetry 输出，记录阶段历史趋势并在“观测指标”页提供阈值告警或回归提示。
+3. **AI 产出评测守门**：在 `scripts/ai/*` 接入离线评测夹具与基线数据，确保真实模型接入时可以据此判定是否回退到占位实现。
+4. ✅ **SEO/OpenGraph 配置治理**：`schema/seo.json` + Schema 校验已落地，主题注入 `<meta>` 并新增 `tests/theme/seo-head.test.mjs` 与运维手册。
 
 > 完成以上步骤后，请同步更新 `pagegen-refactor-roadmap.md`、`module-inventory.md` 与 AGENTS.md 的进度栏。
