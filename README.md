@@ -6,7 +6,7 @@
 - 从 **统一 JSON** → Markdown → PageGen → **VitePress** → Pages/CDN
 - **taxonomy 守门**：多语言分类/标签 Canonical、Slug 规则与路径映射
 - **元数据驱动导航** + 自动 **分类/系列/标签/归档** + **RSS/Sitemap**
-- CI 守门（Schema 校验、构建），后续可加 Lighthouse/体积预算
+- CI 守门：Schema 校验 + 体积预算 + stats 快照对比；主干推送额外跑 Lighthouse
 - 预留 **L1 语义检索（Transformers.js）** 与 **USearch/WASM** 接口
 - PR-I AI 自演进（占位版）：构建阶段自动生成 embeddings/summaries/Q&A JSON，前端可按需消费
 - PR-J 知识 API + Chat：导出段落级只读数据，前端提供带引用的轻量问答
@@ -80,9 +80,10 @@ npm run dev
 - Pagegen 各阶段（collect/sync/collections/feeds/i18n/writer）已模块化并输出指标，CLI 会汇总缓存命中率与写入跳过原因，最新一轮指标会同步写入 telemetry 页面，便于运维直接观测。
 - 多语言内容统计脚本 `npm run stats:lint` 已上线，CI 会生成 `data/stats.snapshot.json` 工件；配套的 `npm run stats:diff` 已接入 CI，自动抓取 `origin/main:data/stats.snapshot.json` 作为基线，对比结果会写入 Step Summary 与 `stats-diff-report` 工件，便于在 PR 审查阶段复核差异。
 - 下一阶段重点：
-  1. ✅ 收敛 orchestrator 契约与日志上下文，`tests/pagegen/integration.test.mjs` 已覆盖 metrics-only、解析失败与写入异常场景。
-  2. ✅ 将 `stats:diff` 接入夜间与 PR 审查：CI 在上传快照后执行 `git fetch --depth=2 origin main` → `npm run stats:diff -- --baseline origin/main:data/stats.snapshot.json --current data/stats.snapshot.json --quiet --json`，并依据退出码 2 失败；结果写入 Step Summary 与 `stats-diff-report` 工件，可直接复用到 nightly 工作流。
-  3. 🔁 评估语义检索管线（Transformers.js / onnxruntime）与占位 AI 脚本的落地方案。
+  1. 🗂️ 将 RSS/Sitemap 生成模板配置化（`schema/feeds.templates.json`），并在 `tests/pagegen/feeds.test.mjs` 增补自定义模板与限流覆盖。
+  2. 🔗 为 `scripts/check-links.mjs` 补充集成测试，确保临时目录/聚合缺失等场景能在 CI 中即时失败。
+  3. 🧭 Schema 化站点级 SEO/OpenGraph 配置，更新 README/运维文档并在主题层快照验证 `<meta>` 输出。
+  4. 🤖 推进 AI 管线适配层（Transformers.js / onnxruntime），在 `scripts/ai/*` 中提供可回退实现并记录遥测指标。
 
 ## 协作约束速查
 
@@ -93,7 +94,7 @@ npm run dev
 - **本地预检**：安装依赖后会自动执行 `husky install`，现有的 `pre-commit` 钩子会调用 `lint-staged`，针对提交的 Markdown 运行 `npm run md:lint`。如需跳过，可在本地使用 `HUSKY=0 git commit ...`。
 - **环境要求**：Node ≥ 22、npm ≥ 10、git ≥ 2.45，`.env` 需包含 `BASE=/ling-atlas/`、`SITE_ORIGIN=https://<user>.github.io/ling-atlas`、`GIT_REMOTE=origin`、`GIT_BRANCH=main`。
 - **首次初始化**：建议执行 `codex run setup --base "/ling-atlas/" --site "https://<user>.github.io/ling-atlas"`，完成依赖安装、预检、聚合页生成与首次构建。
-- **CI 守门**：默认 `npm ci` 安装依赖，持续运行 Pagegen 单测、前置校验、生成聚合页；体积预算与 Lighthouse 可按需开启（参考 `node .codex/budget.mjs` 与 `npx lhci autorun`）。
+- **CI 守门**：流水线默认执行 `npm ci`、前置校验、Pagegen 单测、`node scripts/stats-lint.mjs` + `node scripts/stats-diff.mjs`、`node .codex/budget.mjs` 等步骤；主干推送会额外安装 Chrome 依赖并运行 `npx lhci autorun --collect.chromeFlags="--no-sandbox"`，PR 仅保留核心守门以控制耗时。
 - **内容生产力工具**：通过 `npm run md:lint`、`node scripts/check-links.mjs`、`node scripts/img-opt.mjs` 守门 Markdown、链接与图片质量；其中 `check-links` 会额外校验 `nav.manifest.<locale>.json` 与 `i18n-map.json` 内的目标路径，必要时可在 CI 中暂时调高阈值或跳过。
 - **Landing 入口 BASE 兜底**：`docs/index.md` 的内联重定向脚本会写入 `__LING_ATLAS_ACTIVE_BASE__` 并由 `<script setup>` 在 hydration 期间复用，确保 `/` 与 `/ling-atlas/` 等不同 BASE 下的首屏重定向一致；前端通过 `docs/.vitepress/theme/base.mjs` 统一读取、缓存与复用该 BASE，Locale Toggle、导航 manifest 以及 Telemetry 资产加载都会依赖此模块。如需修改入口，请同步维护内联脚本、`base.mjs` 与相关调用。
 - **导航与标签配置 Playbook**：在修改 `schema/nav.json`、`schema/tag-alias.json` 之前，务必阅读 `docs/zh/plans/nav-config-playbook.md`；文档提供配置步骤、守门命令与常见故障排查。
