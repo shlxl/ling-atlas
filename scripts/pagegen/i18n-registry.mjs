@@ -7,6 +7,13 @@ const NAV_ENTRY_TYPE_MAP = new Map([
   ['archive', 'archive']
 ])
 
+function createConfigError(message, context = {}) {
+  const error = new Error(message)
+  error.code = 'E_PAGEGEN_NAV_CONFIG'
+  error.context = context
+  return error
+}
+
 export function createI18nRegistry(locales, { tagAlias = {}, navConfig } = {}) {
   const localeList = Array.isArray(locales) ? locales : Object.values(locales || {})
   const manifestAlias = new Map(localeList.map(lang => [lang.manifestLocale, lang.aliasLocaleIds || []]))
@@ -202,17 +209,59 @@ export function createI18nRegistry(locales, { tagAlias = {}, navConfig } = {}) {
     for (const type of Object.keys(navEntries)) {
       const manifestKey = navEntryToManifestKey.get(type) || type
       if (!manifestKeys.has(manifestKey)) {
-        console.warn(
-          `[pagegen.i18n-registry] nav entries "${type}" 忽略：nav manifest 未定义对应键 "${manifestKey}"，请检查 schema/nav.json`
+        throw createConfigError(
+          `[pagegen.i18n-registry] 无法写入 "${type}" 导航：nav manifest 缺少键 "${manifestKey}"，请检查 schema/nav.json 的 aggregates 配置`,
+          {
+            type,
+            manifestKey,
+            locale: lang?.manifestLocale
+          }
         )
-        continue
       }
       const entries = navEntries[type]
-      if (!entries || !(entries instanceof Map)) continue
+      if (!entries || !(entries instanceof Map)) {
+        throw createConfigError(
+          `[pagegen.i18n-registry] locale="${lang?.manifestLocale}" 的 "${type}" 导航项不是 Map，生成已终止`,
+          {
+            type,
+            locale: lang?.manifestLocale
+          }
+        )
+      }
       const bucket = manifest[manifestKey]
-      if (!bucket || !(bucket instanceof Map)) continue
+      if (!bucket || !(bucket instanceof Map)) {
+        throw createConfigError(
+          `[pagegen.i18n-registry] nav manifest 未初始化 "${manifestKey}"，请检查 schema/nav.json 的 aggregates`,
+          {
+            type,
+            manifestKey,
+            locale: lang?.manifestLocale
+          }
+        )
+      }
       for (const [slugValue, target] of entries.entries()) {
-        if (slugValue && target) bucket.set(slugValue, target)
+        if (!slugValue) {
+          throw createConfigError(
+            `[pagegen.i18n-registry] locale="${lang?.manifestLocale}" 的 "${type}" 导航存在空白 slug，请检查聚合源数据`,
+            {
+              type,
+              manifestKey,
+              locale: lang?.manifestLocale
+            }
+          )
+        }
+        if (!target) {
+          throw createConfigError(
+            `[pagegen.i18n-registry] locale="${lang?.manifestLocale}" 的 "${type}" 导航 slug="${slugValue}" 缺少目标路径`,
+            {
+              type,
+              manifestKey,
+              locale: lang?.manifestLocale,
+              slug: slugValue
+            }
+          )
+        }
+        bucket.set(slugValue, target)
       }
     }
   }
@@ -261,46 +310,69 @@ export function createI18nRegistry(locales, { tagAlias = {}, navConfig } = {}) {
 }
 
 function normalizeAggregates(rawAggregates) {
-  const defaultMap = new Map([
+  if (!rawAggregates || typeof rawAggregates !== 'object' || !Object.keys(rawAggregates).length) {
+    throw createConfigError(
+      '[pagegen.i18n-registry] nav config 缺少 aggregates 定义，无法构建导航 manifest',
+      { section: 'aggregates' }
+    )
+  }
+
+  const manifestKeys = new Set()
+  const typeToManifestKey = new Map()
+  const manifestKeyOwners = new Map()
+
+  for (const [aggregateKey, value] of Object.entries(rawAggregates)) {
+    if (!value || typeof value !== 'object') {
+      throw createConfigError(
+        `[pagegen.i18n-registry] aggregates.${aggregateKey} 不是对象，无法解析导航配置`,
+        { aggregateKey }
+      )
+    }
+    const manifestKey = value.manifestKey
+    if (!manifestKey) {
+      throw createConfigError(
+        `[pagegen.i18n-registry] aggregates.${aggregateKey}.manifestKey 缺失，请检查 schema/nav.json`,
+        { aggregateKey }
+      )
+    }
+    manifestKeys.add(manifestKey)
+    manifestKeyOwners.set(manifestKey, { aggregateKey, type: value.type })
+    const type = value.type
+    if (type) {
+      if (!typeToManifestKey.has(type)) {
+        typeToManifestKey.set(type, manifestKey)
+      }
+    }
+  }
+
+  const requiredTypes = new Map([
     ['category', 'categories'],
     ['series', 'series'],
     ['archive', 'archive'],
     ['tag', 'tags']
   ])
 
-  const manifestKeys = new Set()
-  const typeToManifestKey = new Map(defaultMap)
-
-  if (rawAggregates && typeof rawAggregates === 'object') {
-    for (const value of Object.values(rawAggregates)) {
-      if (!value || typeof value !== 'object') continue
-      const type = value.type
-      const manifestKey = value.manifestKey || defaultMap.get(type)
-      if (!manifestKey) continue
-      manifestKeys.add(manifestKey)
-      if (type) typeToManifestKey.set(type, manifestKey)
+  for (const [type, fallbackKey] of requiredTypes.entries()) {
+    const manifestKey = typeToManifestKey.get(type)
+    if (!manifestKey) {
+      throw createConfigError(
+        `[pagegen.i18n-registry] nav config 缺少 "${type}" 类型的 aggregates 定义，建议在 schema/nav.json 中补充 manifestKey（示例："${fallbackKey}"）`,
+        { type }
+      )
     }
-  }
-
-  for (const manifestKey of defaultMap.values()) {
-    manifestKeys.add(manifestKey)
   }
 
   const taxonomyKeys = ['category', 'series', 'archive']
     .map(type => typeToManifestKey.get(type))
     .filter(Boolean)
 
-  if (!taxonomyKeys.length) {
-    taxonomyKeys.push('categories', 'series', 'archive')
-  }
-
-  const tagKey = typeToManifestKey.get('tag') || 'tags'
-  manifestKeys.add(tagKey)
+  const tagKey = typeToManifestKey.get('tag')
 
   return {
     taxonomyKeys: Array.from(new Set(taxonomyKeys)),
     tagKey,
     manifestKeys,
-    typeToManifestKey
+    typeToManifestKey,
+    manifestKeyOwners
   }
 }

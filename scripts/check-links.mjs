@@ -36,6 +36,7 @@ const LOCALE_SEARCH_ROOTS = new Map([
 
 let localePrefixes = [...FALLBACK_LOCALE_PREFIXES, { locale: ROOT_LOCALE, prefix: '/' }]
 const CONTENT_CACHE = new Map()
+const AGGREGATE_CANONICAL_PATTERN = /^(categories|series|tags|archive)\/(.+)$/
 const DEFAULT_MANIFESTS = [
   {
     locale: 'zh',
@@ -114,6 +115,22 @@ async function validateInternalLink(url, filePath) {
   const contentRelative = normalizedRelative.replace(/^content\//, '')
 
   const searchCombos = [{ base: DOCS_DIR, rel: normalizedRelative }]
+
+  const aggregateMatch = AGGREGATE_CANONICAL_PATTERN.exec(normalizedRelative)
+  if (aggregateMatch) {
+    const [, aggregateType, rawSlug] = aggregateMatch
+    const slugValue = decodeMaybe(rawSlug)
+    const localesToCheck = new Set()
+    if (locale) localesToCheck.add(locale)
+    for (const candidateLocale of LOCALE_SEARCH_ROOTS.keys()) {
+      localesToCheck.add(candidateLocale)
+    }
+
+    for (const candidateLocale of localesToCheck) {
+      const backed = await hasBackingContent(candidateLocale, aggregateType, slugValue)
+      if (backed) return true
+    }
+  }
 
   const localeRoots = LOCALE_SEARCH_ROOTS.get(locale)
   if (localeRoots) {
