@@ -24,7 +24,7 @@ test('zh locale uses defaults and resolves canonical', () => {
     seoConfig,
     locale: 'zh',
     normalizedPath,
-    siteOrigin: 'https://example.dev'
+    siteOrigin: 'https://example.dev/ling-atlas'
   })
 
   const canonical = findHeadEntry(head, ([tag, attrs]) => tag === 'link' && attrs.rel === 'canonical')
@@ -54,7 +54,7 @@ test('en locale overrides description and locale fields', () => {
     seoConfig,
     locale: 'en',
     normalizedPath,
-    siteOrigin: 'https://example.dev'
+    siteOrigin: 'https://example.dev/ling-atlas'
   })
 
   const canonical = findHeadEntry(head, ([tag, attrs]) => tag === 'link' && attrs.rel === 'canonical')
@@ -75,6 +75,21 @@ test('en locale overrides description and locale fields', () => {
   const keywords = findHeadEntry(head, ([tag, attrs]) => tag === 'meta' && attrs.name === 'keywords')
   assert.ok(keywords)
   assert.equal(keywords[1].content, 'Ling Atlas, knowledge base, VitePress')
+})
+
+test('canonical origin without embedded base preserves site base in path', () => {
+  const routePath = resolveRoutePathFromRelative('zh/content/example/index.md')
+  const normalizedPath = normalizeSeoRoutePath(routePath)
+  const { head } = resolveSeoHead({
+    seoConfig,
+    locale: 'zh',
+    normalizedPath,
+    siteOrigin: 'https://example.dev'
+  })
+
+  const canonical = findHeadEntry(head, ([tag, attrs]) => tag === 'link' && attrs.rel === 'canonical')
+  assert.ok(canonical)
+  assert.equal(canonical[1].href, 'https://example.dev/ling-atlas/zh/content/example/')
 })
 
 process.on('exit', () => {

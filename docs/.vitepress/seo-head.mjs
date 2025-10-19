@@ -2,6 +2,7 @@ import { createLocaleMapCore } from './theme/composables/locale-map-core.mjs'
 import {
   SUPPORTED_LOCALES,
   getFallbackLocale,
+  getSiteBasePath,
   normalizeLocalePath,
   routePrefix,
   withSiteBase
@@ -77,12 +78,52 @@ function joinUrl(base, path) {
   return `${normalizedBase}${normalizedPath}`
 }
 
+function shouldStripBaseFromPath(canonicalBase, siteBasePath) {
+  if (!canonicalBase) return false
+  if (!siteBasePath || siteBasePath === '/') return false
+
+  const trimmedSiteBase = siteBasePath.endsWith('/')
+    ? siteBasePath.slice(0, -1)
+    : siteBasePath
+  if (!trimmedSiteBase) return false
+
+  try {
+    const parsed = new URL(canonicalBase)
+    const canonicalPath = parsed.pathname || '/'
+    const normalizedCanonicalPath = canonicalPath.endsWith('/')
+      ? canonicalPath
+      : `${canonicalPath}/`
+    const normalizedSiteBase = siteBasePath
+    return (
+      normalizedCanonicalPath === normalizedSiteBase ||
+      normalizedCanonicalPath.endsWith(`${trimmedSiteBase}/`)
+    )
+  } catch {
+    return (
+      canonicalBase.endsWith(trimmedSiteBase) ||
+      canonicalBase.endsWith(`${trimmedSiteBase}/`)
+    )
+  }
+}
+
+function normalizeCanonicalPath(canonicalBase, normalizedPath) {
+  if (!normalizedPath) return normalizedPath
+  const siteBasePath = getSiteBasePath()
+  const shouldStrip = shouldStripBaseFromPath(canonicalBase, siteBasePath)
+  if (!shouldStrip) return normalizedPath
+  if (!siteBasePath || siteBasePath === '/') return normalizedPath
+  if (!normalizedPath.startsWith(siteBasePath)) return normalizedPath
+  const remainder = normalizedPath.slice(siteBasePath.length)
+  return remainder ? `/${remainder}` : '/'
+}
+
 function normalizeAssetUrl(value, siteOrigin) {
   if (!value) return ''
   if (isAbsoluteUrl(value)) return value
   const withBase = withSiteBase(value)
   if (!siteOrigin) return withBase
-  return joinUrl(siteOrigin, withBase)
+  const normalizedPath = normalizeCanonicalPath(siteOrigin, withBase)
+  return joinUrl(siteOrigin, normalizedPath || withBase)
 }
 
 function resolveEntry(config, locale) {
@@ -123,7 +164,9 @@ export function resolveSeoHead({ seoConfig = {}, locale, normalizedPath, siteOri
     entry.canonical = {}
   }
   entry.canonical.base = canonicalBase
-  const canonicalUrl = canonicalBase && normalizedPath ? joinUrl(canonicalBase, normalizedPath) : null
+  const canonicalPath = normalizeCanonicalPath(canonicalBase, normalizedPath)
+  const canonicalUrl =
+    canonicalBase && canonicalPath ? joinUrl(canonicalBase, canonicalPath) : null
 
   const head = []
   if (canonicalUrl) {
