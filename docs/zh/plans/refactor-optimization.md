@@ -6,13 +6,13 @@
 整段逻辑集中在一个异步自执行函数内串行执行，使得每次运行都需要完整遍历所有语言与内容目录。【F:scripts/pagegen.mjs†L28-L117】
 配套的 `pagegen.locales.mjs` 曾内置大量语言配置常量，扩展时需要直接改动脚本源码，缺少数据驱动能力（现已迁移到 `schema/locales.json` 并由 JSON Schema 守门，同时提供给前端主题与 Landing 页面复用）。【F:scripts/pagegen.locales.mjs†L10-L199】
 
-## 现状痛点
+## 现状痛点（2024 更新）
 
-1. **职责过载的串行流程**：语言初始化、内容采集、聚合写入、RSS/Sitemap 和 i18n 映射都在单文件内顺序执行，任一步骤阻塞都会拖慢整体生成时间，也难以单独测试某个阶段的逻辑。【F:scripts/pagegen.mjs†L101-L115】
-2. **无差异的目录同步**：`syncLocaleContent` 每次执行都会整目录删除再复制，即使内容没有变化也会做全量 I/O，放大了构建时间和磁盘写入成本。【F:scripts/pagegen.mjs†L146-L157】
-3. **文件读取缺乏并发与缓存**：文章元数据解析采用顺序 `for...of`，每个 Markdown 都独立 `readFile` 与 `gray-matter` 解析；随着文章规模扩大，该区域成为热点瓶颈，且没有缓存层复用解析结果。【F:scripts/pagegen.mjs†L165-L216】
-4. **写入阶段逐条 await**：聚合页、RSS、Sitemap 以及导航 manifest 都在语言循环内逐条写文件，缺乏批量调度和错误隔离机制，导致 I/O 次数偏高，失败时也无法快速定位具体阶段。【F:scripts/pagegen.mjs†L247-L305】【F:scripts/pagegen.mjs†L473-L499】
-5. **配置不可扩展**：语言定义与字段映射曾 hardcode 在 `pagegen.locales.mjs`，新增方言/地区配置需修改源码并重新部署，难以让内容团队独立维护配置表（已迁移至 `schema/locales.json`，导航/标签配置仍待外置）。【F:scripts/pagegen.locales.mjs†L10-L172】
+1. **职责过载的串行流程**：核心 orchestrator 仍串行调度各阶段，但 `collect`、`sync`、`feeds`、`i18n` 等模块已拆分为独立文件并具备单测/集成测试覆盖；后续关注点转向插件化与并行编排。【F:scripts/pagegen.mjs†L101-L115】
+2. **目录同步性能**：阶段 2 已上线基于 snapshot 的增量同步与强制全量回退选项，重复运行时仅复制变更文件，并记录复制/删除/失败统计，剩余工作主要是观察长尾异常。【F:scripts/pagegen/sync.mjs†L1-L160】
+3. **内容解析效率**：`collectPosts` 引入并发池与缓存命中判断，CLI/metrics 输出命中率与解析错误摘要，当前瓶颈集中在慢解析 Markdown，可在后续追加 profiling。【F:scripts/pagegen/collect.mjs†L12-L120】【F:scripts/pagegen.mjs†L200-L235】
+4. **写入阶段可靠性**：批量 writer、内容哈希跳过与结构化错误日志均已到位，`writer.flush()` 汇总失败列表并附带 stage/locale/target 便于排障；可继续评估写入重试或并行策略。【F:scripts/pagegen/writer.mjs†L1-L180】【F:scripts/pagegen.mjs†L276-L344】
+5. **配置可扩展性**：语言、导航、标签别名、feeds 模板与 SEO/OpenGraph 均迁移至 `schema/*.json` 并有校验脚本；后续重点转向 AI 配置、模型生命周期与协作手册的持续同步。【F:schema/locales.json†L1-L200】【F:schema/tag-alias.schema.json†L1-L20】
 
 ## 重构方向
 

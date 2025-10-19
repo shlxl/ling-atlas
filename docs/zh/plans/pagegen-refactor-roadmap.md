@@ -24,7 +24,7 @@ Pagegen 当前为串行的单体脚本，承担同步内容、解析元数据、
 ### 阶段 2 · 差异化同步与缓存
 
 - ✅ 为 `syncLocaleContent` 增加增量策略（mtime/size 对比），默认仅复制有变更的文件；提供 `--full-sync`/`PAGEGEN_FULL_SYNC=1` 回退全量覆盖。
-- ⏳ 在内容解析模块中引入缓存层（基于 `mtime` 及文件尺寸），并通过并发池加速 Markdown 读取与 frontmatter 解析。
+- ✅ 在内容解析模块中引入缓存层（基于 `mtime` 与文件尺寸），并通过并发池加速 Markdown 读取与 frontmatter 解析；命中率、解析失败会写入 metrics。
 - 📊 验证增量效果：对比执行时间、I/O 次数，确保重复运行 `pagegen` 时耗时显著下降。
 
 ### 阶段 3 · 批量写入与失败隔离
@@ -37,7 +37,7 @@ Pagegen 当前为串行的单体脚本，承担同步内容、解析元数据、
 ### 阶段 4 · 配置外置与 Schema 化
 
 - ✅ 语言配置已迁移至 `schema/locales.json` 并由 `schema/locales.schema.json` 守门；提交后会缓存解析结果到 `.codex/cache/pagegen-locales.cache.json`。
-- ⏳ 标签别名配置尚未配置化（见《Pagegen 深入检查清单》），后续需对 `schema/tag-alias.json` 引入 Schema 校验与测试。导航配置已完成迁移。
+- ✅ 标签别名配置已迁移到 `schema/tag-alias.json` 并提供 `schema/tag-alias.schema.json` + `scripts/validate-tag-alias.mjs` 守门；导航配置已完成迁移。
 - ✅ `scripts/pagegen.locales.mjs` 改为读取外置 JSON，运行时自动校验 Schema 并输出详细错误，避免手动维护常量。
 - ✅ 运维指南：`README.md` FAQ 与 `AGENTS.md` 第 9 节已说明如何通过配置文件新增语言、切换默认语言与触发校验。
 - ✅ 导航配置 Schema (`schema/nav.schema.json`) 与默认配置 (`schema/nav.json`) 已落地，Pagegen nav manifest 与 VitePress 主题均从同一文件加载聚合/固定链接定义；导航结构更新无需改动源码，仅需调整 JSON 并重跑 `npm run gen`。
@@ -46,8 +46,11 @@ Pagegen 当前为串行的单体脚本，承担同步内容、解析元数据、
 ### 阶段 5 · Telemetry 与后续拓展
 
 - ✅ 将 `pagegen` 各阶段耗时、处理文件量、命中缓存率写入 telemetry（JSON 输出），并在 CLI 摘要/metrics JSON 中展示缓存命中与写入跳过统计，供 `codex run audit` 或 CI 使用。
-- ✅ 预留 Hook：在 orchestrator 中暴露事件或插件机制，为后续接入 AI 摘要、索引构建等拓展提供接口，并整理 Transformers.js/onnxruntime 的接入评估、回滚策略与脚本清单。
-- 📌 统计快照：基于 `scripts/stats-lint.mjs` 设计 nightly/PR 对比任务与异常提示，持续追踪分类与标签变化。
+- ✅ 预留 Hook：在 orchestrator 中暴露基础事件，并整理 Transformers.js/onnxruntime 的接入评估、回滚策略与脚本清单；AI 构建脚本现具备适配层与占位回退。
+- ✅ 统计快照：`npm run stats:diff` 已接入 PR/夜间流程，CI 自动对比 `data/stats.snapshot.json` 并输出 Step Summary + 工件，支持 `--json` 结构化分析。
+- 🔜 遥测扩展：补齐 `ai.embed.*`/`ai.summary.*`/`ai.qa.*` 事件并在 `scripts/telemetry-merge.mjs` 汇总为 `build.ai`，用于监控真实模型运行情况。
+- 🔜 插件化与并行：实现 orchestrator 插件注册、生命周期钩子与可配置并发调度，保留显式回退开关并更新契约文档。
+- 🔜 模型生命周期：新增 `ai:prepare`、`ai:smoke` 脚本与 CI 守门，确保模型下载、校验与最小推理可控。
 
 ## 风险与应对
 
