@@ -66,10 +66,10 @@ npm run dev
 
 ## 当前进展与下一阶段
 - Pagegen 各阶段（collect/sync/collections/feeds/i18n/writer）已模块化并输出指标，CLI 会汇总缓存命中率与写入跳过原因，最新一轮指标会同步写入 telemetry 页面，便于运维直接观测。
-- 多语言内容统计脚本 `npm run stats:lint` 已上线，CI 会生成 `data/stats.snapshot.json` 工件；配套的 `npm run stats:diff` 支持对比主干快照或前一晚的基线，在异常差异出现时直接在控制台打标。
+- 多语言内容统计脚本 `npm run stats:lint` 已上线，CI 会生成 `data/stats.snapshot.json` 工件；配套的 `npm run stats:diff` 已接入 CI，自动抓取 `origin/main:data/stats.snapshot.json` 作为基线，对比结果会写入 Step Summary 与 `stats-diff-report` 工件，便于在 PR 审查阶段复核差异。
 - 下一阶段重点：
   1. ✅ 收敛 orchestrator 契约与日志上下文，`tests/pagegen/integration.test.mjs` 已覆盖 metrics-only、解析失败与写入异常场景。
-  2. 🔁 将 `stats:diff` 接入夜间与 PR 审查（必要时自动打标签/评论）。
+  2. ✅ 将 `stats:diff` 接入夜间与 PR 审查：CI 在上传快照后执行 `git fetch --depth=2 origin main` → `npm run stats:diff -- --baseline origin/main:data/stats.snapshot.json --current data/stats.snapshot.json --quiet --json`，并依据退出码 2 失败；结果写入 Step Summary 与 `stats-diff-report` 工件，可直接复用到 nightly 工作流。
   3. 🔁 评估语义检索管线（Transformers.js / onnxruntime）与占位 AI 脚本的落地方案。
 
 ## 协作约束速查
