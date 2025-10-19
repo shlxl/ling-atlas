@@ -43,11 +43,10 @@ describe('pagegen plugin scheduler', () => {
     ])
   })
 
-  it('runs parallel stage tasks without duplicates', async () => {
+  it('runs parallel stage tasks without duplicates when enabled', async () => {
     const registry = createPluginRegistry()
-    const scheduler = createScheduler(registry, { parallelLimit: 2 })
+    const scheduler = createScheduler(registry, { parallel: true, parallelLimit: 3 })
     const seen = new Set()
-    const taskOrder = []
 
     registry.registerStage({
       name: 'parallel-stage',
@@ -59,7 +58,6 @@ describe('pagegen plugin scheduler', () => {
           throw new Error(`duplicate execution for ${value}`)
         }
         seen.add(value)
-        taskOrder.push(value)
       }
     })
 
@@ -67,7 +65,6 @@ describe('pagegen plugin scheduler', () => {
 
     assert.equal(seen.size, 5)
     assert.deepStrictEqual([...seen].sort((a, b) => a - b), [1, 2, 3, 4, 5])
-    assert.equal(taskOrder.length, 5)
   })
 
   it('propagates stage errors via lifecycle events', async () => {
@@ -75,7 +72,7 @@ describe('pagegen plugin scheduler', () => {
     const scheduler = createScheduler(registry)
     const errors = []
 
-    registry.on(lifecycleEvents.STAGE_ERROR, payload => {
+    registry.on(lifecycleEvents.ERROR, payload => {
       errors.push({ stage: payload?.stage, message: payload?.error?.message })
     })
 

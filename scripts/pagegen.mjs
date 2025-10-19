@@ -83,19 +83,21 @@ await (async () => {
   if (parallelDisableFlagIndex !== -1) {
     argv.splice(parallelDisableFlagIndex, 1)
   }
-  let parallelLimit = Number(process.env.PAGEGEN_PARALLEL_LIMIT || 4)
-  if (!Number.isFinite(parallelLimit) || parallelLimit <= 0) {
-    parallelLimit = 4
+  let maxParallel = Number(process.env.PAGEGEN_MAX_PARALLEL || 1)
+  if (!Number.isFinite(maxParallel) || maxParallel <= 0) {
+    maxParallel = 1
+  } else {
+    maxParallel = Math.floor(maxParallel)
   }
-  const parallelLimitFlagIndex = argv.indexOf('--parallel-limit')
-  if (parallelLimitFlagIndex !== -1) {
-    const specified = Number(argv[parallelLimitFlagIndex + 1])
+  const maxParallelFlagIndex = argv.indexOf('--max-parallel')
+  if (maxParallelFlagIndex !== -1) {
+    const specified = Number(argv[maxParallelFlagIndex + 1])
     if (!Number.isFinite(specified) || specified <= 0) {
-      console.error('pagegen: --parallel-limit requires a positive integer')
+      console.error('pagegen: --max-parallel requires a positive integer')
       process.exit(1)
     }
-    parallelLimit = Math.floor(specified)
-    argv.splice(parallelLimitFlagIndex, 2)
+    maxParallel = Math.max(1, Math.floor(specified))
+    argv.splice(maxParallelFlagIndex, 2)
   }
   const collectConcurrency = Number(process.env.PAGEGEN_CONCURRENCY || 8)
   const effectiveDryRun = dryRun || metricsOnly
@@ -214,10 +216,11 @@ await (async () => {
     disabled: batchingDisabled || effectiveDryRun
   }
 
+  const parallelEnabled = !parallelDisabled && maxParallel > 1
   const pluginRegistry = createPluginRegistry()
-  const scheduler = createScheduler(pluginRegistry, { parallel: !parallelDisabled, parallelLimit })
+  const scheduler = createScheduler(pluginRegistry, { parallel: parallelEnabled, parallelLimit: maxParallel })
 
-  pluginRegistry.on(lifecycleEvents.STAGE_ERROR, payload => {
+  pluginRegistry.on(lifecycleEvents.ERROR, payload => {
     const error = payload?.error
     if (!error || error.__pagegenLogged) return
     const stageName = payload?.stage || payload?.definition?.name || 'unknown'

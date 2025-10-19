@@ -5,24 +5,27 @@ export function createScheduler(registry, options = {}) {
     throw new Error('[pagegen.scheduler] registry with getStages() is required')
   }
 
-  const parallelEnabled = options?.parallel !== false
   const parallelLimit = normalizeLimit(options?.parallelLimit)
+  const parallelEnabled = options?.parallel === true && parallelLimit > 1
 
   async function run(sharedContext = {}) {
     const stages = registry.getStages()
-    const allContext = { shared: sharedContext, options: { parallel: parallelEnabled, parallelLimit } }
-    await callLifecycle(lifecycleEvents.BEFORE_ALL, { ...allContext })
-    try {
-      for (const stageDef of stages) {
-        await executeStage(stageDef, sharedContext)
-      }
-    } finally {
-      await callLifecycle(lifecycleEvents.AFTER_ALL, { ...allContext })
+    for (const stageDef of stages) {
+      await executeStage(stageDef, sharedContext)
     }
   }
 
   async function executeStage(stageDef, sharedContext) {
-    const stageCtx = { shared: sharedContext, stage: stageDef.name, definition: stageDef, options: { parallel: parallelEnabled, parallelLimit } }
+    const stageCtx = {
+      stage: stageDef.name,
+      definition: stageDef,
+      shared: sharedContext,
+      options: {
+        parallel: Boolean(stageDef.parallel && parallelEnabled),
+        parallelLimit
+      }
+    }
+
     await callLifecycle(lifecycleEvents.BEFORE_STAGE, stageCtx)
     if (typeof stageDef.beforeStage === 'function') {
       await stageDef.beforeStage(sharedContext, stageCtx)
@@ -35,7 +38,7 @@ export function createScheduler(registry, options = {}) {
       } else {
         const items = await collectItems(stageDef.iterator, sharedContext, stageCtx)
         if (!items.length) {
-          // no-op
+          // no items
         } else if (stageDef.parallel && parallelEnabled) {
           await runParallel(items, sharedContext, stageCtx, stageDef.task, parallelLimit)
         } else {
@@ -48,19 +51,17 @@ export function createScheduler(registry, options = {}) {
       if (typeof stageDef.onError === 'function') {
         await stageDef.onError(error, sharedContext, stageCtx)
       }
-      await callLifecycle(lifecycleEvents.STAGE_ERROR, stageCtx)
+      await callLifecycle(lifecycleEvents.ERROR, stageCtx)
       throw error
     } finally {
-      if (!stageError && typeof stageDef.afterStage === 'function') {
-        await stageDef.afterStage(sharedContext, stageCtx)
-      }
       if (!stageError) {
+        if (typeof stageDef.afterStage === 'function') {
+          await stageDef.afterStage(sharedContext, stageCtx)
+        }
         await callLifecycle(lifecycleEvents.AFTER_STAGE, stageCtx)
       }
     }
   }
-
-  return { run }
 
   async function callLifecycle(event, payload) {
     const handlers = registry.getLifecycleHandlers(event)
@@ -68,6 +69,8 @@ export function createScheduler(registry, options = {}) {
       await handler(payload)
     }
   }
+
+  return { run }
 }
 
 async function collectItems(iteratorFn, sharedContext, stageCtx) {
@@ -114,6 +117,6 @@ async function runParallel(items, sharedContext, stageCtx, task, limit) {
 
 function normalizeLimit(value) {
   const num = Number(value)
-  if (Number.isFinite(num) && num > 0) return Math.floor(num)
+  if (Number.isFinite(num) && num > 1) return Math.floor(num)
   return 1
 }
