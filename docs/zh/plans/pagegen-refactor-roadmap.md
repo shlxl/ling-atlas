@@ -46,22 +46,11 @@ Pagegen 当前为串行的单体脚本，承担同步内容、解析元数据、
 ### 阶段 5 · Telemetry 与后续拓展
 
 - ✅ 将 `pagegen` 各阶段耗时、处理文件量、命中缓存率写入 telemetry（JSON 输出），并在 CLI 摘要/metrics JSON 中展示缓存命中与写入跳过统计，供 `codex run audit` 或 CI 使用。
-- ✅ 预留 Hook：在 orchestrator 中暴露事件或插件机制，为后续接入 AI 摘要、索引构建等拓展提供接口，并整理 Transformers.js/onnxruntime 的接入评估、回滚策略与脚本清单。
+- ✅ 预留 Hook：在 orchestrator 中暴露基础事件，并整理 Transformers.js/onnxruntime 的接入评估、回滚策略与脚本清单；AI 构建脚本现具备适配层与占位回退。
 - ✅ 统计快照：`npm run stats:diff` 已接入 PR/夜间流程，CI 自动对比 `data/stats.snapshot.json` 并输出 Step Summary + 工件，支持 `--json` 结构化分析。
-
-### 阶段 6 · 变更感知与质量守门（已完成）
-
-- ✅ 变更感知局部重建：Git 快照 + 缓存命中率方案在多语言目录验证通过，文档同步写入 README/AGENTS，形成显式回退指引。
-- ✅ 指标时间序列基线：`node scripts/telemetry-merge.mjs` 追加时间戳快照至 `data/telemetry.json`，路线图与观测页补充导出说明。
-- ✅ AI 产出评测蓝本：`data/gold.jsonl` 汇总基准集，`npm run ai:smoke` 可读取基线并在 placeholder 模式输出跳过日志，评测指标设计完成评审。
-
-### 阶段 7 · 运营化与守门自动化（规划中）
-
-- 在 CI 与 `codex run gen` 中默认启用局部重建，输出结构化 Step Summary，并保留 `--full-build` 回退开关。
-- 将 `data/telemetry.json` 时间序列搬运到站点“观测指标”页面，补充可视化组件与阈值告警脚本，约定历史快照保留策略。
-- 把 `data/gold.jsonl` 接入 `npm run ai:smoke` 打分与阈值判定，失败时触发占位实现回退并写入结构化日志。
-
-> 更新：2025-10-19 完成阶段 6 目标（局部重建实验、指标快照基线、AI 评测蓝本），并追加阶段 7 运营化任务。
+- 🔜 遥测扩展：补齐 `ai.embed.*`/`ai.summary.*`/`ai.qa.*` 事件并在 `scripts/telemetry-merge.mjs` 汇总为 `build.ai`，用于监控真实模型运行情况。
+- 🔜 插件化与并行：实现 orchestrator 插件注册、生命周期钩子与可配置并发调度，保留显式回退开关并更新契约文档。
+- 🔜 模型生命周期：新增 `ai:prepare`、`ai:smoke` 脚本与 CI 守门，确保模型下载、校验与最小推理可控。
 
 ## 风险与应对
 

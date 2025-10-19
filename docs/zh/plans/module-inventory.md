@@ -12,9 +12,9 @@ title: 核心目录盘点（schema / scripts / plans / tests）
 | `nav.json` + `nav.schema.json` | 导航聚合/固定链接配置 | ✅ Pagegen/nav-core 共用；`npm run config:nav` 校验 | 运维说明已同步到 README/AGENTS；下一步结合局部重建默认化评估导航 diff 报警策略 |
 | `seo.json` + `seo.schema.json` | 站点级 meta/OG/Twitter/canonical | ✅ `npm run config:seo` 校验 + 主题注入 `<meta>`/canonical | 运维范例已写入 `seo-config-playbook.md`；后续关注多语言社交卡片差异化需求 |
 | `frontmatter.schema.json` | 内容 Frontmatter 校验 | ✅ `npm run precheck` 引用 | 持续对齐内容字段；视情况扩展可选字段 |
-| `tag-alias.json` + `tag-alias.schema.json` | 标签归一化 | ✅ Schema 与校验脚本 (`npm run config:tags`) 已接入 precheck | 失败用例测试补齐；下一步将评测阈值与 AI 质量守门联动 |
-
-> Schema 行为均已整理到运维手册，请在修改前阅读对应 Playbook。
+| `tag-alias.json` + `tag-alias.schema.json` | 标签归一化 | ✅ Schema 与校验脚本 (`npm run config:tags`) 已接入 precheck | 继续完善文档示例与失败用例测试 |
+| `feeds.templates.json` + `feeds.templates.schema.json` | RSS/Sitemap 模板 | ✅ 已上线，可按语言映射模板；fallback 保留旧逻辑 | 观察多主题场景下的模板复用情况 |
+| `seo.json` + `seo.schema.json` | 站点级 SEO/OpenGraph | ✅ Schema + 校验脚本已接入 `npm run precheck`，主题 `<meta>` 自动读取 | 定期复核 SEO 字段覆盖率与示例 |
 
 ## 2. `scripts/`（自动化脚本）
 
@@ -22,7 +22,7 @@ title: 核心目录盘点（schema / scripts / plans / tests）
   - ✅ 模块化、缓存、批量写入、导航配置接入已完成，并新增阶段/语言/目标路径的结构化错误日志。
   - ✅ 深入检查：已按照 `docs/zh/plans/pagegen-module-architecture.md` / `pagegen-refactor-roadmap.md` 补齐 orchestrator 契约说明、导航/i18n 故障显式化与端到端测试。
 - **校验脚本**：`validate-frontmatter.mjs`、`validate-nav-config.mjs`、`validate-tag-alias.mjs`、`check-links.mjs`。
-  - ✅ 均已通过 `npm run precheck` 执行；`tests/pagegen/check-links.integration.test.mjs` 补齐 `check-links` 的临时目录与 nav/i18n 缺失场景守门。
+  - ✅ 均已通过 `npm run precheck` 执行，`check-links` 已补临时目录集成测试并纳入 `npm run test:pagegen`。
 - **构建/运维脚本**：`build-embeddings.mjs`、`generate-headers.mjs`、`postbuild-*`、`sbom.mjs` 等。
   - ✅ 可正常使用，建议在 README/AGENTS 中补充触发方式（部分命令仅在 CI 使用）。
 - **评测与统计**：`eval/`、`stats-lint.mjs` 已接入 CI 并上传快照；夜间流程可复用 `npm run stats:diff`。
@@ -43,20 +43,25 @@ title: 核心目录盘点（schema / scripts / plans / tests）
 | `refactor-optimization.md` | Pagegen 重构提案 | ✅ | 继续在此追踪风险与收益 |
 | `module-inventory.md` | （本文）核心目录盘点 | ✅ 最新 | 定期复盘补充 |
 
-运维手册：`nav-config-playbook.md`、`seo-config-playbook.md` 已记录常见修改流程与回滚步骤，修改配置前请先对照执行。
+建议新增：运维操作指南（例如 `nav-config-playbook.md`）记录如何修改导航/语言配置并跑测试。
+新增 feeds/SEO/AI 配置的回滚示例，可作为多代理协作手册。
 
 ## 4. `tests/`（守门测试）
 
 - `tests/pagegen/*.test.mjs`：覆盖采集/同步/聚合/Feeds/写入逻辑，并新增导航/i18n 缺失、缓存指标与回滚路径用例，✅。
 - `tests/theme/nav-core.test.mjs`：导航裁剪与回退，✅。
 - `tests/locale-map/*`：Locale toggle 与路径映射守门，✅。
+- `tests/check-links/integration.test.mjs`：临时目录集成测试验证 nav/i18n 链接缺失会立即失败，✅。
 - 建议补充：
-  - 为 `validate-frontmatter.mjs`、`validate-tag-alias.mjs` 等脚本补齐失败用例测试，确保 CLI 提示有自动化守门。
-  - 当新增 AI/metrics 相关脚本时，同步提供夹具与回退测试，以支撑阶段 6 的质量守门计划。
+  - 当新增 Schema 校验脚本（如 tag alias、seo、feeds）时，同步补充失败用例测试。
+  - 规划 AI 遥测与模型守门的最小冒烟用例。
 
 ## 5. 后续行动建议
 
-### 近期完成（2025-10）
+1. **AI 遥测与指标治理**：扩充 `scripts/ai/*` 的事件产出，`scripts/telemetry-merge.mjs` 汇总为 `build.ai`，并补充集成测试。
+2. **Orchestrator 插件化**：设计插件注册与并行调度机制，为后续扩展（AI 钩子、Telemetry）预留接口。
+3. **模型生命周期守门**：实现 `ai:prepare`、`ai:smoke` 脚本与 CI 钩子，确保真实模型可下载、校验与最小推理通过。
+4. **运维手册同步**：完善 feeds/SEO/AI 配置的操作指南与回滚示例，保持 README、AGENTS 与规划文档一致。
 
 - 局部重建实验：增量同步与缓存命中率已在多语言目录验证，运行指引同步写入 README/AGENTS。
 - 指标时间序列基线：`node scripts/telemetry-merge.mjs` 输出带时间戳的 `data/telemetry.json`，形成快照累积方案。

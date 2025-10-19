@@ -12,7 +12,7 @@
 2. **目录同步性能**：阶段 2 已上线基于 snapshot 的增量同步与强制全量回退选项，重复运行时仅复制变更文件，并记录复制/删除/失败统计，剩余工作主要是观察长尾异常。【F:scripts/pagegen/sync.mjs†L1-L160】
 3. **内容解析效率**：`collectPosts` 引入并发池与缓存命中判断，CLI/metrics 输出命中率与解析错误摘要，当前瓶颈集中在慢解析 Markdown，可在后续追加 profiling。【F:scripts/pagegen/collect.mjs†L12-L120】【F:scripts/pagegen.mjs†L200-L235】
 4. **写入阶段可靠性**：批量 writer、内容哈希跳过与结构化错误日志均已到位，`writer.flush()` 汇总失败列表并附带 stage/locale/target 便于排障；可继续评估写入重试或并行策略。【F:scripts/pagegen/writer.mjs†L1-L180】【F:scripts/pagegen.mjs†L276-L344】
-5. **配置可扩展性**：语言、导航、标签别名与 SEO/OpenGraph 均迁移至 `schema/*.json` 并有校验脚本；后续聚焦 feeds 模板等站点级配置的 Schema 化与运维指引补充。【F:schema/locales.json†L1-L200】【F:schema/tag-alias.schema.json†L1-L20】
+5. **配置可扩展性**：语言、导航、标签别名、feeds 模板与 SEO/OpenGraph 均迁移至 `schema/*.json` 并有校验脚本；后续重点转向 AI 配置、模型生命周期与协作手册的持续同步。【F:schema/locales.json†L1-L200】【F:schema/tag-alias.schema.json†L1-L20】
 
 ## 重构方向
 
