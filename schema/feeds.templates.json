@@ -1,0 +1,73 @@
+{
+  "$schema": "./feeds.templates.schema.json",
+  "templates": {
+    "zh-default": {
+      "rss": {
+        "limit": 50,
+        "header": [
+          "<?xml version=\"1.0\" encoding=\"UTF-8\"?>",
+          "<rss version=\"2.0\"><channel>",
+          "<title>{rssTitle}</title>",
+          "<link>{siteOrigin}{homePath}</link>",
+          "<description>{rssDesc}</description>"
+        ],
+        "item": [
+          "<item>",
+          "<title>{postTitle}</title>",
+          "<link>{postLink}</link>",
+          "<pubDate>{postPubDate}</pubDate>",
+          "<description>{postDescription}</description>",
+          "</item>"
+        ],
+        "footer": ["</channel></rss>"]
+      },
+      "sitemap": {
+        "header": [
+          "<?xml version=\"1.0\" encoding=\"UTF-8\"?>",
+          "<urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">"
+        ],
+        "item": [
+          "<url>",
+          "<loc>{siteOrigin}{postPath}</loc>",
+          "<lastmod>{postLastMod}</lastmod>",
+          "</url>"
+        ],
+        "footer": ["</urlset>"]
+      }
+    },
+    "en-default": {
+      "rss": {
+        "limit": 50,
+        "header": [
+          "<?xml version=\"1.0\" encoding=\"UTF-8\"?>",
+          "<rss version=\"2.0\"><channel>",
+          "<title>{rssTitle}</title>",
+          "<link>{siteOrigin}{homePath}</link>",
+          "<description>{rssDesc}</description>"
+        ],
+        "item": [
+          "<item>",
+          "<title>{postTitle}</title>",
+          "<link>{postLink}</link>",
+          "<pubDate>{postPubDate}</pubDate>",
+          "<description>{postDescription}</description>",
+          "</item>"
+        ],
+        "footer": ["</channel></rss>"]
+      },
+      "sitemap": {
+        "header": [
+          "<?xml version=\"1.0\" encoding=\"UTF-8\"?>",
+          "<urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">"
+        ],
+        "item": [
+          "<url>",
+          "<loc>{siteOrigin}{postPath}</loc>",
+          "<lastmod>{postLastMod}</lastmod>",
+          "</url>"
+        ],
+        "footer": ["</urlset>"]
+      }
+    }
+  }
+}
