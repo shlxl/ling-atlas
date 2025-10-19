@@ -123,6 +123,33 @@ jobs:
         run: node scripts/summary.mjs || true
       - name: Generate QA pairs (soft fail)
         run: node scripts/qa-build.mjs || true
+      - name: AI 模型冒烟测试
+        run: |
+          if [ ! -f data/models.json ]; then
+            echo 'Skip ai:smoke: data/models.json not found.'
+            exit 0
+          fi
+          node --input-type=module <<'NODE'
+            import fs from 'node:fs'
+            try {
+              const data = JSON.parse(fs.readFileSync('data/models.json', 'utf8'))
+              if (!Array.isArray(data.models) || data.models.length === 0) {
+                process.exit(42)
+              }
+            } catch (error) {
+              console.error(error)
+              process.exit(1)
+            }
+          NODE
+          status=$?
+          if [ "$status" -eq 42 ]; then
+            echo 'Skip ai:smoke: no models configured.'
+            exit 0
+          elif [ "$status" -ne 0 ]; then
+            exit "$status"
+          fi
+          npm run ai:prepare -- --config data/models.json --output data/models
+          npm run ai:smoke -- --config data/models.json
       - name: 构建 + 搜索索引（阻断）
         run: npm run build:search
       - name: Bundle budget check
