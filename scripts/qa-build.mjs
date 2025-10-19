@@ -1,154 +1,72 @@
 #!/usr/bin/env node
 
-/**
- * 问答对占位实现：基于 frontmatter 元信息生成结构化 Q&A。
- * 后续可替换为真实的本地 LLM 生成逻辑。
- */
-
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { globby } from 'globby'
-import matter from 'gray-matter'
+import { collectLocaleDocuments } from './ai/content.mjs'
+import { ensureDir } from './ai/utils.mjs'
+import { loadQAAdapter } from './ai/adapters/index.mjs'
 import { LOCALE_REGISTRY, getPreferredLocale } from './pagegen.locales.mjs'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const ROOT = path.resolve(__dirname, '..')
-const preferredLocale = getPreferredLocale()
-const preferredLocaleConfig =
-  LOCALE_REGISTRY.find(locale => locale.code === preferredLocale) || LOCALE_REGISTRY[0]
-
-if (!preferredLocaleConfig) {
-  console.warn('[qa-build] no locale configuration available, skipping generation')
-  process.exit(0)
-}
-
-const CONTENT_DIR = preferredLocaleConfig.contentDir
-const BASE_PATH = preferredLocaleConfig.basePath
 const OUTPUT_DIR = path.join(ROOT, 'docs', 'public', 'data')
 const OUTPUT_FILE = path.join(OUTPUT_DIR, 'qa.json')
 
-function isDraft(frontmatter) {
-  const { status, draft } = frontmatter || {}
-  if (typeof draft === 'boolean') return draft
-  if (typeof status === 'string') return status.toLowerCase() === 'draft'
-  return false
-}
-
-function toPlainText(markdown) {
-  return markdown
-    .replace(/^>\s+/gm, '')
-    .replace(/`{1,3}[^`]*`{1,3}/g, '')
-    .replace(/```[\s\S]*?```/g, '')
-    .replace(/[*_~#>]/g, '')
-    .replace(/\[(.*?)\]\((.*?)\)/g, '$1')
-    .replace(/!\[(.*?)\]\((.*?)\)/g, '$1')
-    .replace(/\r?\n+/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim()
-}
-
-function getFirstParagraph(content) {
-  const normalized = content.trim()
-  if (!normalized) return ''
-  const segments = normalized.split(/\r?\n\r?\n/)
-  const firstBlock = segments.find(block => block.trim().length > 0) || ''
-  return toPlainText(firstBlock)
-}
-
-function buildUrl(mdPath) {
-  const relative = path.relative(CONTENT_DIR, mdPath).replace(/\\/g, '/')
-  const dir = relative.replace(/\/index\.md$/, '')
-  return dir ? `${BASE_PATH}${dir}/` : BASE_PATH
-}
-
-function buildQA(frontmatter, content) {
-  const qa = []
-  const title = String(frontmatter?.title || '').trim()
-  if (!title) return qa
-
-  const summary = frontmatter?.excerpt || getFirstParagraph(content)
-  if (summary) {
-    qa.push({
-      q: `${title} 主要讲述了什么内容？`,
-      a: summary.length > 160 ? summary.slice(0, 157) + '…' : summary
-    })
-  }
-
-  if (Array.isArray(frontmatter?.tags_zh) && frontmatter.tags_zh.length) {
-    qa.push({
-      q: `${title} 涉及了哪些关键主题或标签？`,
-      a: frontmatter.tags_zh.join('、')
-    })
-  }
-
-  if (frontmatter?.series) {
-    const text = frontmatter.series_slug
-      ? `${frontmatter.series}（slug: ${frontmatter.series_slug}）`
-      : frontmatter.series
-    qa.push({
-      q: `${title} 属于哪个系列？`,
-      a: String(text)
-    })
-  } else if (frontmatter?.category_zh) {
-    qa.push({
-      q: `${title} 被归类在哪个知识领域？`,
-      a: String(frontmatter.category_zh)
-    })
-  }
-
-  if (frontmatter?.date) {
-    qa.push({
-      q: `${title} 的发布日期是？`,
-      a: String(frontmatter.date)
-    })
-  }
-
-  if (frontmatter?.updated && frontmatter.updated !== frontmatter.date) {
-    qa.push({
-      q: `${title} 最近一次更新是什么时候？`,
-      a: String(frontmatter.updated)
-    })
-  }
-
-  return qa.slice(0, 5)
-}
-
-async function ensureDir(dir) {
-  await fs.mkdir(dir, { recursive: true })
-}
-
 async function main() {
-  const files = await globby('**/index.md', { cwd: CONTENT_DIR, absolute: true })
-  const items = []
+  const preferredLocale = getPreferredLocale()
+  const preferredLocaleConfig =
+    LOCALE_REGISTRY.find(locale => locale.code === preferredLocale) || LOCALE_REGISTRY[0]
 
-  for (const file of files) {
-    const raw = await fs.readFile(file, 'utf8')
-    const { data, content } = matter(raw)
-    if (isDraft(data)) continue
-    const qa = buildQA(data, content)
-    if (!qa.length) continue
-    items.push({
-      url: buildUrl(file),
-      title: String(data.title || '').trim(),
-      qa
-    })
+  if (!preferredLocaleConfig) {
+    console.warn('[qa-build] no locale configuration available, skipping generation')
+    return
   }
 
+  const documents = await collectLocaleDocuments(preferredLocaleConfig)
   await ensureDir(OUTPUT_DIR)
+
+  const qaModelSpec = process.env.AI_QA_MODEL || process.env.AI_SUMMARY_MODEL
+  const adapterInfo = await loadQAAdapter(qaModelSpec, console)
+  let adapterModule = adapterInfo.adapter
+  let usedName = adapterInfo.adapterName
+  let usedModel = adapterInfo.model
+  let usedFallback = adapterInfo.isFallback
+  let result
+
+  try {
+    result = await adapterModule.buildQA({ documents, model: usedModel, logger: console })
+  } catch (error) {
+    const message = error?.message || String(error)
+    console.warn(`[qa-build] adapter "${usedName}" 执行失败：${message}，已降级至 placeholder`)
+    const fallback = await loadQAAdapter('placeholder', console)
+    adapterModule = fallback.adapter
+    usedName = 'placeholder'
+    usedModel = null
+    usedFallback = true
+    result = await adapterModule.buildQA({ documents, model: null, logger: console })
+  }
+
+  const finalItems = Array.isArray(result?.items) ? result.items : []
+  const sortedItems = finalItems.sort((a, b) => a.title.localeCompare(b.title, 'zh-CN'))
+
   await fs.writeFile(
     OUTPUT_FILE,
     JSON.stringify(
       {
         generatedAt: new Date().toISOString(),
-        items: items.sort((a, b) => a.title.localeCompare(b.title, 'zh-CN'))
+        items: sortedItems
       },
       null,
       2
     ),
     'utf8'
   )
-  console.log(`qa.json 写入 ${items.length} 篇文档的问答对`)
+
+  const mode = usedFallback
+    ? '占位模式'
+    : `adapter: ${usedName}${usedModel ? ` (${usedModel})` : ''}`
+  console.log(`[qa-build] qa.json 写入 ${sortedItems.length} 篇文档的问答对（${mode}）`)
 }
 
 main().catch(err => {

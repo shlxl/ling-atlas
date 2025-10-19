@@ -64,6 +64,18 @@ npm run dev
 - `npm run sbom`：生成 CycloneDX SBOM（输出到 `docs/public/.well-known/sbom.json` 并同步 dist）
 - 离线验证：`npm run build` → `npx vitepress preview docs --host 127.0.0.1 --port 4173`，在浏览器中访问站点、打开 DevTools → Application → Service Workers，勾选 “Offline” 后刷新确认最近访问页和搜索仍能使用缓存；同时观察底部“检测到新版本/已缓存”提示条触发刷新
 
+### AI 管线配置与回滚
+
+- `AI_EMBED_MODEL`：选择嵌入模型适配器，格式为 `<adapter>:<model>`，示例：`transformers-node:sentence-transformers/all-MiniLM-L6-v2`。未设置或显式指定 `placeholder` 时继续走占位文本导出。
+- `AI_SUMMARY_MODEL`：摘要生成的适配器配置，格式同上；问答脚本默认复用该值，可通过 `AI_QA_MODEL` 覆盖。
+- 已内置适配器：
+  - `placeholder`：延续现有占位逻辑，仅导出首段文本/Frontmatter 元信息，任何环境均可使用。
+  - `transformers-node`：基于 `@xenova/transformers` 的 Node 推理，需要先执行 `npm install @xenova/transformers` 并提供模型 ID。
+  - `onnxruntime`：预留 onnxruntime-node 加载入口，需 `npm install onnxruntime-node` 后按需扩展实现。
+- 适配器加载失败或执行异常时，脚本会记录降级日志并自动回退到 placeholder 产出，不会阻断构建。
+- 回滚策略：清空相关环境变量或设置为 `placeholder`，再次运行 `npm run ai:all` 即可恢复占位产物。
+- 单测：`node --test tests/ai/*.test.mjs` 通过 mock 适配器覆盖默认回退与占位逻辑。
+
 ## 当前进展与下一阶段
 - Pagegen 各阶段（collect/sync/collections/feeds/i18n/writer）已模块化并输出指标，CLI 会汇总缓存命中率与写入跳过原因，最新一轮指标会同步写入 telemetry 页面，便于运维直接观测。
 - 多语言内容统计脚本 `npm run stats:lint` 已上线，CI 会生成 `data/stats.snapshot.json` 工件；配套的 `npm run stats:diff` 已接入 CI，自动抓取 `origin/main:data/stats.snapshot.json` 作为基线，对比结果会写入 Step Summary 与 `stats-diff-report` 工件，便于在 PR 审查阶段复核差异。
