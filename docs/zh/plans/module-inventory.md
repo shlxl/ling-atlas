@@ -10,10 +10,11 @@ title: 核心目录盘点（schema / scripts / plans / tests）
 | --- | --- | --- | --- |
 | `locales.json` + `locales.schema.json` | 语言配置、主题文案、内容目录映射 | ✅ Pagegen 与主题均已接入；`npm run precheck` 守门 | 如新增语言，先更新 JSON，再跑 `npm run gen`；考虑补充文档示例 |
 | `nav.json` + `nav.schema.json` | 导航聚合/固定链接配置 | ✅ Pagegen/nav-core 共用；`npm run config:nav` 校验 | 待补运维说明（参考本文件）、如恢复 Chat 页面可在此增项 |
+| `seo.json` + `seo.schema.json` | 站点级 meta/OG/Twitter/canonical | ✅ `npm run config:seo` 校验 + 主题注入 `<meta>`/canonical | 结合 `seo-config-playbook.md` 扩展字段示例 |
 | `frontmatter.schema.json` | 内容 Frontmatter 校验 | ✅ `npm run precheck` 引用 | 持续对齐内容字段；视情况扩展可选字段 |
 | `tag-alias.json` + `tag-alias.schema.json` | 标签归一化 | ✅ Schema 与校验脚本 (`npm run config:tags`) 已接入 precheck | 继续完善文档示例与失败用例测试 |
 
-> TODO：SEO/OpenGraph 常量仍待 Schema 化，保持“配置即事实”。
+> Schema 行为均已整理到运维手册，请在修改前阅读对应 Playbook。
 
 ## 2. `scripts/`（自动化脚本）
 
@@ -37,11 +38,12 @@ title: 核心目录盘点（schema / scripts / plans / tests）
 | `pagegen-refactor-roadmap.md` | 路线图 | ✅ 更新至阶段 4 并同步阶段 1/3/5 完成项 | 按阶段推进后续事项 |
 | `pagegen-validation-checklist.md` | 产物守门清单 | ✅ | 结合新配置/脚本持续更新 |
 | `aggregation-empty-link-plan.md` | 聚合空链修复方案 | ✅ 已落地 | 若导航策略有大改需回顾 |
-| `nav-config-schema.md` | 导航配置 Schema 草案 | ✅ | 待写运维操作指引 & Best Practice |
+| `nav-config-schema.md` | 导航配置 Schema 草案 | ✅ | 持续补充最佳实践 |
+| `seo-config-playbook.md` | SEO/OpenGraph 配置运维手册 | ✅ 新增 | 根据新增字段及时更新示例与回滚策略 |
 | `refactor-optimization.md` | Pagegen 重构提案 | ✅ | 继续在此追踪风险与收益 |
 | `module-inventory.md` | （本文）核心目录盘点 | ✅ 最新 | 定期复盘补充 |
 
-建议新增：运维操作指南（例如 `nav-config-playbook.md`）记录如何修改导航/语言配置并跑测试。
+运维手册：`nav-config-playbook.md`、`seo-config-playbook.md` 已记录常见修改流程与回滚步骤，修改配置前请先对照执行。
 
 ## 4. `tests/`（守门测试）
 
@@ -54,7 +56,7 @@ title: 核心目录盘点（schema / scripts / plans / tests）
 
 ## 5. 后续行动建议
 
-1. **Feeds/SEO 配置治理**：将 RSS/Sitemap 模板与站点级 SEO/OpenGraph 常量迁移到 `schema/`，并补充校验脚本与示例。
+1. **Feeds 模板配置化**：将 RSS/Sitemap 模板迁移到 `schema/`，并补充校验脚本与示例（SEO 已完成 schema 化）。
 2. **运维文档**：根据 `nav-config-schema.md` 草案继续完善操作指南，覆盖 feeds/SEO 模板的修改流程与回滚策略。
 3. **Pagegen 守门**：维持缓存命中率与 stats diff 的回归观察，同时准备 `check-links` 集成测试以阻断配置缺失。
 4. **测试覆盖加固**：在现有导航/i18n 用例基础上，补充 feeds 模板、自定义配置与链接巡检的失败场景，避免 silent failure。

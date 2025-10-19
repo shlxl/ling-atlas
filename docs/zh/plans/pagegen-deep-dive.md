@@ -137,7 +137,7 @@ Pagegen 主脚本以串行 orchestrator 形式驱动各阶段，并在 `data/pag
 
 1. **Feeds 模板配置化**：仿照 collections 模板，在 `schema/feeds.templates.json` 描述 RSS/Sitemap 结构，并在 `tests/pagegen/feeds.test.mjs` 覆盖自定义模板/限流场景。
 2. **链接巡检集成测试**：为 `scripts/check-links.mjs` 新增临时目录用例，验证 nav manifest/i18n map 链接缺失时会立即失败，并纳入 CI 守门。
-3. **SEO/OpenGraph 配置治理**：将站点级元信息外置到 `schema/seo.json` + Schema 校验，主题层补充 `<meta>` 快照测试，并在 README/AGENTS 记录运维流程。
+3. ✅ **SEO/OpenGraph 配置治理**：`schema/seo.json` + Schema 校验已落地，主题注入 `<meta>` 并新增 `tests/theme/seo-head.test.mjs` 与运维手册。
 4. **AI 管线适配层**：设计 `scripts/ai/adapters/*`，支持 Transformers.js/onnxruntime，可通过环境变量回退占位实现，同时记录遥测指标与失败降级。
 
 > 完成以上步骤后，请同步更新 `pagegen-refactor-roadmap.md`、`module-inventory.md` 与 AGENTS.md 的进度栏。
