@@ -239,7 +239,31 @@ await (async () => {
   await measureStage('scheduleI18nMap', () => writeI18nMap(i18nMap, writer))
 
   const navPayloads = registry.getNavManifestPayloads()
-  await measureStage('scheduleNavManifests', () => writeNavManifests(navPayloads, writer))
+  const navMetrics = []
+  await measureStage('scheduleNavManifests', async () => {
+    for (const { lang, payload } of navPayloads) {
+      const counts = {
+        categories: Object.keys(payload.categories || {}).length,
+        series: Object.keys(payload.series || {}).length,
+        tags: Object.keys(payload.tags || {}).length,
+        archive: Object.keys(payload.archive || {}).length
+      }
+      const totalEntries = Object.values(counts).reduce((sum, value) => sum + value, 0)
+      const summaryText =
+        `[pagegen] nav:${lang.manifestLocale} categories=${counts.categories} series=${counts.series}` +
+        ` tags=${counts.tags} archive=${counts.archive}`
+      if (totalEntries === 0) {
+        console.warn(`${summaryText} (empty)`)
+        console.warn(
+          `[pagegen] nav:${lang.manifestLocale} manifest empty; please verify nav configuration and generated aggregates`
+        )
+      } else {
+        logInfo(summaryText)
+      }
+      navMetrics.push({ locale: lang.manifestLocale, counts })
+    }
+    await writeNavManifests(navPayloads, writer)
+  })
 
   let writeResults = {
     total: 0,
@@ -275,7 +299,8 @@ await (async () => {
     syncMetrics,
     collectMetrics,
     writeResults,
-    feedMetrics
+    feedMetrics,
+    navMetrics
   })
 
   if (!metricsOnly) {
@@ -367,7 +392,8 @@ await (async () => {
     syncMetrics,
     collectMetrics,
     writeResults,
-    feedMetrics: feeds
+    feedMetrics: feeds,
+    navMetrics
   }) {
     const stages = stageTimings.map(item => ({
       name: item.name,
@@ -382,6 +408,7 @@ await (async () => {
       sync: summarizeSyncMetrics(syncMetrics),
       collect: summarizeCollectMetrics(collectMetrics),
       feeds: summarizeFeedMetrics(feeds),
+      nav: summarizeNavMetrics(navMetrics),
       write: summarizeWriteResults(writeResults)
     }
   }
@@ -464,6 +491,26 @@ await (async () => {
       sitemapCount: Number(item?.sitemapCount || 0)
     }))
 
+    return { summary, locales }
+  }
+
+  function summarizeNavMetrics(metrics = []) {
+    if (!Array.isArray(metrics)) return { summary: { locales: 0 }, locales: [] }
+    const locales = metrics.map(item => ({
+      locale: item?.locale,
+      categories: Number(item?.counts?.categories || 0),
+      series: Number(item?.counts?.series || 0),
+      tags: Number(item?.counts?.tags || 0),
+      archive: Number(item?.counts?.archive || 0)
+    }))
+    const summary = {
+      locales: locales.length,
+      emptyLocales: locales.filter(loc => loc.categories + loc.series + loc.tags + loc.archive === 0).length,
+      categoriesTotal: locales.reduce((sum, loc) => sum + loc.categories, 0),
+      seriesTotal: locales.reduce((sum, loc) => sum + loc.series, 0),
+      tagsTotal: locales.reduce((sum, loc) => sum + loc.tags, 0),
+      archiveTotal: locales.reduce((sum, loc) => sum + loc.archive, 0)
+    }
     return { summary, locales }
   }
 

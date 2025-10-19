@@ -4,13 +4,13 @@
 
 ## 一句话特性
 - 从 **统一 JSON** → Markdown → PageGen → **VitePress** → Pages/CDN
-- **taxonomy 守门**：中文分类 ↔ 英文路径、标签 Canonical、Slug 规则
+- **taxonomy 守门**：多语言分类/标签 Canonical、Slug 规则与路径映射
 - **元数据驱动导航** + 自动 **分类/系列/标签/归档** + **RSS/Sitemap**
 - CI 守门（Schema 校验、构建），后续可加 Lighthouse/体积预算
 - 预留 **L1 语义检索（Transformers.js）** 与 **USearch/WASM** 接口
 - PR-I AI 自演进（占位版）：构建阶段自动生成 embeddings/summaries/Q&A JSON，前端可按需消费
 - PR-J 知识 API + Chat：导出段落级只读数据，前端提供带引用的轻量问答
-- PR-L 多语/i18n：`docs/zh/content`（默认中文）与 `docs/en/content`（英文）独立演进，构建出 `/zh/` 与 `/en/` 路由、按语言裁剪的聚合页 / RSS / Sitemap，并输出 `nav.manifest.<locale>.json` 供前端加载
+- PR-L 多语/i18n：`schema/locales.json` 统一描述所有语言的内容目录、导航文案与生成路径，Pagegen 会遍历配置生成各语言的聚合页 / RSS / Sitemap，并输出 `nav.manifest.<locale>.json`
 - PR-M 供应链加固 2.0：npm ci + Audit/License 审计、CycloneDX SBOM、SRI 哈希变更守门
 - PR-M（规划中）：SEO / OpenGraph 优化，使知识库更易被搜索引擎收录与展示
 - PR-K 搜索评测：离线 nDCG/MRR/Recall 守门 + 线上查询参数 variant（lex / rrf / rrf-mmr）交替曝光
@@ -31,12 +31,9 @@ npm run dev
 ```
 .
 ├─ docs/                 # 站点根
-│  ├─ zh/                # 中文站点（首页、聚合页、内容源）
-│  │  ├─ content/        # 中文内容源（每篇文章一个文件夹）
-│  │  └─ _generated/     # pagegen 输出（分类/系列/标签/归档）
-│  ├─ en/                # 英文站点（入口、聚合页、内容源）
-│  │  ├─ content/        # 英文内容源
-│  │  └─ _generated/     # 英文聚合页
+│  ├─ <locale>/          # 语言子目录（例如 zh、en），结构由 schema/locales.json 决定
+│  │  ├─ content/        # 对应语言的内容源（每篇文章一个文件夹）
+│  │  └─ _generated/     # 对应语言的聚合页、meta等生成产物
 │  ├─ public/            # 静态文件（rss.xml、sitemap.xml 由脚本生成）
 │  └─ .vitepress/        # VitePress 配置与主题
 ├─ security/             # CSP/SRI 模板配置
@@ -52,7 +49,7 @@ npm run dev
 - `npm run gen -- --no-cache`：禁用内容缓存重新解析 Markdown，亦可设置 `PAGEGEN_DISABLE_CACHE=1`
 - `npm run gen -- --no-batch`：回退到串行写入（禁用批量写入与哈希跳过），或设置 `PAGEGEN_DISABLE_BATCH=1`
 - `PAGEGEN_CONCURRENCY=<num>`：控制内容解析并发度（默认 8），可在 `npm run gen` 前临时指定
-- `npm run test:pagegen`：运行 Pagegen 模块单元测试（采集、聚合、i18n 注册）
+- `npm run test:pagegen`：运行 Pagegen 模块单元测试 + 集成测试（含 nav manifest 输出与聚合产物核对）
 - `npm run stats:lint`：按语言统计分类/标签，控制台输出 TopN 并写入 `data/stats.snapshot.json`，CI 会上传该快照方便历史对比
 - `npm run precheck`：Frontmatter Schema 校验（阻断）
 - `npm run build`：构建站点（前置 `gen` + `knowledge:build`），自动生成中英双语 RSS/Sitemap
@@ -65,6 +62,11 @@ npm run dev
 - `npm run license`：汇总第三方许可证（`license-checker --summary`）
 - `npm run sbom`：生成 CycloneDX SBOM（输出到 `docs/public/.well-known/sbom.json` 并同步 dist）
 - 离线验证：`npm run build` → `npx vitepress preview docs --host 127.0.0.1 --port 4173`，在浏览器中访问站点、打开 DevTools → Application → Service Workers，勾选 “Offline” 后刷新确认最近访问页和搜索仍能使用缓存；同时观察底部“检测到新版本/已缓存”提示条触发刷新
+
+## 当前进展与下一阶段
+- Pagegen 各阶段（collect/sync/collections/feeds/i18n/writer）已模块化并输出指标，`npm run test:pagegen` 覆盖增量同步、缓存命中、写入失败等核心路径；导航/i18n 配置均在生成前即校验。
+- 多语言内容统计脚本 `npm run stats:lint` 已上线，CI 会生成 `data/stats.snapshot.json` 工件，可长期跟踪分类/标签分布，同时 README/AGENTS 同步列出命令。
+- 下一阶段重点：① 完成 `docs/zh/plans/pagegen-deep-dive.md` 中 orchestrator 契约、错误日志与集成测试的 TODO；② 建立 stats 快照的对比/告警机制（夜间任务或 PR 提示）；③ 评估语义检索管线（Transformers.js / onnxruntime）与占位 AI 脚本的落地方案。
 
 ## 协作约束速查
 
