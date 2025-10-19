@@ -379,6 +379,27 @@ await (async () => {
 
   if (!metricsOnly) {
     const collectSummary = metricsEntry.collect?.summary
+    if (collectSummary) {
+      const hitRate = collectSummary.cacheHitRate
+      const hitRateText = Number.isFinite(hitRate) ? `${(hitRate * 100).toFixed(1)}%` : 'n/a'
+      logInfo(
+        `[pagegen] collect summary locales=${collectSummary.locales} parsed=${collectSummary.parsedFiles}/${collectSummary.totalFiles}` +
+          ` cacheHitRate=${hitRateText} cacheDisabled=${collectSummary.cacheDisabledLocales}` +
+          ` parseErrors=${collectSummary.parseErrors} errorEntries=${collectSummary.errorEntries}`
+      )
+    }
+
+    const writeSummary = metricsEntry.write?.summary
+    if (writeSummary) {
+      const hashSkips = writeSummary.hashMatches || 0
+      const skippedOther = Math.max(Number(writeSummary.skipped || 0) - hashSkips, 0)
+      const disabledText = writeSummary.disabled ? ' (disabled)' : ''
+      logInfo(
+        `[pagegen] write summary total=${writeSummary.total} written=${writeSummary.written} skipped=${writeSummary.skipped}` +
+          ` hashMatches=${hashSkips} skippedOther=${skippedOther}${disabledText}`
+      )
+    }
+
     if (collectSummary && (collectSummary.parseErrors > 0 || collectSummary.errorEntries > 0)) {
       logStageWarning('collect', { locale: 'all', target: 'metrics' }, `parseErrors=${collectSummary.parseErrors} errorEntries=${collectSummary.errorEntries}`)
     }
@@ -551,22 +572,31 @@ await (async () => {
       parsedFiles: entries.reduce((sum, [, stats]) => sum + Number(stats?.parsedFiles || 0), 0),
       cacheHits: entries.reduce((sum, [, stats]) => sum + Number(stats?.cacheHits || 0), 0),
       cacheMisses: entries.reduce((sum, [, stats]) => sum + Number(stats?.cacheMisses || 0), 0),
+      cacheDisabledLocales: entries.filter(([, stats]) => Boolean(stats?.cacheDisabled)).length,
       parseErrors: entries.reduce((sum, [, stats]) => sum + Number(stats?.parseErrors || 0), 0),
       errorEntries: entries.reduce((sum, [, stats]) => sum + Number((stats?.errors || []).length), 0)
     }
     const totalRequests = summary.cacheHits + summary.cacheMisses
+    summary.cacheRequests = totalRequests
     summary.cacheHitRate = totalRequests ? Number((summary.cacheHits / totalRequests).toFixed(3)) : 0
 
-    const locales = entries.map(([locale, stats]) => ({
-      locale,
-      totalFiles: stats?.totalFiles || 0,
-      parsedFiles: stats?.parsedFiles || 0,
-      cacheHits: stats?.cacheHits || 0,
-      cacheMisses: stats?.cacheMisses || 0,
-      cacheDisabled: Boolean(stats?.cacheDisabled),
-      parseErrors: stats?.parseErrors || 0,
-      errors: stats?.errors || []
-    }))
+    const locales = entries.map(([locale, stats]) => {
+      const hits = Number(stats?.cacheHits || 0)
+      const misses = Number(stats?.cacheMisses || 0)
+      const requests = hits + misses
+      return {
+        locale,
+        totalFiles: stats?.totalFiles || 0,
+        parsedFiles: stats?.parsedFiles || 0,
+        cacheHits: hits,
+        cacheMisses: misses,
+        cacheDisabled: Boolean(stats?.cacheDisabled),
+        cacheRequests: requests,
+        cacheHitRate: stats?.cacheDisabled ? null : requests ? Number((hits / requests).toFixed(3)) : 0,
+        parseErrors: stats?.parseErrors || 0,
+        errors: stats?.errors || []
+      }
+    })
 
     return { summary, locales }
   }
@@ -619,7 +649,8 @@ await (async () => {
         skipped: Number(results?.skipped || 0),
         failed: Number(results?.failed || 0),
         disabled: Boolean(results?.disabled),
-        skippedByReason: results?.skippedByReason || {}
+        skippedByReason: results?.skippedByReason || {},
+        hashMatches: Number(results?.skippedByReason?.hash || 0)
       },
       errors: Array.isArray(results?.errors)
         ? results.errors.map(err => ({

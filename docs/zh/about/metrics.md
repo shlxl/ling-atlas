@@ -6,7 +6,7 @@ layout: doc
 > 📚 想了解文章要点？请访问 [常见问答索引](/zh/about/qa.html)。
 
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { withBase } from 'vitepress'
 
 interface TelemetryData {
@@ -16,10 +16,39 @@ interface TelemetryData {
     queriesTop: Array<{ hash: string; count: number; avgLen?: number }>
     clicksTop: Array<{ hash: string; url: string; count: number; avgRank?: number }>
   }
+  build?: {
+    pagegen?: PagegenSummary | null
+  }
+}
+
+interface PagegenSummary {
+  timestamp: string
+  totalMs: number
+  collect: {
+    locales?: number
+    cacheHitRate?: number
+    cacheHits?: number
+    cacheMisses?: number
+    cacheDisabledLocales?: number
+    parsedFiles?: number
+    totalFiles?: number
+    parseErrors?: number
+    errorEntries?: number
+  }
+  write: {
+    total?: number
+    written?: number
+    skipped?: number
+    failed?: number
+    hashMatches?: number
+    disabled?: boolean
+    skippedByReason: Record<string, number>
+  }
 }
 
 const telemetry = ref<TelemetryData | null>(null)
 const error = ref<string | null>(null)
+const pagegen = computed<PagegenSummary | null>(() => telemetry.value?.build?.pagegen ?? null)
 
 onMounted(async () => {
   try {
@@ -87,6 +116,42 @@ onMounted(async () => {
       </tbody>
     </table>
     <p v-else>暂无数据。</p>
+  </section>
+
+  <section>
+    <h2>Pagegen 构建指标</h2>
+    <p v-if="!pagegen">暂无构建遥测。</p>
+    <template v-else>
+      <p><strong>最近运行：</strong> {{ new Date(pagegen.timestamp).toLocaleString() }}</p>
+      <p>
+        <strong>采集阶段：</strong>
+        {{ pagegen.collect.locales ?? 0 }} 个语言，
+        缓存命中率 {{
+          pagegen.collect.cacheHitRate == null
+            ? 'n/a'
+            : (pagegen.collect.cacheHitRate * 100).toFixed(1) + '%'
+        }}，
+        已解析 {{ pagegen.collect.parsedFiles ?? 0 }}/{{ pagegen.collect.totalFiles ?? 0 }} 篇，
+        禁用缓存 {{ pagegen.collect.cacheDisabledLocales ?? 0 }} 个语言
+      </p>
+      <p>
+        <strong>写入阶段：</strong>
+        实际写入 {{ pagegen.write.written ?? 0 }} / {{ pagegen.write.total ?? 0 }}，
+        跳过 {{ pagegen.write.skipped ?? 0 }}（内容哈希命中 {{ pagegen.write.hashMatches ?? 0 }}），
+        失败 {{ pagegen.write.failed ?? 0 }}
+        <span v-if="pagegen.write.disabled">— 批量写入未启用</span>
+      </p>
+      <div v-if="Object.keys(pagegen.write.skippedByReason || {}).length">
+        <details>
+          <summary>跳过原因明细</summary>
+          <ul>
+            <li v-for="(count, reason) in pagegen.write.skippedByReason" :key="reason">
+              <code>{{ reason }}</code>：{{ count }}
+            </li>
+          </ul>
+        </details>
+      </div>
+    </template>
   </section>
 </div>
 

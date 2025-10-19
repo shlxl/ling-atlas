@@ -48,6 +48,11 @@ test(
       const zhNavSummary = latest.nav.locales.find(item => item.locale === 'zh')
       assert(zhNavSummary, 'nav metrics should include zh locale')
       assert.ok(zhNavSummary.categories >= 1, 'zh nav metrics should report category count')
+      assert.ok(latest.collect?.summary?.cacheHitRate !== undefined, 'collect summary should include cache hit rate')
+      assert.ok(
+        Object.prototype.hasOwnProperty.call(latest.write?.summary || {}, 'hashMatches'),
+        'write summary should include hashMatches'
+      )
     } catch (error) {
       process.stderr.write(
         `[nav-manifest.test] failure diagnostics: ${error?.stack || error?.message || String(error)}\n`
