@@ -80,7 +80,7 @@ npm run dev
 - 适配器加载失败或执行异常时，脚本会记录结构化降级日志（`ai.*.adapter.*`）并自动回退到 placeholder 产出，同时尝试复用上一次生成的缓存文件，尽量保持前端体验。
 - 模型缓存：`data/models.json` 记录模型来源、校验哈希与缓存状态，`npm run ai:prepare` 会在默认目录（`data/models/`）或指定目录（见下）生成/覆盖模型文件。手动切换到全局缓存时，可设置 `AI_MODELS_SCOPE=global`，或通过 `AI_MODELS_DIR=<path>` 指向自定义目录。传入 `--clean` 或设置 `AI_MODELS_CLEAN=1` 会在准备阶段删除清单外的旧文件。
 - 降级开关：`AI_EMBED_DISABLE=1`、`AI_SUMMARY_DISABLE=1`、`AI_QA_DISABLE=1` 可分别跳过对应模型；当运行时为 `placeholder` 时，`ai:prepare` 仍会生成占位模型并更新缓存状态，`ai:smoke` 会输出跳过日志。
-- 回滚策略：清空相关环境变量或设置为 `placeholder`，依次运行 `npm run ai:prepare`（刷新模型缓存与状态）和 `npm run ai:all` 即可恢复占位产物；如遇模型产出异常，可手动删除 `docs/public/data/*.json` 并重新执行命令。若需临时停止遥测事件写入，可设置 `AI_TELEMETRY_DISABLE=1`。
+- 回滚策略：清空相关环境变量或设置为 `placeholder`，依次运行 `npm run ai:prepare`（刷新模型缓存与状态）和 `npm run ai:all` 即可恢复占位产物；如遇模型产出异常，可手动删除 `docs/public/data/*.json` 并重新执行命令。若需临时停止遥测事件写入，可设置 `AI_TELEMETRY_DISABLE=1`；需要将事件输出重定向到自定义目录（如测试夹具或沙箱）时，可设置 `AI_TELEMETRY_PATH=<dir>`。
 - 单测：`node --test tests/ai/*.test.mjs` 通过 mock 适配器覆盖默认回退、缓存命中与 CLI 解析逻辑。
 
 ## 当前进展与下一阶段
@@ -116,7 +116,7 @@ npm run dev
 ## 统计监控与告警流程
 
 - **Pagegen 指标出口**：运行 `npm run gen` 后，CLI 会额外打印 collect 缓存命中率与 writer 哈希跳过统计，最新一笔指标还会由 `node scripts/telemetry-merge.mjs` 同步到 `/telemetry.json`，可在站点的“观测指标”页面直接查看。
-- **AI 构建遥测**：`scripts/embed-build.mjs`、`scripts/summary.mjs`、`scripts/qa-build.mjs` 会在 `data/ai-events/` 写入 `ai.embed.*`、`ai.summary.*`、`ai.qa.*` 事件，`node scripts/telemetry-merge.mjs` 会将其聚合成 `build.ai` 节点并输出到 `docs/public/telemetry.json`。可通过 `AI_TELEMETRY_DISABLE=1` 暂停事件写入，或设置 `AI_TELEMETRY_PATH=<dir>` 指定事件目录（便于测试与沙箱环境）。
+- **AI 构建遥测**：`scripts/embed-build.mjs`、`scripts/summary.mjs`、`scripts/qa-build.mjs` 会在 `data/ai-events/` 写入结构化事件（含批次数量、推理/写入耗时、成功率、目标路径等），`node scripts/telemetry-merge.mjs` 会清理已消费的事件文件，并将最新结果聚合为与 `build.pagegen` 对齐的 `build.ai` 节点输出到 `docs/public/telemetry.json`。可通过 `AI_TELEMETRY_DISABLE=1` 暂停事件写入，或设置 `AI_TELEMETRY_PATH=<dir>` 指定事件目录（便于测试与沙箱环境）。
 - **快照采集**：`npm run stats:lint` 写入 `data/stats.snapshot.json` 并输出 TopN 排序，CI 会上传该文件作为工件，便于后续下载对比。
 - **自动对比与预警**：通过 `npm run stats:diff -- --baseline origin/main:data/stats.snapshot.json --current data/stats.snapshot.json` 在本地或 CI 中对比差异。命令会按默认阈值（warn≥30%、fail≥60%）输出告警，可搭配 `--json` 输出结构化结果，或在 GitHub Actions 中根据退出码（2 表示 fail）自动打标签/留言；若未提供 baseline 且 git 历史中也无法找到快照，会输出提示并直接跳过对比，避免误报。
 - **夜间任务建议**：Nightly Workflow 可先拉取前一日工件为 baseline，再运行 `stats:diff -- --baseline <path> --current data/stats.snapshot.json --quiet`，将结果上传到日志或告警系统；如需邮件/IM 告警，可根据 JSON 输出过滤高优先级条目。
