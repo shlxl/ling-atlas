@@ -1,114 +1,54 @@
 #!/usr/bin/env node
 
-/**
- * 方案B（占位实现）：扫描内容并导出文本，供前端或后续任务生成向量。
- * 若未来接入本地编码器，只需在 `buildItems` 中补充向量生成逻辑，并更新输出结构。
- */
-
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { globby } from 'globby'
-import matter from 'gray-matter'
+import { collectEmbeddableItems } from './ai/content.mjs'
+import { ensureDir } from './ai/utils.mjs'
+import { loadEmbeddingAdapter } from './ai/adapters/index.mjs'
 import { LOCALE_REGISTRY, getPreferredLocale } from './pagegen.locales.mjs'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const ROOT = path.resolve(__dirname, '..')
 const OUTPUT_DIR = path.join(ROOT, 'docs', 'public', 'data')
 const OUTPUT_FILE = path.join(OUTPUT_DIR, 'embeddings.json')
-const preferredLocale = getPreferredLocale()
-
-const LANG_SOURCES = LOCALE_REGISTRY.map(locale => ({
-  code: locale.code,
-  dir: locale.contentDir,
-  basePath: locale.basePath
-})).sort((a, b) => {
-  if (a.code === preferredLocale) return -1
-  if (b.code === preferredLocale) return 1
-  return a.code.localeCompare(b.code)
-})
-
-function isDraft(frontmatter) {
-  const { status, draft } = frontmatter || {}
-  if (typeof draft === 'boolean') return draft
-  if (typeof status === 'string') return status.toLowerCase() === 'draft'
-  return false
-}
-
-function toPlainText(markdown) {
-  return markdown
-    .replace(/^>\s+/gm, '') // blockquote
-    .replace(/`{1,3}[^`]*`{1,3}/g, '') // inline code
-    .replace(/```[\s\S]*?```/g, '') // fenced code blocks
-    .replace(/[*_~#>]/g, '') // emphasis/symbols
-    .replace(/\[(.*?)\]\((.*?)\)/g, '$1') // links
-    .replace(/!\[(.*?)\]\((.*?)\)/g, '$1') // images
-    .replace(/\r?\n+/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim()
-}
-
-function extractText(frontmatter, body) {
-  if (frontmatter?.excerpt) return String(frontmatter.excerpt)
-  const normalized = body.trim()
-  if (!normalized) return ''
-  const segments = normalized.split(/\r?\n\r?\n/)
-  const firstBlock = segments.find(block => block.trim().length > 0) || ''
-  return toPlainText(firstBlock)
-}
-
-function buildUrl(mdPath, source) {
-  const relative = path.relative(source.dir, mdPath)
-  const clean = relative.replace(/\\/g, '/')
-  const dir = clean.replace(/\/index\.md$/, '')
-  return dir ? `${source.basePath}${dir}/` : source.basePath
-}
-
-async function exists(target) {
-  try {
-    await fs.access(target)
-    return true
-  } catch {
-    return false
-  }
-}
-
-async function buildItems() {
-  const items = []
-
-  for (const source of LANG_SOURCES) {
-    if (!(await exists(source.dir))) continue
-    const files = await globby('**/index.md', { cwd: source.dir, absolute: true })
-
-    for (const file of files) {
-      const raw = await fs.readFile(file, 'utf8')
-      const { data, content } = matter(raw)
-      if (isDraft(data)) continue
-      const url = buildUrl(file, source)
-      const title = String(data.title || '').trim()
-      if (!title) continue
-      const text = extractText(data, content)
-      if (!text) continue
-      items.push({ url, title, text, lang: source.code })
-    }
-  }
-
-  return items.sort((a, b) => a.title.localeCompare(b.title, 'zh-CN'))
-}
-
-async function ensureDir(dir) {
-  await fs.mkdir(dir, { recursive: true })
-}
 
 async function main() {
-  const items = await buildItems()
+  const preferredLocale = getPreferredLocale()
+  const items = await collectEmbeddableItems(LOCALE_REGISTRY, preferredLocale)
   await ensureDir(OUTPUT_DIR)
+
+  const adapterInfo = await loadEmbeddingAdapter(process.env.AI_EMBED_MODEL, console)
+  let adapterModule = adapterInfo.adapter
+  let usedName = adapterInfo.adapterName
+  let usedModel = adapterInfo.model
+  let usedFallback = adapterInfo.isFallback
+  let result
+
+  try {
+    result = await adapterModule.generateEmbeddings({ items, model: usedModel, logger: console })
+  } catch (error) {
+    const message = error?.message || String(error)
+    console.warn(`[embed-build] adapter "${usedName}" 执行失败：${message}，已降级至 placeholder`)
+    const fallback = await loadEmbeddingAdapter('placeholder', console)
+    adapterModule = fallback.adapter
+    usedName = 'placeholder'
+    usedModel = null
+    usedFallback = true
+    result = await adapterModule.generateEmbeddings({ items, model: null, logger: console })
+  }
+
+  const finalItems = Array.isArray(result?.items) ? result.items : items
   const payload = {
     generatedAt: new Date().toISOString(),
-    items
+    items: finalItems
   }
   await fs.writeFile(OUTPUT_FILE, JSON.stringify(payload, null, 2), 'utf8')
-  console.log(`embeddings.json 写入 ${items.length} 条（占位文本模式）`)
+
+  const mode = usedFallback
+    ? '占位文本模式'
+    : `adapter: ${usedName}${usedModel ? ` (${usedModel})` : ''}`
+  console.log(`[embed-build] embeddings.json 写入 ${finalItems.length} 条（${mode}）`)
 }
 
 main().catch(err => {

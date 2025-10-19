@@ -123,6 +123,9 @@ npm run stats:lint
 - 构建阶段新增脚本：`node scripts/embed-build.mjs`（必跑，占位文本）、`node scripts/summary.mjs || true`、`node scripts/qa-build.mjs || true`，产物输出到 `docs/public/data/`。
 - 如本地尚未接入模型，脚本会退化为文本/元信息导出，不会阻塞构建；后续可替换为 Transformers.js / onnxruntime-node 编码器。
 - 前端可按需读取 `embeddings.json`、`summaries.json`、`qa.json`（例如搜索框或专门的问答页）；缺失时不影响正常渲染。
+- 适配器配置：通过环境变量 `AI_EMBED_MODEL`、`AI_SUMMARY_MODEL`（问答可用 `AI_QA_MODEL` 覆盖）选择实现，格式 `<adapter>:<model>`；默认或显式设置 `placeholder` 时沿用占位逻辑。
+- 依赖提示：`transformers-node` 适配器需要 `npm install @xenova/transformers`，`onnxruntime` 适配器需要 `npm install onnxruntime-node`。缺失依赖或执行失败会输出降级日志并回退到 placeholder。
+- 快速回滚：清空相关环境变量或改为 `placeholder`，重新运行 `npm run ai:all` 即可恢复占位产物。`node --test tests/ai/*.test.mjs` 覆盖默认降级路径。
 - 导航栏已包含 `About`（观测指标、常见问答）与 `指南`（部署指南、迁移与重写）入口，确保这些文档始终可见。
 - PR-J 知识 API + Chat：`node scripts/chunk-build.mjs` 生成 `/api/knowledge.json`，前端懒加载聊天组件并在知识不可用时回退到 Pagefind 结果。
 - PR-K 搜索评测：`node scripts/eval/offline.mjs` 守门 nDCG/MRR/Recall，`?variant=lex|rrf|rrf-mmr` 触发 Team Draft 交替曝光并写入匿名遥测。
