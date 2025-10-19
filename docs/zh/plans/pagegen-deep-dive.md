@@ -15,7 +15,7 @@ title: Pagegen 深入检查清单
 | `feeds.mjs` | RSS/Sitemap 输出 | `tests/pagegen/feeds.test.mjs` | - 未记录 feed 输出量在 telemetry 中<br>- RSS/Sitemap 模板未配置化 | 在 `pagegen.mjs` 中汇总 feed 数量（已纳入 metrics.summary）；模板配置仍列为低优先 |
 | `i18n-registry.mjs` | i18n 映射、导航 manifest、标签 canonical | `tests/pagegen/i18n-registry.test.mjs` | - 依赖 nav 配置；缺少 manifestKey 缺失的高亮提示<br>- 错误日志仍偏粗糙 | 在加载 nav 配置时直接抛出 manifestKey 缺失异常；补充包含 locale/slug 的错误详情 |
 | `writer.mjs` | 批量写入、内容哈希跳过、错误收集 | `tests/pagegen/writer.test.mjs` | ✅ 结果中已包含 `skippedByReason`，错误对象带 stack；仍可考虑暴露更多指标 | 1) 评估是否需要将 hash 命中率暴露到 CLI 输出 |
-| `pagegen.mjs` | orchestrator、metrics 汇总、命令行参数 | - `tests/pagegen/*` 间接覆盖<br>- Metrics JSON（手工检查） | ✅ `collect`/`sync`/`write` summary 已写入 metrics；`tests/pagegen/integration.test.mjs` 覆盖 `--dry-run --metrics-output` 行为 | TODO：整理 orchestrator 契约文档 + 端到端集成测试；补充错误日志（含阶段/locale/target） |
+| `pagegen.mjs` | orchestrator、metrics 汇总、命令行参数 | - `tests/pagegen/*` 间接覆盖<br>- Metrics JSON（手工检查） | ✅ `collect`/`sync`/`write` summary 已写入 metrics；端到端测试覆盖 `--metrics-only`、写入失败与 warn/error 日志上下文 | 持续观察 metrics stdout/metrics-only 的使用反馈，必要时再扩展导出选项 |
 | `pagegen.locales.mjs` | 读取语言、导航配置并校验 | 现有脚本校验 + `npm run precheck` + `tests/pagegen/locales-config.test.mjs` | ✅ 已覆盖缺字段/Schema 失败场景 | 后续可补缓存命中路径的快照测试 |
 | `scripts/validate-*.mjs` | 前置校验 | `npm run precheck` | - 没有单独测试 | 暂视为低优先；可在 CI 中新增“校验脚本必须成功” step |
 <!-- markdownlint-enable MD013 -->
@@ -46,6 +46,13 @@ Pagegen 主脚本以串行 orchestrator 形式驱动各阶段，并在 `data/pag
 - 失败日志统一输出为：`[pagegen] error stage=<stage> locale=<locale> target=<target>: <message>`，用于 CI 解析与可观测性聚合。
 - 非致命告警统一输出为：`[pagegen] warn stage=<stage> locale=<locale> target=<target>: <message>`，例如导航聚合为空或 metrics 汇总出现异常指标。
 - writer 产生的错误会带上原任务的 `stage`/`locale`/`target`，便于与 metrics 中的错误条目交叉定位。
+
+### 最终版阶段契约摘要
+
+- orchestrator 全量阶段均通过 `measureStage` 输出统一的 stage 名称，确保 metrics 与日志共享上下文；`resolveLogContext` 会优先读取错误对象中的 `stage`/`locale`/`target`，其次回退到阶段默认值。
+- `[pagegen] warn` 与 `[pagegen] error` 均由 `logStageWarning`/`logStageError` 统一发出，默认填充 locale=`manifestLocale`、target=`navManifestPath` 等真实路径，避免出现 `n/a`。
+- `tests/pagegen/integration.test.mjs` 新增“空导航 + 解析异常”干预用例，验证 dry-run 模式下的 warn 日志仍带完整阶段上下文；原有写入失败用例也同步断言 error 日志上下文格式。
+- Metrics 汇总阶段会在解析或同步失败时回写 `collect`、`sync` 摘要，并透过结构化 warn 日志提示具体指标，确保 CI 可直接解析。
 
 #### 端到端守门补充
 

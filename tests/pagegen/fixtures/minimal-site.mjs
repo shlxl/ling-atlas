@@ -14,6 +14,8 @@ async function copySchemaFile(name, targetDir) {
 }
 
 export async function createMinimalSiteFixture(options = {}) {
+  const emptyNavLocales = new Set(options.emptyNavLocales || [])
+  const parseErrorLocales = new Set(options.parseErrorLocales || [])
   const root = await fs.mkdtemp(path.join(os.tmpdir(), 'pagegen-fixture-'))
   const schemaDir = path.join(root, 'schema')
   await fs.mkdir(schemaDir, { recursive: true })
@@ -99,25 +101,33 @@ export async function createMinimalSiteFixture(options = {}) {
   await fs.mkdir(docsZh, { recursive: true })
   await fs.mkdir(docsEn, { recursive: true })
 
-  const zhPost = `---\n` +
-    `title: 测试文章\n` +
-    `category_zh: 工程\n` +
-    `tags_zh: [自动化]\n` +
-    `series: 系列一\n` +
-    `date: 2025-01-01\n` +
-    `updated: 2025-01-02\n` +
-    `status: published\n` +
-    `---\n\n这是中文内容。`
+  const zhPost = parseErrorLocales.has('zh')
+    ? `---\n` +
+      `title: [\n` +
+      `status: published\n`
+    : `---\n` +
+      `title: 测试文章\n` +
+      `category_zh: 工程\n` +
+      `tags_zh: [自动化]\n` +
+      `series: 系列一\n` +
+      `date: 2025-01-01\n` +
+      `updated: 2025-01-02\n` +
+      `status: ${emptyNavLocales.has('zh') ? 'draft' : 'published'}\n` +
+      `---\n\n这是中文内容。`
 
-  const enPost = `---\n` +
-    `title: Test Article\n` +
-    `category_en: Engineering\n` +
-    `tags_en: [automation]\n` +
-    `series_en: Series One\n` +
-    `date: 2025-01-03\n` +
-    `updated: 2025-01-04\n` +
-    `status: published\n` +
-    `---\n\nEnglish content.`
+  const enPost = parseErrorLocales.has('en')
+    ? `---\n` +
+      `title: [\n` +
+      `status: published\n`
+    : `---\n` +
+      `title: Test Article\n` +
+      `category_en: Engineering\n` +
+      `tags_en: [automation]\n` +
+      `series_en: Series One\n` +
+      `date: 2025-01-03\n` +
+      `updated: 2025-01-04\n` +
+      `status: ${emptyNavLocales.has('en') ? 'draft' : 'published'}\n` +
+      `---\n\nEnglish content.`
 
   await fs.writeFile(path.join(docsZh, 'index.md'), zhPost)
   await fs.writeFile(path.join(docsEn, 'index.md'), enPost)

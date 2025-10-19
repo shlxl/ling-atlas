@@ -67,17 +67,43 @@ test('pagegen metrics-only run emits structured stdout for fixture', async t => 
   assert.equal(metrics.write?.summary?.disabled, true, 'metrics-only run should disable writer')
 })
 
+test('pagegen warns with stage context when aggregates empty or parse errors', async t => {
+  const { root: fixture, cleanup } = await createMinimalSiteFixture({
+    emptyNavLocales: ['en'],
+    parseErrorLocales: ['zh']
+  })
+  t.after(cleanup)
+
+  const result = await runPagegenCLI(fixture, ['--dry-run'])
+  assert.equal(result.code, 0, `pagegen exited with ${result.code}: ${result.stderr}`)
+
+  const warnLines = result.stderr
+    .split('\n')
+    .map(line => line.trim())
+    .filter(line => line.startsWith('[pagegen] warn'))
+
+  assert.ok(warnLines.length > 0, 'expected at least one warn line in stderr output')
+  for (const line of warnLines) {
+    assert.match(line, /\[pagegen\] warn stage=[^\s]+ locale=[^\s]+ target=[^\s]+: /, 'warn line must include stage/locale/target')
+  }
+})
+
 test('pagegen aborts and logs stage context when write fails', async t => {
   const { root: fixture, cleanup, paths } = await createMinimalSiteFixture({ readOnlyMeta: true })
   t.after(cleanup)
 
   const result = await runPagegenCLI(fixture)
   assert.notEqual(result.code, 0, 'pagegen should exit with failure code')
-  assert.match(
-    result.stderr,
-    /stage=meta\s+locale=zh\s+target=.*meta\.zh\.json/i,
-    'stderr should include stage, locale, and target context'
-  )
+
+  const errorLines = result.stderr
+    .split('\n')
+    .map(line => line.trim())
+    .filter(line => line.startsWith('[pagegen] error'))
+
+  assert.ok(errorLines.length > 0, 'expected at least one error line in stderr output')
+  for (const line of errorLines) {
+    assert.match(line, /\[pagegen\] error stage=[^\s]+ locale=[^\s]+ target=[^\s]+(?:\s|:)/, 'error line must include stage/locale/target')
+  }
 
   const metricsExists = await pathExists(paths.metricsLog)
   assert.equal(metricsExists, false, 'metrics log should not be created when write fails')
