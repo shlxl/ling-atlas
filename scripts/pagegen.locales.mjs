@@ -247,9 +247,11 @@ function loadNavConfig() {
 function loadNavConfigFromFiles({ configPath, schemaPath, useCache = false }) {
   const schemaStat = safeStat(schemaPath)
   const configStat = safeStat(configPath)
-  if (!schemaStat || !configStat) {
-    console.warn('[pagegen.locales] navigation schema or config missing; using defaults')
-    return { aggregates: {}, sections: [], links: {} }
+  if (!schemaStat) {
+    throw new Error(`[pagegen.locales] navigation schema 缺失：${schemaPath}`)
+  }
+  if (!configStat) {
+    throw new Error(`[pagegen.locales] navigation 配置缺失：${configPath}`)
   }
 
   const schemaJson = JSON.parse(fs.readFileSync(schemaPath, 'utf8'))

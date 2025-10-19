@@ -28,13 +28,27 @@ function createLocales(tmpDir) {
   ]
 }
 
+const NAV_CONFIG_FIXTURE = {
+  aggregates: {
+    archive: { type: 'archive', labelKey: 'nav.archive', manifestKey: 'archive' },
+    categories: { type: 'category', labelKey: 'nav.categories', manifestKey: 'categories' },
+    series: { type: 'series', labelKey: 'nav.series', manifestKey: 'series' },
+    tags: { type: 'tag', labelKey: 'nav.tags', manifestKey: 'tags' }
+  },
+  sections: [],
+  links: {}
+}
+
 test('i18n registry merges posts, tags, and nav entries', async t => {
   const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), TMP_PREFIX))
   t.after(async () => {
     await fs.rm(tmpDir, { recursive: true, force: true })
   })
   const locales = createLocales(tmpDir)
-  const registry = createI18nRegistry(locales, { tagAlias: { Workflow: 'workflow' } })
+  const registry = createI18nRegistry(locales, {
+    tagAlias: { Workflow: 'workflow' },
+    navConfig: NAV_CONFIG_FIXTURE
+  })
 
   const zhNav = {
     categories: new Map([['guides', '/zh/_generated/categories/guides/']]),
@@ -102,7 +116,7 @@ test('i18n registry skips locales without backing aggregates', async t => {
   })
 
   const locales = createLocales(tmpDir)
-  const registry = createI18nRegistry(locales)
+  const registry = createI18nRegistry(locales, { navConfig: NAV_CONFIG_FIXTURE })
 
   const enNav = {
     categories: new Map([['guides', '/en/_generated/categories/guides/']]),
@@ -148,7 +162,7 @@ test('i18n registry keeps locale-specific aggregates separated', async t => {
   })
 
   const locales = createLocales(tmpDir)
-  const registry = createI18nRegistry(locales)
+  const registry = createI18nRegistry(locales, { navConfig: NAV_CONFIG_FIXTURE })
 
   const zhNav = {
     categories: new Map([['cases', '/zh/_generated/categories/cases/']]),
@@ -181,4 +195,60 @@ test('i18n registry keeps locale-specific aggregates separated', async t => {
   assert.deepEqual(enPayload.categories, {})
   assert.deepEqual(enPayload.series, {})
   assert.deepEqual(enPayload.archive, {})
+})
+
+test('i18n registry throws when aggregates definition is missing', async t => {
+  const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), TMP_PREFIX))
+  t.after(async () => {
+    await fs.rm(tmpDir, { recursive: true, force: true })
+  })
+
+  const locales = createLocales(tmpDir)
+
+  assert.throws(
+    () =>
+      createI18nRegistry(locales, {
+        navConfig: { aggregates: {}, sections: [], links: {} }
+      }),
+    /nav config 缺少 aggregates/,
+    'missing aggregates should throw'
+  )
+})
+
+test('i18n registry throws when nav entries contain empty slug', async t => {
+  const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), TMP_PREFIX))
+  t.after(async () => {
+    await fs.rm(tmpDir, { recursive: true, force: true })
+  })
+
+  const locales = createLocales(tmpDir)
+  const registry = createI18nRegistry(locales, { navConfig: NAV_CONFIG_FIXTURE })
+
+  assert.throws(
+    () =>
+      registry.addNavEntries(locales[0], {
+        categories: new Map([['', '/zh/_generated/categories/empty/']])
+      }),
+    /空白 slug/,
+    'empty slug should trigger nav error'
+  )
+})
+
+test('i18n registry rejects unknown nav manifest buckets', async t => {
+  const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), TMP_PREFIX))
+  t.after(async () => {
+    await fs.rm(tmpDir, { recursive: true, force: true })
+  })
+
+  const locales = createLocales(tmpDir)
+  const registry = createI18nRegistry(locales, { navConfig: NAV_CONFIG_FIXTURE })
+
+  assert.throws(
+    () =>
+      registry.addNavEntries(locales[0], {
+        custom: new Map([['foo', '/zh/custom/foo/']])
+      }),
+    /nav manifest 缺少键 "custom"/, 
+    'unknown manifest key should throw'
+  )
 })
