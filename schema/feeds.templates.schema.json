@@ -1,0 +1,65 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Ling Atlas Feed Templates",
+  "type": "object",
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "templates": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "rss": {
+            "type": "object",
+            "properties": {
+              "limit": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "header": {
+                "$ref": "#/$defs/stringArray"
+              },
+              "item": {
+                "$ref": "#/$defs/stringArray"
+              },
+              "footer": {
+                "$ref": "#/$defs/stringArray"
+              }
+            },
+            "required": ["header", "item", "footer"],
+            "additionalProperties": false
+          },
+          "sitemap": {
+            "type": "object",
+            "properties": {
+              "header": {
+                "$ref": "#/$defs/stringArray"
+              },
+              "item": {
+                "$ref": "#/$defs/stringArray"
+              },
+              "footer": {
+                "$ref": "#/$defs/stringArray"
+              }
+            },
+            "required": ["header", "item", "footer"],
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": ["templates"],
+  "additionalProperties": false,
+  "$defs": {
+    "stringArray": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}
