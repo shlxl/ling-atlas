@@ -11,6 +11,8 @@ import {
   NAVIGATION_CONFIG,
   getPreferredLocale
 } from './pagegen.locales.mjs'
+import { createPluginRegistry, lifecycleEvents } from './pagegen/plugin-registry.mjs'
+import { createScheduler } from './pagegen/scheduler.mjs'
 import { collectPosts } from './pagegen/collect.mjs'
 import { syncLocaleContent } from './pagegen/sync.mjs'
 import { writeCollections } from './pagegen/collections.mjs'
@@ -153,6 +155,9 @@ await (async () => {
     const code = error?.code ? ` code=${error.code}` : ''
     const message = error?.message || String(error)
     console.error(`[pagegen] error stage=${stage} locale=${locale} target=${target}${code}: ${message}`)
+    if (error && typeof error === 'object') {
+      error.__pagegenLogged = true
+    }
   }
 
   function recordStage(name, durationMs) {
@@ -185,6 +190,19 @@ await (async () => {
     return total
   }
 
+  async function appendMetricsLog(entry) {
+    try {
+      await fs.mkdir(path.dirname(metricsLogPath), { recursive: true })
+      const existingRaw = await fs.readFile(metricsLogPath, 'utf8').catch(() => '[]')
+      const existing = JSON.parse(existingRaw || '[]')
+      existing.push(entry)
+      const limited = existing.slice(-100)
+      await fs.writeFile(metricsLogPath, JSON.stringify(limited, null, 2))
+    } catch (error) {
+      logStageWarning('metrics', { locale: 'global', target: metricsLogPath }, `failed to write metrics log: ${error.message}`)
+    }
+  }
+
   const tagAlias = await loadTagAlias(__dirname)
   const registry = createI18nRegistry(LOCALE_CONFIG, { tagAlias, navConfig: NAVIGATION_CONFIG })
 
@@ -201,27 +219,21 @@ await (async () => {
     logInfo(`[pagegen] locale pipeline parallelism enabled (max=${maxParallel})`)
   }
 
-  const syncMetrics = await measureStage(
-    'syncLocaleContent',
-    () =>
-      syncLocaleContent(LOCALE_CONFIG, {
-        fullSync: forceFullSync,
-        cacheDir: path.join(__dirname, '..', 'data')
-      }),
-    { stage: 'sync', locale: 'all', target: 'localized-content' }
-  )
-  for (const metric of syncMetrics || []) {
-    const copied = metric.copied ? 'copied' : 'skipped'
-    const sizeMb = metric.bytes ? (metric.bytes / (1024 * 1024)).toFixed(2) : '0.00'
-    logInfo(
-      `[pagegen] sync:${metric.locale} ${copied} mode=${metric.mode} files=${metric.files}` +
-        ` copied=${metric.copiedFiles} removed=${metric.removedFiles} size=${sizeMb}MB`
-    )
-  }
-
   const siteOrigin = process.env.SITE_ORIGIN || 'https://example.com'
+  const postsByLocale = new Map()
   const collectMetrics = {}
   const feedMetrics = []
+  const navMetrics = []
+  let syncMetrics = []
+  let writeResults = {
+    total: 0,
+    written: 0,
+    skipped: 0,
+    failed: 0,
+    errors: [],
+    skippedByReason: {},
+    disabled: batchingDisabled || effectiveDryRun
+  }
 
   async function runLocalePipeline(lang) {
     const posts = await measureStage(
@@ -259,87 +271,141 @@ await (async () => {
       rssLimited: false,
       sitemapCount: 0
     }
-    feedMetrics.push(localeFeed)
-    await measureStage(
-      `meta:${lang.manifestLocale}`,
-      async () => {
-        if (effectiveDryRun) return
-        const payload = `${JSON.stringify(posts.meta, null, 2)}\n`
-        if (writer) {
-          writer.addFileTask({
-            stage: 'meta',
-            locale: lang.manifestLocale,
-            target: lang.outMeta,
-            content: payload
-          })
-        } else {
-          try {
-            await fs.writeFile(lang.outMeta, payload)
-          } catch (error) {
-            error.stage = 'meta'
-            error.locale = lang.manifestLocale
-            error.target = lang.outMeta
-            throw error
+  })
+
+  pluginRegistry.registerStage({
+    name: 'meta',
+    iterator: () => LOCALE_CONFIG,
+    task: async lang => {
+      const posts = postsByLocale.get(lang.manifestLocale)
+      if (!posts) {
+        throw new Error(`pagegen: posts for locale ${lang.manifestLocale} missing before meta stage`)
+      }
+      await measureStage(
+        `meta:${lang.manifestLocale}`,
+        async () => {
+          if (effectiveDryRun) return
+          const payload = `${JSON.stringify(posts.meta, null, 2)}\n`
+          if (writer) {
+            writer.addFileTask({
+              stage: 'meta',
+              locale: lang.manifestLocale,
+              target: lang.outMeta,
+              content: payload
+            })
+          } else {
+            try {
+              await fs.writeFile(lang.outMeta, payload)
+            } catch (error) {
+              error.stage = 'meta'
+              error.locale = lang.manifestLocale
+              error.target = lang.outMeta
+              throw error
+            }
           }
+        },
+        { stage: 'meta', locale: lang.manifestLocale, target: lang.outMeta }
+      )
+    }
+  })
+
+  pluginRegistry.registerStage({
+    name: 'collections',
+    iterator: () => LOCALE_CONFIG,
+    task: async lang => {
+      const posts = postsByLocale.get(lang.manifestLocale)
+      if (!posts) {
+        throw new Error(`pagegen: posts for locale ${lang.manifestLocale} missing before collections stage`)
+      }
+      const navEntries = await measureStage(
+        `collections:${lang.manifestLocale}`,
+        () => writeCollections(lang, posts.meta, writer, { dryRun: effectiveDryRun }),
+        { stage: 'collections', locale: lang.manifestLocale, target: lang.generatedDir }
+      )
+      registry.addNavEntries(lang, navEntries)
+    }
+  })
+
+  pluginRegistry.registerStage({
+    name: 'feeds',
+    iterator: () => LOCALE_CONFIG,
+    parallel: true,
+    task: async lang => {
+      const posts = postsByLocale.get(lang.manifestLocale)
+      if (!posts) {
+        throw new Error(`pagegen: posts for locale ${lang.manifestLocale} missing before feeds stage`)
+      }
+      const localeFeed = {
+        locale: lang.manifestLocale,
+        rssCount: 0,
+        rssLimited: false,
+        sitemapCount: 0
+      }
+      feedMetrics.push(localeFeed)
+      const rssStats = await measureStage(
+        `rss:${lang.manifestLocale}`,
+        () =>
+          generateRss(lang, posts.list, {
+            publicDir: PUBLIC_DIR,
+            siteOrigin,
+            preferredLocale: preferredLocaleCode,
+            writer,
+            dryRun: effectiveDryRun
+          }),
+        {
+          stage: 'rss',
+          locale: lang.manifestLocale,
+          target: path.join(PUBLIC_DIR, lang.rssFile || `rss.${lang.manifestLocale}.xml`)
         }
-      },
-      { stage: 'meta', locale: lang.manifestLocale, target: lang.outMeta }
-    )
-
-    const navEntries = await measureStage(
-      `collections:${lang.manifestLocale}`,
-      () => writeCollections(lang, posts.meta, writer, { dryRun: effectiveDryRun }),
-      { stage: 'collections', locale: lang.manifestLocale, target: lang.generatedDir }
-    )
-    registry.addNavEntries(lang, navEntries)
-    const rssStats = await measureStage(
-      `rss:${lang.manifestLocale}`,
-      () =>
-        generateRss(lang, posts.list, {
-          publicDir: PUBLIC_DIR,
-          siteOrigin,
-          preferredLocale: preferredLocaleCode,
-          writer,
-          dryRun: effectiveDryRun
-        }),
-      {
-        stage: 'rss',
-        locale: lang.manifestLocale,
-        target: path.join(PUBLIC_DIR, lang.rssFile || `rss.${lang.manifestLocale}.xml`)
+      )
+      if (rssStats) {
+        localeFeed.rssCount = Number(rssStats.count || 0)
+        localeFeed.rssLimited = Boolean(rssStats.limited)
       }
-    )
-    if (rssStats) {
-      localeFeed.rssCount = Number(rssStats.count || 0)
-      localeFeed.rssLimited = Boolean(rssStats.limited)
-    }
-    const sitemapStats = await measureStage(
-      `sitemap:${lang.manifestLocale}`,
-      () =>
-        generateSitemap(lang, posts.list, {
-          publicDir: PUBLIC_DIR,
-          siteOrigin,
-          writer,
-          dryRun: effectiveDryRun
-        }),
-      {
-        stage: 'sitemap',
-        locale: lang.manifestLocale,
-        target: path.join(PUBLIC_DIR, lang.sitemapFile || `sitemap.${lang.manifestLocale}.xml`)
+      const sitemapStats = await measureStage(
+        `sitemap:${lang.manifestLocale}`,
+        () =>
+          generateSitemap(lang, posts.list, {
+            publicDir: PUBLIC_DIR,
+            siteOrigin,
+            writer,
+            dryRun: effectiveDryRun
+          }),
+        {
+          stage: 'sitemap',
+          locale: lang.manifestLocale,
+          target: path.join(PUBLIC_DIR, lang.sitemapFile || `sitemap.${lang.manifestLocale}.xml`)
+        }
+      )
+      if (sitemapStats) {
+        localeFeed.sitemapCount = Number(sitemapStats.count || 0)
       }
-    )
-    if (sitemapStats) {
-      localeFeed.sitemapCount = Number(sitemapStats.count || 0)
+      logInfo(
+        `[pagegen] feeds:${lang.manifestLocale} rss=${localeFeed.rssCount}${
+          localeFeed.rssLimited ? ' (limited)' : ''
+        } sitemap=${localeFeed.sitemapCount}`
+      )
+      for (const post of posts.list) {
+        registry.registerPost(post, lang)
+      }
     }
-    logInfo(
-      `[pagegen] feeds:${lang.manifestLocale} rss=${localeFeed.rssCount}${
-        localeFeed.rssLimited ? ' (limited)' : ''
-      } sitemap=${localeFeed.sitemapCount}`
-    )
+  })
 
-    for (const post of posts.list) {
-      registry.registerPost(post, lang)
+  pluginRegistry.registerStage({
+    name: 'i18n-map',
+    run: async () => {
+      const i18nMap = registry.getI18nMap()
+      await measureStage(
+        'scheduleI18nMap',
+        () => writeI18nMap(i18nMap, writer),
+        {
+          stage: 'i18n-map',
+          locale: 'root',
+          target: path.join(PUBLIC_DIR, 'i18n-map.json')
+        }
+      )
     }
-  }
+  })
 
   await scheduler.run(LOCALE_CONFIG.map(lang => () => runLocalePipeline(lang)))
 
@@ -350,61 +416,40 @@ await (async () => {
     target: path.join(PUBLIC_DIR, 'i18n-map.json')
   })
 
-  const navPayloads = registry.getNavManifestPayloads()
-  const navMetrics = []
-  await measureStage(
-    'scheduleNavManifests',
-    async () => {
-      for (const { lang, payload } of navPayloads) {
-        const counts = {
-          categories: Object.keys(payload.categories || {}).length,
-          series: Object.keys(payload.series || {}).length,
-          tags: Object.keys(payload.tags || {}).length,
-        archive: Object.keys(payload.archive || {}).length
-      }
-      const totalEntries = Object.values(counts).reduce((sum, value) => sum + value, 0)
-      const summaryText =
-        `[pagegen] nav:${lang.manifestLocale} categories=${counts.categories} series=${counts.series}` +
-        ` tags=${counts.tags} archive=${counts.archive}`
-      if (totalEntries === 0) {
-        logStageWarning('nav-manifest', { locale: lang.manifestLocale, target: lang.navManifestPath }, 'manifest empty; please verify nav configuration and generated aggregates')
+  pluginRegistry.registerStage({
+    name: 'write',
+    run: async () => {
+      if (writer) {
+        writeResults = await measureStage(
+          'flushWrites',
+          () => writer.flush(),
+          { stage: 'write', locale: 'batch', target: 'writer' }
+        )
+        if (writeResults.failed > 0) {
+          for (const err of writeResults.errors || []) {
+            const writeError = new Error(err?.message || 'unknown error')
+            writeError.stage = err?.stage || 'write'
+            writeError.locale = err?.locale || 'n/a'
+            writeError.target = err?.target || 'n/a'
+            logStageError('flushWrites', { stage: 'write' }, writeError)
+          }
+          throw new Error(`pagegen write failures: ${writeResults.failed}`)
+        }
       } else {
-        logInfo(summaryText)
+        writeResults = {
+          total: 0,
+          written: 0,
+          skipped: 0,
+          failed: 0,
+          errors: [],
+          skippedByReason: {},
+          disabled: true
+        }
       }
-      navMetrics.push({ locale: lang.manifestLocale, counts })
     }
-    await writeNavManifests(navPayloads, writer)
-    },
-    { stage: 'nav-manifest', locale: 'all', target: path.join(PUBLIC_DIR, 'nav.manifest.*.json') }
-  )
+  })
 
-  let writeResults = {
-    total: 0,
-    written: 0,
-    skipped: 0,
-    failed: 0,
-    errors: [],
-    skippedByReason: {},
-    disabled: batchingDisabled || effectiveDryRun
-  }
-
-  if (writer) {
-    writeResults = await measureStage(
-      'flushWrites',
-      () => writer.flush(),
-      { stage: 'write', locale: 'batch', target: 'writer' }
-    )
-    if (writeResults.failed > 0) {
-      for (const err of writeResults.errors || []) {
-        const writeError = new Error(err?.message || 'unknown error')
-        writeError.stage = err?.stage || 'write'
-        writeError.locale = err?.locale || 'n/a'
-        writeError.target = err?.target || 'n/a'
-        logStageError('flushWrites', { stage: 'write' }, writeError)
-      }
-      throw new Error(`pagegen write failures: ${writeResults.failed}`)
-    }
-  }
+  await scheduler.run({})
 
   const totalDuration = flushStageSummary()
 
@@ -461,249 +506,244 @@ await (async () => {
   } else {
     await appendMetricsLog(metricsEntry)
   }
+})();
 
-  async function writeI18nMap(map, currentWriter) {
-    const json = `${JSON.stringify(map, null, 2)}\n`
+async function writeI18nMap(map, currentWriter) {
+  const __dirname = path.dirname(fileURLToPath(import.meta.url))
+  const DOCS_DIR = path.join(__dirname, '..', 'docs')
+  const PUBLIC_DIR = path.join(DOCS_DIR, 'public')
+  const json = `${JSON.stringify(map, null, 2)}\n`
+  if (currentWriter) {
+    currentWriter.addFileTask({
+      stage: 'i18n-map',
+      locale: 'root',
+      target: path.join(PUBLIC_DIR, 'i18n-map.json'),
+      content: json
+    })
+  } else {
+    const target = path.join(PUBLIC_DIR, 'i18n-map.json')
+    try {
+      await fs.writeFile(target, json)
+    } catch (error) {
+      error.stage = 'i18n-map'
+      error.locale = 'root'
+      error.target = target
+      throw error
+    }
+  }
+}
+
+async function writeNavManifests(entries, currentWriter) {
+  const __dirname = path.dirname(fileURLToPath(import.meta.url))
+  const DOCS_DIR = path.join(__dirname, '..', 'docs')
+  const GENERATED_DIR = path.join(DOCS_DIR, '_generated')
+  const PUBLIC_DIR = path.join(DOCS_DIR, 'public')
+  for (const { lang, payload } of entries) {
+    const json = `${JSON.stringify(payload, null, 2)}\n`
+    const file = lang.navManifestFile || `nav.manifest.${lang.manifestLocale}.json`
+    const generatedTarget = lang.navManifestPath || path.join(GENERATED_DIR, file)
     if (currentWriter) {
       currentWriter.addFileTask({
-        stage: 'i18n-map',
-        locale: 'root',
-        target: path.join(PUBLIC_DIR, 'i18n-map.json'),
+        stage: 'nav-manifest',
+        locale: lang.manifestLocale,
+        target: generatedTarget,
+        content: json
+      })
+      currentWriter.addFileTask({
+        stage: 'nav-manifest',
+        locale: lang.manifestLocale,
+        target: path.join(PUBLIC_DIR, file),
         content: json
       })
     } else {
-      const target = path.join(PUBLIC_DIR, 'i18n-map.json')
+      await fs.mkdir(path.dirname(generatedTarget), { recursive: true })
       try {
-        await fs.writeFile(target, json)
+        await fs.writeFile(generatedTarget, json)
       } catch (error) {
-        error.stage = 'i18n-map'
-        error.locale = 'root'
-        error.target = target
+        error.stage = 'nav-manifest'
+        error.locale = lang.manifestLocale
+        error.target = generatedTarget
+        throw error
+      }
+      const publicTarget = path.join(PUBLIC_DIR, file)
+      try {
+        await fs.writeFile(publicTarget, json)
+      } catch (error) {
+        error.stage = 'nav-manifest'
+        error.locale = lang.manifestLocale
+        error.target = publicTarget
         throw error
       }
     }
   }
+}
 
-  async function writeNavManifests(entries, currentWriter) {
-    for (const { lang, payload } of entries) {
-      const json = `${JSON.stringify(payload, null, 2)}\n`
-      const file = lang.navManifestFile || `nav.manifest.${lang.manifestLocale}.json`
-      const generatedTarget = lang.navManifestPath || path.join(GENERATED_DIR, file)
-      if (currentWriter) {
-        currentWriter.addFileTask({
-          stage: 'nav-manifest',
-          locale: lang.manifestLocale,
-          target: generatedTarget,
-          content: json
-        })
-        currentWriter.addFileTask({
-          stage: 'nav-manifest',
-          locale: lang.manifestLocale,
-          target: path.join(PUBLIC_DIR, file),
-          content: json
-        })
-      } else {
-        await fs.mkdir(path.dirname(generatedTarget), { recursive: true })
-        try {
-          await fs.writeFile(generatedTarget, json)
-        } catch (error) {
-          error.stage = 'nav-manifest'
-          error.locale = lang.manifestLocale
-          error.target = generatedTarget
-          throw error
-        }
-        const publicTarget = path.join(PUBLIC_DIR, file)
-        try {
-          await fs.writeFile(publicTarget, json)
-        } catch (error) {
-          error.stage = 'nav-manifest'
-          error.locale = lang.manifestLocale
-          error.target = publicTarget
-          throw error
-        }
-      }
-    }
+async function loadTagAlias(baseDir) {
+  try {
+    const raw = await fs.readFile(path.join(baseDir, '..', 'schema', 'tag-alias.json'), 'utf8')
+    return JSON.parse(raw)
+  } catch {
+    return {}
+  }
+}
+
+function buildMetricsEntry({
+  totalDuration,
+  stageTimings,
+  syncMetrics,
+  collectMetrics,
+  writeResults,
+  feedMetrics: feeds,
+  navMetrics
+}) {
+  const stages = stageTimings.map(item => ({
+    name: item.name,
+    ms: Number(item.durationMs.toFixed(3))
+  }))
+
+  return {
+    timestamp: new Date().toISOString(),
+    totalMs: Number(totalDuration.toFixed(3)),
+    stages,
+    stageSummary: Object.fromEntries(stages.map(item => [item.name, item.ms])),
+    sync: summarizeSyncMetrics(syncMetrics),
+    collect: summarizeCollectMetrics(collectMetrics),
+    feeds: summarizeFeedMetrics(feeds),
+    nav: summarizeNavMetrics(navMetrics),
+    write: summarizeWriteResults(writeResults)
+  }
+}
+
+function summarizeSyncMetrics(metrics = []) {
+  if (!Array.isArray(metrics)) return { summary: { locales: 0 }, locales: [] }
+  const summary = {
+    locales: metrics.length,
+    copiedLocales: metrics.filter(item => item?.copied).length,
+    skippedLocales: metrics.filter(item => !item?.copied).length,
+    totalFiles: metrics.reduce((sum, item) => sum + Number(item?.files || 0), 0),
+    copiedFiles: metrics.reduce((sum, item) => sum + Number(item?.copiedFiles || 0), 0),
+    removedFiles: metrics.reduce((sum, item) => sum + Number(item?.removedFiles || 0), 0),
+    bytes: metrics.reduce((sum, item) => sum + Number(item?.bytes || 0), 0),
+    failedCopies: metrics.reduce((sum, item) => sum + Number(item?.failedCopies || 0), 0),
+    failedRemovals: metrics.reduce((sum, item) => sum + Number(item?.failedRemovals || 0), 0),
+    errors: metrics.reduce((sum, item) => sum + Number((item?.errors || []).length), 0),
+    snapshotsUpdated: metrics.filter(item => item?.snapshotUpdated).length
   }
 
-  async function loadTagAlias(baseDir) {
-    try {
-      const raw = await fs.readFile(path.join(baseDir, '..', 'schema', 'tag-alias.json'), 'utf8')
-      return JSON.parse(raw)
-    } catch {
-      return {}
-    }
+  const locales = metrics.map(item => ({
+    locale: item?.locale,
+    mode: item?.mode,
+    files: item?.files,
+    copiedFiles: item?.copiedFiles,
+    removedFiles: item?.removedFiles,
+    unchangedFiles: item?.unchangedFiles,
+    bytes: item?.bytes,
+    copied: item?.copied,
+    failedCopies: item?.failedCopies,
+    failedRemovals: item?.failedRemovals,
+    snapshotUpdated: item?.snapshotUpdated,
+    errors: item?.errors || []
+  }))
+
+  return { summary, locales }
+}
+
+function summarizeCollectMetrics(metrics = {}) {
+  const entries = Object.entries(metrics || {})
+  const summary = {
+    locales: entries.length,
+    totalFiles: entries.reduce((sum, [, stats]) => sum + Number(stats?.totalFiles || 0), 0),
+    parsedFiles: entries.reduce((sum, [, stats]) => sum + Number(stats?.parsedFiles || 0), 0),
+    cacheHits: entries.reduce((sum, [, stats]) => sum + Number(stats?.cacheHits || 0), 0),
+    cacheMisses: entries.reduce((sum, [, stats]) => sum + Number(stats?.cacheMisses || 0), 0),
+    cacheDisabledLocales: entries.filter(([, stats]) => Boolean(stats?.cacheDisabled)).length,
+    parseErrors: entries.reduce((sum, [, stats]) => sum + Number(stats?.parseErrors || 0), 0),
+    errorEntries: entries.reduce((sum, [, stats]) => sum + Number((stats?.errors || []).length), 0)
   }
+  const totalRequests = summary.cacheHits + summary.cacheMisses
+  summary.cacheRequests = totalRequests
+  summary.cacheHitRate = totalRequests ? Number((summary.cacheHits / totalRequests).toFixed(3)) : 0
 
-  async function appendMetricsLog(entry) {
-    try {
-      await fs.mkdir(path.dirname(metricsLogPath), { recursive: true })
-      const existingRaw = await fs.readFile(metricsLogPath, 'utf8').catch(() => '[]')
-      const existing = JSON.parse(existingRaw || '[]')
-      existing.push(entry)
-      const limited = existing.slice(-100)
-      await fs.writeFile(metricsLogPath, JSON.stringify(limited, null, 2))
-    } catch (error) {
-      logStageWarning('metrics', { locale: 'global', target: metricsLogPath }, `failed to write metrics log: ${error.message}`)
-    }
-  }
-
-  function buildMetricsEntry({
-    totalDuration,
-    stageTimings,
-    syncMetrics,
-    collectMetrics,
-    writeResults,
-    feedMetrics: feeds,
-    navMetrics
-  }) {
-    const stages = stageTimings.map(item => ({
-      name: item.name,
-      ms: Number(item.durationMs.toFixed(3))
-    }))
-
+  const locales = entries.map(([locale, stats]) => {
+    const hits = Number(stats?.cacheHits || 0)
+    const misses = Number(stats?.cacheMisses || 0)
+    const requests = hits + misses
     return {
-      timestamp: new Date().toISOString(),
-      totalMs: Number(totalDuration.toFixed(3)),
-      stages,
-      stageSummary: Object.fromEntries(stages.map(item => [item.name, item.ms])),
-      sync: summarizeSyncMetrics(syncMetrics),
-      collect: summarizeCollectMetrics(collectMetrics),
-      feeds: summarizeFeedMetrics(feeds),
-      nav: summarizeNavMetrics(navMetrics),
-      write: summarizeWriteResults(writeResults)
+      locale,
+      totalFiles: stats?.totalFiles || 0,
+      parsedFiles: stats?.parsedFiles || 0,
+      cacheHits: hits,
+      cacheMisses: misses,
+      cacheDisabled: Boolean(stats?.cacheDisabled),
+      cacheRequests: requests,
+      cacheHitRate: stats?.cacheDisabled ? null : requests ? Number((hits / requests).toFixed(3)) : 0,
+      parseErrors: stats?.parseErrors || 0,
+      errors: stats?.errors || []
     }
+  })
+
+  return { summary, locales }
+}
+
+function summarizeFeedMetrics(metrics = []) {
+  if (!Array.isArray(metrics)) return { summary: { locales: 0 }, locales: [] }
+  const summary = {
+    locales: metrics.length,
+    rssTotal: metrics.reduce((sum, item) => sum + Number(item?.rssCount || 0), 0),
+    rssLimitedLocales: metrics.filter(item => item?.rssLimited).length,
+    sitemapTotal: metrics.reduce((sum, item) => sum + Number(item?.sitemapCount || 0), 0),
+    emptyLocales: metrics.filter(item => Number(item?.rssCount || 0) + Number(item?.sitemapCount || 0) === 0).length
   }
 
-  function summarizeSyncMetrics(metrics = []) {
-    if (!Array.isArray(metrics)) return { summary: { locales: 0 }, locales: [] }
-    const summary = {
-      locales: metrics.length,
-      copiedLocales: metrics.filter(item => item?.copied).length,
-      totalFiles: metrics.reduce((sum, item) => sum + Number(item?.files || 0), 0),
-      copiedFiles: metrics.reduce((sum, item) => sum + Number(item?.copiedFiles || 0), 0),
-      removedFiles: metrics.reduce((sum, item) => sum + Number(item?.removedFiles || 0), 0),
-      bytes: metrics.reduce((sum, item) => sum + Number(item?.bytes || 0), 0),
-      failedCopies: metrics.reduce((sum, item) => sum + Number(item?.failedCopies || 0), 0),
-      failedRemovals: metrics.reduce((sum, item) => sum + Number(item?.failedRemovals || 0), 0),
-      errors: metrics.reduce((sum, item) => sum + Number((item?.errors || []).length), 0),
-      snapshotsUpdated: metrics.filter(item => item?.snapshotUpdated).length
-    }
+  const locales = metrics.map(item => ({
+    locale: item?.locale,
+    rssCount: Number(item?.rssCount || 0),
+    rssLimited: Boolean(item?.rssLimited),
+    sitemapCount: Number(item?.sitemapCount || 0)
+  }))
 
-    const locales = metrics.map(item => ({
-      locale: item?.locale,
-      mode: item?.mode,
-      files: item?.files,
-      copiedFiles: item?.copiedFiles,
-      removedFiles: item?.removedFiles,
-      unchangedFiles: item?.unchangedFiles,
-      bytes: item?.bytes,
-      copied: item?.copied,
-      failedCopies: item?.failedCopies,
-      failedRemovals: item?.failedRemovals,
-      snapshotUpdated: item?.snapshotUpdated,
-      errors: item?.errors || []
-    }))
+  return { summary, locales }
+}
 
-    return { summary, locales }
+function summarizeNavMetrics(metrics = []) {
+  if (!Array.isArray(metrics)) return { summary: { locales: 0 }, locales: [] }
+  const locales = metrics.map(item => ({
+    locale: item?.locale,
+    categories: Number(item?.counts?.categories || 0),
+    series: Number(item?.counts?.series || 0),
+    tags: Number(item?.counts?.tags || 0),
+    archive: Number(item?.counts?.archive || 0)
+  }))
+  const summary = {
+    locales: locales.length,
+    emptyLocales: locales.filter(loc => loc.categories + loc.series + loc.tags + loc.archive === 0).length,
+    categoriesTotal: locales.reduce((sum, loc) => sum + loc.categories, 0),
+    seriesTotal: locales.reduce((sum, loc) => sum + loc.series, 0),
+    tagsTotal: locales.reduce((sum, loc) => sum + loc.tags, 0),
+    archiveTotal: locales.reduce((sum, loc) => sum + loc.archive, 0)
   }
+  return { summary, locales }
+}
 
-  function summarizeCollectMetrics(metrics = {}) {
-    const entries = Object.entries(metrics || {})
-    const summary = {
-      locales: entries.length,
-      totalFiles: entries.reduce((sum, [, stats]) => sum + Number(stats?.totalFiles || 0), 0),
-      parsedFiles: entries.reduce((sum, [, stats]) => sum + Number(stats?.parsedFiles || 0), 0),
-      cacheHits: entries.reduce((sum, [, stats]) => sum + Number(stats?.cacheHits || 0), 0),
-      cacheMisses: entries.reduce((sum, [, stats]) => sum + Number(stats?.cacheMisses || 0), 0),
-      cacheDisabledLocales: entries.filter(([, stats]) => Boolean(stats?.cacheDisabled)).length,
-      parseErrors: entries.reduce((sum, [, stats]) => sum + Number(stats?.parseErrors || 0), 0),
-      errorEntries: entries.reduce((sum, [, stats]) => sum + Number((stats?.errors || []).length), 0)
-    }
-    const totalRequests = summary.cacheHits + summary.cacheMisses
-    summary.cacheRequests = totalRequests
-    summary.cacheHitRate = totalRequests ? Number((summary.cacheHits / totalRequests).toFixed(3)) : 0
-
-    const locales = entries.map(([locale, stats]) => {
-      const hits = Number(stats?.cacheHits || 0)
-      const misses = Number(stats?.cacheMisses || 0)
-      const requests = hits + misses
-      return {
-        locale,
-        totalFiles: stats?.totalFiles || 0,
-        parsedFiles: stats?.parsedFiles || 0,
-        cacheHits: hits,
-        cacheMisses: misses,
-        cacheDisabled: Boolean(stats?.cacheDisabled),
-        cacheRequests: requests,
-        cacheHitRate: stats?.cacheDisabled ? null : requests ? Number((hits / requests).toFixed(3)) : 0,
-        parseErrors: stats?.parseErrors || 0,
-        errors: stats?.errors || []
-      }
-    })
-
-    return { summary, locales }
+function summarizeWriteResults(results = {}) {
+  return {
+    summary: {
+      total: Number(results?.total || 0),
+      written: Number(results?.written || 0),
+      skipped: Number(results?.skipped || 0),
+      failed: Number(results?.failed || 0),
+      disabled: Boolean(results?.disabled),
+      skippedByReason: results?.skippedByReason || {},
+      hashMatches: Number(results?.skippedByReason?.hash || 0)
+    },
+    errors: Array.isArray(results?.errors)
+      ? results.errors.map(err => ({
+          stage: err?.stage,
+          locale: err?.locale,
+          target: err?.target,
+          message: err?.message,
+          stack: err?.stack
+        }))
+      : []
   }
-
-  function summarizeFeedMetrics(metrics = []) {
-    if (!Array.isArray(metrics)) return { summary: { locales: 0 }, locales: [] }
-    const summary = {
-      locales: metrics.length,
-      rssTotal: metrics.reduce((sum, item) => sum + Number(item?.rssCount || 0), 0),
-      rssLimitedLocales: metrics.filter(item => item?.rssLimited).length,
-      sitemapTotal: metrics.reduce((sum, item) => sum + Number(item?.sitemapCount || 0), 0),
-      emptyLocales: metrics.filter(item => Number(item?.rssCount || 0) + Number(item?.sitemapCount || 0) === 0).length
-    }
-
-    const locales = metrics.map(item => ({
-      locale: item?.locale,
-      rssCount: Number(item?.rssCount || 0),
-      rssLimited: Boolean(item?.rssLimited),
-      sitemapCount: Number(item?.sitemapCount || 0)
-    }))
-
-    return { summary, locales }
-  }
-
-  function summarizeNavMetrics(metrics = []) {
-    if (!Array.isArray(metrics)) return { summary: { locales: 0 }, locales: [] }
-    const locales = metrics.map(item => ({
-      locale: item?.locale,
-      categories: Number(item?.counts?.categories || 0),
-      series: Number(item?.counts?.series || 0),
-      tags: Number(item?.counts?.tags || 0),
-      archive: Number(item?.counts?.archive || 0)
-    }))
-    const summary = {
-      locales: locales.length,
-      emptyLocales: locales.filter(loc => loc.categories + loc.series + loc.tags + loc.archive === 0).length,
-      categoriesTotal: locales.reduce((sum, loc) => sum + loc.categories, 0),
-      seriesTotal: locales.reduce((sum, loc) => sum + loc.series, 0),
-      tagsTotal: locales.reduce((sum, loc) => sum + loc.tags, 0),
-      archiveTotal: locales.reduce((sum, loc) => sum + loc.archive, 0)
-    }
-    return { summary, locales }
-  }
-
-  function summarizeWriteResults(results = {}) {
-    return {
-      summary: {
-        total: Number(results?.total || 0),
-        written: Number(results?.written || 0),
-        skipped: Number(results?.skipped || 0),
-        failed: Number(results?.failed || 0),
-        disabled: Boolean(results?.disabled),
-        skippedByReason: results?.skippedByReason || {},
-        hashMatches: Number(results?.skippedByReason?.hash || 0)
-      },
-      errors: Array.isArray(results?.errors)
-        ? results.errors.map(err => ({
-            stage: err?.stage,
-            locale: err?.locale,
-            target: err?.target,
-            message: err?.message,
-            stack: err?.stack
-          }))
-        : []
-    }
-  }
-})();
+}

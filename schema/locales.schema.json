@@ -23,6 +23,7 @@
             "items": { "type": "string", "minLength": 1 }
           },
           "collectionsTemplate": { "type": "string", "minLength": 1 },
+          "feedsTemplate": { "type": "string", "minLength": 1 },
           "mirrorContentToRoot": { "type": "boolean" },
           "routePrefix": { "type": "string" },
           "docsDir": { "type": "string", "minLength": 1 },
