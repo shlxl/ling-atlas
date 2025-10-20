@@ -60,7 +60,7 @@
    - 适用于构建阶段批量生成向量、摘要与问答。
    - 计划步骤：
      1. 引入 `onnxruntime-node` 或 `onnxruntime-web`（WASM）作为可选依赖，必要时通过 `optionalDependencies` 控制安装失败时的降级。
-     2. 建立 `data/models.json` 清单，记录模型名称、来源、checksum、维度与最近验证时间。
+     2. 通过 `npm run ai:prepare` 建立并维护 `data/models.json` 清单，记录模型名称、来源、checksum、维度与最近验证时间。
      3. 脚本运行前检测模型缓存目录（默认 `~/.cache/ling-atlas/models` 或 `data/models/`），缺失时下载并校验哈希。
      4. 支持批处理（`AI_EMBED_BATCH_SIZE` 等），在 telemetry 中写入批处理耗时、CPU/GPU 信息（若可用）。
    - 安全与依赖：onnxruntime-node 需系统级依赖（libstdc++ 等）；在 CI 中可设置 `AI_RUNTIME=wasm` 回退至纯 WASM 版本，避免编译失败。
@@ -77,7 +77,7 @@
 
 ## 实验环境规划
 
-1. **CI 预检**：新增 `codex run ai:smoke` 或 `npm run ai:smoke`，验证模型下载、哈希校验与 onnxruntime 空推理。如失败则打印提示并回退占位实现。
+1. **CI 预检**：新增 `codex run ai:smoke` 或 `npm run ai:smoke`，在 `ai:prepare` 成功后读取缓存并执行最小推理验证；`AI_RUNTIME=placeholder` 或 `AI_*_DISABLE` 时会输出降级日志并跳过。主干推送与带 `ai-smoke` 标签的 PR 会自动运行 `ai:prepare` → `ai:smoke`，失败会写入结构化日志并触发占位回退。
 2. **本地实验矩阵**：
    - Node 22 + `onnxruntime-node`（CPU）。
    - Node 22 + `onnxruntime-web`（WASM，多线程）。
@@ -85,11 +85,19 @@
    - 支持 WebGPU 的浏览器（如 Chrome 121+），通过 `TRANSFORMERS_BACKEND=webgpu` 测试。
 3. **遥测输出**：实验阶段把模型版本、批量大小、平均耗时、峰值内存写入 `data/ai-experiments/<date>.json`。提交前仅保留最新文件，并在 `.gitignore` 中忽略模型缓存目录。
 
+## 模型缓存与运行时配置
+
+- `AI_RUNTIME`：决定 `ai:prepare`/`ai:smoke` 的目标运行时，可选 `placeholder`（默认）、`node`、`wasm` 等。设置为 `placeholder` 时保留占位模型并跳过真实推理。
+- `AI_MODELS_SCOPE`：控制缓存目录作用域，`local`（默认）写入 `data/models/`，`global` 写入 `~/.cache/ling-atlas/models`。也可通过 `AI_MODELS_DIR=<absolute|relative>` 指定自定义目录。
+- `AI_MODELS_CLEAN=1` 或 `npm run ai:prepare -- --clean`：在准备阶段清除 manifest 未声明的旧缓存，便于切换模型或释放空间。
+- `AI_EMBED_DISABLE`、`AI_SUMMARY_DISABLE`、`AI_QA_DISABLE`：逐项关闭对应模型，`ai:smoke` 会输出降级日志，构建脚本自动回退到占位实现。
+- `data/models.json` 为模型清单的单一事实来源，包含校验哈希、缓存状态、smoke 测试定义与最近一次推理结果。`ai:smoke` 会写入每个模型的 `smoke` 字段和顶层 `smoke` 摘要，失败时附加 `fallback` 节点记录原始运行时并把 manifest 的 `runtime` 改为 `placeholder`。
+
 ## 回滚策略
 
 - **脚本级开关**：每个脚本接受 `--disable-model` 或 `AI_<TASK>_DISABLE=1`，禁用模型时仍输出占位 JSON。
-- **模型缓存清理**：提供 `npm run ai:reset` 删除 `data/models/` 与 `docs/public/models/`，并恢复 `docs/public/data/*.json` 为占位内容。
-- **Git 标签与产物备份**：上线真实模型前打 `ai-pipeline-vX` tag，将 `docs/public/data/*.json` 与 `data/models.json` 上传到 Release。回滚时切换 tag 并重新构建。
+- **模型缓存清理**：执行 `npm run ai:prepare -- --clean`（或设置 `AI_MODELS_CLEAN=1`）清除 manifest 未声明的旧缓存；必要时可额外删除 `data/models/` 与 `docs/public/models/` 并重新运行 `ai:prepare`。
+- **Git 标签与产物备份**：上线真实模型前打 `ai-pipeline-vX` tag，将 `docs/public/data/*.json` 与 `data/models.json` 上传到 Release，并记录使用的 `AI_RUNTIME`/`AI_MODELS_SCOPE`。回滚时切换 tag、运行 `npm run ai:prepare` 还原模型缓存，再执行构建。
 - **Telemetry 回滚**：若 `build.ai` 数据导致页面报错，可设置 `AI_TELEMETRY_DISABLE=1` 暂停合并，待修复后再恢复。
 
 ## 多代理协作指引
