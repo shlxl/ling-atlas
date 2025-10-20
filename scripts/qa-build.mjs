@@ -11,6 +11,7 @@ import { fileURLToPath } from 'node:url'
 import { globby } from 'globby'
 import matter from 'gray-matter'
 import { LOCALE_REGISTRY, getPreferredLocale } from './pagegen.locales.mjs'
+import { createAiEventRecorder } from './ai/event-logger.mjs'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const ROOT = path.resolve(__dirname, '..')
@@ -18,13 +19,10 @@ const preferredLocale = getPreferredLocale()
 const preferredLocaleConfig =
   LOCALE_REGISTRY.find(locale => locale.code === preferredLocale) || LOCALE_REGISTRY[0]
 
-if (!preferredLocaleConfig) {
-  console.warn('[qa-build] no locale configuration available, skipping generation')
-  process.exit(0)
-}
+const QA_ADAPTER = process.env.AI_QA_ADAPTER || 'placeholder'
 
-const CONTENT_DIR = preferredLocaleConfig.contentDir
-const BASE_PATH = preferredLocaleConfig.basePath
+const CONTENT_DIR = preferredLocaleConfig?.contentDir
+const BASE_PATH = preferredLocaleConfig?.basePath
 const OUTPUT_DIR = path.join(ROOT, 'docs', 'public', 'data')
 const OUTPUT_FILE = path.join(OUTPUT_DIR, 'qa.json')
 
@@ -118,37 +116,90 @@ async function ensureDir(dir) {
   await fs.mkdir(dir, { recursive: true })
 }
 
-async function main() {
-  const files = await globby('**/index.md', { cwd: CONTENT_DIR, absolute: true })
-  const items = []
+function durationFrom(start) {
+  const diff = process.hrtime.bigint() - start
+  return Number(diff / 1000000n)
+}
 
-  for (const file of files) {
-    const raw = await fs.readFile(file, 'utf8')
-    const { data, content } = matter(raw)
-    if (isDraft(data)) continue
-    const qa = buildQA(data, content)
-    if (!qa.length) continue
-    items.push({
-      url: buildUrl(file),
-      title: String(data.title || '').trim(),
-      qa
+async function main() {
+  const runLogger = createAiEventRecorder({ script: 'qa-build', namespace: 'ai.qa' })
+  const started = process.hrtime.bigint()
+  runLogger.record('ai.qa.started', {
+    status: 'running',
+    adapter: QA_ADAPTER,
+    preferredLocale,
+    hasLocaleConfig: Boolean(preferredLocaleConfig)
+  })
+
+  if (!preferredLocaleConfig || !CONTENT_DIR || !BASE_PATH) {
+    runLogger.record('ai.qa.skipped', {
+      status: 'skipped',
+      adapter: QA_ADAPTER,
+      reason: 'missing-locale-config'
     })
+    await runLogger.flush()
+    console.warn('[qa-build] no locale configuration available, skipping generation')
+    return
   }
 
-  await ensureDir(OUTPUT_DIR)
-  await fs.writeFile(
-    OUTPUT_FILE,
-    JSON.stringify(
-      {
-        generatedAt: new Date().toISOString(),
-        items: items.sort((a, b) => a.title.localeCompare(b.title, 'zh-CN'))
-      },
-      null,
-      2
-    ),
-    'utf8'
-  )
-  console.log(`qa.json 写入 ${items.length} 篇文档的问答对`)
+  try {
+    const files = await globby('**/index.md', { cwd: CONTENT_DIR, absolute: true })
+    const items = []
+    let draftsSkipped = 0
+
+    for (const file of files) {
+      const raw = await fs.readFile(file, 'utf8')
+      const { data, content } = matter(raw)
+      if (isDraft(data)) {
+        draftsSkipped += 1
+        continue
+      }
+      const qa = buildQA(data, content)
+      if (!qa.length) continue
+      items.push({
+        url: buildUrl(file),
+        title: String(data.title || '').trim(),
+        qa
+      })
+    }
+
+    await ensureDir(OUTPUT_DIR)
+    await fs.writeFile(
+      OUTPUT_FILE,
+      JSON.stringify(
+        {
+          generatedAt: new Date().toISOString(),
+          items: items.sort((a, b) => a.title.localeCompare(b.title, 'zh-CN'))
+        },
+        null,
+        2
+      ),
+      'utf8'
+    )
+    const durationMs = durationFrom(started)
+    runLogger.record('ai.qa.completed', {
+      status: 'success',
+      adapter: QA_ADAPTER,
+      durationMs,
+      itemsProcessed: items.length,
+      filesScanned: files.length,
+      draftsSkipped,
+      outputPath: OUTPUT_FILE,
+      locale: preferredLocaleConfig.code
+    })
+    console.log(`qa.json 写入 ${items.length} 篇文档的问答对`)
+  } catch (error) {
+    runLogger.record('ai.qa.failed', {
+      status: 'failed',
+      adapter: QA_ADAPTER,
+      durationMs: durationFrom(started),
+      errorName: error?.name || 'Error',
+      errorMessage: error?.message || String(error)
+    })
+    throw error
+  } finally {
+    await runLogger.flush()
+  }
 }
 
 main().catch(err => {
