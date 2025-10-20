@@ -1,15 +1,17 @@
 #!/usr/bin/env node
 
-/**
- * 摘要生成占位实现：优先使用 frontmatter.excerpt，其次使用正文首段。
- * 如需接入本地 LLM，可在 `generateSummary` 中替换逻辑。
- */
-
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { globby } from 'globby'
-import matter from 'gray-matter'
+import { collectLocaleDocuments } from './ai/content.mjs'
+import {
+  ensureDir,
+  flushAIEvents,
+  logStructured,
+  readJSONIfExists,
+  resolveAdapterSpec
+} from './ai/utils.mjs'
+import { loadSummaryAdapter } from './ai/adapters/index.mjs'
 import { LOCALE_REGISTRY, getPreferredLocale } from './pagegen.locales.mjs'
 import { createAiEventRecorder } from './ai/event-logger.mjs'
 
@@ -26,53 +28,36 @@ const BASE_PATH = preferredLocaleConfig?.basePath
 const OUTPUT_DIR = path.join(ROOT, 'docs', 'public', 'data')
 const OUTPUT_FILE = path.join(OUTPUT_DIR, 'summaries.json')
 
-function isDraft(frontmatter) {
-  const { status, draft } = frontmatter || {}
-  if (typeof draft === 'boolean') return draft
-  if (typeof status === 'string') return status.toLowerCase() === 'draft'
-  return false
-}
+async function main() {
+  const scriptStartedAt = Date.now()
+  const preferredLocale = getPreferredLocale()
+  const preferredLocaleConfig =
+    LOCALE_REGISTRY.find(locale => locale.code === preferredLocale) || LOCALE_REGISTRY[0]
 
-function toPlainText(markdown) {
-  return markdown
-    .replace(/^>\s+/gm, '')
-    .replace(/`{1,3}[^`]*`{1,3}/g, '')
-    .replace(/```[\s\S]*?```/g, '')
-    .replace(/[*_~#>]/g, '')
-    .replace(/\[(.*?)\]\((.*?)\)/g, '$1')
-    .replace(/!\[(.*?)\]\((.*?)\)/g, '$1')
-    .replace(/\r?\n+/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim()
-}
+  if (!preferredLocaleConfig) {
+    console.warn('[summary] no locale configuration available, skipping generation')
+    return
+  }
 
-function getFirstParagraph(content) {
-  const normalized = content.trim()
-  if (!normalized) return ''
-  const segments = normalized.split(/\r?\n\r?\n/)
-  const firstBlock = segments.find(block => block.trim().length > 0) || ''
-  return toPlainText(firstBlock)
-}
+  const documents = await collectLocaleDocuments(preferredLocaleConfig)
+  await ensureDir(OUTPUT_DIR)
 
-function generateSummary(frontmatter, content) {
-  if (frontmatter?.excerpt) return String(frontmatter.excerpt)
-  const firstParagraph = getFirstParagraph(content)
-  if (!firstParagraph) return ''
-  const sentences = firstParagraph.split(/(?<=[。！？!?])/).map(s => s.trim()).filter(Boolean)
-  if (sentences.length === 0) return firstParagraph.slice(0, 120)
-  const summary = sentences.slice(0, 2).join(' ')
-  return summary.length > 160 ? summary.slice(0, 157) + '…' : summary
-}
+  const spec = resolveAdapterSpec({ envKey: 'AI_SUMMARY_MODEL', cliFlag: 'adapter' })
+  const previous = await readJSONIfExists(OUTPUT_FILE)
 
-function buildUrl(mdPath) {
-  const relative = path.relative(CONTENT_DIR, mdPath).replace(/\\/g, '/')
-  const dir = relative.replace(/\/index\.md$/, '')
-  return dir ? `${BASE_PATH}${dir}/` : BASE_PATH
-}
+  const events = []
 
-async function ensureDir(dir) {
-  await fs.mkdir(dir, { recursive: true })
-}
+  events.push(
+    logStructured(
+      'ai.summary.start',
+      {
+        locale: preferredLocaleConfig.code,
+        inputCount: documents.length,
+        requestedAdapter: spec || 'placeholder'
+      },
+      console
+    )
+  )
 
 function durationFrom(start) {
   const diff = process.hrtime.bigint() - start
