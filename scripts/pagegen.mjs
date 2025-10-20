@@ -17,6 +17,8 @@ import { writeCollections } from './pagegen/collections.mjs'
 import { generateRss, generateSitemap } from './pagegen/feeds.mjs'
 import { createI18nRegistry } from './pagegen/i18n-registry.mjs'
 import { createWriter } from './pagegen/writer.mjs'
+import { PagegenPluginRegistry } from './pagegen/plugin-registry.mjs'
+import { PagegenScheduler } from './pagegen/scheduler.mjs'
 
 export {
   LOCALE_REGISTRY,
@@ -75,16 +77,53 @@ await (async () => {
   const forceFullSync = argv.includes('--full-sync') || process.env.PAGEGEN_FULL_SYNC === '1'
   const disableCache = argv.includes('--no-cache') || process.env.PAGEGEN_DISABLE_CACHE === '1'
   const batchingDisabled = argv.includes('--no-batch') || process.env.PAGEGEN_DISABLE_BATCH === '1'
+  const noParallelIndex = argv.indexOf('--no-parallel')
+  const parallelDisabled = noParallelIndex !== -1 || process.env.PAGEGEN_DISABLE_PARALLEL === '1'
+  if (noParallelIndex !== -1) {
+    argv.splice(noParallelIndex, 1)
+  }
+  let maxParallel = Number(process.env.PAGEGEN_MAX_PARALLEL)
+  if (!Number.isFinite(maxParallel) || maxParallel < 1) {
+    maxParallel = undefined
+  } else {
+    maxParallel = Math.floor(maxParallel)
+  }
+  const maxParallelFlagIndex = argv.indexOf('--max-parallel')
+  if (maxParallelFlagIndex !== -1) {
+    const specified = Number(argv[maxParallelFlagIndex + 1])
+    if (!Number.isFinite(specified) || specified < 1) {
+      console.error('pagegen: --max-parallel requires a positive integer')
+      process.exit(1)
+    }
+    maxParallel = Math.floor(specified)
+    argv.splice(maxParallelFlagIndex, 2)
+  }
+  if (parallelDisabled) {
+    maxParallel = 1
+  }
+  if (!maxParallel) {
+    maxParallel = 2
+  }
   const collectConcurrency = Number(process.env.PAGEGEN_CONCURRENCY || 8)
   const effectiveDryRun = dryRun || metricsOnly
   const writer = effectiveDryRun || batchingDisabled ? null : createWriter()
+  const pluginRegistry = new PagegenPluginRegistry()
+  const scheduler = new PagegenScheduler({ maxParallel })
+
+  const metaTargets = new Map()
 
   for (const lang of LOCALE_CONFIG) {
+    const fallbackMetaTarget = lang.generatedDir
+      ? path.join(lang.generatedDir, `meta.${lang.manifestLocale || lang.code || 'default'}.json`)
+      : path.join(GENERATED_DIR, `meta.${lang.manifestLocale || lang.code || 'default'}.json`)
+    const metaTarget = lang.outMeta || fallbackMetaTarget
+    metaTargets.set(lang, metaTarget)
+
     if (lang.generatedDir) {
       await fs.mkdir(lang.generatedDir, { recursive: true })
     }
-    if (lang.outMeta) {
-      await fs.mkdir(path.dirname(lang.outMeta), { recursive: true })
+    if (metaTarget) {
+      await fs.mkdir(path.dirname(metaTarget), { recursive: true })
     }
     if (lang.navManifestPath) {
       await fs.mkdir(path.dirname(lang.navManifestPath), { recursive: true })
@@ -129,15 +168,22 @@ await (async () => {
     logInfo(`[pagegen] ${name} ${durationMs.toFixed(1)}ms`)
   }
 
-  async function measureStage(name, fn, context) {
+  async function measureStage(name, fn, context = {}) {
+    const stageInfo = { name, ...context }
+    await pluginRegistry.runHook('beforeStage', stageInfo)
     const start = performance.now()
     try {
-      return await fn()
+      const result = await fn()
+      const duration = performance.now() - start
+      recordStage(name, duration)
+      await pluginRegistry.runHook('afterStage', stageInfo, { durationMs: duration, result })
+      return result
     } catch (error) {
+      const duration = performance.now() - start
+      recordStage(name, duration)
+      await pluginRegistry.runHook('onStageError', stageInfo, error)
       logStageError(name, context, error)
       throw error
-    } finally {
-      recordStage(name, performance.now() - start)
     }
   }
 
@@ -158,6 +204,9 @@ await (async () => {
   }
   if (metricsStdout && metricsOutputPath && !metricsOnly) {
     logInfo('[pagegen] metrics stdout mode enabled; file output will be skipped')
+  }
+  if (!metricsOnly && maxParallel > 1) {
+    logInfo(`[pagegen] locale pipeline parallelism enabled (max=${maxParallel})`)
   }
 
   const syncMetrics = await measureStage(
@@ -182,7 +231,7 @@ await (async () => {
   const collectMetrics = {}
   const feedMetrics = []
 
-  for (const lang of LOCALE_CONFIG) {
+  async function runLocalePipeline(lang) {
     const posts = await measureStage(
       `collect:${lang.manifestLocale}`,
       () =>
@@ -219,30 +268,36 @@ await (async () => {
       sitemapCount: 0
     }
     feedMetrics.push(localeFeed)
+    const metaTarget = metaTargets.get(lang)
+
     await measureStage(
       `meta:${lang.manifestLocale}`,
       async () => {
+        if (!metaTarget) {
+          logStageWarning('meta', { lang }, 'outMeta path missing, skipping metadata export')
+          return
+        }
         if (effectiveDryRun) return
         const payload = `${JSON.stringify(posts.meta, null, 2)}\n`
         if (writer) {
           writer.addFileTask({
             stage: 'meta',
             locale: lang.manifestLocale,
-            target: lang.outMeta,
+            target: metaTarget,
             content: payload
           })
         } else {
           try {
-            await fs.writeFile(lang.outMeta, payload)
+            await fs.writeFile(metaTarget, payload)
           } catch (error) {
             error.stage = 'meta'
             error.locale = lang.manifestLocale
-            error.target = lang.outMeta
+            error.target = metaTarget
             throw error
           }
         }
       },
-      { stage: 'meta', locale: lang.manifestLocale, target: lang.outMeta }
+      { stage: 'meta', locale: lang.manifestLocale, target: metaTarget }
     )
 
     const navEntries = await measureStage(
@@ -251,39 +306,52 @@ await (async () => {
       { stage: 'collections', locale: lang.manifestLocale, target: lang.generatedDir }
     )
     registry.addNavEntries(lang, navEntries)
+
+    const rssFile = lang.rssFile || `rss.${lang.manifestLocale}.xml`
+    if (!lang.rssFile) {
+      lang.rssFile = rssFile
+    }
+    const rssTarget = path.join(PUBLIC_DIR, rssFile)
+    const rssOptions = {
+      publicDir: PUBLIC_DIR,
+      siteOrigin,
+      preferredLocale: preferredLocaleCode,
+      writer,
+      dryRun: effectiveDryRun,
+      target: rssTarget
+    }
     const rssStats = await measureStage(
       `rss:${lang.manifestLocale}`,
-      () =>
-        generateRss(lang, posts.list, {
-          publicDir: PUBLIC_DIR,
-          siteOrigin,
-          preferredLocale: preferredLocaleCode,
-          writer,
-          dryRun: effectiveDryRun
-        }),
+      () => generateRss(lang, posts.list, rssOptions),
       {
         stage: 'rss',
         locale: lang.manifestLocale,
-        target: path.join(PUBLIC_DIR, lang.rssFile || `rss.${lang.manifestLocale}.xml`)
+        target: rssTarget
       }
     )
     if (rssStats) {
       localeFeed.rssCount = Number(rssStats.count || 0)
       localeFeed.rssLimited = Boolean(rssStats.limited)
     }
+    const sitemapFile = lang.sitemapFile || `sitemap.${lang.manifestLocale}.xml`
+    if (!lang.sitemapFile) {
+      lang.sitemapFile = sitemapFile
+    }
+    const sitemapTarget = path.join(PUBLIC_DIR, sitemapFile)
+    const sitemapOptions = {
+      publicDir: PUBLIC_DIR,
+      siteOrigin,
+      writer,
+      dryRun: effectiveDryRun,
+      target: sitemapTarget
+    }
     const sitemapStats = await measureStage(
       `sitemap:${lang.manifestLocale}`,
-      () =>
-        generateSitemap(lang, posts.list, {
-          publicDir: PUBLIC_DIR,
-          siteOrigin,
-          writer,
-          dryRun: effectiveDryRun
-        }),
+      () => generateSitemap(lang, posts.list, sitemapOptions),
       {
         stage: 'sitemap',
         locale: lang.manifestLocale,
-        target: path.join(PUBLIC_DIR, lang.sitemapFile || `sitemap.${lang.manifestLocale}.xml`)
+        target: sitemapTarget
       }
     )
     if (sitemapStats) {
@@ -299,6 +367,8 @@ await (async () => {
       registry.registerPost(post, lang)
     }
   }
+
+  await scheduler.run(LOCALE_CONFIG.map(lang => () => runLocalePipeline(lang)))
 
   const i18nMap = registry.getI18nMap()
   await measureStage('scheduleI18nMap', () => writeI18nMap(i18nMap, writer), {

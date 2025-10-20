@@ -11,6 +11,7 @@ import { fileURLToPath } from 'node:url'
 import { globby } from 'globby'
 import matter from 'gray-matter'
 import { LOCALE_REGISTRY, getPreferredLocale } from './pagegen.locales.mjs'
+import { createAiEventRecorder } from './ai/event-logger.mjs'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const ROOT = path.resolve(__dirname, '..')
@@ -75,10 +76,16 @@ async function exists(target) {
 
 async function buildItems() {
   const items = []
+  const localeSummaries = []
 
   for (const source of LANG_SOURCES) {
-    if (!(await exists(source.dir))) continue
+    if (!(await exists(source.dir))) {
+      localeSummaries.push({ locale: source.code, status: 'missing', totalFiles: 0, included: 0 })
+      continue
+    }
+
     const files = await globby('**/index.md', { cwd: source.dir, absolute: true })
+    let included = 0
 
     for (const file of files) {
       const raw = await fs.readFile(file, 'utf8')
@@ -90,25 +97,73 @@ async function buildItems() {
       const text = extractText(data, content)
       if (!text) continue
       items.push({ url, title, text, lang: source.code })
+      included += 1
     }
+
+    localeSummaries.push({
+      locale: source.code,
+      status: included > 0 ? 'ok' : 'empty',
+      totalFiles: files.length,
+      included
+    })
   }
 
-  return items.sort((a, b) => a.title.localeCompare(b.title, 'zh-CN'))
+  return {
+    items: items.sort((a, b) => a.title.localeCompare(b.title, 'zh-CN')),
+    locales: localeSummaries
+  }
 }
 
 async function ensureDir(dir) {
   await fs.mkdir(dir, { recursive: true })
 }
 
+const EMBED_ADAPTER = process.env.AI_EMBED_ADAPTER || 'placeholder'
+
+function durationFrom(start) {
+  const diff = process.hrtime.bigint() - start
+  return Number(diff / 1000000n)
+}
+
 async function main() {
-  const items = await buildItems()
-  await ensureDir(OUTPUT_DIR)
-  const payload = {
-    generatedAt: new Date().toISOString(),
-    items
+  const runLogger = createAiEventRecorder({ script: 'embed-build', namespace: 'ai.embed' })
+  const started = process.hrtime.bigint()
+  runLogger.record('ai.embed.started', {
+    status: 'running',
+    adapter: EMBED_ADAPTER,
+    localesPlanned: LANG_SOURCES.length
+  })
+
+  try {
+    const { items, locales } = await buildItems()
+    await ensureDir(OUTPUT_DIR)
+    const payload = {
+      generatedAt: new Date().toISOString(),
+      items
+    }
+    await fs.writeFile(OUTPUT_FILE, JSON.stringify(payload, null, 2), 'utf8')
+    const durationMs = durationFrom(started)
+    runLogger.record('ai.embed.completed', {
+      status: 'success',
+      adapter: EMBED_ADAPTER,
+      durationMs,
+      itemsProcessed: items.length,
+      outputPath: OUTPUT_FILE,
+      locales
+    })
+    console.log(`embeddings.json 写入 ${items.length} 条（占位文本模式）`)
+  } catch (error) {
+    runLogger.record('ai.embed.failed', {
+      status: 'failed',
+      adapter: EMBED_ADAPTER,
+      durationMs: durationFrom(started),
+      errorName: error?.name || 'Error',
+      errorMessage: error?.message || String(error)
+    })
+    throw error
+  } finally {
+    await runLogger.flush()
   }
-  await fs.writeFile(OUTPUT_FILE, JSON.stringify(payload, null, 2), 'utf8')
-  console.log(`embeddings.json 写入 ${items.length} 条（占位文本模式）`)
 }
 
 main().catch(err => {

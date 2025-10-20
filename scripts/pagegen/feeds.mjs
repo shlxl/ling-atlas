@@ -1,13 +1,22 @@
 import fs from 'node:fs/promises'
 import path from 'node:path'
 
-export async function generateRss(lang, items = [], { publicDir, siteOrigin, preferredLocale, writer, dryRun = false }) {
+export async function generateRss(
+  lang,
+  items = [],
+  { publicDir, siteOrigin, preferredLocale, writer, dryRun = false, target }
+) {
   const totalItems = Array.isArray(items) ? items.length : 0
   if (!totalItems) return { count: 0, limited: false }
 
   const homePath = lang.code === preferredLocale ? '/' : lang.localeRoot
   const limited = totalItems > 50
   const sliceCount = Math.min(totalItems, 50)
+  const rssFile = lang.rssFile || `rss.${lang.manifestLocale}.xml`
+  if (!lang.rssFile) {
+    lang.rssFile = rssFile
+  }
+  const outputTarget = target || path.join(publicDir, rssFile)
   const feed = [
     `<?xml version="1.0" encoding="UTF-8"?>`,
     `<rss version="2.0"><channel>`,
@@ -34,17 +43,21 @@ export async function generateRss(lang, items = [], { publicDir, siteOrigin, pre
     writer.addFileTask({
       stage: 'rss',
       locale: lang.manifestLocale,
-      target: path.join(publicDir, lang.rssFile),
+      target: outputTarget,
       content: feed.join('')
     })
   } else {
-    await fs.writeFile(path.join(publicDir, lang.rssFile), feed.join(''))
+    await fs.writeFile(outputTarget, feed.join(''))
   }
 
   return { count: sliceCount, limited }
 }
 
-export async function generateSitemap(lang, items = [], { publicDir, siteOrigin, writer, dryRun = false }) {
+export async function generateSitemap(
+  lang,
+  items = [],
+  { publicDir, siteOrigin, writer, dryRun = false, target }
+) {
   const totalItems = Array.isArray(items) ? items.length : 0
   if (!totalItems) return { count: 0 }
 
@@ -52,6 +65,11 @@ export async function generateSitemap(lang, items = [], { publicDir, siteOrigin,
     .map(post => `<url><loc>${siteOrigin}${post.path}</loc><lastmod>${post.updated || post.date}</lastmod></url>`)
     .join('')
   const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${urls}</urlset>`
+  const sitemapFile = lang.sitemapFile || `sitemap.${lang.manifestLocale}.xml`
+  if (!lang.sitemapFile) {
+    lang.sitemapFile = sitemapFile
+  }
+  const outputTarget = target || path.join(publicDir, sitemapFile)
   if (dryRun) {
     return { count: totalItems }
   }
@@ -59,11 +77,11 @@ export async function generateSitemap(lang, items = [], { publicDir, siteOrigin,
     writer.addFileTask({
       stage: 'sitemap',
       locale: lang.manifestLocale,
-      target: path.join(publicDir, lang.sitemapFile),
+      target: outputTarget,
       content: xml
     })
   } else {
-    await fs.writeFile(path.join(publicDir, lang.sitemapFile), xml)
+    await fs.writeFile(outputTarget, xml)
   }
 
   return { count: totalItems }
