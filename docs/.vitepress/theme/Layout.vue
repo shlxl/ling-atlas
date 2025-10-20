@@ -14,6 +14,7 @@ import {
   hasLocalePrefix,
   normalizeRoutePath
 } from './composables/localeMap'
+import { useSeoHead } from './composables/seoHead.mjs'
 
 const router = useRouter()
 const { theme } = useData()
@@ -22,6 +23,7 @@ const needRefresh = ref(false)
 const chatOpen = ref(false)
 const activeLocale = ref<LocaleCode>(getFallbackLocale())
 const { preferredLocale, rememberLocale, refreshPreferredLocale } = usePreferredLocale()
+const { applyForPath: applySeoHead } = useSeoHead()
 
 let updateServiceWorker: (reloadPage?: boolean) => Promise<void>
 
@@ -83,6 +85,7 @@ onMounted(() => {
   if (!redirected) {
     updateLocale(initialPath)
     rememberLocale(activeLocale.value)
+    applySeoHead(initialPath, activeLocale.value)
   }
   router.onAfterRouteChanged?.((to: string) => {
     handleRouteChange(to)
@@ -95,8 +98,10 @@ function updateLocale(path: string) {
 }
 
 function handleRouteChange(path: string) {
-  updateLocale(path)
+  const normalized = normalizePath(path)
+  updateLocale(normalized)
   rememberLocale(activeLocale.value)
+  applySeoHead(normalized, activeLocale.value)
 }
 
 watch(
