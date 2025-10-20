@@ -7,6 +7,7 @@ export function createScheduler(registry, options = {}) {
 
   const parallelLimit = normalizeLimit(options?.parallelLimit)
   const parallelEnabled = options?.parallel === true && parallelLimit > 1
+  const stageOverrides = normalizeOverrides(options?.stageOverrides)
 
   async function run(sharedContext = {}) {
     const stages = registry.getStages()
@@ -16,13 +17,25 @@ export function createScheduler(registry, options = {}) {
   }
 
   async function executeStage(stageDef, sharedContext) {
+    const nameKey = typeof stageDef.name === 'string' ? stageDef.name.toLowerCase() : ''
+    const override = nameKey ? stageOverrides[nameKey] : undefined
+    const baseParallel = Boolean(stageDef.parallel && parallelEnabled)
+    let stageParallel = baseParallel
+    if (override && Object.prototype.hasOwnProperty.call(override, 'enabled')) {
+      stageParallel = override.enabled === true ? baseParallel : false
+    }
+    const stageParallelLimit = stageParallel
+      ? normalizeLimit(override?.limit || parallelLimit)
+      : 1
+
     const stageCtx = {
       stage: stageDef.name,
       definition: stageDef,
       shared: sharedContext,
       options: {
-        parallel: Boolean(stageDef.parallel && parallelEnabled),
-        parallelLimit
+        parallel: stageParallel,
+        parallelLimit: stageParallelLimit,
+        override: override || null
       }
     }
 
@@ -39,8 +52,8 @@ export function createScheduler(registry, options = {}) {
         const items = await collectItems(stageDef.iterator, sharedContext, stageCtx)
         if (!items.length) {
           // no items
-        } else if (stageDef.parallel && parallelEnabled) {
-          await runParallel(items, sharedContext, stageCtx, stageDef.task, parallelLimit)
+        } else if (stageCtx.options.parallel) {
+          await runParallel(items, sharedContext, stageCtx, stageDef.task, stageCtx.options.parallelLimit)
         } else {
           await runSequential(items, sharedContext, stageCtx, stageDef.task)
         }
@@ -119,4 +132,35 @@ function normalizeLimit(value) {
   const num = Number(value)
   if (Number.isFinite(num) && num > 1) return Math.floor(num)
   return 1
+}
+
+function normalizeOverrides(overrides) {
+  if (!overrides || typeof overrides !== 'object') return {}
+  const normalized = {}
+  for (const [key, value] of Object.entries(overrides)) {
+    if (!key) continue
+    const stage = key.toLowerCase()
+    if (!stage) continue
+    const config = {}
+    if (value && typeof value === 'object') {
+      if (Object.prototype.hasOwnProperty.call(value, 'enabled')) {
+        config.enabled = Boolean(value.enabled)
+      }
+      if (Number.isFinite(value.limit) && value.limit > 0) {
+        config.limit = Math.floor(value.limit)
+      }
+    } else if (value === false) {
+      config.enabled = false
+    } else if (value === true) {
+      config.enabled = true
+    } else if (Number.isFinite(value) && value > 0) {
+      config.enabled = true
+      config.limit = Math.floor(value)
+    }
+
+    if (Object.keys(config).length > 0) {
+      normalized[stage] = config
+    }
+  }
+  return normalized
 }

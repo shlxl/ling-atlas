@@ -13,7 +13,7 @@
     "gen": "node scripts/pagegen.mjs && node scripts/telemetry-merge.mjs",
     "knowledge:build": "node scripts/chunk-build.mjs",
     "eval:offline": "node scripts/eval/offline.mjs",
-    "build": "npm run gen && npm run knowledge:build && vitepress build docs && node scripts/telemetry-merge.mjs && node scripts/postbuild-aliases.mjs && node scripts/postbuild-pwa.mjs",
+    "build": "npm run ai:prepare && npm run ai:smoke && npm run gen && npm run knowledge:build && vitepress build docs && node scripts/telemetry-merge.mjs && node scripts/postbuild-aliases.mjs && node scripts/postbuild-pwa.mjs",
     "dev": "npm run gen && vitepress dev docs",
     "md:lint": "markdownlint-cli2 'docs/**/*.md'",
     "build:search": "npm run embeddings:build && npm run build && npm run search:index && node -e \"import('node:fs').then(fs=>fs.cpSync('docs/public/pagefind','docs/.vitepress/dist/pagefind',{recursive:true}))\" && node scripts/generate-headers.mjs && node scripts/sri.mjs",

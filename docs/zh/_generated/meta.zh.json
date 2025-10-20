@@ -1,366 +1,860 @@
 {
   "byCategory": {
-    "工程笔记": [
+    "管理与协作": [
       {
-        "title": "从0到1：Ling Atlas 的诞生记",
-        "date": "2025-10-13",
-        "updated": "2025-10-13",
+        "title": "AI 占位阶段总结与实践",
+        "date": "2025-10-20",
+        "updated": "",
         "status": "published",
-        "category": "工程笔记",
-        "category_slug": "工程笔记",
-        "series": "Ling Atlas 起步",
-        "series_slug": "ling-atlas-kickoff",
+        "category": "管理与协作",
+        "category_slug": "管理与协作",
+        "series": "项目起航手记",
+        "series_slug": "project-kickoff",
         "tags": [
-          "github-actions",
-          "automation",
-          "knowledge-base"
+          "占位运行",
+          "模型冒烟",
+          "回滚"
         ],
-        "slug": "from-zero-to-one",
-        "path": "/zh/content/from-zero-to-one/",
-        "excerpt": "记录 Ling Atlas 从脚手架到全自动部署的首篇实践，总结决策脉络与经验。",
-        "relative": "from-zero-to-one",
+        "slug": "ai-placeholder-retrospective",
+        "path": "/zh/content/ai-placeholder-retrospective/",
+        "excerpt": "记录 placeholder 运行时在落地过程中的价值、局限与最佳实践，为后续切换真实模型提供可复用的经验与风险清单。",
+        "relative": "ai-placeholder-retrospective",
         "year": "2025"
       },
       {
-        "title": "你好，知识库",
-        "date": "2025-10-12",
+        "title": "Ling Atlas 项目缘起与系统全貌",
+        "date": "2025-10-20",
+        "updated": "",
+        "status": "published",
+        "category": "管理与协作",
+        "category_slug": "管理与协作",
+        "series": "项目起航手记",
+        "series_slug": "project-kickoff",
+        "tags": [
+          "项目治理",
+          "知识管理",
+          "自动化运维"
+        ],
+        "slug": "project-overview",
+        "path": "/zh/content/project-overview/",
+        "excerpt": "全面梳理 Ling Atlas 的愿景、演进路线与当前落地能力，帮助后续贡献者快速理解“个人向量化知识库”的系统边界与协作模式。",
+        "relative": "project-overview",
+        "year": "2025"
+      },
+      {
+        "title": "AI 管线占位与切换指南",
+        "date": "2025-10-20",
+        "updated": "",
+        "status": "published",
+        "category": "管理与协作",
+        "category_slug": "管理与协作",
+        "series": "项目起航手记",
+        "series_slug": "project-kickoff",
+        "tags": [
+          "AI管线",
+          "冒烟测试",
+          "运行时切换"
+        ],
+        "slug": "ai-runtime-guide",
+        "path": "/zh/content/ai-runtime-guide/",
+        "excerpt": "详细说明 Ling Atlas 在 placeholder 与真实模型之间切换的步骤、环境变量配置、冒烟守门与回滚策略，确保个人向量化知识库的构建过程安全可控。",
+        "relative": "ai-runtime-guide",
+        "year": "2025"
+      },
+      {
+        "title": "观测指标导览",
+        "date": "2025-10-20",
+        "updated": "",
+        "status": "published",
+        "category": "管理与协作",
+        "category_slug": "管理与协作",
+        "series": "项目起航手记",
+        "series_slug": "project-kickoff",
+        "tags": [
+          "遥测",
+          "指标治理",
+          "运维看板"
+        ],
+        "slug": "telemetry-guide",
+        "path": "/zh/content/telemetry-guide/",
+        "excerpt": "解读 Ling Atlas 观测指标页的各类数据来源、告警含义与排障流程，帮助维护者快速判断个人向量化知识库的运行健康度。",
+        "relative": "telemetry-guide",
+        "year": "2025"
+      },
+      {
+        "title": "写作到发布的完整流程",
+        "date": "2025-10-20",
+        "updated": "",
+        "status": "published",
+        "category": "管理与协作",
+        "category_slug": "管理与协作",
+        "series": "项目起航手记",
+        "series_slug": "project-kickoff",
+        "tags": [
+          "写作流程",
+          "发布管线",
+          "质量守门"
+        ],
+        "slug": "tutorial-authoring-to-publish",
+        "path": "/zh/content/tutorial-authoring-to-publish/",
+        "excerpt": "手把手演示从新建文章、预检聚合、观测指标复核到发布与回滚的全流程，配套常用命令与问题排查清单。",
+        "relative": "tutorial-authoring-to-publish",
+        "year": "2025"
+      }
+    ],
+    "工程笔记": [
+      {
+        "title": "Pagegen 运行手册",
+        "date": "2025-10-20",
         "updated": "",
         "status": "published",
         "category": "工程笔记",
         "category_slug": "工程笔记",
-        "series": "起步",
-        "series_slug": "kick-off",
+        "series": "项目起航手记",
+        "series_slug": "project-kickoff",
         "tags": [
-          "vector-search",
-          "BM25"
+          "生成管线",
+          "调度插件",
+          "缓存优化"
         ],
-        "slug": "hello-kb",
-        "path": "/zh/content/hello-world/",
-        "excerpt": "这是第一篇示例文。实际使用时请删除本目录并导入你的内容。",
-        "relative": "hello-world",
-        "year": "2025"
-      }
-    ],
-    "管理与协作": [
-      {
-        "title": "Ling Atlas 分类与元数据规范 v1.0",
-        "date": "2025-01-18",
-        "updated": "2025-01-18",
-        "status": "published",
-        "category": "管理与协作",
-        "category_slug": "管理与协作",
-        "series": null,
-        "series_slug": "",
-        "tags": [
-          "内容治理",
-          "分类体系",
-          "规范"
-        ],
-        "slug": "taxonomy-reference",
-        "path": "/zh/content/taxonomy-reference/",
-        "excerpt": "全量保留 TAXONOMY.md 的规范内容，方便在站点内直接查阅 Ling Atlas 的分类、元数据与变更流程。",
-        "relative": "taxonomy-reference",
+        "slug": "pagegen-handbook",
+        "path": "/zh/content/pagegen-handbook/",
+        "excerpt": "总结 Pagegen orchestrator 的阶段划分、CLI 参数、缓存策略与插件机制，帮助维护者快速定位生成问题并扩展新的自动化能力。",
+        "relative": "pagegen-handbook",
         "year": "2025"
       },
       {
-        "title": "Ling Atlas 分类与元数据实战手册",
-        "date": "2025-01-18",
-        "updated": "2025-01-18",
+        "title": "Pagegen 重构回顾（含占位阶段）",
+        "date": "2025-10-20",
+        "updated": "",
         "status": "published",
-        "category": "管理与协作",
-        "category_slug": "管理与协作",
-        "series": null,
-        "series_slug": "",
+        "category": "工程笔记",
+        "category_slug": "工程笔记",
+        "series": "项目起航手记",
+        "series_slug": "project-kickoff",
         "tags": [
-          "内容治理",
-          "分类体系",
-          "automation"
+          "重构",
+          "性能优化",
+          "架构演进"
         ],
-        "slug": "taxonomy-playbook",
-        "path": "/zh/content/taxonomy-playbook/",
-        "excerpt": "按照 TAXONOMY.md 给出的规范，落地一套可执行的分类与元数据流程，帮助内容团队把写作与自动化部署串起来。",
-        "relative": "taxonomy-playbook",
+        "slug": "pagegen-retrospective",
+        "path": "/zh/content/pagegen-retrospective/",
+        "excerpt": "复盘 Pagegen 从单体脚本到模块化/并发/插件化的演进过程，记录收益、风险与仍需打磨的环节，并补充占位阶段的取舍与经验。",
+        "relative": "pagegen-retrospective",
+        "year": "2025"
+      },
+      {
+        "title": "观测指标场景案例与排障实录",
+        "date": "2025-10-20",
+        "updated": "",
+        "status": "published",
+        "category": "工程笔记",
+        "category_slug": "工程笔记",
+        "series": "项目起航手记",
+        "series_slug": "project-kickoff",
+        "tags": [
+          "案例分析",
+          "告警处理",
+          "故障排查"
+        ],
+        "slug": "telemetry-cases",
+        "path": "/zh/content/telemetry-cases/",
+        "excerpt": "以真实场景为线索，逐步演示如何通过 Telemetry + CLI 日志定位 Pagegen 与 AI 管线告警，并给出可复现的修复步骤。",
+        "relative": "telemetry-cases",
         "year": "2025"
       }
     ]
   },
   "bySeries": {
-    "ling-atlas-kickoff": [
+    "project-kickoff": [
       {
-        "title": "从0到1：Ling Atlas 的诞生记",
-        "date": "2025-10-13",
-        "updated": "2025-10-13",
+        "title": "AI 占位阶段总结与实践",
+        "date": "2025-10-20",
+        "updated": "",
         "status": "published",
-        "category": "工程笔记",
-        "category_slug": "工程笔记",
-        "series": "Ling Atlas 起步",
-        "series_slug": "ling-atlas-kickoff",
+        "category": "管理与协作",
+        "category_slug": "管理与协作",
+        "series": "项目起航手记",
+        "series_slug": "project-kickoff",
         "tags": [
-          "github-actions",
-          "automation",
-          "knowledge-base"
+          "占位运行",
+          "模型冒烟",
+          "回滚"
         ],
-        "slug": "from-zero-to-one",
-        "path": "/zh/content/from-zero-to-one/",
-        "excerpt": "记录 Ling Atlas 从脚手架到全自动部署的首篇实践，总结决策脉络与经验。",
-        "relative": "from-zero-to-one",
+        "slug": "ai-placeholder-retrospective",
+        "path": "/zh/content/ai-placeholder-retrospective/",
+        "excerpt": "记录 placeholder 运行时在落地过程中的价值、局限与最佳实践，为后续切换真实模型提供可复用的经验与风险清单。",
+        "relative": "ai-placeholder-retrospective",
         "year": "2025"
-      }
-    ],
-    "kick-off": [
+      },
       {
-        "title": "你好，知识库",
-        "date": "2025-10-12",
+        "title": "Pagegen 运行手册",
+        "date": "2025-10-20",
         "updated": "",
         "status": "published",
         "category": "工程笔记",
         "category_slug": "工程笔记",
-        "series": "起步",
-        "series_slug": "kick-off",
+        "series": "项目起航手记",
+        "series_slug": "project-kickoff",
         "tags": [
-          "vector-search",
-          "BM25"
+          "生成管线",
+          "调度插件",
+          "缓存优化"
         ],
-        "slug": "hello-kb",
-        "path": "/zh/content/hello-world/",
-        "excerpt": "这是第一篇示例文。实际使用时请删除本目录并导入你的内容。",
-        "relative": "hello-world",
+        "slug": "pagegen-handbook",
+        "path": "/zh/content/pagegen-handbook/",
+        "excerpt": "总结 Pagegen orchestrator 的阶段划分、CLI 参数、缓存策略与插件机制，帮助维护者快速定位生成问题并扩展新的自动化能力。",
+        "relative": "pagegen-handbook",
+        "year": "2025"
+      },
+      {
+        "title": "Pagegen 重构回顾（含占位阶段）",
+        "date": "2025-10-20",
+        "updated": "",
+        "status": "published",
+        "category": "工程笔记",
+        "category_slug": "工程笔记",
+        "series": "项目起航手记",
+        "series_slug": "project-kickoff",
+        "tags": [
+          "重构",
+          "性能优化",
+          "架构演进"
+        ],
+        "slug": "pagegen-retrospective",
+        "path": "/zh/content/pagegen-retrospective/",
+        "excerpt": "复盘 Pagegen 从单体脚本到模块化/并发/插件化的演进过程，记录收益、风险与仍需打磨的环节，并补充占位阶段的取舍与经验。",
+        "relative": "pagegen-retrospective",
+        "year": "2025"
+      },
+      {
+        "title": "观测指标场景案例与排障实录",
+        "date": "2025-10-20",
+        "updated": "",
+        "status": "published",
+        "category": "工程笔记",
+        "category_slug": "工程笔记",
+        "series": "项目起航手记",
+        "series_slug": "project-kickoff",
+        "tags": [
+          "案例分析",
+          "告警处理",
+          "故障排查"
+        ],
+        "slug": "telemetry-cases",
+        "path": "/zh/content/telemetry-cases/",
+        "excerpt": "以真实场景为线索，逐步演示如何通过 Telemetry + CLI 日志定位 Pagegen 与 AI 管线告警，并给出可复现的修复步骤。",
+        "relative": "telemetry-cases",
+        "year": "2025"
+      },
+      {
+        "title": "Ling Atlas 项目缘起与系统全貌",
+        "date": "2025-10-20",
+        "updated": "",
+        "status": "published",
+        "category": "管理与协作",
+        "category_slug": "管理与协作",
+        "series": "项目起航手记",
+        "series_slug": "project-kickoff",
+        "tags": [
+          "项目治理",
+          "知识管理",
+          "自动化运维"
+        ],
+        "slug": "project-overview",
+        "path": "/zh/content/project-overview/",
+        "excerpt": "全面梳理 Ling Atlas 的愿景、演进路线与当前落地能力，帮助后续贡献者快速理解“个人向量化知识库”的系统边界与协作模式。",
+        "relative": "project-overview",
+        "year": "2025"
+      },
+      {
+        "title": "AI 管线占位与切换指南",
+        "date": "2025-10-20",
+        "updated": "",
+        "status": "published",
+        "category": "管理与协作",
+        "category_slug": "管理与协作",
+        "series": "项目起航手记",
+        "series_slug": "project-kickoff",
+        "tags": [
+          "AI管线",
+          "冒烟测试",
+          "运行时切换"
+        ],
+        "slug": "ai-runtime-guide",
+        "path": "/zh/content/ai-runtime-guide/",
+        "excerpt": "详细说明 Ling Atlas 在 placeholder 与真实模型之间切换的步骤、环境变量配置、冒烟守门与回滚策略，确保个人向量化知识库的构建过程安全可控。",
+        "relative": "ai-runtime-guide",
+        "year": "2025"
+      },
+      {
+        "title": "观测指标导览",
+        "date": "2025-10-20",
+        "updated": "",
+        "status": "published",
+        "category": "管理与协作",
+        "category_slug": "管理与协作",
+        "series": "项目起航手记",
+        "series_slug": "project-kickoff",
+        "tags": [
+          "遥测",
+          "指标治理",
+          "运维看板"
+        ],
+        "slug": "telemetry-guide",
+        "path": "/zh/content/telemetry-guide/",
+        "excerpt": "解读 Ling Atlas 观测指标页的各类数据来源、告警含义与排障流程，帮助维护者快速判断个人向量化知识库的运行健康度。",
+        "relative": "telemetry-guide",
+        "year": "2025"
+      },
+      {
+        "title": "写作到发布的完整流程",
+        "date": "2025-10-20",
+        "updated": "",
+        "status": "published",
+        "category": "管理与协作",
+        "category_slug": "管理与协作",
+        "series": "项目起航手记",
+        "series_slug": "project-kickoff",
+        "tags": [
+          "写作流程",
+          "发布管线",
+          "质量守门"
+        ],
+        "slug": "tutorial-authoring-to-publish",
+        "path": "/zh/content/tutorial-authoring-to-publish/",
+        "excerpt": "手把手演示从新建文章、预检聚合、观测指标复核到发布与回滚的全流程，配套常用命令与问题排查清单。",
+        "relative": "tutorial-authoring-to-publish",
         "year": "2025"
       }
     ]
   },
   "byTag": {
-    "github-actions": [
+    "占位运行": [
       {
-        "title": "从0到1：Ling Atlas 的诞生记",
-        "date": "2025-10-13",
-        "updated": "2025-10-13",
-        "status": "published",
-        "category": "工程笔记",
-        "category_slug": "工程笔记",
-        "series": "Ling Atlas 起步",
-        "series_slug": "ling-atlas-kickoff",
-        "tags": [
-          "github-actions",
-          "automation",
-          "knowledge-base"
-        ],
-        "slug": "from-zero-to-one",
-        "path": "/zh/content/from-zero-to-one/",
-        "excerpt": "记录 Ling Atlas 从脚手架到全自动部署的首篇实践，总结决策脉络与经验。",
-        "relative": "from-zero-to-one",
-        "year": "2025"
-      }
-    ],
-    "automation": [
-      {
-        "title": "从0到1：Ling Atlas 的诞生记",
-        "date": "2025-10-13",
-        "updated": "2025-10-13",
-        "status": "published",
-        "category": "工程笔记",
-        "category_slug": "工程笔记",
-        "series": "Ling Atlas 起步",
-        "series_slug": "ling-atlas-kickoff",
-        "tags": [
-          "github-actions",
-          "automation",
-          "knowledge-base"
-        ],
-        "slug": "from-zero-to-one",
-        "path": "/zh/content/from-zero-to-one/",
-        "excerpt": "记录 Ling Atlas 从脚手架到全自动部署的首篇实践，总结决策脉络与经验。",
-        "relative": "from-zero-to-one",
-        "year": "2025"
-      },
-      {
-        "title": "Ling Atlas 分类与元数据实战手册",
-        "date": "2025-01-18",
-        "updated": "2025-01-18",
+        "title": "AI 占位阶段总结与实践",
+        "date": "2025-10-20",
+        "updated": "",
         "status": "published",
         "category": "管理与协作",
         "category_slug": "管理与协作",
-        "series": null,
-        "series_slug": "",
+        "series": "项目起航手记",
+        "series_slug": "project-kickoff",
         "tags": [
-          "内容治理",
-          "分类体系",
-          "automation"
+          "占位运行",
+          "模型冒烟",
+          "回滚"
         ],
-        "slug": "taxonomy-playbook",
-        "path": "/zh/content/taxonomy-playbook/",
-        "excerpt": "按照 TAXONOMY.md 给出的规范，落地一套可执行的分类与元数据流程，帮助内容团队把写作与自动化部署串起来。",
-        "relative": "taxonomy-playbook",
+        "slug": "ai-placeholder-retrospective",
+        "path": "/zh/content/ai-placeholder-retrospective/",
+        "excerpt": "记录 placeholder 运行时在落地过程中的价值、局限与最佳实践，为后续切换真实模型提供可复用的经验与风险清单。",
+        "relative": "ai-placeholder-retrospective",
         "year": "2025"
       }
     ],
-    "knowledge-base": [
+    "模型冒烟": [
       {
-        "title": "从0到1：Ling Atlas 的诞生记",
-        "date": "2025-10-13",
-        "updated": "2025-10-13",
+        "title": "AI 占位阶段总结与实践",
+        "date": "2025-10-20",
+        "updated": "",
         "status": "published",
-        "category": "工程笔记",
-        "category_slug": "工程笔记",
-        "series": "Ling Atlas 起步",
-        "series_slug": "ling-atlas-kickoff",
+        "category": "管理与协作",
+        "category_slug": "管理与协作",
+        "series": "项目起航手记",
+        "series_slug": "project-kickoff",
         "tags": [
-          "github-actions",
-          "automation",
-          "knowledge-base"
+          "占位运行",
+          "模型冒烟",
+          "回滚"
         ],
-        "slug": "from-zero-to-one",
-        "path": "/zh/content/from-zero-to-one/",
-        "excerpt": "记录 Ling Atlas 从脚手架到全自动部署的首篇实践，总结决策脉络与经验。",
-        "relative": "from-zero-to-one",
+        "slug": "ai-placeholder-retrospective",
+        "path": "/zh/content/ai-placeholder-retrospective/",
+        "excerpt": "记录 placeholder 运行时在落地过程中的价值、局限与最佳实践，为后续切换真实模型提供可复用的经验与风险清单。",
+        "relative": "ai-placeholder-retrospective",
         "year": "2025"
       }
     ],
-    "vector-search": [
+    "回滚": [
       {
-        "title": "你好，知识库",
-        "date": "2025-10-12",
+        "title": "AI 占位阶段总结与实践",
+        "date": "2025-10-20",
+        "updated": "",
+        "status": "published",
+        "category": "管理与协作",
+        "category_slug": "管理与协作",
+        "series": "项目起航手记",
+        "series_slug": "project-kickoff",
+        "tags": [
+          "占位运行",
+          "模型冒烟",
+          "回滚"
+        ],
+        "slug": "ai-placeholder-retrospective",
+        "path": "/zh/content/ai-placeholder-retrospective/",
+        "excerpt": "记录 placeholder 运行时在落地过程中的价值、局限与最佳实践，为后续切换真实模型提供可复用的经验与风险清单。",
+        "relative": "ai-placeholder-retrospective",
+        "year": "2025"
+      }
+    ],
+    "生成管线": [
+      {
+        "title": "Pagegen 运行手册",
+        "date": "2025-10-20",
         "updated": "",
         "status": "published",
         "category": "工程笔记",
         "category_slug": "工程笔记",
-        "series": "起步",
-        "series_slug": "kick-off",
+        "series": "项目起航手记",
+        "series_slug": "project-kickoff",
         "tags": [
-          "vector-search",
-          "BM25"
+          "生成管线",
+          "调度插件",
+          "缓存优化"
         ],
-        "slug": "hello-kb",
-        "path": "/zh/content/hello-world/",
-        "excerpt": "这是第一篇示例文。实际使用时请删除本目录并导入你的内容。",
-        "relative": "hello-world",
+        "slug": "pagegen-handbook",
+        "path": "/zh/content/pagegen-handbook/",
+        "excerpt": "总结 Pagegen orchestrator 的阶段划分、CLI 参数、缓存策略与插件机制，帮助维护者快速定位生成问题并扩展新的自动化能力。",
+        "relative": "pagegen-handbook",
         "year": "2025"
       }
     ],
-    "BM25": [
+    "调度插件": [
       {
-        "title": "你好，知识库",
-        "date": "2025-10-12",
+        "title": "Pagegen 运行手册",
+        "date": "2025-10-20",
         "updated": "",
         "status": "published",
         "category": "工程笔记",
         "category_slug": "工程笔记",
-        "series": "起步",
-        "series_slug": "kick-off",
+        "series": "项目起航手记",
+        "series_slug": "project-kickoff",
         "tags": [
-          "vector-search",
-          "BM25"
+          "生成管线",
+          "调度插件",
+          "缓存优化"
         ],
-        "slug": "hello-kb",
-        "path": "/zh/content/hello-world/",
-        "excerpt": "这是第一篇示例文。实际使用时请删除本目录并导入你的内容。",
-        "relative": "hello-world",
+        "slug": "pagegen-handbook",
+        "path": "/zh/content/pagegen-handbook/",
+        "excerpt": "总结 Pagegen orchestrator 的阶段划分、CLI 参数、缓存策略与插件机制，帮助维护者快速定位生成问题并扩展新的自动化能力。",
+        "relative": "pagegen-handbook",
         "year": "2025"
       }
     ],
-    "内容治理": [
+    "缓存优化": [
       {
-        "title": "Ling Atlas 分类与元数据规范 v1.0",
-        "date": "2025-01-18",
-        "updated": "2025-01-18",
+        "title": "Pagegen 运行手册",
+        "date": "2025-10-20",
+        "updated": "",
         "status": "published",
-        "category": "管理与协作",
-        "category_slug": "管理与协作",
-        "series": null,
-        "series_slug": "",
+        "category": "工程笔记",
+        "category_slug": "工程笔记",
+        "series": "项目起航手记",
+        "series_slug": "project-kickoff",
         "tags": [
-          "内容治理",
-          "分类体系",
-          "规范"
+          "生成管线",
+          "调度插件",
+          "缓存优化"
         ],
-        "slug": "taxonomy-reference",
-        "path": "/zh/content/taxonomy-reference/",
-        "excerpt": "全量保留 TAXONOMY.md 的规范内容，方便在站点内直接查阅 Ling Atlas 的分类、元数据与变更流程。",
-        "relative": "taxonomy-reference",
-        "year": "2025"
-      },
-      {
-        "title": "Ling Atlas 分类与元数据实战手册",
-        "date": "2025-01-18",
-        "updated": "2025-01-18",
-        "status": "published",
-        "category": "管理与协作",
-        "category_slug": "管理与协作",
-        "series": null,
-        "series_slug": "",
-        "tags": [
-          "内容治理",
-          "分类体系",
-          "automation"
-        ],
-        "slug": "taxonomy-playbook",
-        "path": "/zh/content/taxonomy-playbook/",
-        "excerpt": "按照 TAXONOMY.md 给出的规范，落地一套可执行的分类与元数据流程，帮助内容团队把写作与自动化部署串起来。",
-        "relative": "taxonomy-playbook",
+        "slug": "pagegen-handbook",
+        "path": "/zh/content/pagegen-handbook/",
+        "excerpt": "总结 Pagegen orchestrator 的阶段划分、CLI 参数、缓存策略与插件机制，帮助维护者快速定位生成问题并扩展新的自动化能力。",
+        "relative": "pagegen-handbook",
         "year": "2025"
       }
     ],
-    "分类体系": [
+    "重构": [
       {
-        "title": "Ling Atlas 分类与元数据规范 v1.0",
-        "date": "2025-01-18",
-        "updated": "2025-01-18",
+        "title": "Pagegen 重构回顾（含占位阶段）",
+        "date": "2025-10-20",
+        "updated": "",
         "status": "published",
-        "category": "管理与协作",
-        "category_slug": "管理与协作",
-        "series": null,
-        "series_slug": "",
+        "category": "工程笔记",
+        "category_slug": "工程笔记",
+        "series": "项目起航手记",
+        "series_slug": "project-kickoff",
         "tags": [
-          "内容治理",
-          "分类体系",
-          "规范"
+          "重构",
+          "性能优化",
+          "架构演进"
         ],
-        "slug": "taxonomy-reference",
-        "path": "/zh/content/taxonomy-reference/",
-        "excerpt": "全量保留 TAXONOMY.md 的规范内容，方便在站点内直接查阅 Ling Atlas 的分类、元数据与变更流程。",
-        "relative": "taxonomy-reference",
-        "year": "2025"
-      },
-      {
-        "title": "Ling Atlas 分类与元数据实战手册",
-        "date": "2025-01-18",
-        "updated": "2025-01-18",
-        "status": "published",
-        "category": "管理与协作",
-        "category_slug": "管理与协作",
-        "series": null,
-        "series_slug": "",
-        "tags": [
-          "内容治理",
-          "分类体系",
-          "automation"
-        ],
-        "slug": "taxonomy-playbook",
-        "path": "/zh/content/taxonomy-playbook/",
-        "excerpt": "按照 TAXONOMY.md 给出的规范，落地一套可执行的分类与元数据流程，帮助内容团队把写作与自动化部署串起来。",
-        "relative": "taxonomy-playbook",
+        "slug": "pagegen-retrospective",
+        "path": "/zh/content/pagegen-retrospective/",
+        "excerpt": "复盘 Pagegen 从单体脚本到模块化/并发/插件化的演进过程，记录收益、风险与仍需打磨的环节，并补充占位阶段的取舍与经验。",
+        "relative": "pagegen-retrospective",
         "year": "2025"
       }
     ],
-    "规范": [
+    "性能优化": [
       {
-        "title": "Ling Atlas 分类与元数据规范 v1.0",
-        "date": "2025-01-18",
-        "updated": "2025-01-18",
+        "title": "Pagegen 重构回顾（含占位阶段）",
+        "date": "2025-10-20",
+        "updated": "",
+        "status": "published",
+        "category": "工程笔记",
+        "category_slug": "工程笔记",
+        "series": "项目起航手记",
+        "series_slug": "project-kickoff",
+        "tags": [
+          "重构",
+          "性能优化",
+          "架构演进"
+        ],
+        "slug": "pagegen-retrospective",
+        "path": "/zh/content/pagegen-retrospective/",
+        "excerpt": "复盘 Pagegen 从单体脚本到模块化/并发/插件化的演进过程，记录收益、风险与仍需打磨的环节，并补充占位阶段的取舍与经验。",
+        "relative": "pagegen-retrospective",
+        "year": "2025"
+      }
+    ],
+    "架构演进": [
+      {
+        "title": "Pagegen 重构回顾（含占位阶段）",
+        "date": "2025-10-20",
+        "updated": "",
+        "status": "published",
+        "category": "工程笔记",
+        "category_slug": "工程笔记",
+        "series": "项目起航手记",
+        "series_slug": "project-kickoff",
+        "tags": [
+          "重构",
+          "性能优化",
+          "架构演进"
+        ],
+        "slug": "pagegen-retrospective",
+        "path": "/zh/content/pagegen-retrospective/",
+        "excerpt": "复盘 Pagegen 从单体脚本到模块化/并发/插件化的演进过程，记录收益、风险与仍需打磨的环节，并补充占位阶段的取舍与经验。",
+        "relative": "pagegen-retrospective",
+        "year": "2025"
+      }
+    ],
+    "案例分析": [
+      {
+        "title": "观测指标场景案例与排障实录",
+        "date": "2025-10-20",
+        "updated": "",
+        "status": "published",
+        "category": "工程笔记",
+        "category_slug": "工程笔记",
+        "series": "项目起航手记",
+        "series_slug": "project-kickoff",
+        "tags": [
+          "案例分析",
+          "告警处理",
+          "故障排查"
+        ],
+        "slug": "telemetry-cases",
+        "path": "/zh/content/telemetry-cases/",
+        "excerpt": "以真实场景为线索，逐步演示如何通过 Telemetry + CLI 日志定位 Pagegen 与 AI 管线告警，并给出可复现的修复步骤。",
+        "relative": "telemetry-cases",
+        "year": "2025"
+      }
+    ],
+    "告警处理": [
+      {
+        "title": "观测指标场景案例与排障实录",
+        "date": "2025-10-20",
+        "updated": "",
+        "status": "published",
+        "category": "工程笔记",
+        "category_slug": "工程笔记",
+        "series": "项目起航手记",
+        "series_slug": "project-kickoff",
+        "tags": [
+          "案例分析",
+          "告警处理",
+          "故障排查"
+        ],
+        "slug": "telemetry-cases",
+        "path": "/zh/content/telemetry-cases/",
+        "excerpt": "以真实场景为线索，逐步演示如何通过 Telemetry + CLI 日志定位 Pagegen 与 AI 管线告警，并给出可复现的修复步骤。",
+        "relative": "telemetry-cases",
+        "year": "2025"
+      }
+    ],
+    "故障排查": [
+      {
+        "title": "观测指标场景案例与排障实录",
+        "date": "2025-10-20",
+        "updated": "",
+        "status": "published",
+        "category": "工程笔记",
+        "category_slug": "工程笔记",
+        "series": "项目起航手记",
+        "series_slug": "project-kickoff",
+        "tags": [
+          "案例分析",
+          "告警处理",
+          "故障排查"
+        ],
+        "slug": "telemetry-cases",
+        "path": "/zh/content/telemetry-cases/",
+        "excerpt": "以真实场景为线索，逐步演示如何通过 Telemetry + CLI 日志定位 Pagegen 与 AI 管线告警，并给出可复现的修复步骤。",
+        "relative": "telemetry-cases",
+        "year": "2025"
+      }
+    ],
+    "项目治理": [
+      {
+        "title": "Ling Atlas 项目缘起与系统全貌",
+        "date": "2025-10-20",
+        "updated": "",
         "status": "published",
         "category": "管理与协作",
         "category_slug": "管理与协作",
-        "series": null,
-        "series_slug": "",
+        "series": "项目起航手记",
+        "series_slug": "project-kickoff",
         "tags": [
-          "内容治理",
-          "分类体系",
-          "规范"
+          "项目治理",
+          "知识管理",
+          "自动化运维"
         ],
-        "slug": "taxonomy-reference",
-        "path": "/zh/content/taxonomy-reference/",
-        "excerpt": "全量保留 TAXONOMY.md 的规范内容，方便在站点内直接查阅 Ling Atlas 的分类、元数据与变更流程。",
-        "relative": "taxonomy-reference",
+        "slug": "project-overview",
+        "path": "/zh/content/project-overview/",
+        "excerpt": "全面梳理 Ling Atlas 的愿景、演进路线与当前落地能力，帮助后续贡献者快速理解“个人向量化知识库”的系统边界与协作模式。",
+        "relative": "project-overview",
+        "year": "2025"
+      }
+    ],
+    "知识管理": [
+      {
+        "title": "Ling Atlas 项目缘起与系统全貌",
+        "date": "2025-10-20",
+        "updated": "",
+        "status": "published",
+        "category": "管理与协作",
+        "category_slug": "管理与协作",
+        "series": "项目起航手记",
+        "series_slug": "project-kickoff",
+        "tags": [
+          "项目治理",
+          "知识管理",
+          "自动化运维"
+        ],
+        "slug": "project-overview",
+        "path": "/zh/content/project-overview/",
+        "excerpt": "全面梳理 Ling Atlas 的愿景、演进路线与当前落地能力，帮助后续贡献者快速理解“个人向量化知识库”的系统边界与协作模式。",
+        "relative": "project-overview",
+        "year": "2025"
+      }
+    ],
+    "自动化运维": [
+      {
+        "title": "Ling Atlas 项目缘起与系统全貌",
+        "date": "2025-10-20",
+        "updated": "",
+        "status": "published",
+        "category": "管理与协作",
+        "category_slug": "管理与协作",
+        "series": "项目起航手记",
+        "series_slug": "project-kickoff",
+        "tags": [
+          "项目治理",
+          "知识管理",
+          "自动化运维"
+        ],
+        "slug": "project-overview",
+        "path": "/zh/content/project-overview/",
+        "excerpt": "全面梳理 Ling Atlas 的愿景、演进路线与当前落地能力，帮助后续贡献者快速理解“个人向量化知识库”的系统边界与协作模式。",
+        "relative": "project-overview",
+        "year": "2025"
+      }
+    ],
+    "AI管线": [
+      {
+        "title": "AI 管线占位与切换指南",
+        "date": "2025-10-20",
+        "updated": "",
+        "status": "published",
+        "category": "管理与协作",
+        "category_slug": "管理与协作",
+        "series": "项目起航手记",
+        "series_slug": "project-kickoff",
+        "tags": [
+          "AI管线",
+          "冒烟测试",
+          "运行时切换"
+        ],
+        "slug": "ai-runtime-guide",
+        "path": "/zh/content/ai-runtime-guide/",
+        "excerpt": "详细说明 Ling Atlas 在 placeholder 与真实模型之间切换的步骤、环境变量配置、冒烟守门与回滚策略，确保个人向量化知识库的构建过程安全可控。",
+        "relative": "ai-runtime-guide",
+        "year": "2025"
+      }
+    ],
+    "冒烟测试": [
+      {
+        "title": "AI 管线占位与切换指南",
+        "date": "2025-10-20",
+        "updated": "",
+        "status": "published",
+        "category": "管理与协作",
+        "category_slug": "管理与协作",
+        "series": "项目起航手记",
+        "series_slug": "project-kickoff",
+        "tags": [
+          "AI管线",
+          "冒烟测试",
+          "运行时切换"
+        ],
+        "slug": "ai-runtime-guide",
+        "path": "/zh/content/ai-runtime-guide/",
+        "excerpt": "详细说明 Ling Atlas 在 placeholder 与真实模型之间切换的步骤、环境变量配置、冒烟守门与回滚策略，确保个人向量化知识库的构建过程安全可控。",
+        "relative": "ai-runtime-guide",
+        "year": "2025"
+      }
+    ],
+    "运行时切换": [
+      {
+        "title": "AI 管线占位与切换指南",
+        "date": "2025-10-20",
+        "updated": "",
+        "status": "published",
+        "category": "管理与协作",
+        "category_slug": "管理与协作",
+        "series": "项目起航手记",
+        "series_slug": "project-kickoff",
+        "tags": [
+          "AI管线",
+          "冒烟测试",
+          "运行时切换"
+        ],
+        "slug": "ai-runtime-guide",
+        "path": "/zh/content/ai-runtime-guide/",
+        "excerpt": "详细说明 Ling Atlas 在 placeholder 与真实模型之间切换的步骤、环境变量配置、冒烟守门与回滚策略，确保个人向量化知识库的构建过程安全可控。",
+        "relative": "ai-runtime-guide",
+        "year": "2025"
+      }
+    ],
+    "遥测": [
+      {
+        "title": "观测指标导览",
+        "date": "2025-10-20",
+        "updated": "",
+        "status": "published",
+        "category": "管理与协作",
+        "category_slug": "管理与协作",
+        "series": "项目起航手记",
+        "series_slug": "project-kickoff",
+        "tags": [
+          "遥测",
+          "指标治理",
+          "运维看板"
+        ],
+        "slug": "telemetry-guide",
+        "path": "/zh/content/telemetry-guide/",
+        "excerpt": "解读 Ling Atlas 观测指标页的各类数据来源、告警含义与排障流程，帮助维护者快速判断个人向量化知识库的运行健康度。",
+        "relative": "telemetry-guide",
+        "year": "2025"
+      }
+    ],
+    "指标治理": [
+      {
+        "title": "观测指标导览",
+        "date": "2025-10-20",
+        "updated": "",
+        "status": "published",
+        "category": "管理与协作",
+        "category_slug": "管理与协作",
+        "series": "项目起航手记",
+        "series_slug": "project-kickoff",
+        "tags": [
+          "遥测",
+          "指标治理",
+          "运维看板"
+        ],
+        "slug": "telemetry-guide",
+        "path": "/zh/content/telemetry-guide/",
+        "excerpt": "解读 Ling Atlas 观测指标页的各类数据来源、告警含义与排障流程，帮助维护者快速判断个人向量化知识库的运行健康度。",
+        "relative": "telemetry-guide",
+        "year": "2025"
+      }
+    ],
+    "运维看板": [
+      {
+        "title": "观测指标导览",
+        "date": "2025-10-20",
+        "updated": "",
+        "status": "published",
+        "category": "管理与协作",
+        "category_slug": "管理与协作",
+        "series": "项目起航手记",
+        "series_slug": "project-kickoff",
+        "tags": [
+          "遥测",
+          "指标治理",
+          "运维看板"
+        ],
+        "slug": "telemetry-guide",
+        "path": "/zh/content/telemetry-guide/",
+        "excerpt": "解读 Ling Atlas 观测指标页的各类数据来源、告警含义与排障流程，帮助维护者快速判断个人向量化知识库的运行健康度。",
+        "relative": "telemetry-guide",
+        "year": "2025"
+      }
+    ],
+    "写作流程": [
+      {
+        "title": "写作到发布的完整流程",
+        "date": "2025-10-20",
+        "updated": "",
+        "status": "published",
+        "category": "管理与协作",
+        "category_slug": "管理与协作",
+        "series": "项目起航手记",
+        "series_slug": "project-kickoff",
+        "tags": [
+          "写作流程",
+          "发布管线",
+          "质量守门"
+        ],
+        "slug": "tutorial-authoring-to-publish",
+        "path": "/zh/content/tutorial-authoring-to-publish/",
+        "excerpt": "手把手演示从新建文章、预检聚合、观测指标复核到发布与回滚的全流程，配套常用命令与问题排查清单。",
+        "relative": "tutorial-authoring-to-publish",
+        "year": "2025"
+      }
+    ],
+    "发布管线": [
+      {
+        "title": "写作到发布的完整流程",
+        "date": "2025-10-20",
+        "updated": "",
+        "status": "published",
+        "category": "管理与协作",
+        "category_slug": "管理与协作",
+        "series": "项目起航手记",
+        "series_slug": "project-kickoff",
+        "tags": [
+          "写作流程",
+          "发布管线",
+          "质量守门"
+        ],
+        "slug": "tutorial-authoring-to-publish",
+        "path": "/zh/content/tutorial-authoring-to-publish/",
+        "excerpt": "手把手演示从新建文章、预检聚合、观测指标复核到发布与回滚的全流程，配套常用命令与问题排查清单。",
+        "relative": "tutorial-authoring-to-publish",
+        "year": "2025"
+      }
+    ],
+    "质量守门": [
+      {
+        "title": "写作到发布的完整流程",
+        "date": "2025-10-20",
+        "updated": "",
+        "status": "published",
+        "category": "管理与协作",
+        "category_slug": "管理与协作",
+        "series": "项目起航手记",
+        "series_slug": "project-kickoff",
+        "tags": [
+          "写作流程",
+          "发布管线",
+          "质量守门"
+        ],
+        "slug": "tutorial-authoring-to-publish",
+        "path": "/zh/content/tutorial-authoring-to-publish/",
+        "excerpt": "手把手演示从新建文章、预检聚合、观测指标复核到发布与回滚的全流程，配套常用命令与问题排查清单。",
+        "relative": "tutorial-authoring-to-publish",
         "year": "2025"
       }
     ]
@@ -368,164 +862,326 @@
   "byYear": {
     "2025": [
       {
-        "title": "从0到1：Ling Atlas 的诞生记",
-        "date": "2025-10-13",
-        "updated": "2025-10-13",
+        "title": "AI 占位阶段总结与实践",
+        "date": "2025-10-20",
+        "updated": "",
         "status": "published",
-        "category": "工程笔记",
-        "category_slug": "工程笔记",
-        "series": "Ling Atlas 起步",
-        "series_slug": "ling-atlas-kickoff",
+        "category": "管理与协作",
+        "category_slug": "管理与协作",
+        "series": "项目起航手记",
+        "series_slug": "project-kickoff",
         "tags": [
-          "github-actions",
-          "automation",
-          "knowledge-base"
+          "占位运行",
+          "模型冒烟",
+          "回滚"
         ],
-        "slug": "from-zero-to-one",
-        "path": "/zh/content/from-zero-to-one/",
-        "excerpt": "记录 Ling Atlas 从脚手架到全自动部署的首篇实践，总结决策脉络与经验。",
-        "relative": "from-zero-to-one",
+        "slug": "ai-placeholder-retrospective",
+        "path": "/zh/content/ai-placeholder-retrospective/",
+        "excerpt": "记录 placeholder 运行时在落地过程中的价值、局限与最佳实践，为后续切换真实模型提供可复用的经验与风险清单。",
+        "relative": "ai-placeholder-retrospective",
         "year": "2025"
       },
       {
-        "title": "你好，知识库",
-        "date": "2025-10-12",
+        "title": "Pagegen 运行手册",
+        "date": "2025-10-20",
         "updated": "",
         "status": "published",
         "category": "工程笔记",
         "category_slug": "工程笔记",
-        "series": "起步",
-        "series_slug": "kick-off",
+        "series": "项目起航手记",
+        "series_slug": "project-kickoff",
         "tags": [
-          "vector-search",
-          "BM25"
+          "生成管线",
+          "调度插件",
+          "缓存优化"
         ],
-        "slug": "hello-kb",
-        "path": "/zh/content/hello-world/",
-        "excerpt": "这是第一篇示例文。实际使用时请删除本目录并导入你的内容。",
-        "relative": "hello-world",
+        "slug": "pagegen-handbook",
+        "path": "/zh/content/pagegen-handbook/",
+        "excerpt": "总结 Pagegen orchestrator 的阶段划分、CLI 参数、缓存策略与插件机制，帮助维护者快速定位生成问题并扩展新的自动化能力。",
+        "relative": "pagegen-handbook",
         "year": "2025"
       },
       {
-        "title": "Ling Atlas 分类与元数据规范 v1.0",
-        "date": "2025-01-18",
-        "updated": "2025-01-18",
+        "title": "Pagegen 重构回顾（含占位阶段）",
+        "date": "2025-10-20",
+        "updated": "",
         "status": "published",
-        "category": "管理与协作",
-        "category_slug": "管理与协作",
-        "series": null,
-        "series_slug": "",
+        "category": "工程笔记",
+        "category_slug": "工程笔记",
+        "series": "项目起航手记",
+        "series_slug": "project-kickoff",
         "tags": [
-          "内容治理",
-          "分类体系",
-          "规范"
+          "重构",
+          "性能优化",
+          "架构演进"
         ],
-        "slug": "taxonomy-reference",
-        "path": "/zh/content/taxonomy-reference/",
-        "excerpt": "全量保留 TAXONOMY.md 的规范内容，方便在站点内直接查阅 Ling Atlas 的分类、元数据与变更流程。",
-        "relative": "taxonomy-reference",
+        "slug": "pagegen-retrospective",
+        "path": "/zh/content/pagegen-retrospective/",
+        "excerpt": "复盘 Pagegen 从单体脚本到模块化/并发/插件化的演进过程，记录收益、风险与仍需打磨的环节，并补充占位阶段的取舍与经验。",
+        "relative": "pagegen-retrospective",
         "year": "2025"
       },
       {
-        "title": "Ling Atlas 分类与元数据实战手册",
-        "date": "2025-01-18",
-        "updated": "2025-01-18",
+        "title": "观测指标场景案例与排障实录",
+        "date": "2025-10-20",
+        "updated": "",
+        "status": "published",
+        "category": "工程笔记",
+        "category_slug": "工程笔记",
+        "series": "项目起航手记",
+        "series_slug": "project-kickoff",
+        "tags": [
+          "案例分析",
+          "告警处理",
+          "故障排查"
+        ],
+        "slug": "telemetry-cases",
+        "path": "/zh/content/telemetry-cases/",
+        "excerpt": "以真实场景为线索，逐步演示如何通过 Telemetry + CLI 日志定位 Pagegen 与 AI 管线告警，并给出可复现的修复步骤。",
+        "relative": "telemetry-cases",
+        "year": "2025"
+      },
+      {
+        "title": "Ling Atlas 项目缘起与系统全貌",
+        "date": "2025-10-20",
+        "updated": "",
         "status": "published",
         "category": "管理与协作",
         "category_slug": "管理与协作",
-        "series": null,
-        "series_slug": "",
+        "series": "项目起航手记",
+        "series_slug": "project-kickoff",
         "tags": [
-          "内容治理",
-          "分类体系",
-          "automation"
+          "项目治理",
+          "知识管理",
+          "自动化运维"
         ],
-        "slug": "taxonomy-playbook",
-        "path": "/zh/content/taxonomy-playbook/",
-        "excerpt": "按照 TAXONOMY.md 给出的规范，落地一套可执行的分类与元数据流程，帮助内容团队把写作与自动化部署串起来。",
-        "relative": "taxonomy-playbook",
+        "slug": "project-overview",
+        "path": "/zh/content/project-overview/",
+        "excerpt": "全面梳理 Ling Atlas 的愿景、演进路线与当前落地能力，帮助后续贡献者快速理解“个人向量化知识库”的系统边界与协作模式。",
+        "relative": "project-overview",
+        "year": "2025"
+      },
+      {
+        "title": "AI 管线占位与切换指南",
+        "date": "2025-10-20",
+        "updated": "",
+        "status": "published",
+        "category": "管理与协作",
+        "category_slug": "管理与协作",
+        "series": "项目起航手记",
+        "series_slug": "project-kickoff",
+        "tags": [
+          "AI管线",
+          "冒烟测试",
+          "运行时切换"
+        ],
+        "slug": "ai-runtime-guide",
+        "path": "/zh/content/ai-runtime-guide/",
+        "excerpt": "详细说明 Ling Atlas 在 placeholder 与真实模型之间切换的步骤、环境变量配置、冒烟守门与回滚策略，确保个人向量化知识库的构建过程安全可控。",
+        "relative": "ai-runtime-guide",
+        "year": "2025"
+      },
+      {
+        "title": "观测指标导览",
+        "date": "2025-10-20",
+        "updated": "",
+        "status": "published",
+        "category": "管理与协作",
+        "category_slug": "管理与协作",
+        "series": "项目起航手记",
+        "series_slug": "project-kickoff",
+        "tags": [
+          "遥测",
+          "指标治理",
+          "运维看板"
+        ],
+        "slug": "telemetry-guide",
+        "path": "/zh/content/telemetry-guide/",
+        "excerpt": "解读 Ling Atlas 观测指标页的各类数据来源、告警含义与排障流程，帮助维护者快速判断个人向量化知识库的运行健康度。",
+        "relative": "telemetry-guide",
+        "year": "2025"
+      },
+      {
+        "title": "写作到发布的完整流程",
+        "date": "2025-10-20",
+        "updated": "",
+        "status": "published",
+        "category": "管理与协作",
+        "category_slug": "管理与协作",
+        "series": "项目起航手记",
+        "series_slug": "project-kickoff",
+        "tags": [
+          "写作流程",
+          "发布管线",
+          "质量守门"
+        ],
+        "slug": "tutorial-authoring-to-publish",
+        "path": "/zh/content/tutorial-authoring-to-publish/",
+        "excerpt": "手把手演示从新建文章、预检聚合、观测指标复核到发布与回滚的全流程，配套常用命令与问题排查清单。",
+        "relative": "tutorial-authoring-to-publish",
         "year": "2025"
       }
     ]
   },
   "all": [
     {
-      "title": "从0到1：Ling Atlas 的诞生记",
-      "date": "2025-10-13",
-      "updated": "2025-10-13",
+      "title": "AI 占位阶段总结与实践",
+      "date": "2025-10-20",
+      "updated": "",
       "status": "published",
-      "category": "工程笔记",
-      "category_slug": "工程笔记",
-      "series": "Ling Atlas 起步",
-      "series_slug": "ling-atlas-kickoff",
+      "category": "管理与协作",
+      "category_slug": "管理与协作",
+      "series": "项目起航手记",
+      "series_slug": "project-kickoff",
       "tags": [
-        "github-actions",
-        "automation",
-        "knowledge-base"
+        "占位运行",
+        "模型冒烟",
+        "回滚"
       ],
-      "slug": "from-zero-to-one",
-      "path": "/zh/content/from-zero-to-one/",
-      "excerpt": "记录 Ling Atlas 从脚手架到全自动部署的首篇实践，总结决策脉络与经验。",
-      "relative": "from-zero-to-one",
+      "slug": "ai-placeholder-retrospective",
+      "path": "/zh/content/ai-placeholder-retrospective/",
+      "excerpt": "记录 placeholder 运行时在落地过程中的价值、局限与最佳实践，为后续切换真实模型提供可复用的经验与风险清单。",
+      "relative": "ai-placeholder-retrospective",
       "year": "2025"
     },
     {
-      "title": "你好，知识库",
-      "date": "2025-10-12",
+      "title": "Pagegen 运行手册",
+      "date": "2025-10-20",
       "updated": "",
       "status": "published",
       "category": "工程笔记",
       "category_slug": "工程笔记",
-      "series": "起步",
-      "series_slug": "kick-off",
+      "series": "项目起航手记",
+      "series_slug": "project-kickoff",
       "tags": [
-        "vector-search",
-        "BM25"
+        "生成管线",
+        "调度插件",
+        "缓存优化"
       ],
-      "slug": "hello-kb",
-      "path": "/zh/content/hello-world/",
-      "excerpt": "这是第一篇示例文。实际使用时请删除本目录并导入你的内容。",
-      "relative": "hello-world",
+      "slug": "pagegen-handbook",
+      "path": "/zh/content/pagegen-handbook/",
+      "excerpt": "总结 Pagegen orchestrator 的阶段划分、CLI 参数、缓存策略与插件机制，帮助维护者快速定位生成问题并扩展新的自动化能力。",
+      "relative": "pagegen-handbook",
       "year": "2025"
     },
     {
-      "title": "Ling Atlas 分类与元数据规范 v1.0",
-      "date": "2025-01-18",
-      "updated": "2025-01-18",
+      "title": "Pagegen 重构回顾（含占位阶段）",
+      "date": "2025-10-20",
+      "updated": "",
       "status": "published",
-      "category": "管理与协作",
-      "category_slug": "管理与协作",
-      "series": null,
-      "series_slug": "",
+      "category": "工程笔记",
+      "category_slug": "工程笔记",
+      "series": "项目起航手记",
+      "series_slug": "project-kickoff",
       "tags": [
-        "内容治理",
-        "分类体系",
-        "规范"
+        "重构",
+        "性能优化",
+        "架构演进"
       ],
-      "slug": "taxonomy-reference",
-      "path": "/zh/content/taxonomy-reference/",
-      "excerpt": "全量保留 TAXONOMY.md 的规范内容，方便在站点内直接查阅 Ling Atlas 的分类、元数据与变更流程。",
-      "relative": "taxonomy-reference",
+      "slug": "pagegen-retrospective",
+      "path": "/zh/content/pagegen-retrospective/",
+      "excerpt": "复盘 Pagegen 从单体脚本到模块化/并发/插件化的演进过程，记录收益、风险与仍需打磨的环节，并补充占位阶段的取舍与经验。",
+      "relative": "pagegen-retrospective",
       "year": "2025"
     },
     {
-      "title": "Ling Atlas 分类与元数据实战手册",
-      "date": "2025-01-18",
-      "updated": "2025-01-18",
+      "title": "观测指标场景案例与排障实录",
+      "date": "2025-10-20",
+      "updated": "",
+      "status": "published",
+      "category": "工程笔记",
+      "category_slug": "工程笔记",
+      "series": "项目起航手记",
+      "series_slug": "project-kickoff",
+      "tags": [
+        "案例分析",
+        "告警处理",
+        "故障排查"
+      ],
+      "slug": "telemetry-cases",
+      "path": "/zh/content/telemetry-cases/",
+      "excerpt": "以真实场景为线索，逐步演示如何通过 Telemetry + CLI 日志定位 Pagegen 与 AI 管线告警，并给出可复现的修复步骤。",
+      "relative": "telemetry-cases",
+      "year": "2025"
+    },
+    {
+      "title": "Ling Atlas 项目缘起与系统全貌",
+      "date": "2025-10-20",
+      "updated": "",
       "status": "published",
       "category": "管理与协作",
       "category_slug": "管理与协作",
-      "series": null,
-      "series_slug": "",
+      "series": "项目起航手记",
+      "series_slug": "project-kickoff",
       "tags": [
-        "内容治理",
-        "分类体系",
-        "automation"
+        "项目治理",
+        "知识管理",
+        "自动化运维"
       ],
-      "slug": "taxonomy-playbook",
-      "path": "/zh/content/taxonomy-playbook/",
-      "excerpt": "按照 TAXONOMY.md 给出的规范，落地一套可执行的分类与元数据流程，帮助内容团队把写作与自动化部署串起来。",
-      "relative": "taxonomy-playbook",
+      "slug": "project-overview",
+      "path": "/zh/content/project-overview/",
+      "excerpt": "全面梳理 Ling Atlas 的愿景、演进路线与当前落地能力，帮助后续贡献者快速理解“个人向量化知识库”的系统边界与协作模式。",
+      "relative": "project-overview",
+      "year": "2025"
+    },
+    {
+      "title": "AI 管线占位与切换指南",
+      "date": "2025-10-20",
+      "updated": "",
+      "status": "published",
+      "category": "管理与协作",
+      "category_slug": "管理与协作",
+      "series": "项目起航手记",
+      "series_slug": "project-kickoff",
+      "tags": [
+        "AI管线",
+        "冒烟测试",
+        "运行时切换"
+      ],
+      "slug": "ai-runtime-guide",
+      "path": "/zh/content/ai-runtime-guide/",
+      "excerpt": "详细说明 Ling Atlas 在 placeholder 与真实模型之间切换的步骤、环境变量配置、冒烟守门与回滚策略，确保个人向量化知识库的构建过程安全可控。",
+      "relative": "ai-runtime-guide",
+      "year": "2025"
+    },
+    {
+      "title": "观测指标导览",
+      "date": "2025-10-20",
+      "updated": "",
+      "status": "published",
+      "category": "管理与协作",
+      "category_slug": "管理与协作",
+      "series": "项目起航手记",
+      "series_slug": "project-kickoff",
+      "tags": [
+        "遥测",
+        "指标治理",
+        "运维看板"
+      ],
+      "slug": "telemetry-guide",
+      "path": "/zh/content/telemetry-guide/",
+      "excerpt": "解读 Ling Atlas 观测指标页的各类数据来源、告警含义与排障流程，帮助维护者快速判断个人向量化知识库的运行健康度。",
+      "relative": "telemetry-guide",
+      "year": "2025"
+    },
+    {
+      "title": "写作到发布的完整流程",
+      "date": "2025-10-20",
+      "updated": "",
+      "status": "published",
+      "category": "管理与协作",
+      "category_slug": "管理与协作",
+      "series": "项目起航手记",
+      "series_slug": "project-kickoff",
+      "tags": [
+        "写作流程",
+        "发布管线",
+        "质量守门"
+      ],
+      "slug": "tutorial-authoring-to-publish",
+      "path": "/zh/content/tutorial-authoring-to-publish/",
+      "excerpt": "手把手演示从新建文章、预检聚合、观测指标复核到发布与回滚的全流程，配套常用命令与问题排查清单。",
+      "relative": "tutorial-authoring-to-publish",
       "year": "2025"
     }
   ]

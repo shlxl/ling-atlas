@@ -49,13 +49,15 @@ npm run dev
 - `npm run gen -- --no-cache`：禁用内容缓存重新解析 Markdown，亦可设置 `PAGEGEN_DISABLE_CACHE=1`
 - `npm run gen -- --no-batch`：回退到串行写入（禁用批量写入与哈希跳过），或设置 `PAGEGEN_DISABLE_BATCH=1`
 - `PAGEGEN_CONCURRENCY=<num>`：控制内容解析并发度（默认 8），可在 `npm run gen` 前临时指定
+- `npm run gen -- --parallel-stage feeds=4`：覆盖特定阶段的并发度，也可设置 `PAGEGEN_PARALLEL_STAGES=feeds=4,collect=off`
+- `npm run gen -- --plugin ./scripts/pagegen/plugins/example.mjs`：加载示例插件，运行后会在 `data/pagegen-plugin.example.json` 输出调度摘要；使用 `--no-plugins` 或 `PAGEGEN_DISABLE_PLUGINS=1` 可回退默认管线
 - `npm run test:pagegen`：运行 Pagegen 模块单元测试 + 集成测试（含 nav manifest 输出与聚合产物核对）
 - `npm run test:links`：基于临时站点夹具运行链接巡检，覆盖 Markdown、nav manifest、i18n map 成功与失败场景
 - `npm run stats:lint`：按语言统计分类/标签，控制台输出 TopN 并写入 `data/stats.snapshot.json`，CI 会上传该快照方便历史对比
 - `npm run stats:diff -- --baseline <ref:path|file> [--current <file>]`：对比两份分类/标签快照，输出高于阈值的差异（默认 warn≥30%、fail≥60%）；未显式指定时会尝试从 git 历史（`origin/main`、`HEAD^` 等）寻找 baseline，若无法定位则打印提示并跳过对比
 - `npm run precheck`：Frontmatter 与导航/SEO/标签配置校验（阻断）
 - `npm run config:seo`：校验 SEO/OpenGraph 配置（Schema + 引用完整性）
-- `npm run build`：构建站点（前置 `gen` + `knowledge:build`），自动生成中英双语 RSS/Sitemap
+- `npm run build`：构建站点（串联 `ai:prepare` → `ai:smoke` → `gen` → `knowledge:build`），自动生成中英双语 RSS/Sitemap
 - `npm run pwa:build`：独立构建 PWA 产物（`sw.js`、`manifest.webmanifest`、`icons/`）
 - `npm run dev`：本地开发（前置 `gen`）
 - `npm run knowledge:build`：单独更新 `/api/knowledge.json`（段落级知识数据）
@@ -96,17 +98,21 @@ npm run dev
   - 🧩 局部重建实验：`scripts/pagegen/sync.mjs`、`scripts/pagegen/collect.mjs` 与 orchestrator 现联动 Git 快照与缓存命中率，默认增量流程在多语言目录下跑通，并补齐运行指引。
   - 📈 指标时间序列基线：`node scripts/telemetry-merge.mjs` 已将阶段指标写入带时间戳的 `data/telemetry.json`，路线图与文档同步记录导出路径。
   - 🤖 AI 质量评测蓝本：评测基准集写入 `data/gold.jsonl`，`npm run ai:smoke` 会读取基线并在 placeholder 模式输出跳过日志，形成后续守门的设计基础。
+  - 🔌 Pagegen 插件示例：新增 `scripts/pagegen/plugins/example.mjs` 与 `node --test tests/pagegen/plugin-example.integration.test.mjs`，演示如何在管线末尾输出调度摘要并校验回退行为。
+  - 🛰️ 调度插件化：`scripts/pagegen/plugin-registry.mjs` / `scheduler.mjs` 支持 `--parallel-stage`、`--plugin`、`--no-plugins` 等覆盖，metrics 新增 `scheduler` 与 `plugins` 摘要。
+  - 🛡️ AI 守门串联：`npm run build` / `codex run publish` 默认执行 `ai:prepare` → `ai:smoke`，`build.ai` 节点带 schema 版本与 overview，失败时自动写入回退原因。
 - 下一阶段重点：
-  1. 📡 扩充 AI 构建脚本的遥测事件（`ai.embed.*`/`ai.summary.*`/`ai.qa.*`），并在 `scripts/telemetry-merge.mjs` 汇总为 `build.ai`。
-  2. 🧩 将 `pagegen` orchestrator 插件化，引入可配置并行度与回退 flag，完善阶段契约文档。
-  3. 🪪 构建模型生命周期守门：实现 `npm run ai:prepare`、`npm run ai:smoke`，在本地与 CI 维持最小推理校验。
-  4. 📘 更新协作手册，补充 feeds/SEO/AI 新配置的运维流程与回滚示例，确保 README、AGENTS 与规划文档同步。
+  1. 📊 将 scheduler / AI 指标接入站点 Telemetry 页面，补齐可视化与阈值告警脚本。
+  2. 🔌 产出官方 Pagegen 插件示例与端到端用例，完善 `--plugin` 协议与回滚测试夹具。
+  3. 🧪 扩展 `ai:smoke` 结果写入 telemetry，生成结构化失败清单并与 `build.ai` 打通。
+  4. 📚 更新协作手册，汇总并发覆盖、插件加载与 AI 守门的运维/回退案例，使 README、AGENTS 与规划文档保持一致。
+- 执行顺序建议：先完成 1（先补齐可观测面板再推进依赖任务）→ 3（把冒烟结果接入 telemetry 与降级链路）→ 2（在指标到位后补强插件示例与测试）→ 4（功能稳定后统一文档）。
 
 ## 协作约束速查
 
 > 以下清单同步自仓库根部的 `AGENTS.md`，便于贡献者在不离开 README 的情况下快速了解约束与常用命令。
 
-- **角色与脚本管线**：通过 `codex run <task>` 调用 `.codex/*.mjs` 中的脚本，涵盖 `plan`、`precheck`、`gen`、`build`、`deploy`、`audit` 等角色；`publish` 会串联 tags 规范化 → precheck → gen → build → git 推送。
+- **角色与脚本管线**：通过 `codex run <task>` 调用 `.codex/*.mjs` 中的脚本，涵盖 `plan`、`precheck`、`gen`、`build`、`deploy`、`audit` 等角色；`publish` 会串联 tags 规范化 → precheck → ai:prepare → ai:smoke → gen → build → git 推送。
 - **内容统计守门**：CI 在 `npm run test:pagegen` 后追加 `node scripts/stats-lint.mjs`，同时上传 `data/stats.snapshot.json` 作为工件，便于观察分类/标签分布的阶段变化。
 - **本地预检**：安装依赖后会自动执行 `husky install`，现有的 `pre-commit` 钩子会调用 `lint-staged`，针对提交的 Markdown 运行 `npm run md:lint`。如需跳过，可在本地使用 `HUSKY=0 git commit ...`。
 - **环境要求**：Node ≥ 22、npm ≥ 10、git ≥ 2.45，`.env` 需包含 `BASE=/ling-atlas/`、`SITE_ORIGIN=https://<user>.github.io/ling-atlas`、`GIT_REMOTE=origin`、`GIT_BRANCH=main`。
@@ -118,8 +124,8 @@ npm run dev
 
 ## 统计监控与告警流程
 
-- **Pagegen 指标出口**：运行 `npm run gen` 后，CLI 会额外打印 collect 缓存命中率与 writer 哈希跳过统计，最新一笔指标还会由 `node scripts/telemetry-merge.mjs` 同步到 `/telemetry.json`，可在站点的“观测指标”页面直接查看。
-- **AI 构建遥测**：`scripts/embed-build.mjs`、`scripts/summary.mjs`、`scripts/qa-build.mjs` 会在 `data/ai-events/` 写入结构化事件（含批次数量、推理/写入耗时、成功率、目标路径等），`node scripts/telemetry-merge.mjs` 会清理已消费的事件文件，并将最新结果聚合为与 `build.pagegen` 对齐的 `build.ai` 节点输出到 `docs/public/telemetry.json`。可通过 `AI_TELEMETRY_DISABLE=1` 暂停事件写入，或设置 `AI_TELEMETRY_PATH=<dir>` 指定事件目录（便于测试与沙箱环境）。
+- **Pagegen 指标出口**：运行 `npm run gen` 后，CLI 会额外打印 collect 缓存命中率与 writer 哈希跳过统计，最新一笔指标还会由 `node scripts/telemetry-merge.mjs` 同步到 `/telemetry.json`，并新增 `scheduler` / `plugins` 摘要，便于在站点“观测指标”页面查看并发设定与插件状态。
+- **AI 构建遥测**：`scripts/embed-build.mjs`、`scripts/summary.mjs`、`scripts/qa-build.mjs` 会在 `data/ai-events/` 写入结构化事件（含批次数量、推理/写入耗时、成功率、目标路径等），`node scripts/telemetry-merge.mjs` 会清理已消费的事件文件，并以带 `schemaVersion` 的 `build.ai` 节点输出模型摘要（含 overview、成功率、缓存回退）到 `docs/public/telemetry.json`。可通过 `AI_TELEMETRY_DISABLE=1` 暂停事件写入，或设置 `AI_TELEMETRY_PATH=<dir>` 指定事件目录（便于测试与沙箱环境）。
 - **快照采集**：`npm run stats:lint` 写入 `data/stats.snapshot.json` 并输出 TopN 排序，CI 会上传该文件作为工件，便于后续下载对比。
 - **自动对比与预警**：通过 `npm run stats:diff -- --baseline origin/main:data/stats.snapshot.json --current data/stats.snapshot.json` 在本地或 CI 中对比差异。命令会按默认阈值（warn≥30%、fail≥60%）输出告警，可搭配 `--json` 输出结构化结果，或在 GitHub Actions 中根据退出码（2 表示 fail）自动打标签/留言；若未提供 baseline 且 git 历史中也无法找到快照，会输出提示并直接跳过对比，避免误报。
 - **夜间任务建议**：Nightly Workflow 可先拉取前一日工件为 baseline，再运行 `stats:diff -- --baseline <path> --current data/stats.snapshot.json --quiet`，将结果上传到日志或告警系统；如需邮件/IM 告警，可根据 JSON 输出过滤高优先级条目。

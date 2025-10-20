@@ -48,9 +48,20 @@ Pagegen 当前为串行的单体脚本，承担同步内容、解析元数据、
 - ✅ 将 `pagegen` 各阶段耗时、处理文件量、命中缓存率写入 telemetry（JSON 输出），并在 CLI 摘要/metrics JSON 中展示缓存命中与写入跳过统计，供 `codex run audit` 或 CI 使用。
 - ✅ 预留 Hook：在 orchestrator 中暴露基础事件，并整理 Transformers.js/onnxruntime 的接入评估、回滚策略与脚本清单；AI 构建脚本现具备适配层与占位回退。
 - ✅ 统计快照：`npm run stats:diff` 已接入 PR/夜间流程，CI 自动对比 `data/stats.snapshot.json` 并输出 Step Summary + 工件，支持 `--json` 结构化分析。
-- 🔜 遥测扩展：补齐 `ai.embed.*`/`ai.summary.*`/`ai.qa.*` 事件并在 `scripts/telemetry-merge.mjs` 汇总为 `build.ai`，用于监控真实模型运行情况。
-- 🔜 插件化与并行：实现 orchestrator 插件注册、生命周期钩子与可配置并发调度，保留显式回退开关并更新契约文档。
-- 🔜 模型生命周期：新增 `ai:prepare`、`ai:smoke` 脚本与 CI 守门，确保模型下载、校验与最小推理可控。
+- ✅ 遥测扩展：`scripts/telemetry-merge.mjs` 现输出带 `schemaVersion` 的 `build.ai` 节点，并将调度/插件概览同步到 metrics（`scheduler`、`plugins`）。
+- ✅ 插件化与并行：调度器支持 `--parallel-stage` / `PAGEGEN_PARALLEL_STAGES` 覆盖并发度，`--plugin` / `PAGEGEN_PLUGINS` 动态加载阶段，并提供 `--no-plugins`、`--ignore-plugin-errors` 回退。
+- ✅ 模型生命周期：`npm run ai:prepare`、`npm run ai:smoke` 已纳入 `codex run publish` 与 `npm run build`，失败时会写入 manifest 降级信息并回退占位实现。
+- 🔜 Telemetry 可视化：在站点“观测指标”页落地 scheduler / AI 指标图表，并补齐阈值告警脚本。
+- ✅ 插件示例：产出官方 Pagegen 插件与端到端用例（`scripts/pagegen/plugins/example.mjs` + `node --test tests/pagegen/plugin-example.integration.test.mjs`），验证 `--plugin` 协议与回滚测试夹具。
+- 🔜 冒烟遥测：将 `ai:smoke` 结果写回 telemetry，生成结构化失败清单并与 `build.ai` 概览打通。
+- 🔜 文档同步：更新 README / AGENTS / 规划文档，汇总并发覆盖、插件加载与 AI 守门的运维回滚案例。
+
+### 执行顺序建议
+
+1. 先补齐 Telemetry 页面与告警基线，确保 scheduler / AI 指标可视化到位。
+2. 随后把 `ai:smoke` 结果写入 telemetry，与 `build.ai` overview 联动降级路径。
+3. 完善插件示例后的运维/回滚文档，对接更多实际插件场景。
+4. 最后统一更新 README、AGENTS 与规划文档，沉淀新的运维与回滚指引。
 
 ## 风险与应对
 
@@ -69,4 +80,4 @@ Pagegen 当前为串行的单体脚本，承担同步内容、解析元数据、
 - **协作约束梳理**：完成 `AGENTS.md`、README 与 `.codex/` 指南的交叉检查，产出 README《协作约束速查》以便快速上手。
 - **模块盘点回顾**：`schema/`、`scripts/`、`docs/zh/plans/` 与 `tests/` 的资产现已补写 orchestrator 契约说明与依赖矩阵，确保变更有据可查。
 - **Pagegen 深入检查跟进**：端到端测试现覆盖导航/i18n 故障、缓存命中指标与失败回滚路径；`npm run test:pagegen` 已模拟完整生成流程并对 metrics 导出做断言。
-- **反馈同步机制**：本节会随巡检推进持续更新，关键结论亦会同步至 `AGENTS.md` 第 10 节，确保多代理协作信息一致。当前转向阶段 7 的运营化任务（局部重建默认化、指标可视化、AI 守门自动化）。
+- **反馈同步机制**：本节会随巡检推进持续更新，关键结论亦会同步至 `AGENTS.md` 第 10 节，确保多代理协作信息一致。当前迭代聚焦于 Telemetry 可视化与 `ai:smoke` 遥测回写的收尾，以及插件运维文档的拓展。

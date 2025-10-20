@@ -9,6 +9,8 @@ const msg = i>=0 ? argv[i+1] : 'chore: content update'
 envFromDotEnv()
 await sh('npm', ['run', 'tags:normalize']).catch(()=>0)
 await sh('npm', ['run', 'precheck'])
+await sh('npm', ['run', 'ai:prepare'])
+await sh('npm', ['run', 'ai:smoke'])
 await sh('npm', ['run', 'gen'])
 await sh('npm', ['run', 'build'], { env: { ...process.env, BASE: process.env.BASE || '/', SITE_ORIGIN: process.env.SITE_ORIGIN || '' } })
 

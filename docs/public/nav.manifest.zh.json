@@ -4,21 +4,36 @@
     "2025": "/zh/_generated/archive/2025/"
   },
   "categories": {
-    "工程笔记": "/zh/_generated/categories/工程笔记/",
-    "管理与协作": "/zh/_generated/categories/管理与协作/"
+    "管理与协作": "/zh/_generated/categories/管理与协作/",
+    "工程笔记": "/zh/_generated/categories/工程笔记/"
   },
   "series": {
-    "ling-atlas-kickoff": "/zh/_generated/series/ling-atlas-kickoff/",
-    "kick-off": "/zh/_generated/series/kick-off/"
+    "project-kickoff": "/zh/_generated/series/project-kickoff/"
   },
   "tags": {
-    "github-actions": "/zh/_generated/tags/github-actions/",
-    "automation": "/zh/_generated/tags/automation/",
-    "knowledge-base": "/zh/_generated/tags/knowledge-base/",
-    "vector-search": "/zh/_generated/tags/vector-search/",
-    "bm25": "/zh/_generated/tags/bm25/",
-    "内容治理": "/zh/_generated/tags/内容治理/",
-    "分类体系": "/zh/_generated/tags/分类体系/",
-    "规范": "/zh/_generated/tags/规范/"
+    "占位运行": "/zh/_generated/tags/占位运行/",
+    "模型冒烟": "/zh/_generated/tags/模型冒烟/",
+    "回滚": "/zh/_generated/tags/回滚/",
+    "生成管线": "/zh/_generated/tags/生成管线/",
+    "调度插件": "/zh/_generated/tags/调度插件/",
+    "缓存优化": "/zh/_generated/tags/缓存优化/",
+    "重构": "/zh/_generated/tags/重构/",
+    "性能优化": "/zh/_generated/tags/性能优化/",
+    "架构演进": "/zh/_generated/tags/架构演进/",
+    "案例分析": "/zh/_generated/tags/案例分析/",
+    "告警处理": "/zh/_generated/tags/告警处理/",
+    "故障排查": "/zh/_generated/tags/故障排查/",
+    "项目治理": "/zh/_generated/tags/项目治理/",
+    "知识管理": "/zh/_generated/tags/知识管理/",
+    "自动化运维": "/zh/_generated/tags/自动化运维/",
+    "ai管线": "/zh/_generated/tags/ai管线/",
+    "冒烟测试": "/zh/_generated/tags/冒烟测试/",
+    "运行时切换": "/zh/_generated/tags/运行时切换/",
+    "遥测": "/zh/_generated/tags/遥测/",
+    "指标治理": "/zh/_generated/tags/指标治理/",
+    "运维看板": "/zh/_generated/tags/运维看板/",
+    "写作流程": "/zh/_generated/tags/写作流程/",
+    "发布管线": "/zh/_generated/tags/发布管线/",
+    "质量守门": "/zh/_generated/tags/质量守门/"
   }
 }

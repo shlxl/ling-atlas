@@ -64,7 +64,7 @@ codex run dev
 ```bash
 codex run publish --message "update: 新增文章 <title>"
 ```
-行为：`tags:normalize` → `precheck` → `gen` → `build` → `git commit & push`。
+行为：`tags:normalize` → `precheck` → `ai:prepare` → `ai:smoke` → `gen` → `build`（内部再次串联 AI 守门）→ `git commit & push`。
 
 ### 导航 / 标签 / SEO Playbook
 
@@ -93,7 +93,10 @@ codex run audit   # 可选
 npm run stats:lint
 npm run ai:prepare
 npm run ai:smoke
+node --test tests/pagegen/plugin-example.integration.test.mjs
 ```
+
+> 提示：`codex run build` 与 `codex run publish` 会自动执行 `npm run ai:prepare` / `npm run ai:smoke`，保证本地与 CI 的模型守门一致。
 
 ---
 
@@ -163,14 +166,18 @@ npm run ai:smoke
 - ✅ **局部重建实验完成**：`scripts/pagegen/sync.mjs`、`scripts/pagegen/collect.mjs` 与 orchestrator 串联 Git 快照与缓存命中信息，默认增量流程已在多语言目录验证通过，并补齐运行指引。
 - ✅ **指标时间序列基线已建立**：`node scripts/telemetry-merge.mjs` 会把最新阶段指标写入 `data/telemetry.json` 并带时间戳，README/路线图同步记录导出步骤，形成可追溯快照。
 - ✅ **AI 产出质量评测蓝本到位**：基准集整理于 `data/gold.jsonl`，`npm run ai:smoke` 在 placeholder 运行时会读取并输出跳过日志，评测指标方案写入规划文档供后续接入。
+- ✅ **AI 遥测与生命周期守门合流**：`scripts/telemetry-merge.mjs` 现输出带版本的 `build.ai` 摘要节点，`codex run publish` / `npm run build` 默认串联 `ai:prepare` → `ai:smoke`，失败会在 manifest 中记录降级原因。
+- ✅ **Pagegen 调度插件化落地**：调度器支持阶段并行覆盖（`--parallel-stage feeds=4` / `PAGEGEN_PARALLEL_STAGES`），`--plugin` / `PAGEGEN_PLUGINS` 可注入自定义阶段，`--no-plugins` 与 `--ignore-plugin-errors` 提供回退；metrics 额外写出 `scheduler` 与 `plugins` 摘要。
 - 📌 **下一阶段重点**：
-  1. 扩充 AI 构建脚本的遥测事件（`ai.embed.*`/`ai.summary.*`/`ai.qa.*`），在 `scripts/telemetry-merge.mjs` 汇总为 `build.ai`，并补上对应集成测试。
-  2. 将 `pagegen` orchestrator 插件化并引入可配置并行调度，提供回退 flag 并更新规划文档的阶段契约。
-  3. 落地模型生命周期管理：实现 `scripts/ai/prepare.mjs`、`scripts/ai/smoke.mjs`，在本地与 CI 加入 `ai:prepare`/`ai:smoke` 守门。
-  4. 继续梳理多代理协作手册，补充 feeds/SEO/AI 新配置的运维与回滚示例，保持 README 与 `docs/zh/plans/` 同步。
+  1. 将 scheduler / AI 指标接入站点 Telemetry 页面，补齐可视化与阈值告警脚本。
+  2. 产出官方 Pagegen 插件示例与端到端用例，完善 `--plugin` 协议与回滚测试夹具。
+  3. 扩展 `ai:smoke` 结果写入 telemetry，生成结构化失败清单并与 `build.ai` 打通。
+  4. 更新协作手册与 README，汇总并发覆盖、插件加载与 AI 守门的运维/回退案例。
+- **执行顺序建议**：先完成 1（先补齐可观测面板再推进依赖任务）→ 3（把冒烟结果接入 telemetry 与降级链路）→ 2（在指标到位后补强插件示例与测试）→ 4（功能稳定后统一文档与运维手册）。
 - ✅ **导航配置引用守门**：`scripts/validate-nav-config.mjs` 与 `scripts/pagegen.locales.mjs` 现会校验 `aggregates`、`sections`、`links` 的引用关系，运行前即可捕获缺失键，Pagegen orchestrator 中的 nav manifest 也会提示未映射的聚合键。
 - ✅ **导航与 i18n 预检显式化**：i18n registry 与导航配置加载过程会在 manifestKey/slug 缺失时即时抛错，`normalizeAggregates` 等关键路径同步补强定位信息，对应单测已覆盖误删/拼写错误场景。
-- ✅ **Pagegen 指标可观测性**：collect 阶段输出缓存命中率、解析错误摘要；feeds 阶段记录各语言 RSS/Sitemap 数量并写入 metrics JSON，CLI/Telemetry 同步展示缓存命中与写入跳过统计，dry-run/CI 可直接观察。
+- ✅ **Pagegen 指标可观测性**：collect 阶段输出缓存命中率、解析错误摘要；feeds 阶段记录各语言 RSS/Sitemap 数量并写入 metrics JSON，CLI/Telemetry 同步展示缓存命中与写入跳过统计，并新增 `scheduler` / `plugins` 摘要可追踪并发设置与插件状态，dry-run/CI 可直接观察。
+- ✅ **插件示例与测试**：`scripts/pagegen/plugins/example.mjs` 提供官方样例，`node --test tests/pagegen/plugin-example.integration.test.mjs` 校验插件可在独立目录写入调度摘要并正确捕获阶段/错误信息。
 - ✅ **失败场景补测**：新增 `tests/pagegen/collections.failures.test.mjs` 与 feeds 写入失败用例，确保文件系统异常会被抛出并纳入守门。
 - 🔁 **结果同步机制**：所有阶段性结论将同步回本文件与 `docs/zh/plans/pagegen-refactor-roadmap.md`，保持多代理协同一致性。
 - ✅ **Landing 入口 root 兼容**：`docs/index.md` 的预渲染脚本会写入 `__LING_ATLAS_ACTIVE_BASE__` 并在 Vue hydration 期间复用，确保 Lighthouse/本地 root 服务下的 locale 重定向保持一致；前端会通过 `docs/.vitepress/theme/base.mjs` 统一读取与缓存该 BASE，Locale Toggle、导航 manifest 与 Telemetry 资产加载均复用同一逻辑。如需调整入口，请同步更新内联脚本、`base.mjs` 与 `<script setup>` 内的调用。

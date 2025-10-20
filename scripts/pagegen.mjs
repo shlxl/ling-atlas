@@ -1,7 +1,7 @@
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import { performance } from 'node:perf_hooks'
-import { fileURLToPath } from 'url'
+import { fileURLToPath, pathToFileURL } from 'url'
 import {
   DOCS_DIR as DOCS,
   GENERATED_ROOT as GEN,
@@ -43,7 +43,139 @@ await (async () => {
   await fs.mkdir(PUBLIC_DIR, { recursive: true })
 
   const LOCALE_CONFIG = LANGUAGES
-  const argv = process.argv.slice(2)
+  const rawArgv = process.argv.slice(2)
+  const argv = rawArgv.slice()
+  const overrideWarnings = []
+  const pluginWarnings = []
+
+  function parseStageParallelOverrides(args) {
+    const overrides = {}
+    const warnings = []
+
+    function applySpec(spec, source) {
+      if (!spec) return
+      const entries = String(spec)
+        .split(',')
+        .map(item => item.trim())
+        .filter(Boolean)
+      for (const entry of entries) {
+        const [rawStage, rawValue] = entry.split('=')
+        const stageKey = (rawStage || '').trim().toLowerCase()
+        if (!stageKey) continue
+        const valueRaw = rawValue === undefined ? '' : rawValue.trim().toLowerCase()
+        if (valueRaw === '' || valueRaw === 'on' || valueRaw === 'enable' || valueRaw === 'enabled' || valueRaw === 'true' || valueRaw === '1') {
+          overrides[stageKey] = { enabled: true }
+          continue
+        }
+        if (valueRaw === 'off' || valueRaw === 'disable' || valueRaw === 'disabled' || valueRaw === 'false' || valueRaw === '0') {
+          overrides[stageKey] = { enabled: false }
+          continue
+        }
+        if (valueRaw === 'default' || valueRaw === 'reset') {
+          delete overrides[stageKey]
+          continue
+        }
+        const numeric = Number(valueRaw)
+        if (Number.isFinite(numeric) && numeric > 0) {
+          overrides[stageKey] = { enabled: true, limit: Math.floor(numeric) }
+        } else {
+          warnings.push({ source, value: entry })
+        }
+      }
+    }
+
+    const envSpec = process.env.PAGEGEN_PARALLEL_STAGES
+    if (envSpec) {
+      applySpec(envSpec, 'env:PAGEGEN_PARALLEL_STAGES')
+    }
+
+    let index
+    while ((index = args.indexOf('--parallel-stage')) !== -1) {
+      const spec = args[index + 1]
+      if (!spec) {
+        console.error('pagegen: --parallel-stage requires a value (e.g. feeds=2,collect=off)')
+        process.exit(1)
+      }
+      applySpec(spec, 'cli:--parallel-stage')
+      args.splice(index, 2)
+    }
+
+    return { overrides, warnings }
+  }
+
+  function parsePluginSpecifiers(args) {
+    const specifiers = new Set()
+    const warnings = []
+    let disabled = process.env.PAGEGEN_DISABLE_PLUGINS === '1'
+    let ignoreErrors = process.env.PAGEGEN_IGNORE_PLUGIN_ERRORS === '1'
+
+    function applySpec(spec, source) {
+      if (!spec) return
+      const entries = String(spec)
+        .split(',')
+        .map(item => item.trim())
+        .filter(Boolean)
+      for (const entry of entries) {
+        if (!entry) continue
+        specifiers.add(entry)
+      }
+    }
+
+    const envPlugins = process.env.PAGEGEN_PLUGINS
+    if (envPlugins) {
+      applySpec(envPlugins, 'env:PAGEGEN_PLUGINS')
+    }
+
+    let idx
+    while ((idx = args.indexOf('--plugin')) !== -1) {
+      const spec = args[idx + 1]
+      if (!spec) {
+        console.error('pagegen: --plugin requires a module specifier')
+        process.exit(1)
+      }
+      applySpec(spec, 'cli:--plugin')
+      args.splice(idx, 2)
+    }
+
+    while ((idx = args.indexOf('--plugins')) !== -1) {
+      const spec = args[idx + 1]
+      if (!spec) {
+        console.error('pagegen: --plugins requires a comma-separated list of modules')
+        process.exit(1)
+      }
+      applySpec(spec, 'cli:--plugins')
+      args.splice(idx, 2)
+    }
+
+    while ((idx = args.indexOf('--no-plugins')) !== -1) {
+      disabled = true
+      args.splice(idx, 1)
+    }
+
+    while ((idx = args.indexOf('--ignore-plugin-errors')) !== -1) {
+      ignoreErrors = true
+      args.splice(idx, 1)
+    }
+
+    if (disabled) {
+      return { specifiers: [], warnings, disabled, ignoreErrors }
+    }
+
+    return { specifiers: Array.from(specifiers), warnings, disabled: false, ignoreErrors }
+  }
+
+  const { overrides: stageParallelOverrides, warnings: stageOverrideWarnings } = parseStageParallelOverrides(argv)
+  overrideWarnings.push(...stageOverrideWarnings)
+
+  const {
+    specifiers: pluginSpecifiers,
+    warnings: pluginSpecifierWarnings,
+    disabled: pluginsDisabled,
+    ignoreErrors: ignorePluginErrors
+  } = parsePluginSpecifiers(argv)
+  if (pluginsDisabled && pluginSpecifiers.length > 0) {
+    pluginWarnings.push({ source: 'config', message: 'plugins disabled via flag; specified modules ignored' })
+  }
   const dryRunFlagIndex = argv.indexOf('--dry-run')
   const dryRunEnv = process.env.PAGEGEN_DRY_RUN === '1'
   const dryRun = dryRunFlagIndex !== -1 || dryRunEnv
@@ -151,6 +283,19 @@ await (async () => {
     }
   }
 
+  for (const warning of overrideWarnings) {
+    const source = warning?.source || 'config'
+    const value = warning?.value || 'unknown'
+    logStageWarning('parallel-overrides', { locale: 'all', target: source }, `ignored override "${value}"`)
+  }
+
+  for (const warning of pluginWarnings) {
+    if (!warning) continue
+    const source = warning?.source || 'config'
+    const message = warning?.message || 'plugin configuration warning'
+    logStageWarning('plugins', { locale: 'all', target: source }, message)
+  }
+
   function recordStage(name, durationMs) {
     stageTimings.push({ name, durationMs })
     logInfo(`[pagegen] ${name} ${durationMs.toFixed(1)}ms`)
@@ -218,7 +363,30 @@ await (async () => {
 
   const parallelEnabled = !parallelDisabled && maxParallel > 1
   const pluginRegistry = createPluginRegistry()
-  const scheduler = createScheduler(pluginRegistry, { parallel: parallelEnabled, parallelLimit: maxParallel })
+  const scheduler = createScheduler(pluginRegistry, {
+    parallel: parallelEnabled,
+    parallelLimit: maxParallel,
+    stageOverrides: stageParallelOverrides
+  })
+  const pluginLoadResults = []
+
+  if (!metricsOnly) {
+    logInfo(
+      `[pagegen] scheduler parallel=${parallelEnabled ? 'on' : 'off'} maxParallel=${parallelEnabled ? maxParallel : 1}`
+    )
+    const overrideEntries = Object.entries(stageParallelOverrides || {})
+    if (overrideEntries.length > 0) {
+      const formatted = overrideEntries.map(([stage, settings]) => {
+        if (settings?.enabled === false) return `${stage}=off`
+        if (Number.isFinite(settings?.limit) && settings.limit > 0) return `${stage}=${settings.limit}`
+        return `${stage}=on`
+      })
+      logInfo(`[pagegen] stage parallel overrides: ${formatted.join(', ')}`)
+    }
+    if (!pluginsDisabled && pluginSpecifiers.length > 0) {
+      logInfo(`[pagegen] plugins requested: ${pluginSpecifiers.join(', ')}`)
+    }
+  }
 
   pluginRegistry.on(lifecycleEvents.ERROR, payload => {
     const error = payload?.error
@@ -486,11 +654,70 @@ await (async () => {
     }
   })
 
+  if (!pluginsDisabled && pluginSpecifiers.length > 0) {
+    const pluginContext = {
+      registry: pluginRegistry,
+      env: process.env,
+      schedulerOptions: {
+        parallelEnabled,
+        parallelLimit: parallelEnabled ? maxParallel : 1,
+        stageOverrides: stageParallelOverrides
+      },
+      dryRun: effectiveDryRun,
+      metricsOnly
+    }
+    const loadedPlugins = await loadPagegenPlugins(pluginSpecifiers, pluginContext, {
+      ignoreErrors: ignorePluginErrors,
+      baseDir: process.cwd()
+    })
+    pluginLoadResults.push(...loadedPlugins)
+  }
+
+  if (pluginLoadResults.length > 0) {
+    const loaded = pluginLoadResults
+      .filter(result => result.status === 'loaded')
+      .map(result => result.specifier)
+    if (loaded.length > 0 && !metricsOnly) {
+      logInfo(`[pagegen] plugins loaded: ${loaded.join(', ')}`)
+    }
+    for (const result of pluginLoadResults) {
+      if (result.status === 'failed') {
+        logStageWarning('plugins', { locale: 'all', target: result.specifier }, `failed to load: ${result.error}`)
+      } else if (result.status === 'ignored') {
+        logStageWarning('plugins', { locale: 'all', target: result.specifier }, result.reason || 'module ignored')
+      }
+    }
+  }
+
   await scheduler.run({})
 
   const totalDuration = flushStageSummary()
 
   logInfo('✔ pagegen 完成')
+
+  const schedulerSummary = {
+    parallelEnabled,
+    requestedParallelLimit: maxParallel,
+    effectiveParallelLimit: parallelEnabled ? maxParallel : 1,
+    stageOverrides: Object.fromEntries(
+      Object.entries(stageParallelOverrides || {}).map(([stage, settings]) => [stage, {
+        enabled: settings?.enabled === false ? false : true,
+        limit: Number.isFinite(settings?.limit) && settings.limit > 0 ? Math.floor(settings.limit) : null
+      }])
+    )
+  }
+
+  const pluginMetrics = {
+    requested: pluginSpecifiers,
+    disabled: pluginsDisabled,
+    ignoreErrors: ignorePluginErrors,
+    results: pluginLoadResults.map(result => ({
+      specifier: result.specifier,
+      status: result.status,
+      error: result.error || null,
+      reason: result.reason || null
+    }))
+  }
 
   const metricsEntry = buildMetricsEntry({
     totalDuration,
@@ -499,7 +726,9 @@ await (async () => {
     collectMetrics,
     writeResults,
     feedMetrics,
-    navMetrics
+    navMetrics,
+    scheduler: schedulerSummary,
+    plugins: pluginMetrics
   })
 
   if (!metricsOnly) {
@@ -615,6 +844,64 @@ async function writeNavManifests(entries, currentWriter) {
   }
 }
 
+async function loadPagegenPlugins(specifiers, context, options = {}) {
+  if (!Array.isArray(specifiers) || specifiers.length === 0) return []
+  const results = []
+  const ignoreErrors = options?.ignoreErrors === true
+  const baseDir = options?.baseDir || process.cwd()
+
+  for (const specifier of specifiers) {
+    const entry = { specifier, status: 'pending' }
+    try {
+      const resolved = resolvePluginSpecifier(specifier, baseDir)
+      const module = await import(resolved)
+      const handler = typeof module?.register === 'function'
+        ? module.register
+        : typeof module?.default === 'function'
+          ? module.default
+          : null
+
+      if (typeof handler !== 'function') {
+        entry.status = 'ignored'
+        entry.reason = 'missing register/default export'
+        results.push(entry)
+        continue
+      }
+
+      await handler({
+        registry: context.registry,
+        env: context.env,
+        scheduler: context.schedulerOptions,
+        dryRun: context.dryRun,
+        metricsOnly: context.metricsOnly
+      })
+
+      entry.status = 'loaded'
+      results.push(entry)
+    } catch (error) {
+      entry.status = 'failed'
+      entry.error = error?.message || String(error)
+      results.push(entry)
+      if (!ignoreErrors) {
+        throw Object.assign(new Error(`pagegen plugin load failed for ${specifier}: ${entry.error}`), { cause: error })
+      }
+    }
+  }
+
+  return results
+}
+
+function resolvePluginSpecifier(specifier, baseDir) {
+  if (!specifier) return null
+  if (specifier.startsWith('file:')) return specifier
+  const winDrivePattern = /^[a-zA-Z]:[\\/]/
+  if (specifier.startsWith('.') || specifier.startsWith('/') || winDrivePattern.test(specifier)) {
+    const absolute = path.isAbsolute(specifier) ? specifier : path.resolve(baseDir, specifier)
+    return pathToFileURL(absolute).href
+  }
+  return specifier
+}
+
 async function loadTagAlias(baseDir) {
   try {
     const raw = await fs.readFile(path.join(baseDir, '..', 'schema', 'tag-alias.json'), 'utf8')
@@ -631,7 +918,9 @@ function buildMetricsEntry({
   collectMetrics,
   writeResults,
   feedMetrics: feeds,
-  navMetrics
+  navMetrics,
+  scheduler,
+  plugins
 }) {
   const stages = stageTimings.map(item => ({
     name: item.name,
@@ -647,7 +936,9 @@ function buildMetricsEntry({
     collect: summarizeCollectMetrics(collectMetrics),
     feeds: summarizeFeedMetrics(feeds),
     nav: summarizeNavMetrics(navMetrics),
-    write: summarizeWriteResults(writeResults)
+    write: summarizeWriteResults(writeResults),
+    scheduler: summarizeScheduler(scheduler),
+    plugins: summarizePluginMetrics(plugins)
   }
 }
 
@@ -720,6 +1011,47 @@ function summarizeCollectMetrics(metrics = {}) {
   })
 
   return { summary, locales }
+}
+
+function summarizeScheduler(scheduler = {}) {
+  const stageOverrides = scheduler?.stageOverrides && typeof scheduler.stageOverrides === 'object'
+    ? Object.fromEntries(
+        Object.entries(scheduler.stageOverrides).map(([stage, config]) => [stage, {
+          enabled: config?.enabled === false ? false : true,
+          limit: Number.isFinite(config?.limit) && config.limit > 0 ? Math.floor(config.limit) : null
+        }])
+      )
+    : {}
+
+  return {
+    parallelEnabled: Boolean(scheduler?.parallelEnabled),
+    requestedParallelLimit: Number.isFinite(scheduler?.requestedParallelLimit)
+      ? Number(scheduler.requestedParallelLimit)
+      : 1,
+    effectiveParallelLimit: Number.isFinite(scheduler?.effectiveParallelLimit)
+      ? Number(scheduler.effectiveParallelLimit)
+      : 1,
+    stageOverrides
+  }
+}
+
+function summarizePluginMetrics(plugins = {}) {
+  const requested = Array.isArray(plugins?.requested) ? [...plugins.requested] : []
+  const results = Array.isArray(plugins?.results)
+    ? plugins.results.map(item => ({
+        specifier: item?.specifier,
+        status: item?.status,
+        error: item?.error || null,
+        reason: item?.reason || null
+      }))
+    : []
+
+  return {
+    requested,
+    disabled: Boolean(plugins?.disabled),
+    ignoreErrors: Boolean(plugins?.ignoreErrors),
+    results
+  }
 }
 
 function summarizeFeedMetrics(metrics = []) {

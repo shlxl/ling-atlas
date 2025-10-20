@@ -3,12 +3,131 @@ import path from 'node:path'
 
 const TOP_LIMIT = 100
 
+export const AI_TELEMETRY_SCHEMA_VERSION = '2024-11-01'
+
+const AI_DOMAINS = ['embed', 'summary', 'qa']
+
+const AI_EVENT_SCHEMA = {
+  start: {
+    required: ['timestamp', 'inputCount'],
+    numeric: ['inputCount', 'localeCount'],
+    boolean: [],
+    optional: ['preferredLocale', 'locale', 'localeCount', 'requestedAdapter']
+  },
+  'adapter.resolved': {
+    required: ['timestamp', 'adapter'],
+    numeric: [],
+    boolean: ['fallback'],
+    optional: ['requested', 'model', 'reason', 'fallback']
+  },
+  'adapter.error': {
+    required: ['timestamp', 'adapter', 'message'],
+    numeric: [],
+    boolean: [],
+    optional: ['model']
+  },
+  batch: {
+    required: ['timestamp', 'durationMs', 'inputCount', 'outputCount', 'successRate', 'adapter', 'fallback', 'retries'],
+    numeric: ['durationMs', 'inputCount', 'outputCount', 'successRate', 'retries'],
+    boolean: ['fallback'],
+    optional: ['index', 'model']
+  },
+  write: {
+    required: ['timestamp', 'target', 'bytes', 'durationMs', 'items'],
+    numeric: ['bytes', 'durationMs', 'items'],
+    boolean: ['cacheReuse'],
+    optional: ['cacheReuse']
+  },
+  complete: {
+    required: ['timestamp', 'adapter', 'fallback', 'totalMs', 'inferenceMs', 'writeMs', 'batchCount', 'inputCount', 'outputCount', 'successRate', 'target'],
+    numeric: ['totalMs', 'inferenceMs', 'writeMs', 'batchCount', 'inputCount', 'outputCount', 'successRate', 'count', 'retries', 'bytes'],
+    boolean: ['fallback', 'cacheReuse'],
+    optional: ['model', 'cacheReuse', 'count', 'retries', 'bytes']
+  }
+}
+
+function extractAIEventType(eventName) {
+  if (typeof eventName !== 'string') return null
+  const segments = eventName.split('.')
+  if (segments.length < 3) return null
+  return segments.slice(2).join('.')
+}
+
+function isValidTimestamp(value) {
+  if (typeof value !== 'string') return false
+  const time = Date.parse(value)
+  return Number.isFinite(time)
+}
+
+function coerceNumber(value) {
+  const num = Number(value)
+  return Number.isFinite(num) ? num : null
+}
+
+function validateAIEvent(domain, event, logger) {
+  if (!event || typeof event !== 'object') {
+    logger?.warn?.('[telemetry] skip invalid ai event: non-object payload')
+    return false
+  }
+
+  const eventName = event.event
+  if (typeof eventName !== 'string') {
+    logger?.warn?.('[telemetry] skip invalid ai event: missing event name')
+    return false
+  }
+
+  const eventDomain = eventName.split('.')[1]
+  if (eventDomain !== domain) {
+    logger?.warn?.(`[telemetry] skip ai event with mismatched domain "${eventDomain}" for ${domain}`)
+    return false
+  }
+
+  const eventType = extractAIEventType(eventName)
+  if (!eventType || !Object.prototype.hasOwnProperty.call(AI_EVENT_SCHEMA, eventType)) {
+    logger?.warn?.(`[telemetry] skip ai event "${eventName}": unsupported event type`)
+    return false
+  }
+
+  const schema = AI_EVENT_SCHEMA[eventType]
+  if (!isValidTimestamp(event.timestamp)) {
+    logger?.warn?.(`[telemetry] skip ai event "${eventName}": invalid timestamp`)
+    return false
+  }
+
+  const missingFields = (schema.required || []).filter(field => event[field] === undefined)
+  if (missingFields.length > 0) {
+    logger?.warn?.(
+      `[telemetry] skip ai event "${eventName}": missing required field(s) ${missingFields.join(', ')}`
+    )
+    return false
+  }
+
+  for (const field of schema.numeric || []) {
+    if (event[field] === undefined) continue
+    const coerced = coerceNumber(event[field])
+    if (coerced === null) {
+      logger?.warn?.(
+        `[telemetry] skip ai event "${eventName}": field "${field}" should be numeric`
+      )
+      return false
+    }
+    event[field] = coerced
+  }
+
+  for (const field of schema.boolean || []) {
+    if (event[field] === undefined) continue
+    event[field] = Boolean(event[field])
+  }
+
+  return true
+}
+
 function defaultState() {
   return {
     updatedAt: new Date(0).toISOString(),
     pv: { total: 0, pathsTop: [] },
     search: { queriesTop: [], clicksTop: [] },
-    build: { pagegen: null, ai: { embed: null, summary: null, qa: null } },
+    build: { pagegen: null, ai: normalizeAIState({}) },
     _internal: {
       paths: {},
       queries: {}, // hash -> { count, lenSum }
@@ -118,6 +237,82 @@ function detectDomainFromEvents(events = []) {
   return null
 }
 
+function sanitizeSmokeSummary(manifestSummary = {}, manifest = {}) {
+  if (!manifestSummary || typeof manifestSummary !== 'object') return null
+  const failures = Array.isArray(manifestSummary.failures)
+    ? manifestSummary.failures.map(entry => ({
+        id: entry?.id ?? entry?.modelId ?? null,
+        reason: entry?.reason ?? null
+      }))
+    : []
+  return {
+    status: manifestSummary.status ?? 'unknown',
+    runtime: manifestSummary.runtime ?? manifest.runtime ?? null,
+    executed: Number(manifestSummary.executed ?? 0),
+    skipped: Number(manifestSummary.skipped ?? 0),
+    failed: Number(manifestSummary.failed ?? 0),
+    verifiedAt: manifestSummary.verifiedAt ?? null,
+    reason: manifestSummary.reason ?? null,
+    failures
+  }
+}
+
+function sanitizeModelEntries(models = []) {
+  if (!Array.isArray(models)) return []
+  return models.map(model => ({
+    id: model?.id ?? null,
+    name: model?.name ?? null,
+    tasks: Array.isArray(model?.tasks) ? model.tasks : [],
+    smoke: model?.smoke
+      ? {
+          status: model.smoke.status ?? 'unknown',
+          reason: model.smoke.reason ?? null,
+          verifiedAt: model.smoke.verifiedAt ?? null
+        }
+      : null,
+    cache: model?.cache
+      ? {
+          status: model.cache.status ?? null,
+          scope: model.cache.location?.scope ?? null
+        }
+      : null
+  }))
+}
+
+async function loadModelSmokeSummary(root, logger) {
+  const manifestPath = path.join(root, 'data', 'models.json')
+  let raw
+  try {
+    raw = await fs.readFile(manifestPath, 'utf8')
+  } catch (error) {
+    if (error && (error.code === 'ENOENT' || error.code === 'ENOTDIR')) {
+      return null
+    }
+    throw error
+  }
+
+  if (!raw) return null
+
+  let manifest
+  try {
+    manifest = JSON.parse(raw)
+  } catch (error) {
+    logger?.warn?.('[telemetry] skip invalid models manifest:', error?.message || error)
+    return null
+  }
+
+  const summary = sanitizeSmokeSummary(manifest?.smoke, manifest)
+  const models = sanitizeModelEntries(manifest?.models)
+
+  return {
+    summary,
+    models,
+    runtime: manifest?.runtime ?? null,
+    fallback: manifest?.fallback ?? null,
+    generatedAt: manifest?.generatedAt ?? null
+  }
+}
+
 async function collectAIEvents({ root, logger }) {
   const dir = resolveAIEventsDir(root)
   let entries
@@ -159,8 +354,17 @@ async function collectAIEvents({ root, logger }) {
       continue
     }
 
+    const validEvents = events.filter(evt => validateAIEvent(domain, evt, logger))
+    if (!validEvents.length) {
+      logger?.warn?.(
+        `[telemetry] skip ai event file ${entry.name}: no events passed schema validation`
+      )
+      processedFiles.push(filePath)
+      continue
+    }
+
     const list = grouped.get(domain) || []
-    list.push(...events)
+    list.push(...validEvents)
     grouped.set(domain, list)
     processedFiles.push(filePath)
   }
@@ -179,11 +383,31 @@ function computeSuccessRate(outputCount, inputCount) {
   return Number.isFinite(rate) ? Number(rate.toFixed(4)) : 0
 }
 
+function normalizeAIOverview(overview) {
+  const summary = overview?.summary || {}
+  return {
+    schemaVersion: overview?.schemaVersion ?? AI_TELEMETRY_SCHEMA_VERSION,
+    updatedAt: overview?.updatedAt ?? null,
+    status: overview?.status ?? 'unknown',
+    summary: {
+      ok: summary.ok ?? 0,
+      fallback: summary.fallback ?? 0,
+      empty: summary.empty ?? 0,
+      missing: summary.missing ?? 0,
+      overall: summary.overall ?? overview?.status ?? 'unknown'
+    },
+    domains: overview?.domains && typeof overview.domains === 'object' ? { ...overview.domains } : {}
+  }
+}
+
 function normalizeAIState(existing = {}) {
   return {
+    schemaVersion: AI_TELEMETRY_SCHEMA_VERSION,
     embed: existing?.embed ?? null,
     summary: existing?.summary ?? null,
-    qa: existing?.qa ?? null
+    qa: existing?.qa ?? null,
+    overview: normalizeAIOverview(existing?.overview),
+    smoke: existing?.smoke ?? null
   }
 }
 
@@ -224,9 +448,10 @@ function summarizeAIDomain(domain, events = []) {
   const batchTotalMs = inferenceTotalMs
   const batchAvgMs = batchCount > 0 ? Number((batchTotalMs / batchCount).toFixed(2)) : 0
 
-  const successRate = Number(
+  const rawSuccessRate = Number(
     complete?.successRate ?? computeSuccessRate(outputCount, inputCount)
   )
+  const successRate = Math.min(Math.max(rawSuccessRate, 0), 1)
 
   const timestamp = complete?.timestamp || write?.timestamp || start?.timestamp || new Date().toISOString()
   const totalMs = Number(
@@ -261,6 +486,7 @@ function summarizeAIDomain(domain, events = []) {
   )
 
   return {
+    schemaVersion: AI_TELEMETRY_SCHEMA_VERSION,
     timestamp,
     totalMs,
     adapter: adapterSummary,
@@ -286,7 +512,7 @@ function summarizeAIDomain(domain, events = []) {
 function mergeAIState(existing, grouped, logger) {
   const normalized = normalizeAIState(existing)
   for (const [domain, events] of grouped.entries()) {
-    if (!['embed', 'summary', 'qa'].includes(domain)) {
+    if (!AI_DOMAINS.includes(domain)) {
       logger?.warn?.(`[telemetry] skip ai domain ${domain}`)
       continue
     }
@@ -296,6 +522,130 @@ function mergeAIState(existing, grouped, logger) {
     }
   }
   return normalized
+}
+
+function computeDomainOverview(summary) {
+  if (!summary) {
+    return {
+      status: 'missing',
+      lastRunAt: null,
+      adapter: null,
+      outputCount: 0,
+      successRate: null,
+      cacheReuse: false,
+      totalMs: null,
+      inputCount: null,
+      retries: null,
+      batches: null
+    }
+  }
+
+  const fallback = Boolean(summary.adapter?.fallback)
+  const outputCount = Number(summary.inference?.outputCount ?? summary.write?.items ?? 0)
+  let status = 'ok'
+  if (fallback) {
+    status = 'fallback'
+  } else if (!Number.isFinite(outputCount) || outputCount <= 0) {
+    status = 'empty'
+  }
+
+  return {
+    status,
+    lastRunAt: summary.timestamp || null,
+    adapter: summary.adapter || null,
+    outputCount,
+    successRate: summary.inference?.successRate ?? null,
+    cacheReuse: summary.cache?.reused ?? Boolean(summary.write?.cacheReuse),
+    totalMs: summary.totalMs ?? null,
+    inputCount: summary.inference?.inputCount ?? null,
+    retries: summary.inference?.retries ?? null,
+    batches: summary.inference?.batches ?? null
+  }
+}
+
+function resolveOverallStatus(counts) {
+  if ((counts.ok ?? 0) === 0 && (counts.fallback ?? 0) === 0 && (counts.empty ?? 0) === 0) {
+    return 'missing'
+  }
+  if ((counts.fallback ?? 0) > 0 || (counts.empty ?? 0) > 0) {
+    return 'degraded'
+  }
+  return 'ok'
+}
+
+function updateAIOverview(state, options = {}) {
+  const normalized = normalizeAIState(state)
+  const smokeSummary = options?.smoke || null
+  const overview = {
+    schemaVersion: AI_TELEMETRY_SCHEMA_VERSION,
+    updatedAt: null,
+    status: 'unknown',
+    summary: { ok: 0, fallback: 0, empty: 0, missing: 0, overall: 'unknown' },
+    domains: {}
+  }
+
+  let latestTimestamp = null
+  for (const domain of AI_DOMAINS) {
+    const domainOverview = computeDomainOverview(normalized[domain])
+    overview.domains[domain] = domainOverview
+    overview.summary[domainOverview.status] = (overview.summary[domainOverview.status] || 0) + 1
+
+    const ts = domainOverview.lastRunAt
+    if (ts && (!latestTimestamp || new Date(ts) > new Date(latestTimestamp))) {
+      latestTimestamp = ts
+    }
+  }
+
+  overview.summary.overall = resolveOverallStatus(overview.summary)
+  overview.status = overview.summary.overall
+  overview.updatedAt = latestTimestamp
+
+  if (smokeSummary) {
+    const smokeStatus = smokeSummary.status ?? 'unknown'
+    overview.smoke = {
+      status: smokeStatus,
+      runtime: smokeSummary.runtime ?? null,
+      executed: Number(smokeSummary.executed ?? 0),
+      skipped: Number(smokeSummary.skipped ?? 0),
+      failed: Number(smokeSummary.failed ?? 0),
+      verifiedAt: smokeSummary.verifiedAt ?? null
+    }
+    if (smokeStatus === 'failed') {
+      overview.status = 'degraded'
+      overview.summary.overall = overview.status
+    }
+  }
+
+  normalized.overview = overview
+  normalized.schemaVersion = AI_TELEMETRY_SCHEMA_VERSION
+  return normalized
+}
+
+function logAIOverview(aiState, logger) {
+  if (!logger?.log) return
+  const overview = aiState?.overview
+  if (!overview) return
+  const summary = overview.summary || {}
+  logger.log(
+    `[telemetry] ai overview status=${overview.status} updated=${overview.updatedAt || 'n/a'} ok=${summary.ok ?? 0} fallback=${summary.fallback ?? 0} empty=${summary.empty ?? 0} missing=${summary.missing ?? 0}`
+  )
+  for (const domain of AI_DOMAINS) {
+    const info = overview.domains?.[domain]
+    if (!info) continue
+    const adapterName = info.adapter?.name || 'n/a'
+    const adapterModel = info.adapter?.model || null
+    const adapterDescriptor = adapterModel ? `${adapterName}(${adapterModel})` : adapterName
+    const fallback = info.adapter?.fallback ? 'yes' : 'no'
+    logger.log(
+      `[telemetry] ai.${domain} status=${info.status} adapter=${adapterDescriptor} fallback=${fallback} output=${info.outputCount ?? 0} successRate=${info.successRate ?? 0}`
+    )
+  }
+  const smokeSummary = aiState?.smoke?.summary || overview.smoke
+  if (smokeSummary) {
+    logger.log(
+      `[telemetry] ai smoke status=${smokeSummary.status ?? 'unknown'} failed=${smokeSummary.failed ?? 0} executed=${smokeSummary.executed ?? 0} skipped=${smokeSummary.skipped ?? 0}`
+    )
+  }
 }
 
 async function loadLatestPagegenSummary(root) {
@@ -319,6 +669,10 @@ async function loadLatestPagegenSummary(root) {
   if (!latest) return null
   const collectSummary = latest.collect?.summary || {}
   const writeSummary = latest.write?.summary || {}
+  const feedsSummary = latest.feeds || null
+  const navSummary = latest.nav || null
+  const schedulerSummary = latest.scheduler || null
+  const pluginsSummary = latest.plugins || null
   return {
     timestamp: latest.timestamp,
     totalMs: latest.totalMs,
@@ -341,7 +695,11 @@ async function loadLatestPagegenSummary(root) {
       hashMatches: writeSummary.hashMatches,
       disabled: writeSummary.disabled,
       skippedByReason: writeSummary.skippedByReason || {}
-    }
+    },
+    feeds: feedsSummary,
+    nav: navSummary,
+    scheduler: schedulerSummary,
+    plugins: pluginsSummary
   }
 }
 
@@ -351,22 +709,28 @@ export async function mergeTelemetry({ root = process.cwd(), logger = console } 
   const state = await loadJSON(paths.dataPath, defaultState())
 
   if (!state.build || typeof state.build !== 'object') {
-    state.build = { pagegen: null, ai: { embed: null, summary: null, qa: null } }
+    state.build = { pagegen: null, ai: normalizeAIState({}) }
   } else {
     if (!Object.prototype.hasOwnProperty.call(state.build, 'pagegen')) {
       state.build.pagegen = state.build.pagegen ?? null
     }
     if (!Object.prototype.hasOwnProperty.call(state.build, 'ai')) {
-      state.build.ai = { embed: null, summary: null, qa: null }
-    } else {
-      state.build.ai = normalizeAIState(state.build.ai)
+      state.build.ai = normalizeAIState({})
     }
   }
+
+  state.build.ai = normalizeAIState(state.build.ai)
 
   const aiGrouped = await collectAIEvents({ root, logger })
   if (aiGrouped.size > 0) {
     state.build.ai = mergeAIState(state.build.ai, aiGrouped, logger)
   }
+
+  const modelSmoke = await loadModelSmokeSummary(root, logger)
+
+  state.build.ai = updateAIOverview(state.build.ai, { smoke: modelSmoke?.summary })
+  state.build.ai.smoke = modelSmoke
+  logAIOverview(state.build.ai, logger)
 
   let tmp
   try {

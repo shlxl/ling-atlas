@@ -1,10 +1,198 @@
 {
   "updatedAt": "1970-01-01T00:00:00.000Z",
-  "pv": { "total": 0, "pathsTop": [] },
-  "search": { "queriesTop": [], "clicksTop": [] },
+  "pv": {
+    "total": 0,
+    "pathsTop": []
+  },
+  "search": {
+    "queriesTop": [],
+    "clicksTop": []
+  },
   "build": {
-    "pagegen": null,
-    "ai": { "embed": null, "summary": null, "qa": null }
+    "pagegen": {
+      "timestamp": "2025-10-20T05:43:28.193Z",
+      "totalMs": 30.95,
+      "collect": {
+        "locales": 2,
+        "cacheHitRate": 1,
+        "cacheHits": 8,
+        "cacheMisses": 0,
+        "cacheDisabledLocales": 0,
+        "parsedFiles": 0,
+        "totalFiles": 8,
+        "parseErrors": 0,
+        "errorEntries": 0
+      },
+      "write": {
+        "total": 37,
+        "written": 5,
+        "skipped": 32,
+        "failed": 0,
+        "hashMatches": 32,
+        "disabled": false,
+        "skippedByReason": {
+          "hash": 32
+        }
+      },
+      "feeds": {
+        "summary": {
+          "locales": 2,
+          "rssTotal": 8,
+          "rssLimitedLocales": 0,
+          "sitemapTotal": 8,
+          "emptyLocales": 1
+        },
+        "locales": [
+          {
+            "locale": "zh",
+            "rssCount": 8,
+            "rssLimited": false,
+            "sitemapCount": 8
+          },
+          {
+            "locale": "en",
+            "rssCount": 0,
+            "rssLimited": false,
+            "sitemapCount": 0
+          }
+        ]
+      },
+      "nav": {
+        "summary": {
+          "locales": 2,
+          "emptyLocales": 1,
+          "categoriesTotal": 2,
+          "seriesTotal": 1,
+          "tagsTotal": 24,
+          "archiveTotal": 1
+        },
+        "locales": [
+          {
+            "locale": "zh",
+            "categories": 2,
+            "series": 1,
+            "tags": 24,
+            "archive": 1
+          },
+          {
+            "locale": "en",
+            "categories": 0,
+            "series": 0,
+            "tags": 0,
+            "archive": 0
+          }
+        ]
+      },
+      "scheduler": {
+        "parallelEnabled": false,
+        "requestedParallelLimit": 1,
+        "effectiveParallelLimit": 1,
+        "stageOverrides": {}
+      },
+      "plugins": {
+        "requested": [],
+        "disabled": false,
+        "ignoreErrors": false,
+        "results": []
+      }
+    },
+    "ai": {
+      "schemaVersion": "2024-11-01",
+      "embed": null,
+      "summary": null,
+      "qa": null,
+      "overview": {
+        "schemaVersion": "2024-11-01",
+        "updatedAt": null,
+        "status": "missing",
+        "summary": {
+          "ok": 0,
+          "fallback": 0,
+          "empty": 0,
+          "missing": 3,
+          "overall": "missing"
+        },
+        "domains": {
+          "embed": {
+            "status": "missing",
+            "lastRunAt": null,
+            "adapter": null,
+            "outputCount": 0,
+            "successRate": null,
+            "cacheReuse": false,
+            "totalMs": null,
+            "inputCount": null,
+            "retries": null,
+            "batches": null
+          },
+          "summary": {
+            "status": "missing",
+            "lastRunAt": null,
+            "adapter": null,
+            "outputCount": 0,
+            "successRate": null,
+            "cacheReuse": false,
+            "totalMs": null,
+            "inputCount": null,
+            "retries": null,
+            "batches": null
+          },
+          "qa": {
+            "status": "missing",
+            "lastRunAt": null,
+            "adapter": null,
+            "outputCount": 0,
+            "successRate": null,
+            "cacheReuse": false,
+            "totalMs": null,
+            "inputCount": null,
+            "retries": null,
+            "batches": null
+          }
+        },
+        "smoke": {
+          "status": "skipped",
+          "runtime": "placeholder",
+          "executed": 0,
+          "skipped": 1,
+          "failed": 0,
+          "verifiedAt": "2025-10-20T05:43:27.956Z"
+        }
+      },
+      "smoke": {
+        "summary": {
+          "status": "skipped",
+          "runtime": "placeholder",
+          "executed": 0,
+          "skipped": 1,
+          "failed": 0,
+          "verifiedAt": "2025-10-20T05:43:27.956Z",
+          "reason": "Runtime set to placeholder; skipping inference checks.",
+          "failures": []
+        },
+        "models": [
+          {
+            "id": "placeholder-embed-linear",
+            "name": "Placeholder Embedding Linear Model",
+            "tasks": [
+              "embed"
+            ],
+            "smoke": {
+              "status": "skipped",
+              "reason": "Runtime set to placeholder; skipping inference checks.",
+              "verifiedAt": null
+            },
+            "cache": {
+              "status": "ready",
+              "scope": "local"
+            }
+          }
+        ],
+        "runtime": "placeholder",
+        "fallback": null,
+        "generatedAt": "2025-10-20T05:43:27.843Z"
+      }
+    }
   },
   "_internal": {
     "paths": {},
