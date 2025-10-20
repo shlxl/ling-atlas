@@ -17,6 +17,7 @@ excerpt: 手把手演示从新建文章、预检聚合、观测指标复核到�
 
 - 目录约定：`docs/<locale>/content/<slug>/index.md`
 - Frontmatter 最小集：
+
   ```yaml
   ---
   title: <标题>
@@ -30,6 +31,7 @@ excerpt: 手把手演示从新建文章、预检聚合、观测指标复核到�
   excerpt: <一句话摘要>
   ---
   ```
+
 - 预检命令：`npm run precheck`（Frontmatter/Schema/配置校验）。
 
 ## 2. 本地生成与预览
@@ -40,6 +42,7 @@ npm run dev                 # 启动预览服务器
 ```
 
 必要时使用：
+
 - `npm run gen -- --full-sync` 强制全量同步；
 - `npm run gen -- --no-cache` 观察 collect 真实解析；
 - `PAGEGEN_CONCURRENCY=8 npm run gen` 调整解析并发。
@@ -62,6 +65,7 @@ codex run publish --message "content: 新增 <标题>"
 流程拆解：`tags:normalize → precheck → ai:prepare → ai:smoke → gen → build → push`。
 
 回滚建议：
+
 - 发布后发现死链 → 修正文档或导航，重新 `publish`；
 - AI 冒烟不通过 → 切回 `AI_RUNTIME=placeholder`，再 `ai:prepare && ai:smoke`；
 - 构建异常 → 直接回退上一个 commit，再离线修复后重试。
@@ -74,4 +78,3 @@ codex run publish --message "content: 新增 <标题>"
   > Frontmatter 设 `status: draft` 即可避免进入聚合/RSS/Sitemap。
 - 如何批量改 slug？
   > 先修改内容目录与 Frontmatter，再 `--full-sync`，最后检查 `_generated` 与 `nav.manifest.*.json`。
-

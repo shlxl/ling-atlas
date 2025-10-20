@@ -22,26 +22,6 @@
         "year": "2025"
       },
       {
-        "title": "Ling Atlas 项目缘起与系统全貌",
-        "date": "2025-10-20",
-        "updated": "",
-        "status": "published",
-        "category": "管理与协作",
-        "category_slug": "管理与协作",
-        "series": "项目起航手记",
-        "series_slug": "project-kickoff",
-        "tags": [
-          "项目治理",
-          "知识管理",
-          "自动化运维"
-        ],
-        "slug": "project-overview",
-        "path": "/zh/content/project-overview/",
-        "excerpt": "全面梳理 Ling Atlas 的愿景、演进路线与当前落地能力，帮助后续贡献者快速理解“个人向量化知识库”的系统边界与协作模式。",
-        "relative": "project-overview",
-        "year": "2025"
-      },
-      {
         "title": "AI 管线占位与切换指南",
         "date": "2025-10-20",
         "updated": "",
@@ -59,6 +39,26 @@
         "path": "/zh/content/ai-runtime-guide/",
         "excerpt": "详细说明 Ling Atlas 在 placeholder 与真实模型之间切换的步骤、环境变量配置、冒烟守门与回滚策略，确保个人向量化知识库的构建过程安全可控。",
         "relative": "ai-runtime-guide",
+        "year": "2025"
+      },
+      {
+        "title": "Ling Atlas 项目缘起与系统全貌",
+        "date": "2025-10-20",
+        "updated": "",
+        "status": "published",
+        "category": "管理与协作",
+        "category_slug": "管理与协作",
+        "series": "项目起航手记",
+        "series_slug": "project-kickoff",
+        "tags": [
+          "项目治理",
+          "知识管理",
+          "自动化运维"
+        ],
+        "slug": "project-overview",
+        "path": "/zh/content/project-overview/",
+        "excerpt": "全面梳理 Ling Atlas 的愿景、演进路线与当前落地能力，帮助后续贡献者快速理解“个人向量化知识库”的系统边界与协作模式。",
+        "relative": "project-overview",
         "year": "2025"
       },
       {
@@ -208,6 +208,26 @@
         "year": "2025"
       },
       {
+        "title": "AI 管线占位与切换指南",
+        "date": "2025-10-20",
+        "updated": "",
+        "status": "published",
+        "category": "管理与协作",
+        "category_slug": "管理与协作",
+        "series": "项目起航手记",
+        "series_slug": "project-kickoff",
+        "tags": [
+          "AI管线",
+          "冒烟测试",
+          "运行时切换"
+        ],
+        "slug": "ai-runtime-guide",
+        "path": "/zh/content/ai-runtime-guide/",
+        "excerpt": "详细说明 Ling Atlas 在 placeholder 与真实模型之间切换的步骤、环境变量配置、冒烟守门与回滚策略，确保个人向量化知识库的构建过程安全可控。",
+        "relative": "ai-runtime-guide",
+        "year": "2025"
+      },
+      {
         "title": "Pagegen 重构回顾（含占位阶段）",
         "date": "2025-10-20",
         "updated": "",
@@ -225,26 +245,6 @@
         "path": "/zh/content/pagegen-retrospective/",
         "excerpt": "复盘 Pagegen 从单体脚本到模块化/并发/插件化的演进过程，记录收益、风险与仍需打磨的环节，并补充占位阶段的取舍与经验。",
         "relative": "pagegen-retrospective",
-        "year": "2025"
-      },
-      {
-        "title": "观测指标场景案例与排障实录",
-        "date": "2025-10-20",
-        "updated": "",
-        "status": "published",
-        "category": "工程笔记",
-        "category_slug": "工程笔记",
-        "series": "项目起航手记",
-        "series_slug": "project-kickoff",
-        "tags": [
-          "案例分析",
-          "告警处理",
-          "故障排查"
-        ],
-        "slug": "telemetry-cases",
-        "path": "/zh/content/telemetry-cases/",
-        "excerpt": "以真实场景为线索，逐步演示如何通过 Telemetry + CLI 日志定位 Pagegen 与 AI 管线告警，并给出可复现的修复步骤。",
-        "relative": "telemetry-cases",
         "year": "2025"
       },
       {
@@ -268,23 +268,23 @@
         "year": "2025"
       },
       {
-        "title": "AI 管线占位与切换指南",
+        "title": "观测指标场景案例与排障实录",
         "date": "2025-10-20",
         "updated": "",
         "status": "published",
-        "category": "管理与协作",
-        "category_slug": "管理与协作",
+        "category": "工程笔记",
+        "category_slug": "工程笔记",
         "series": "项目起航手记",
         "series_slug": "project-kickoff",
         "tags": [
-          "AI管线",
-          "冒烟测试",
-          "运行时切换"
+          "案例分析",
+          "告警处理",
+          "故障排查"
         ],
-        "slug": "ai-runtime-guide",
-        "path": "/zh/content/ai-runtime-guide/",
-        "excerpt": "详细说明 Ling Atlas 在 placeholder 与真实模型之间切换的步骤、环境变量配置、冒烟守门与回滚策略，确保个人向量化知识库的构建过程安全可控。",
-        "relative": "ai-runtime-guide",
+        "slug": "telemetry-cases",
+        "path": "/zh/content/telemetry-cases/",
+        "excerpt": "以真实场景为线索，逐步演示如何通过 Telemetry + CLI 日志定位 Pagegen 与 AI 管线告警，并给出可复现的修复步骤。",
+        "relative": "telemetry-cases",
         "year": "2025"
       },
       {
@@ -462,6 +462,72 @@
         "year": "2025"
       }
     ],
+    "AI管线": [
+      {
+        "title": "AI 管线占位与切换指南",
+        "date": "2025-10-20",
+        "updated": "",
+        "status": "published",
+        "category": "管理与协作",
+        "category_slug": "管理与协作",
+        "series": "项目起航手记",
+        "series_slug": "project-kickoff",
+        "tags": [
+          "AI管线",
+          "冒烟测试",
+          "运行时切换"
+        ],
+        "slug": "ai-runtime-guide",
+        "path": "/zh/content/ai-runtime-guide/",
+        "excerpt": "详细说明 Ling Atlas 在 placeholder 与真实模型之间切换的步骤、环境变量配置、冒烟守门与回滚策略，确保个人向量化知识库的构建过程安全可控。",
+        "relative": "ai-runtime-guide",
+        "year": "2025"
+      }
+    ],
+    "冒烟测试": [
+      {
+        "title": "AI 管线占位与切换指南",
+        "date": "2025-10-20",
+        "updated": "",
+        "status": "published",
+        "category": "管理与协作",
+        "category_slug": "管理与协作",
+        "series": "项目起航手记",
+        "series_slug": "project-kickoff",
+        "tags": [
+          "AI管线",
+          "冒烟测试",
+          "运行时切换"
+        ],
+        "slug": "ai-runtime-guide",
+        "path": "/zh/content/ai-runtime-guide/",
+        "excerpt": "详细说明 Ling Atlas 在 placeholder 与真实模型之间切换的步骤、环境变量配置、冒烟守门与回滚策略，确保个人向量化知识库的构建过程安全可控。",
+        "relative": "ai-runtime-guide",
+        "year": "2025"
+      }
+    ],
+    "运行时切换": [
+      {
+        "title": "AI 管线占位与切换指南",
+        "date": "2025-10-20",
+        "updated": "",
+        "status": "published",
+        "category": "管理与协作",
+        "category_slug": "管理与协作",
+        "series": "项目起航手记",
+        "series_slug": "project-kickoff",
+        "tags": [
+          "AI管线",
+          "冒烟测试",
+          "运行时切换"
+        ],
+        "slug": "ai-runtime-guide",
+        "path": "/zh/content/ai-runtime-guide/",
+        "excerpt": "详细说明 Ling Atlas 在 placeholder 与真实模型之间切换的步骤、环境变量配置、冒烟守门与回滚策略，确保个人向量化知识库的构建过程安全可控。",
+        "relative": "ai-runtime-guide",
+        "year": "2025"
+      }
+    ],
     "重构": [
       {
         "title": "Pagegen 重构回顾（含占位阶段）",
@@ -525,72 +591,6 @@
         "path": "/zh/content/pagegen-retrospective/",
         "excerpt": "复盘 Pagegen 从单体脚本到模块化/并发/插件化的演进过程，记录收益、风险与仍需打磨的环节，并补充占位阶段的取舍与经验。",
         "relative": "pagegen-retrospective",
-        "year": "2025"
-      }
-    ],
-    "案例分析": [
-      {
-        "title": "观测指标场景案例与排障实录",
-        "date": "2025-10-20",
-        "updated": "",
-        "status": "published",
-        "category": "工程笔记",
-        "category_slug": "工程笔记",
-        "series": "项目起航手记",
-        "series_slug": "project-kickoff",
-        "tags": [
-          "案例分析",
-          "告警处理",
-          "故障排查"
-        ],
-        "slug": "telemetry-cases",
-        "path": "/zh/content/telemetry-cases/",
-        "excerpt": "以真实场景为线索，逐步演示如何通过 Telemetry + CLI 日志定位 Pagegen 与 AI 管线告警，并给出可复现的修复步骤。",
-        "relative": "telemetry-cases",
-        "year": "2025"
-      }
-    ],
-    "告警处理": [
-      {
-        "title": "观测指标场景案例与排障实录",
-        "date": "2025-10-20",
-        "updated": "",
-        "status": "published",
-        "category": "工程笔记",
-        "category_slug": "工程笔记",
-        "series": "项目起航手记",
-        "series_slug": "project-kickoff",
-        "tags": [
-          "案例分析",
-          "告警处理",
-          "故障排查"
-        ],
-        "slug": "telemetry-cases",
-        "path": "/zh/content/telemetry-cases/",
-        "excerpt": "以真实场景为线索，逐步演示如何通过 Telemetry + CLI 日志定位 Pagegen 与 AI 管线告警，并给出可复现的修复步骤。",
-        "relative": "telemetry-cases",
-        "year": "2025"
-      }
-    ],
-    "故障排查": [
-      {
-        "title": "观测指标场景案例与排障实录",
-        "date": "2025-10-20",
-        "updated": "",
-        "status": "published",
-        "category": "工程笔记",
-        "category_slug": "工程笔记",
-        "series": "项目起航手记",
-        "series_slug": "project-kickoff",
-        "tags": [
-          "案例分析",
-          "告警处理",
-          "故障排查"
-        ],
-        "slug": "telemetry-cases",
-        "path": "/zh/content/telemetry-cases/",
-        "excerpt": "以真实场景为线索，逐步演示如何通过 Telemetry + CLI 日志定位 Pagegen 与 AI 管线告警，并给出可复现的修复步骤。",
-        "relative": "telemetry-cases",
         "year": "2025"
       }
     ],
@@ -660,69 +660,69 @@
         "year": "2025"
       }
     ],
-    "AI管线": [
+    "案例分析": [
       {
-        "title": "AI 管线占位与切换指南",
+        "title": "观测指标场景案例与排障实录",
         "date": "2025-10-20",
         "updated": "",
         "status": "published",
-        "category": "管理与协作",
-        "category_slug": "管理与协作",
+        "category": "工程笔记",
+        "category_slug": "工程笔记",
         "series": "项目起航手记",
         "series_slug": "project-kickoff",
         "tags": [
-          "AI管线",
-          "冒烟测试",
-          "运行时切换"
+          "案例分析",
+          "告警处理",
+          "故障排查"
         ],
-        "slug": "ai-runtime-guide",
-        "path": "/zh/content/ai-runtime-guide/",
-        "excerpt": "详细说明 Ling Atlas 在 placeholder 与真实模型之间切换的步骤、环境变量配置、冒烟守门与回滚策略，确保个人向量化知识库的构建过程安全可控。",
-        "relative": "ai-runtime-guide",
+        "slug": "telemetry-cases",
+        "path": "/zh/content/telemetry-cases/",
+        "excerpt": "以真实场景为线索，逐步演示如何通过 Telemetry + CLI 日志定位 Pagegen 与 AI 管线告警，并给出可复现的修复步骤。",
+        "relative": "telemetry-cases",
         "year": "2025"
       }
     ],
-    "冒烟测试": [
+    "告警处理": [
       {
-        "title": "AI 管线占位与切换指南",
+        "title": "观测指标场景案例与排障实录",
         "date": "2025-10-20",
         "updated": "",
         "status": "published",
-        "category": "管理与协作",
-        "category_slug": "管理与协作",
+        "category": "工程笔记",
+        "category_slug": "工程笔记",
         "series": "项目起航手记",
         "series_slug": "project-kickoff",
         "tags": [
-          "AI管线",
-          "冒烟测试",
-          "运行时切换"
+          "案例分析",
+          "告警处理",
+          "故障排查"
         ],
-        "slug": "ai-runtime-guide",
-        "path": "/zh/content/ai-runtime-guide/",
-        "excerpt": "详细说明 Ling Atlas 在 placeholder 与真实模型之间切换的步骤、环境变量配置、冒烟守门与回滚策略，确保个人向量化知识库的构建过程安全可控。",
-        "relative": "ai-runtime-guide",
+        "slug": "telemetry-cases",
+        "path": "/zh/content/telemetry-cases/",
+        "excerpt": "以真实场景为线索，逐步演示如何通过 Telemetry + CLI 日志定位 Pagegen 与 AI 管线告警，并给出可复现的修复步骤。",
+        "relative": "telemetry-cases",
         "year": "2025"
       }
     ],
-    "运行时切换": [
+    "故障排查": [
       {
-        "title": "AI 管线占位与切换指南",
+        "title": "观测指标场景案例与排障实录",
         "date": "2025-10-20",
         "updated": "",
         "status": "published",
-        "category": "管理与协作",
-        "category_slug": "管理与协作",
+        "category": "工程笔记",
+        "category_slug": "工程笔记",
         "series": "项目起航手记",
         "series_slug": "project-kickoff",
         "tags": [
-          "AI管线",
-          "冒烟测试",
-          "运行时切换"
+          "案例分析",
+          "告警处理",
+          "故障排查"
         ],
-        "slug": "ai-runtime-guide",
-        "path": "/zh/content/ai-runtime-guide/",
-        "excerpt": "详细说明 Ling Atlas 在 placeholder 与真实模型之间切换的步骤、环境变量配置、冒烟守门与回滚策略，确保个人向量化知识库的构建过程安全可控。",
-        "relative": "ai-runtime-guide",
+        "slug": "telemetry-cases",
+        "path": "/zh/content/telemetry-cases/",
+        "excerpt": "以真实场景为线索，逐步演示如何通过 Telemetry + CLI 日志定位 Pagegen 与 AI 管线告警，并给出可复现的修复步骤。",
+        "relative": "telemetry-cases",
         "year": "2025"
       }
     ],
@@ -902,6 +902,26 @@
         "year": "2025"
       },
       {
+        "title": "AI 管线占位与切换指南",
+        "date": "2025-10-20",
+        "updated": "",
+        "status": "published",
+        "category": "管理与协作",
+        "category_slug": "管理与协作",
+        "series": "项目起航手记",
+        "series_slug": "project-kickoff",
+        "tags": [
+          "AI管线",
+          "冒烟测试",
+          "运行时切换"
+        ],
+        "slug": "ai-runtime-guide",
+        "path": "/zh/content/ai-runtime-guide/",
+        "excerpt": "详细说明 Ling Atlas 在 placeholder 与真实模型之间切换的步骤、环境变量配置、冒烟守门与回滚策略，确保个人向量化知识库的构建过程安全可控。",
+        "relative": "ai-runtime-guide",
+        "year": "2025"
+      },
+      {
         "title": "Pagegen 重构回顾（含占位阶段）",
         "date": "2025-10-20",
         "updated": "",
@@ -919,26 +939,6 @@
         "path": "/zh/content/pagegen-retrospective/",
         "excerpt": "复盘 Pagegen 从单体脚本到模块化/并发/插件化的演进过程，记录收益、风险与仍需打磨的环节，并补充占位阶段的取舍与经验。",
         "relative": "pagegen-retrospective",
-        "year": "2025"
-      },
-      {
-        "title": "观测指标场景案例与排障实录",
-        "date": "2025-10-20",
-        "updated": "",
-        "status": "published",
-        "category": "工程笔记",
-        "category_slug": "工程笔记",
-        "series": "项目起航手记",
-        "series_slug": "project-kickoff",
-        "tags": [
-          "案例分析",
-          "告警处理",
-          "故障排查"
-        ],
-        "slug": "telemetry-cases",
-        "path": "/zh/content/telemetry-cases/",
-        "excerpt": "以真实场景为线索，逐步演示如何通过 Telemetry + CLI 日志定位 Pagegen 与 AI 管线告警，并给出可复现的修复步骤。",
-        "relative": "telemetry-cases",
         "year": "2025"
       },
       {
@@ -962,23 +962,23 @@
         "year": "2025"
       },
       {
-        "title": "AI 管线占位与切换指南",
+        "title": "观测指标场景案例与排障实录",
         "date": "2025-10-20",
         "updated": "",
         "status": "published",
-        "category": "管理与协作",
-        "category_slug": "管理与协作",
+        "category": "工程笔记",
+        "category_slug": "工程笔记",
         "series": "项目起航手记",
         "series_slug": "project-kickoff",
         "tags": [
-          "AI管线",
-          "冒烟测试",
-          "运行时切换"
+          "案例分析",
+          "告警处理",
+          "故障排查"
         ],
-        "slug": "ai-runtime-guide",
-        "path": "/zh/content/ai-runtime-guide/",
-        "excerpt": "详细说明 Ling Atlas 在 placeholder 与真实模型之间切换的步骤、环境变量配置、冒烟守门与回滚策略，确保个人向量化知识库的构建过程安全可控。",
-        "relative": "ai-runtime-guide",
+        "slug": "telemetry-cases",
+        "path": "/zh/content/telemetry-cases/",
+        "excerpt": "以真实场景为线索，逐步演示如何通过 Telemetry + CLI 日志定位 Pagegen 与 AI 管线告警，并给出可复现的修复步骤。",
+        "relative": "telemetry-cases",
         "year": "2025"
       },
       {
@@ -1065,6 +1065,26 @@
       "year": "2025"
     },
     {
+      "title": "AI 管线占位与切换指南",
+      "date": "2025-10-20",
+      "updated": "",
+      "status": "published",
+      "category": "管理与协作",
+      "category_slug": "管理与协作",
+      "series": "项目起航手记",
+      "series_slug": "project-kickoff",
+      "tags": [
+        "AI管线",
+        "冒烟测试",
+        "运行时切换"
+      ],
+      "slug": "ai-runtime-guide",
+      "path": "/zh/content/ai-runtime-guide/",
+      "excerpt": "详细说明 Ling Atlas 在 placeholder 与真实模型之间切换的步骤、环境变量配置、冒烟守门与回滚策略，确保个人向量化知识库的构建过程安全可控。",
+      "relative": "ai-runtime-guide",
+      "year": "2025"
+    },
+    {
       "title": "Pagegen 重构回顾（含占位阶段）",
       "date": "2025-10-20",
       "updated": "",
@@ -1082,26 +1102,6 @@
       "path": "/zh/content/pagegen-retrospective/",
       "excerpt": "复盘 Pagegen 从单体脚本到模块化/并发/插件化的演进过程，记录收益、风险与仍需打磨的环节，并补充占位阶段的取舍与经验。",
       "relative": "pagegen-retrospective",
-      "year": "2025"
-    },
-    {
-      "title": "观测指标场景案例与排障实录",
-      "date": "2025-10-20",
-      "updated": "",
-      "status": "published",
-      "category": "工程笔记",
-      "category_slug": "工程笔记",
-      "series": "项目起航手记",
-      "series_slug": "project-kickoff",
-      "tags": [
-        "案例分析",
-        "告警处理",
-        "故障排查"
-      ],
-      "slug": "telemetry-cases",
-      "path": "/zh/content/telemetry-cases/",
-      "excerpt": "以真实场景为线索，逐步演示如何通过 Telemetry + CLI 日志定位 Pagegen 与 AI 管线告警，并给出可复现的修复步骤。",
-      "relative": "telemetry-cases",
       "year": "2025"
     },
     {
@@ -1125,23 +1125,23 @@
       "year": "2025"
     },
     {
-      "title": "AI 管线占位与切换指南",
+      "title": "观测指标场景案例与排障实录",
       "date": "2025-10-20",
       "updated": "",
       "status": "published",
-      "category": "管理与协作",
-      "category_slug": "管理与协作",
+      "category": "工程笔记",
+      "category_slug": "工程笔记",
       "series": "项目起航手记",
       "series_slug": "project-kickoff",
       "tags": [
-        "AI管线",
-        "冒烟测试",
-        "运行时切换"
+        "案例分析",
+        "告警处理",
+        "故障排查"
       ],
-      "slug": "ai-runtime-guide",
-      "path": "/zh/content/ai-runtime-guide/",
-      "excerpt": "详细说明 Ling Atlas 在 placeholder 与真实模型之间切换的步骤、环境变量配置、冒烟守门与回滚策略，确保个人向量化知识库的构建过程安全可控。",
-      "relative": "ai-runtime-guide",
+      "slug": "telemetry-cases",
+      "path": "/zh/content/telemetry-cases/",
+      "excerpt": "以真实场景为线索，逐步演示如何通过 Telemetry + CLI 日志定位 Pagegen 与 AI 管线告警，并给出可复现的修复步骤。",
+      "relative": "telemetry-cases",
       "year": "2025"
     },
     {

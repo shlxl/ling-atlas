@@ -55,6 +55,7 @@ AI_RUNTIME=node npm run ai:smoke
 ### Pagegen 指标
 
 `build.pagegen` 汇总内容如下：
+
 - `collect.summary`：包含 `cacheHitRate`、`parsedFiles`、`errorEntries` 等字段，是判断采集阶段是否工作正常的第一手数据。
 - `write.summary`：观察 `hashMatches`（内容无变更时的跳过数）与 `failed`（写入失败数），配合 CLI 日志可以快速定位问题文件。
 - `scheduler` / `plugins`：记录并发开关、阶段覆写（`--parallel-stage`）以及插件加载结果，是调度治理的重要依据。
@@ -62,6 +63,7 @@ AI_RUNTIME=node npm run ai:smoke
 ### AI 指标
 
 `build.ai` 由事件日志与模型 manifest 拼装：
+
 - 每个域（`embed`、`summary`、`qa`）包含适配器名称、批次数量、输出条数、成功率、错误列表。
 - `overview` 聚合整体状态与 `smoke` 摘要，当冒烟失败时会自动把整体状态降级为 `degraded`。
 - `smoke.models` 暴露每个模型的执行结果，方便精准定位失败原因。

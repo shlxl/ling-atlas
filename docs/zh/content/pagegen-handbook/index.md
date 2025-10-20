@@ -42,6 +42,7 @@ npm run gen -- --plugin ./scripts/pagegen/plugins/example.mjs
 ```
 
 环境变量与 CLI 参数含义：
+
 - `PAGEGEN_FULL_SYNC=1`：等同于 `--full-sync`。
 - `PAGEGEN_DISABLE_CACHE=1`：等同于 `--no-cache`。
 - `PAGEGEN_DISABLE_BATCH=1`：禁用批量写入。
@@ -88,19 +89,23 @@ npm run gen -- --plugin ./scripts/pagegen/plugins/example.mjs
 ## 常见问题与排障
 
 ### 1. 聚合页仍引用已删除的内容
+
 - 运行 `npm run gen -- --full-sync`，确保缓存与同步快照被刷新。
 - 检查导航配置 `schema/nav.json` 是否仍保留旧 slug，如是请同步更新。
 - 若 `_generated/` 中还存在过时文件，可直接删除整个目录后再次运行生成命令。
 
 ### 2. `nav.manifest.<locale>.json` 为空
+
 - 说明目标语言目录尚无正式内容。补齐文章并重新运行 `npm run gen` 即可填充。
 - Telemetry 仍会记录 `nav` 摘要，为后续内容上线提供基线。
 
 ### 3. 插件加载不到位
+
 - 确认插件路径是否使用了相对路径或 `file://`，若在子目录建议使用绝对路径或 `pathToFileURL`。
 - 查看 `telemetry.json` 中 `build.pagegen.plugins.results` 获取详细错误信息。
 
 ### 4. 生成耗时过长
+
 - 可增加 `PAGEGEN_CONCURRENCY`（collect 阶段并发度），或通过 `PAGEGEN_PARALLEL_STAGES` 调整各阶段并发。
 - 若是 I/O 瓶颈，检查是否大量写入未变化的文件；适当启用哈希跳过可以显著提速。
 

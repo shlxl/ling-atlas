@@ -16,11 +16,13 @@ excerpt: 全面梳理 Ling Atlas 的愿景、演进路线与当前落地能力�
 ## 为什么要做 Ling Atlas？
 
 Ling Atlas 最初诞生于一次“AI 自驱动知识库”的头脑风暴：  
+
 - **动机**：希望把个人笔记、项目记录、运维指引合并到同一套可回滚、可编排的工作流里，避免再掉进“分散文档 + 无人维护”的老坑。  
 - **约束**：仓库必须可由 Agent/脚本全流程托管，人工只需决策内容与验收结果。  
 - **目标**：构建一个既适合单人维护、又能逐步演进到团队协作的现代化知识库工程。
 
 这意味着系统在设计之初就围绕三条红线展开：
+
 1. **协议优先**：所有关键能力（内容采集、导航、AI 构建等）都要有明确的 JSON Schema、CLI 入口与回退策略，保证“个人向量化知识库”的核心资产可长期维护。
 2. **自动化友好**：从 init 到 publish 必须串联脚本化流程，任何新增能力都要能在 CI/CLI 中一键触发，让个人作者可以专注内容而非维护细节。
 3. **可观测**：生成脚本、AI 管线、调度插件都需要留有指标出口，确保向量知识库的构建质量和检索体验可持续优化。
@@ -29,7 +31,7 @@ Ling Atlas 最初诞生于一次“AI 自驱动知识库”的头脑风暴：
 
 | 模块 | 关键职责 | 当前状态 |
 | --- | --- | --- |
-| **内容组织** | `docs/zh|en/content/**` 按语言/slug 管理文章，Frontmatter 由 `schema/frontmatter.schema.json` 守门，确保向量化前的元数据规范 | ✅ 已启用；示例文档已清理，等待正式内容补齐 |
+| **内容组织** | `docs/zh\|en/content/**` 按语言/slug 管理文章，Frontmatter 由 `schema/frontmatter.schema.json` 守门，确保向量化前的元数据规范 | ✅ 已启用；示例文档已清理，等待正式内容补齐 |
 | **生成管线（Pagegen）** | `scripts/pagegen.mjs` orchestrator + 模块化子阶段（collect/sync/feeds/i18n/writer），为向量化前的静态聚合与检索索引提供基础 | ✅ 模块化完成，支持缓存、并发、批量写入与阶段指标 |
 | **调度插件体系** | `pagegen` 通过 `--plugin` / `PAGEGEN_PLUGINS` 加载扩展，可在生成阶段输出向量化摘要或自定义指标；示例位于 `scripts/pagegen/plugins/example.mjs` | ✅ 已上线示例及测试，可写出调度摘要 |
 | **AI 构建管线** | `npm run ai:prepare` / `npm run ai:smoke` / `npm run ai:all` 负责模型准备、冒烟、占位产物，为个人向量库生成 embeddings/summaries/QA | ✅ 默认使用 placeholder，可随时替换为真实模型 |
@@ -61,6 +63,7 @@ Ling Atlas 最初诞生于一次“AI 自驱动知识库”的头脑风暴：
 ## 观测指标页现状解读
 
 初次打开 “观测指标” 时会看到几条看似“告警”的提示：
+
 - **缓存命中率低**：当前仓库尚未写入正式文章，collect 阶段无法复用缓存，命中率自然为 0%。一旦补齐内容并多跑几次生成，这条告警就会消失。
 - **AI 构建缺失 / 冒烟跳过**：默认使用 placeholder runtime，冒烟会直接跳过。换成真实模型后，这里会显示 `passed`/`failed`，并列出失败模型清单。
 - **模块状态 missing**：同样来自于尚未产出真正的 embeddings/summary/QA。接入真实模型即可恢复。
