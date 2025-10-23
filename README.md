@@ -118,20 +118,30 @@ npm run dev
 - **环境要求**：Node ≥ 22、npm ≥ 10、git ≥ 2.45，`.env` 需包含 `BASE=/ling-atlas/`、`SITE_ORIGIN=https://<user>.github.io/ling-atlas`、`GIT_REMOTE=origin`、`GIT_BRANCH=main`。
 - **首次初始化**：建议执行 `codex run setup --base "/ling-atlas/" --site "https://<user>.github.io/ling-atlas"`，完成依赖安装、预检、聚合页生成与首次构建。
 - **CI 守门**：流水线默认执行 `npm ci`、前置校验、Pagegen 单测、`node scripts/stats-lint.mjs` + `node scripts/stats-diff.mjs`、`node .codex/budget.mjs` 等步骤；主干推送会额外安装 Chrome 依赖并运行 `npx lhci autorun --collect.chromeFlags="--no-sandbox"`，PR 仅保留核心守门以控制耗时。
-- **内容生产力工具**：通过 `npm run md:lint`、`node scripts/check-links.mjs`、`node scripts/img-opt.mjs` 守门 Markdown、链接与图片质量；其中 `check-links` 会额外校验 `nav.manifest.<locale>.json` 与 `i18n-map.json` 内的目标路径，必要时可在 CI 中暂时调高阈值或跳过。
-- **Landing 入口 BASE 兜底**：`docs/index.md` 的内联重定向脚本会写入 `__LING_ATLAS_ACTIVE_BASE__` 并由 `<script setup>` 在 hydration 期间复用，确保 `/` 与 `/ling-atlas/` 等不同 BASE 下的首屏重定向一致；前端通过 `docs/.vitepress/theme/base.mjs` 统一读取、缓存与复用该 BASE，Locale Toggle、导航 manifest 以及 Telemetry 资产加载都会依赖此模块。如需修改入口，请同步维护内联脚本、`base.mjs` 与相关调用。
-- **导航/标签/SEO 配置 Playbook**：在修改 `schema/nav.json`、`schema/tag-alias.json` 或 `schema/seo.json` 之前，务必阅读 `docs/zh/plans/nav-config-playbook.md` 与 `docs/zh/plans/seo-config-playbook.md`；文档提供配置步骤、守门命令与常见故障排查。
+**内容生产力工具**：通过 `npm run md:lint`、`node scripts/check-links.mjs`、`node scripts/img-opt.mjs` 守门 Markdown、链接与图片质量；其中 `check-links` 会额外校验 `nav.manifest.<locale>.json` 与 `i18n-map.json` 内的目标路径，必要时可在 CI 中暂时调高阈值或跳过。
+**Landing 入口 BASE 兜底**：`docs/index.md` 的内联重定向脚本会写入 `__LING_ATLAS_ACTIVE_BASE__` 并由 `<script setup>` 在 hydration 期间复用，确保 `/` 与 `/ling-atlas/` 等不同 BASE 下的首屏重定向一致；前端通过 `docs/.vitepress/theme/base.mjs` 统一读取、缓存与复用该 BASE，Locale Toggle、导航 manifest 以及 Telemetry 资产加载都会依赖此模块。如需修改入口，请同步维护内联脚本、`base.mjs` 与相关调用。
+**导航/标签/SEO 配置 Playbook**：在修改 `schema/nav.json`、`schema/tag-alias.json` 或 `schema/seo.json` 之前，务必阅读 `docs/zh/plans/nav-config-playbook.md` 与 `docs/zh/plans/seo-config-playbook.md`；文档提供配置步骤、守门命令与常见故障排查。
+**想了解目录现状和 TODO？** 参考 `docs/zh/plans/module-inventory.md`，该文档汇总了 `schema/`、`scripts/`、`docs/zh/plans/` 与 `tests/` 目录的资产与后续建议；Pagegen 模块的详细检查清单见 `docs/zh/plans/pagegen-deep-dive.md`。
+**如何自定义 metrics 输出？** 默认写入 `data/pagegen-metrics.json`。也可以通过 `PAGEGEN_METRICS_OUTPUT=<path>` 或运行 `node scripts/pagegen.mjs --metrics-output <file>` 指定目标文件，便于在 CI 中收集统计。
+**可以只观察指标不落盘吗？** 支持在运行 Pagegen 时加上 `--dry-run`（或设定 `PAGEGEN_DRY_RUN=1`）来跳过文件写入，配合 `--metrics-output` 可以在 CI 中快速收集指标而不改动仓库。
+**只输出指标、不显示阶段日志？** 使用 `--metrics-only`（或 `PAGEGEN_METRICS_ONLY=1`）可将指标 JSON 直接写到 stdout，并自动启用 dry-run 写入保护；适合在 CI 中解析。
+**Landing 语言卡片 / 主题文案在哪配置？** 同一份 `schema/locales.json` 也托管首页语言卡片文案与主题切换提示（`ui.*` 字段）。修改后无需调整前端源码，`npm run build` 会自动读取最新配置并同步到 VitePress 主题。
 
-## 统计监控与告警流程
+---
 
-- **Pagegen 指标出口**：运行 `npm run gen` 后，CLI 会额外打印 collect 缓存命中率与 writer 哈希跳过统计，最新一笔指标还会由 `node scripts/telemetry-merge.mjs` 同步到 `/telemetry.json`，并新增 `scheduler` / `plugins` 摘要，便于在站点“观测指标”页面查看并发设定与插件状态。
-- **AI 构建遥测**：`scripts/embed-build.mjs`、`scripts/summary.mjs`、`scripts/qa-build.mjs` 会在 `data/ai-events/` 写入结构化事件（含批次数量、推理/写入耗时、成功率、目标路径等），`node scripts/telemetry-merge.mjs` 会清理已消费的事件文件，并以带 `schemaVersion` 的 `build.ai` 节点输出模型摘要（含 overview、成功率、缓存回退）到 `docs/public/telemetry.json`。可通过 `AI_TELEMETRY_DISABLE=1` 暂停事件写入，或设置 `AI_TELEMETRY_PATH=<dir>` 指定事件目录（便于测试与沙箱环境）。
-- **快照采集**：`npm run stats:lint` 写入 `data/stats.snapshot.json` 并输出 TopN 排序，CI 会上传该文件作为工件，便于后续下载对比。
-- **自动对比与预警**：通过 `npm run stats:diff -- --baseline origin/main:data/stats.snapshot.json --current data/stats.snapshot.json` 在本地或 CI 中对比差异。命令会按默认阈值（warn≥30%、fail≥60%）输出告警，可搭配 `--json` 输出结构化结果，或在 GitHub Actions 中根据退出码（2 表示 fail）自动打标签/留言；若未提供 baseline 且 git 历史中也无法找到快照，会输出提示并直接跳过对比，避免误报。
-- **夜间任务建议**：Nightly Workflow 可先拉取前一日工件为 baseline，再运行 `stats:diff -- --baseline <path> --current data/stats.snapshot.json --quiet`，将结果上传到日志或告警系统；如需邮件/IM 告警，可根据 JSON 输出过滤高优先级条目。
+> 名称约定：仓库名 **ling-atlas**，站点标题“Ling Atlas · 小凌的个人知识库”。
 
-### 最小发布流程
+````
 
+## VS Code workspace
+
+This repository contains a ready-to-open workspace file `ling-atlas.code-workspace` and editor helpers in `.vscode/`:
+
+- Open the workspace: File → Open Workspace... → select `ling-atlas.code-workspace`.
+- Recommended extensions are listed in `.vscode/extensions.json` (ESLint, Prettier, YAML, Markdown tools, npm script runner, GitLens).
+- Common tasks are available via the Run/Tasks UI: `npm: dev`, `npm: build`, `npm: gen`, `npm: test:pagegen`.
+
+These are convenience helpers — edit `.vscode/tasks.json` to add or adjust scripts.
 1. 修改内容或配置后，依次执行：
    ```bash
    npm run config:nav   # 如涉及导航

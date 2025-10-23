@@ -1,40 +1,52 @@
 {
-  "generatedAt": "2025-10-16T04:34:57.970Z",
+  "generatedAt": "2025-10-20T08:20:30.243Z",
   "items": [
     {
-      "url": "/zh/content/from-zero-to-one/",
-      "title": "从0到1：Ling Atlas 的诞生记",
-      "text": "记录 Ling Atlas 从脚手架到全自动部署的首篇实践，总结决策脉络与经验。",
+      "url": "/zh/content/telemetry-cases/",
+      "title": "观测指标场景案例与排障实录",
+      "text": "以真实场景为线索，逐步演示如何通过 Telemetry + CLI 日志定位 Pagegen 与 AI 管线告警，并给出可复现的修复步骤。",
       "lang": "zh"
     },
     {
-      "url": "/zh/content/hello-world/",
-      "title": "你好，知识库",
-      "text": "这是第一篇示例文。实际使用时请删除本目录并导入你的内容。",
+      "url": "/zh/content/telemetry-guide/",
+      "title": "观测指标导览",
+      "text": "解读 Ling Atlas 观测指标页的各类数据来源、告警含义与排障流程，帮助维护者快速判断个人向量化知识库的运行健康度。",
       "lang": "zh"
     },
     {
-      "url": "/en/content/automation/",
-      "title": "Automating Deployments",
-      "text": "A concise walkthrough on how Ling Atlas automates content validation, build, and deployment.",
-      "lang": "en"
-    },
-    {
-      "url": "/en/content/hello-world/",
-      "title": "Hello, Knowledge Base",
-      "text": "This is the first English sample entry. Replace it with your content when ready.",
-      "lang": "en"
-    },
-    {
-      "url": "/zh/content/taxonomy-reference/",
-      "title": "Ling Atlas 分类与元数据规范 v1.0",
-      "text": "全量保留 TAXONOMY.md 的规范内容，方便在站点内直接查阅 Ling Atlas 的分类、元数据与变更流程。",
+      "url": "/zh/content/tutorial-authoring-to-publish/",
+      "title": "写作到发布的完整流程",
+      "text": "手把手演示从新建文章、预检聚合、观测指标复核到发布与回滚的全流程，配套常用命令与问题排查清单。",
       "lang": "zh"
     },
     {
-      "url": "/zh/content/taxonomy-playbook/",
-      "title": "Ling Atlas 分类与元数据实战手册",
-      "text": "按照 TAXONOMY.md 给出的规范，落地一套可执行的分类与元数据流程，帮助内容团队把写作与自动化部署串起来。",
+      "url": "/zh/content/ai-runtime-guide/",
+      "title": "AI 管线占位与切换指南",
+      "text": "详细说明 Ling Atlas 在 placeholder 与真实模型之间切换的步骤、环境变量配置、冒烟守门与回滚策略，确保个人向量化知识库的构建过程安全可控。",
+      "lang": "zh"
+    },
+    {
+      "url": "/zh/content/ai-placeholder-retrospective/",
+      "title": "AI 占位阶段总结与实践",
+      "text": "记录 placeholder 运行时在落地过程中的价值、局限与最佳实践，为后续切换真实模型提供可复用的经验与风险清单。",
+      "lang": "zh"
+    },
+    {
+      "url": "/zh/content/project-overview/",
+      "title": "Ling Atlas 项目缘起与系统全貌",
+      "text": "全面梳理 Ling Atlas 的愿景、演进路线与当前落地能力，帮助后续贡献者快速理解“个人向量化知识库”的系统边界与协作模式。",
+      "lang": "zh"
+    },
+    {
+      "url": "/zh/content/pagegen-handbook/",
+      "title": "Pagegen 运行手册",
+      "text": "总结 Pagegen orchestrator 的阶段划分、CLI 参数、缓存策略与插件机制，帮助维护者快速定位生成问题并扩展新的自动化能力。",
+      "lang": "zh"
+    },
+    {
+      "url": "/zh/content/pagegen-retrospective/",
+      "title": "Pagegen 重构回顾（含占位阶段）",
+      "text": "复盘 Pagegen 从单体脚本到模块化/并发/插件化的演进过程，记录收益、风险与仍需打磨的环节，并补充占位阶段的取舍与经验。",
       "lang": "zh"
     }
   ]

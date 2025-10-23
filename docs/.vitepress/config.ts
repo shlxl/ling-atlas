@@ -23,7 +23,9 @@ import {
   LocaleCode,
   VitepressLocaleKey,
   manifestFileName,
-  normalizedRoutePrefix
+  normalizedRoutePrefix,
+  isLocaleCode,
+  localeFromVitepressKey
 } from './theme/locales.mjs'
 import {
   resolveSeoHead,
@@ -63,12 +65,25 @@ function serializeCsp(directives: Record<string, string[] | string> | null) {
     .join('; ')
 }
 
-function escapeRegex(input: string) {
-  return input.replace(/[.*+?^${}()|[\]\\]/g, '\$&')
-}
 const baseFromEnv = (process.env.BASE as string) || '/'
 const normalizedBase = baseFromEnv.endsWith('/') ? baseFromEnv : `${baseFromEnv}/`
-const escapedBase = escapeRegex(normalizedBase)
+const faviconHref = `${normalizedBase}favicon.ico`
+
+function createLocaleCollator(locale: string) {
+  try {
+    return new Intl.Collator(locale)
+  } catch {
+    const fallback = locale?.split('-')?.[0]
+    if (fallback) {
+      try {
+        return new Intl.Collator(fallback)
+      } catch {
+        // fall through and use English
+      }
+    }
+    return new Intl.Collator('en')
+  }
+}
 
 const i18nMap = loadI18nTranslations()
 
@@ -171,7 +186,7 @@ const localizedLocaleConfigs = Object.fromEntries(
             locale: code,
             translations,
             routeRoot,
-            collator: new Intl.Collator(code === 'en' ? 'en' : 'zh-CN'),
+            collator: createLocaleCollator(code),
             config: NAV_CONFIG
           }),
           sidebar: 'auto',
@@ -211,6 +226,23 @@ const pwaGlobPatterns = [
   'worker/**/*'
 ]
 
+function resolveManifestLocale(localeId: LocaleCode, manifestLocale?: string | null): LocaleCode {
+  if (manifestLocale && typeof manifestLocale === 'string') {
+    if (isLocaleCode(manifestLocale)) {
+      return manifestLocale
+    }
+    const fromKey = localeFromVitepressKey(manifestLocale)
+    if (fromKey) {
+      return fromKey
+    }
+    const normalized = manifestLocale.split('-')[0]
+    if (normalized && isLocaleCode(normalized)) {
+      return normalized
+    }
+  }
+  return localeId
+}
+
 function loadNavManifest(localeId: LocaleCode): NavManifest | null {
   const baseFile = manifestFileName(localeId)
   const candidates = [
@@ -227,7 +259,7 @@ function loadNavManifest(localeId: LocaleCode): NavManifest | null {
     try {
       const raw = fs.readFileSync(file, 'utf8')
       const parsed = JSON.parse(raw) as Partial<NavManifest> & { locale?: string }
-      const detectedLocale = parsed.locale === 'en' ? 'en' : 'zh'
+      const detectedLocale = resolveManifestLocale(localeId, parsed.locale)
       return {
         locale: detectedLocale,
         categories: parsed.categories ?? {},
@@ -349,7 +381,7 @@ export default defineConfig({
       normalizedPath,
       siteOrigin: SEO_SITE_ORIGIN
     })
-    return seoHead as HeadConfig[]
+    return [...seoHead, ['link', { rel: 'icon', href: faviconHref }]] as HeadConfig[]
   },
   themeConfig: {
     socialLinks: [{ icon: 'github', link: 'https://github.com/shlxl/ling-atlas' }],

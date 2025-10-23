@@ -10,8 +10,8 @@
   },
   "build": {
     "pagegen": {
-      "timestamp": "2025-10-20T06:06:40.803Z",
-      "totalMs": 30.902,
+      "timestamp": "2025-10-23T11:55:24.380Z",
+      "totalMs": 29.09,
       "collect": {
         "locales": 2,
         "cacheHitRate": 1,
@@ -25,13 +25,13 @@
       },
       "write": {
         "total": 37,
-        "written": 5,
-        "skipped": 32,
+        "written": 0,
+        "skipped": 37,
         "failed": 0,
-        "hashMatches": 32,
+        "hashMatches": 37,
         "disabled": false,
         "skippedByReason": {
-          "hash": 32
+          "hash": 37
         }
       },
       "feeds": {
@@ -98,32 +98,100 @@
     },
     "ai": {
       "schemaVersion": "2024-11-01",
-      "embed": null,
+      "embed": {
+        "schemaVersion": "2024-11-01",
+        "timestamp": "2025-10-20T08:20:30.246Z",
+        "totalMs": 26935,
+        "adapter": {
+          "name": "placeholder",
+          "model": "all-MiniLM-L6-v2",
+          "fallback": true
+        },
+        "inference": {
+          "batches": 1,
+          "totalMs": 185,
+          "avgMs": 185,
+          "inputCount": 8,
+          "outputCount": 8,
+          "successRate": 1,
+          "retries": 1,
+          "errors": [
+            {
+              "adapter": "transformers-node",
+              "model": "all-MiniLM-L6-v2",
+              "message": "fetch failed"
+            }
+          ]
+        },
+        "write": {
+          "target": "docs/public/data/embeddings.json",
+          "bytes": 2542,
+          "durationMs": 2,
+          "items": 8,
+          "cacheReuse": false
+        },
+        "cache": {
+          "reused": false
+        }
+      },
       "summary": null,
-      "qa": null,
+      "qa": {
+        "schemaVersion": "2024-11-01",
+        "timestamp": "2025-10-20T11:09:19.360Z",
+        "totalMs": 27,
+        "adapter": {
+          "name": "placeholder",
+          "model": null,
+          "fallback": false
+        },
+        "inference": {
+          "batches": 1,
+          "totalMs": 0,
+          "avgMs": 0,
+          "inputCount": 8,
+          "outputCount": 8,
+          "successRate": 1,
+          "retries": 0,
+          "errors": []
+        },
+        "write": {
+          "target": "docs/public/data/qa.json",
+          "bytes": 6934,
+          "durationMs": 1,
+          "items": 8,
+          "cacheReuse": false
+        },
+        "cache": {
+          "reused": false
+        }
+      },
       "overview": {
         "schemaVersion": "2024-11-01",
-        "updatedAt": null,
-        "status": "missing",
+        "updatedAt": "2025-10-20T11:09:19.360Z",
+        "status": "degraded",
         "summary": {
-          "ok": 0,
-          "fallback": 0,
+          "ok": 1,
+          "fallback": 1,
           "empty": 0,
-          "missing": 3,
-          "overall": "missing"
+          "missing": 1,
+          "overall": "degraded"
         },
         "domains": {
           "embed": {
-            "status": "missing",
-            "lastRunAt": null,
-            "adapter": null,
-            "outputCount": 0,
-            "successRate": null,
+            "status": "fallback",
+            "lastRunAt": "2025-10-20T08:20:30.246Z",
+            "adapter": {
+              "name": "placeholder",
+              "model": "all-MiniLM-L6-v2",
+              "fallback": true
+            },
+            "outputCount": 8,
+            "successRate": 1,
             "cacheReuse": false,
-            "totalMs": null,
-            "inputCount": null,
-            "retries": null,
-            "batches": null
+            "totalMs": 26935,
+            "inputCount": 8,
+            "retries": 1,
+            "batches": 1
           },
           "summary": {
             "status": "missing",
@@ -138,16 +206,20 @@
             "batches": null
           },
           "qa": {
-            "status": "missing",
-            "lastRunAt": null,
-            "adapter": null,
-            "outputCount": 0,
-            "successRate": null,
+            "status": "ok",
+            "lastRunAt": "2025-10-20T11:09:19.360Z",
+            "adapter": {
+              "name": "placeholder",
+              "model": null,
+              "fallback": false
+            },
+            "outputCount": 8,
+            "successRate": 1,
             "cacheReuse": false,
-            "totalMs": null,
-            "inputCount": null,
-            "retries": null,
-            "batches": null
+            "totalMs": 27,
+            "inputCount": 8,
+            "retries": 0,
+            "batches": 1
           }
         },
         "smoke": {
@@ -156,7 +228,7 @@
           "executed": 0,
           "skipped": 1,
           "failed": 0,
-          "verifiedAt": "2025-10-20T06:06:40.564Z"
+          "verifiedAt": "2025-10-23T11:55:23.935Z"
         }
       },
       "smoke": {
@@ -166,7 +238,7 @@
           "executed": 0,
           "skipped": 1,
           "failed": 0,
-          "verifiedAt": "2025-10-20T06:06:40.564Z",
+          "verifiedAt": "2025-10-23T11:55:23.935Z",
           "reason": "Runtime set to placeholder; skipping inference checks.",
           "failures": []
         },
@@ -190,7 +262,7 @@
         ],
         "runtime": "placeholder",
         "fallback": null,
-        "generatedAt": "2025-10-20T06:06:40.461Z"
+        "generatedAt": "2025-10-23T11:55:23.623Z"
       }
     }
   }

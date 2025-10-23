@@ -1,0 +1,31 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "npm: dev",
+      "type": "shell",
+      "command": "npm run dev",
+      "group": "build",
+      "presentation": { "reveal": "always" }
+    },
+    {
+      "label": "npm: build",
+      "type": "shell",
+      "command": "npm run build",
+      "group": "build",
+      "presentation": { "reveal": "always" }
+    },
+    {
+      "label": "npm: gen",
+      "type": "shell",
+      "command": "npm run gen",
+      "presentation": { "reveal": "always" }
+    },
+    {
+      "label": "npm: test:pagegen",
+      "type": "shell",
+      "command": "npm run test:pagegen",
+      "presentation": { "reveal": "always" }
+    }
+  ]
+}
