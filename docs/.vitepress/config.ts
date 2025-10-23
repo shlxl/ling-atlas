@@ -216,6 +216,7 @@ if (supportedLocalesMeta) {
 }
 
 head.push(['meta', { name: 'ling-atlas:base', content: normalizedBase }])
+head.push(['link', { rel: 'icon', type: 'image/x-icon', href: faviconHref }])
 
 if (cspContent) {
   head.unshift(['meta', { 'http-equiv': 'Content-Security-Policy', content: cspContent }])
@@ -381,7 +382,7 @@ export default defineConfig({
       normalizedPath,
       siteOrigin: SEO_SITE_ORIGIN
     })
-    return [...seoHead, ['link', { rel: 'icon', href: faviconHref }]] as HeadConfig[]
+    return seoHead as HeadConfig[]
   },
   themeConfig: {
     socialLinks: [{ icon: 'github', link: 'https://github.com/shlxl/ling-atlas' }],

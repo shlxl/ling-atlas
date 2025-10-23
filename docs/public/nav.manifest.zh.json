@@ -35,5 +35,21 @@
     "项目治理": "/zh/_generated/tags/项目治理/",
     "知识管理": "/zh/_generated/tags/知识管理/",
     "自动化运维": "/zh/_generated/tags/自动化运维/"
-  }
+  },
+  "name": "Ling Atlas",
+  "short_name": "LingAtlas",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
 }
