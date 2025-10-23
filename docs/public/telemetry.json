@@ -10,8 +10,8 @@
   },
   "build": {
     "pagegen": {
-      "timestamp": "2025-10-23T11:55:24.380Z",
-      "totalMs": 29.09,
+      "timestamp": "2025-10-23T13:39:59.365Z",
+      "totalMs": 29.3,
       "collect": {
         "locales": 2,
         "cacheHitRate": 1,
@@ -25,13 +25,13 @@
       },
       "write": {
         "total": 37,
-        "written": 0,
-        "skipped": 37,
+        "written": 5,
+        "skipped": 32,
         "failed": 0,
-        "hashMatches": 37,
+        "hashMatches": 32,
         "disabled": false,
         "skippedByReason": {
-          "hash": 37
+          "hash": 32
         }
       },
       "feeds": {
@@ -228,7 +228,7 @@
           "executed": 0,
           "skipped": 1,
           "failed": 0,
-          "verifiedAt": "2025-10-23T11:55:23.935Z"
+          "verifiedAt": "2025-10-23T13:39:36.818Z"
         }
       },
       "smoke": {
@@ -238,7 +238,7 @@
           "executed": 0,
           "skipped": 1,
           "failed": 0,
-          "verifiedAt": "2025-10-23T11:55:23.935Z",
+          "verifiedAt": "2025-10-23T13:39:36.818Z",
           "reason": "Runtime set to placeholder; skipping inference checks.",
           "failures": []
         },
@@ -262,7 +262,7 @@
         ],
         "runtime": "placeholder",
         "fallback": null,
-        "generatedAt": "2025-10-23T11:55:23.623Z"
+        "generatedAt": "2025-10-23T13:39:36.495Z"
       }
     }
   }

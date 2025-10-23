@@ -17,12 +17,12 @@
     "ai管线": "/zh/_generated/tags/ai管线/",
     "冒烟测试": "/zh/_generated/tags/冒烟测试/",
     "运行时切换": "/zh/_generated/tags/运行时切换/",
-    "重构": "/zh/_generated/tags/重构/",
-    "性能优化": "/zh/_generated/tags/性能优化/",
-    "架构演进": "/zh/_generated/tags/架构演进/",
     "生成管线": "/zh/_generated/tags/生成管线/",
     "调度插件": "/zh/_generated/tags/调度插件/",
     "缓存优化": "/zh/_generated/tags/缓存优化/",
+    "重构": "/zh/_generated/tags/重构/",
+    "性能优化": "/zh/_generated/tags/性能优化/",
+    "架构演进": "/zh/_generated/tags/架构演进/",
     "案例分析": "/zh/_generated/tags/案例分析/",
     "告警处理": "/zh/_generated/tags/告警处理/",
     "故障排查": "/zh/_generated/tags/故障排查/",
@@ -35,21 +35,5 @@
     "项目治理": "/zh/_generated/tags/项目治理/",
     "知识管理": "/zh/_generated/tags/知识管理/",
     "自动化运维": "/zh/_generated/tags/自动化运维/"
-  },
-  "name": "Ling Atlas",
-  "short_name": "LingAtlas",
-  "icons": [
-    {
-      "src": "icon-192.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "icon-512.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any"
-    }
-  ]
+  }
 }

@@ -68,6 +68,12 @@ function serializeCsp(directives: Record<string, string[] | string> | null) {
 const baseFromEnv = (process.env.BASE as string) || '/'
 const normalizedBase = baseFromEnv.endsWith('/') ? baseFromEnv : `${baseFromEnv}/`
 const faviconHref = `${normalizedBase}favicon.ico`
+const faviconHeadEntries: HeadConfig[] = [
+  ['link', { rel: 'icon', href: faviconHref, type: 'image/x-icon' }],
+  ['link', { rel: 'icon', href: `${normalizedBase}icons/icon-192.png`, type: 'image/png', sizes: '192x192' }],
+  ['link', { rel: 'icon', href: `${normalizedBase}icons/icon-512.png`, type: 'image/png', sizes: '512x512' }],
+  ['link', { rel: 'apple-touch-icon', href: `${normalizedBase}icons/apple-touch-icon.png`, sizes: '180x180' }]
+]
 
 function createLocaleCollator(locale: string) {
   try {
@@ -382,7 +388,7 @@ export default defineConfig({
       normalizedPath,
       siteOrigin: SEO_SITE_ORIGIN
     })
-    return seoHead as HeadConfig[]
+    return [...seoHead, ...faviconHeadEntries] as HeadConfig[]
   },
   themeConfig: {
     socialLinks: [{ icon: 'github', link: 'https://github.com/shlxl/ling-atlas' }],
