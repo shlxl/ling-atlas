@@ -51,7 +51,8 @@ export AI_SUMMARY_MODEL="transformers-node:Xenova/distilbart-cnn-12-6"
 export AI_QA_MODEL="transformers-node:Xenova/distilbert-base-uncased-distilled-squad"
 ```
 
-- 若当前环境无法直接访问 Hugging Face / ONNX 仓库，请不要启用真实模型；保持 `AI_RUNTIME=placeholder` 或提前在有网络的环境完成 `npm run ai:prepare` 并拷贝 `data/models` 缓存，否则 Telemetry 会把无法下载的模型判定为 “fallback”。未显式设置 `AI_*_MODEL` 时脚本会默认尝试上述三个真实模型，如需占位请显式设置 `AI_EMBED_MODEL=placeholder` / `AI_SUMMARY_MODEL=placeholder` / `AI_QA_MODEL=placeholder`。
+- 若当前环境无法直接访问 Hugging Face / ONNX 仓库，请不要启用真实模型；保持 `AI_RUNTIME=placeholder` 或提前在有网络的环境完成 `npm run ai:prepare` 并拷贝 `data/models` 缓存，否则 Telemetry 会把无法下载的模型判定为 “fallback”。
+- 未显式设置 `AI_*_MODEL` 时脚本会默认尝试上述三个真实模型，如需占位请显式设置 `AI_EMBED_MODEL=placeholder` / `AI_SUMMARY_MODEL=placeholder` / `AI_QA_MODEL=placeholder`。
 
 临时使用 CLI 覆盖：
 
