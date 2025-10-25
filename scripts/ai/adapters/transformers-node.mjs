@@ -163,14 +163,14 @@ export async function buildQA({ documents = [], model, logger, pipelineOptions =
     for (const q of questions) {
       const questionText = String(q ?? '')
       const contextText = String(limited ?? '')
+      if (!questionText.trim() || !contextText.trim()) continue
       let out
       try {
-        out = await qa({ question: questionText, context: contextText }, { ...callOptions })
+        out = await qa(questionText, contextText, { ...callOptions })
       } catch (err) {
         const msg = err?.message || String(err)
         if (/text\.split is not a function/i.test(msg)) {
-          // 针对 transformers.js 偶发报错，重试一次
-          out = await qa({ question: questionText, context: contextText }, { ...callOptions })
+          out = await qa(questionText, contextText, { ...callOptions })
         } else {
           throw err
         }
