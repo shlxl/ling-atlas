@@ -82,6 +82,35 @@ export function configureOrtLogging(defaultSeverity = '3') {
   }
 }
 
+// 临时屏蔽 ONNX Runtime 的冗余警告输出（匹配典型 [W:onnxruntime:, graph.cc] 前缀）
+export function beginOrtWarningSilence() {
+  const patterns = [/\[W:onnxruntime:,/]
+  const origErr = process.stderr?.write?.bind?.(process.stderr)
+  const origOut = process.stdout?.write?.bind?.(process.stdout)
+  function makeFiltered(orig) {
+    if (typeof orig !== 'function') return null
+    return function filteredWrite(chunk, encoding, cb) {
+      try {
+        const str = typeof chunk === 'string' ? chunk : Buffer.from(chunk)
+        const text = Buffer.isBuffer(str) ? str.toString(typeof encoding === 'string' ? encoding : 'utf8') : String(str)
+        if (patterns.some(re => re.test(text))) {
+          if (typeof cb === 'function') cb()
+          return true
+        }
+      } catch {}
+      return orig(chunk, encoding, cb)
+    }
+  }
+  const filteredErr = makeFiltered(origErr)
+  const filteredOut = makeFiltered(origOut)
+  if (filteredErr) process.stderr.write = filteredErr
+  if (filteredOut) process.stdout.write = filteredOut
+  return () => {
+    if (origErr) process.stderr.write = origErr
+    if (origOut) process.stdout.write = origOut
+  }
+}
+
 export function getAIEventsDirectory() {
   return resolveAIEventsDir()
 }

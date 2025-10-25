@@ -11,7 +11,8 @@ import {
   readJSONIfExists,
   resolveAdapterSpec,
   installEpipeHandlers,
-  configureOrtLogging
+  configureOrtLogging,
+  beginOrtWarningSilence
 } from './ai/utils.mjs'
 import { loadSummaryAdapter } from './ai/adapters/index.mjs'
 import { LOCALE_REGISTRY, getPreferredLocale } from './pagegen.locales.mjs'
@@ -24,6 +25,7 @@ const OUTPUT_FILE = path.join(OUTPUT_DIR, 'summaries.json')
 async function main() {
   installEpipeHandlers()
   configureOrtLogging('3')
+  const restoreOrt = beginOrtWarningSilence()
   const scriptStartedAt = Date.now()
   const preferredLocale = getPreferredLocale()
   const preferredLocaleConfig =
@@ -185,7 +187,11 @@ async function main() {
   console.log(`[summary] summaries.json 写入 ${sortedItems.length} 条（${mode}${reusedCache ? '，命中缓存' : ''}）`)
 }
 
-main().catch(err => {
-  console.error('[summary] failed:', err)
-  process.exitCode = 1
-})
+main()
+  .catch(err => {
+    console.error('[summary] failed:', err)
+    process.exitCode = 1
+  })
+  .finally(() => {
+    try { typeof restoreOrt === 'function' && restoreOrt() } catch {}
+  })

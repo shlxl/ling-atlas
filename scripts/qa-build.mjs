@@ -11,7 +11,8 @@ import {
   readJSONIfExists,
   resolveAdapterSpec,
   installEpipeHandlers,
-  configureOrtLogging
+  configureOrtLogging,
+  beginOrtWarningSilence
 } from './ai/utils.mjs'
 import { loadQAAdapter } from './ai/adapters/index.mjs'
 import { LOCALE_REGISTRY, getPreferredLocale } from './pagegen.locales.mjs'
@@ -24,6 +25,7 @@ const OUTPUT_FILE = path.join(OUTPUT_DIR, 'qa.json')
 async function main() {
   installEpipeHandlers()
   configureOrtLogging('3')
+  const restoreOrt = beginOrtWarningSilence()
   const scriptStartedAt = Date.now()
   const preferredLocale = getPreferredLocale()
   const preferredLocaleConfig =
@@ -186,7 +188,11 @@ async function main() {
   console.log(`[qa-build] qa.json 写入 ${sortedItems.length} 篇文档的问答对（${mode}${reusedCache ? '，命中缓存' : ''}）`)
 }
 
-main().catch(err => {
-  console.error('[qa-build] failed:', err)
-  process.exitCode = 1
-})
+main()
+  .catch(err => {
+    console.error('[qa-build] failed:', err)
+    process.exitCode = 1
+  })
+  .finally(() => {
+    try { typeof restoreOrt === 'function' && restoreOrt() } catch {}
+  })
