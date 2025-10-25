@@ -16,6 +16,8 @@ jobs:
     env:
       BASE: /ling-atlas/
       SITE_ORIGIN: https://shlxl.github.io/ling-atlas
+      ORT_LOG_SEVERITY_LEVEL: '3'
+      ORT_LOGGING_LEVEL: '3'
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
