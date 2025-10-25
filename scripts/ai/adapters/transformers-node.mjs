@@ -141,7 +141,7 @@ export async function buildQA({ documents = [], model, logger, pipelineOptions =
   const { pipeline: qa, model: usedModel } = await getPipelineWithFallback(
     'question-answering',
     model,
-    ['Xenova/distilbert-base-cased-distilled-squad'],
+    ['Xenova/distilbert-base-uncased-distilled-squad'],
     pipelineOptions,
     logger
   )
@@ -161,10 +161,24 @@ export async function buildQA({ documents = [], model, logger, pipelineOptions =
 
     const qaPairs = []
     for (const q of questions) {
-      const out = await qa({ question: q, context: limited }, { ...callOptions })
+      const questionText = String(q ?? '')
+      const contextText = String(limited ?? '')
+      let out
+      try {
+        out = await qa({ question: questionText, context: contextText }, { ...callOptions })
+      } catch (err) {
+        const msg = err?.message || String(err)
+        if (/text\.split is not a function/i.test(msg)) {
+          // 针对 transformers.js 偶发报错，重试一次
+          out = await qa({ question: questionText, context: contextText }, { ...callOptions })
+        } else {
+          throw err
+        }
+      }
       const answer = out?.answer || out?.generated_text || ''
-      if (String(answer).trim()) {
-        qaPairs.push({ q, a: limitLength(String(answer), 220) })
+      const answerText = String(answer || '')
+      if (answerText.trim()) {
+        qaPairs.push({ q: questionText, a: limitLength(answerText, 220) })
       }
     }
 

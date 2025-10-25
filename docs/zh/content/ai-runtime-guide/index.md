@@ -46,7 +46,7 @@ excerpt: >-
 export AI_RUNTIME=node
 export AI_EMBED_MODEL="transformers-node:sentence-transformers:Xenova/all-MiniLM-L6-v2"
 export AI_SUMMARY_MODEL="transformers-node:Xenova/distilbart-cnn-12-6"
-export AI_QA_MODEL="transformers-node:Xenova/distilbert-base-cased-distilled-squad"
+export AI_QA_MODEL="transformers-node:Xenova/distilbert-base-uncased-distilled-squad"
 ```
 
 - 若当前环境无法直接访问 Hugging Face / ONNX 仓库，请不要启用真实模型；保持 `AI_RUNTIME=placeholder` 或提前在有网络的环境完成 `npm run ai:prepare` 并拷贝 `data/models` 缓存，否则 Telemetry 会把无法下载的模型判定为 “fallback”。
