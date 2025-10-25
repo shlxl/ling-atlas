@@ -28,6 +28,8 @@ excerpt: >-
 
 ## 切换到真实模型的步骤
 
+> ⚠️ 提醒：当前脚本会在 **未设置 `AI_*_MODEL`** 时自动尝试默认真实模型（嵌入/摘要/问答分别是上文列出的三个 spec）。如果希望保持占位实现，请显式设置对应环境变量为 `placeholder`。
+
 ### 步骤 1：准备运行时依赖
 
 - 选择合适的适配器：目前内置 `transformers-node`、`onnxruntime` 与 `placeholder`。
