@@ -45,8 +45,11 @@ function normalizeModelSpec(adapterName, model) {
   if (adapterName === 'transformers-node') {
     // 常见原仓模型到 Xenova 移植模型的映射（用于 summarization / QA 等）
     const KNOWN_MAPPINGS = new Map([
-      ['deepset/roberta-base-squad2', 'Xenova/roberta-base-squad2'],
-      ['roberta-base-squad2', 'Xenova/roberta-base-squad2'],
+      // QA: 统一映射到可用的 distilbert 版本
+      ['deepset/roberta-base-squad2', 'Xenova/distilbert-base-cased-distilled-squad'],
+      ['roberta-base-squad2', 'Xenova/distilbert-base-cased-distilled-squad'],
+      ['deberta-v3-base-squad2', 'Xenova/distilbert-base-cased-distilled-squad'],
+      // Summary: distilbart
       ['philschmid/bart-large-cnn-samsum', 'Xenova/distilbart-cnn-12-6'],
       ['bart-large-cnn-samsum', 'Xenova/distilbart-cnn-12-6']
     ])

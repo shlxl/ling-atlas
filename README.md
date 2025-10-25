@@ -90,11 +90,11 @@ npm run dev
 推荐模型与验证
 - 嵌入：`transformers-node:sentence-transformers:Xenova/all-MiniLM-L6-v2`
 - 摘要：`transformers-node:Xenova/distilbart-cnn-12-6`
-- 问答：`transformers-node:Xenova/deberta-v3-base-squad2`
+- 问答：`transformers-node:Xenova/distilbert-base-cased-distilled-squad`
 
 快速验证命令
 - `AI_SUMMARY_MODEL="transformers-node:Xenova/distilbart-cnn-12-6" node scripts/summary.mjs | rg 'ai\.summary\.(adapter\.resolved|adapter\.error|complete)'`
-- `AI_QA_MODEL="transformers-node:Xenova/deberta-v3-base-squad2" node scripts/qa-build.mjs | rg 'ai\.qa\.(adapter\.resolved|adapter\.error|complete)'`
+- `AI_QA_MODEL="transformers-node:Xenova/distilbert-base-cased-distilled-squad" node scripts/qa-build.mjs | rg 'ai\.qa\.(adapter\.resolved|adapter\.error|complete)'`
 
 ## 当前进展与下一阶段
 - Pagegen 各阶段（collect/sync/collections/feeds/i18n/writer）已模块化并输出指标，CLI 会汇总缓存命中率与写入跳过原因，最新一轮指标会同步写入 telemetry 页面，便于运维直接观测。

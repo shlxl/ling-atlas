@@ -141,7 +141,7 @@ export async function buildQA({ documents = [], model, logger, pipelineOptions =
   const { pipeline: qa, model: usedModel } = await getPipelineWithFallback(
     'question-answering',
     model,
-    ['Xenova/deberta-v3-base-squad2', 'Xenova/roberta-base-squad2', 'Xenova/distilbert-base-cased-distilled-squad'],
+    ['Xenova/distilbert-base-cased-distilled-squad'],
     pipelineOptions,
     logger
   )
