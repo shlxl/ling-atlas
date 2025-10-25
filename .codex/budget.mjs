@@ -9,7 +9,8 @@ const defaults = {
   totalMB: 5,
   maxJsKB: 150,
   maxCssKB: 100,
-  topN: 10
+  topN: 10,
+  exclude: ['.well-known/sbom.json']
 }
 
 function loadConfig(){
@@ -32,6 +33,22 @@ function overrideWithEnv(config){
   if (envJs && !Number.isNaN(Number(envJs))) config.maxJsKB = Number(envJs)
   if (envCss && !Number.isNaN(Number(envCss))) config.maxCssKB = Number(envCss)
   return config
+}
+
+function shouldExclude(relativePath, patterns = []){
+  if (!Array.isArray(patterns) || patterns.length === 0) return false
+  return patterns.some(pattern => {
+    if (!pattern) return false
+    if (pattern.endsWith('/**')) {
+      const prefix = pattern.slice(0, -3)
+      return relativePath.startsWith(prefix)
+    }
+    if (pattern.endsWith('*')) {
+      const prefix = pattern.slice(0, -1)
+      return relativePath.startsWith(prefix)
+    }
+    return relativePath === pattern
+  })
 }
 
 function walk(dir){
@@ -86,10 +103,13 @@ function main(){
     console.error('[budget] dist directory not found:', DIST_DIR)
     process.exit(1)
   }
-  const files = walk(DIST_DIR).map(abs => {
-    const stat = fs.statSync(abs)
-    return { abs, size: stat.size, relative: path.relative(DIST_DIR, abs) }
-  })
+  const files = walk(DIST_DIR)
+    .map(abs => {
+      const stat = fs.statSync(abs)
+      const relative = path.relative(DIST_DIR, abs).split(path.sep).join('/')
+      return { abs, size: stat.size, relative }
+    })
+    .filter(file => !shouldExclude(file.relative, config.exclude))
   const jsFiles = {}
   const cssFiles = {}
   let maxJs = 0
