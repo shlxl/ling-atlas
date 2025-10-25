@@ -25,7 +25,6 @@ const OUTPUT_FILE = path.join(OUTPUT_DIR, 'summaries.json')
 async function main() {
   installEpipeHandlers()
   configureOrtLogging('3')
-  const restoreOrt = beginOrtWarningSilence()
   const scriptStartedAt = Date.now()
   const preferredLocale = getPreferredLocale()
   const preferredLocaleConfig =
@@ -56,142 +55,147 @@ async function main() {
     )
   )
 
-  const adapterInfo = await loadSummaryAdapter(spec, console)
-  events.push(
-    logStructured(
-      'ai.summary.adapter.resolved',
-      {
-        requested: spec || 'placeholder',
-        adapter: adapterInfo.adapterName,
-        model: adapterInfo.model,
-        fallback: adapterInfo.isFallback,
-        reason: adapterInfo.reason || null
-      },
-      console
-    )
-  )
-
-  let adapterModule = adapterInfo.adapter
-  let usedName = adapterInfo.adapterName
-  let usedModel = adapterInfo.model
-  let usedFallback = adapterInfo.isFallback
-  let result
-  let retries = 0
-  const inferenceStartedAt = Date.now()
-
+  let restoreOrt
   try {
-    result = await adapterModule.summarize({ documents, model: usedModel, logger: console })
-  } catch (error) {
-    const message = error?.message || String(error)
+    restoreOrt = beginOrtWarningSilence()
+
+    const adapterInfo = await loadSummaryAdapter(spec, console)
     events.push(
       logStructured(
-        'ai.summary.adapter.error',
-        { adapter: usedName, model: usedModel, message },
+        'ai.summary.adapter.resolved',
+        {
+          requested: spec || 'placeholder',
+          adapter: adapterInfo.adapterName,
+          model: adapterInfo.model,
+          fallback: adapterInfo.isFallback,
+          reason: adapterInfo.reason || null
+        },
         console
       )
     )
-    console.warn(`[summary] adapter "${usedName}" 执行失败：${message}，已降级至 placeholder`)
-    const fallback = await loadSummaryAdapter('placeholder', console)
-    adapterModule = fallback.adapter
-    usedName = 'placeholder'
-    usedModel = null
-    usedFallback = true
-    retries += 1
-    result = await adapterModule.summarize({ documents, model: null, logger: console })
-  }
 
-  const inferenceDurationMs = Date.now() - inferenceStartedAt
+    let adapterModule = adapterInfo.adapter
+    let usedName = adapterInfo.adapterName
+    let usedModel = adapterInfo.model
+    let usedFallback = adapterInfo.isFallback
+    let result
+    let retries = 0
+    const inferenceStartedAt = Date.now()
 
-  let finalItems = Array.isArray(result?.items) ? result.items : []
-  let reusedCache = false
+    try {
+      result = await adapterModule.summarize({ documents, model: usedModel, logger: console })
+    } catch (error) {
+      const message = error?.message || String(error)
+      events.push(
+        logStructured(
+          'ai.summary.adapter.error',
+          { adapter: usedName, model: usedModel, message },
+          console
+        )
+      )
+      console.warn(`[summary] adapter "${usedName}" 执行失败：${message}，已降级至 placeholder`)
+      const fallback = await loadSummaryAdapter('placeholder', console)
+      adapterModule = fallback.adapter
+      usedName = 'placeholder'
+      usedModel = null
+      usedFallback = true
+      retries += 1
+      result = await adapterModule.summarize({ documents, model: null, logger: console })
+    }
 
-  if ((!Array.isArray(finalItems) || finalItems.length === 0) && Array.isArray(previous?.items) && previous.items.length > 0) {
-    finalItems = previous.items
-    reusedCache = true
-    console.warn('[summary] 本次未生成摘要，已沿用缓存结果')
-  }
+    const inferenceDurationMs = Date.now() - inferenceStartedAt
 
-  const sortedItems = finalItems.sort((a, b) => a.title.localeCompare(b.title, 'zh-CN'))
+    let finalItems = Array.isArray(result?.items) ? result.items : []
+    let reusedCache = false
 
-  const payload = {
-    generatedAt: new Date().toISOString(),
-    items: sortedItems
-  }
-  const serialized = JSON.stringify(payload, null, 2)
-  const writeStartedAt = Date.now()
-  await fs.writeFile(OUTPUT_FILE, serialized, 'utf8')
-  const writeDurationMs = Date.now() - writeStartedAt
+    if ((!Array.isArray(finalItems) || finalItems.length === 0) && Array.isArray(previous?.items) && previous.items.length > 0) {
+      finalItems = previous.items
+      reusedCache = true
+      console.warn('[summary] 本次未生成摘要，已沿用缓存结果')
+    }
 
-  const relativeTarget = path.relative(ROOT, OUTPUT_FILE)
-  const successRate = documents.length === 0 ? 1 : Number((sortedItems.length / documents.length).toFixed(4))
-  const batchCount = 1
+    const sortedItems = finalItems.sort((a, b) => a.title.localeCompare(b.title, 'zh-CN'))
 
-  events.push(
-    logStructured(
-      'ai.summary.batch',
-      {
-        index: 0,
-        durationMs: inferenceDurationMs,
-        inputCount: documents.length,
-        outputCount: sortedItems.length,
-        successRate,
-        adapter: usedName,
-        model: usedModel,
-        fallback: usedFallback,
-        retries
-      },
-      console
+    const payload = {
+      generatedAt: new Date().toISOString(),
+      items: sortedItems
+    }
+    const serialized = JSON.stringify(payload, null, 2)
+    const writeStartedAt = Date.now()
+    await fs.writeFile(OUTPUT_FILE, serialized, 'utf8')
+    const writeDurationMs = Date.now() - writeStartedAt
+
+    const relativeTarget = path.relative(ROOT, OUTPUT_FILE)
+    const successRate = documents.length === 0 ? 1 : Number((sortedItems.length / documents.length).toFixed(4))
+    const batchCount = 1
+
+    events.push(
+      logStructured(
+        'ai.summary.batch',
+        {
+          index: 0,
+          durationMs: inferenceDurationMs,
+          inputCount: documents.length,
+          outputCount: sortedItems.length,
+          successRate,
+          adapter: usedName,
+          model: usedModel,
+          fallback: usedFallback,
+          retries
+        },
+        console
+      )
     )
-  )
 
-  events.push(
-    logStructured(
-      'ai.summary.write',
-      {
-        target: relativeTarget,
-        bytes: Buffer.byteLength(serialized, 'utf8'),
-        durationMs: writeDurationMs,
-        items: sortedItems.length,
-        cacheReuse: reusedCache
-      },
-      console
+    events.push(
+      logStructured(
+        'ai.summary.write',
+        {
+          target: relativeTarget,
+          bytes: Buffer.byteLength(serialized, 'utf8'),
+          durationMs: writeDurationMs,
+          items: sortedItems.length,
+          cacheReuse: reusedCache
+        },
+        console
+      )
     )
-  )
 
-  const mode = usedFallback
-    ? '占位模式'
-    : `adapter: ${usedName}${usedModel ? ` (${usedModel})` : ''}`
-  events.push(
-    logStructured(
-      'ai.summary.complete',
-      {
-        adapter: usedName,
-        model: usedModel,
-        fallback: usedFallback,
-        cacheReuse: reusedCache,
-        count: sortedItems.length,
-        inputCount: documents.length,
-        outputCount: sortedItems.length,
-        successRate,
-        totalMs: Date.now() - scriptStartedAt,
-        inferenceMs: inferenceDurationMs,
-        writeMs: writeDurationMs,
-        batchCount,
-        target: relativeTarget,
-        retries
-      },
-      console
+    const mode = usedFallback
+      ? '占位模式'
+      : `adapter: ${usedName}${usedModel ? ` (${usedModel})` : ''}`
+    events.push(
+      logStructured(
+        'ai.summary.complete',
+        {
+          adapter: usedName,
+          model: usedModel,
+          fallback: usedFallback,
+          cacheReuse: reusedCache,
+          count: sortedItems.length,
+          inputCount: documents.length,
+          outputCount: sortedItems.length,
+          successRate,
+          totalMs: Date.now() - scriptStartedAt,
+          inferenceMs: inferenceDurationMs,
+          writeMs: writeDurationMs,
+          batchCount,
+          target: relativeTarget,
+          retries
+        },
+        console
+      )
     )
-  )
-  await flushAIEvents('summary', events, console)
-  console.log(`[summary] summaries.json 写入 ${sortedItems.length} 条（${mode}${reusedCache ? '，命中缓存' : ''}）`)
+    await flushAIEvents('summary', events, console)
+    console.log(`[summary] summaries.json 写入 ${sortedItems.length} 条（${mode}${reusedCache ? '，命中缓存' : ''}）`)
+  } finally {
+    try {
+      typeof restoreOrt === 'function' && restoreOrt()
+    } catch {}
+  }
 }
 
-main()
-  .catch(err => {
-    console.error('[summary] failed:', err)
-    process.exitCode = 1
-  })
-  .finally(() => {
-    try { typeof restoreOrt === 'function' && restoreOrt() } catch {}
-  })
+main().catch(err => {
+  console.error('[summary] failed:', err)
+  process.exitCode = 1
+})
