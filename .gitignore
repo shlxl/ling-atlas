@@ -16,6 +16,7 @@ data/pagegen-metrics.json
 data/pagegen-cache.*.json
 data/pagegen-sync.*.json
 data/telemetry.tmp.json
+data/ai-events/
 data/stats.snapshot.json
 data/models/
 docs/public/pagefind/
