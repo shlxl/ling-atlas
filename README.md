@@ -72,8 +72,9 @@ npm run dev
 ### AI 管线配置与回滚
 
 - `AI_RUNTIME`：决定 `ai:prepare`/`ai:smoke` 的运行时（`placeholder`、`node`、`wasm` 等）。未设置时默认为 `placeholder` 并跳过真实模型下载。
-- `AI_EMBED_MODEL`：选择嵌入模型适配器，格式为 `<adapter>:<model>`，示例：`transformers-node:sentence-transformers:Xenova/all-MiniLM-L6-v2`。未设置或显式指定 `placeholder` 时继续走占位文本导出。
-- `AI_SUMMARY_MODEL`：摘要生成的适配器配置，格式同上；问答脚本默认复用该值，可通过 `AI_QA_MODEL` 覆盖。
+- `AI_EMBED_MODEL`：选择嵌入模型适配器，格式为 `<adapter>:<model>`；**未设置时默认尝试** `transformers-node:sentence-transformers:Xenova/all-MiniLM-L6-v2`，若需停用请显式设置为 `placeholder`。
+- `AI_SUMMARY_MODEL`：摘要生成的适配器配置，格式同上；默认值为 `transformers-node:Xenova/distilbart-cnn-12-6`，问答脚本默认复用该值，可通过 `AI_QA_MODEL` 覆盖。
+- `AI_QA_MODEL`：问答生成适配器，默认 `transformers-node:Xenova/distilbert-base-uncased-distilled-squad`；如需占位请显式设置 `placeholder`。
 - CLI 覆盖：所有 AI CLI（`scripts/embed-build.mjs`、`scripts/summary.mjs`、`scripts/qa-build.mjs`）均支持 `--adapter <spec>`，用于临时指定 `<adapter>:<model>`，优先级高于环境变量。
 - 已内置适配器：
   - `placeholder`：延续现有占位逻辑，仅导出首段文本/Frontmatter 元信息，任何环境均可使用。

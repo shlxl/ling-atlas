@@ -38,8 +38,9 @@ async function main() {
   const documents = await collectLocaleDocuments(preferredLocaleConfig)
   await ensureDir(OUTPUT_DIR)
 
+  const defaultSpec = 'transformers-node:Xenova/distilbert-base-uncased-distilled-squad'
   const cliSpec = resolveAdapterSpec({ envKey: null, cliFlag: 'adapter' })
-  const spec = cliSpec || process.env.AI_QA_MODEL || process.env.AI_SUMMARY_MODEL
+  const spec = cliSpec || process.env.AI_QA_MODEL || process.env.AI_SUMMARY_MODEL || defaultSpec
   const previous = await readJSONIfExists(OUTPUT_FILE)
 
   const events = []

@@ -38,7 +38,8 @@ async function main() {
   const documents = await collectLocaleDocuments(preferredLocaleConfig)
   await ensureDir(OUTPUT_DIR)
 
-  const spec = resolveAdapterSpec({ envKey: 'AI_SUMMARY_MODEL', cliFlag: 'adapter' })
+  const defaultSpec = 'transformers-node:Xenova/distilbart-cnn-12-6'
+  const spec = resolveAdapterSpec({ envKey: 'AI_SUMMARY_MODEL', cliFlag: 'adapter' }) || defaultSpec
   const previous = await readJSONIfExists(OUTPUT_FILE)
 
   const events = []

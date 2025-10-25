@@ -31,7 +31,8 @@ async function main() {
   const items = await collectEmbeddableItems(LOCALE_REGISTRY, preferredLocale)
   await ensureDir(OUTPUT_DIR)
 
-  const spec = resolveAdapterSpec({ envKey: 'AI_EMBED_MODEL', cliFlag: 'adapter' })
+  const defaultSpec = 'transformers-node:sentence-transformers:Xenova/all-MiniLM-L6-v2'
+  const spec = resolveAdapterSpec({ envKey: 'AI_EMBED_MODEL', cliFlag: 'adapter' }) || defaultSpec
   const previous = await readJSONIfExists(OUTPUT_FILE)
 
   const events = []
