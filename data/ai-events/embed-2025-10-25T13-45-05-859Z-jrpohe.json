@@ -1,0 +1,62 @@
+{
+  "domain": "embed",
+  "events": [
+    {
+      "event": "ai.embed.start",
+      "timestamp": "2025-10-25T13:45:05.429Z",
+      "inputCount": 8,
+      "preferredLocale": "zh",
+      "localeCount": 2,
+      "requestedAdapter": "transformers-node:sentence-transformers/all-MiniLM-L6-v2"
+    },
+    {
+      "event": "ai.embed.adapter.resolved",
+      "timestamp": "2025-10-25T13:45:05.618Z",
+      "requested": "transformers-node:sentence-transformers/all-MiniLM-L6-v2",
+      "adapter": "transformers-node",
+      "model": "sentence-transformers:Xenova/all-MiniLM-L6-v2",
+      "fallback": false,
+      "reason": null
+    },
+    {
+      "event": "ai.embed.batch",
+      "timestamp": "2025-10-25T13:45:05.858Z",
+      "index": 0,
+      "durationMs": 238,
+      "inputCount": 8,
+      "outputCount": 8,
+      "successRate": 1,
+      "adapter": "transformers-node",
+      "model": "sentence-transformers:Xenova/all-MiniLM-L6-v2",
+      "fallback": false,
+      "retries": 0
+    },
+    {
+      "event": "ai.embed.write",
+      "timestamp": "2025-10-25T13:45:05.858Z",
+      "target": "docs/public/data/embeddings.json",
+      "bytes": 94949,
+      "durationMs": 2,
+      "items": 8,
+      "cacheReuse": false
+    },
+    {
+      "event": "ai.embed.complete",
+      "timestamp": "2025-10-25T13:45:05.858Z",
+      "adapter": "transformers-node",
+      "model": "sentence-transformers:Xenova/all-MiniLM-L6-v2",
+      "fallback": false,
+      "cacheReuse": false,
+      "count": 8,
+      "inputCount": 8,
+      "outputCount": 8,
+      "successRate": 1,
+      "totalMs": 450,
+      "inferenceMs": 238,
+      "writeMs": 2,
+      "batchCount": 1,
+      "target": "docs/public/data/embeddings.json",
+      "retries": 0
+    }
+  ]
+}

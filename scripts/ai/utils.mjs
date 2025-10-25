@@ -61,6 +61,27 @@ export function logStructured(event, details = {}, logger = console) {
   return payload
 }
 
+// 防止在通过管道（如 rg/grep/head）截断输出时触发 EPIPE 导致进程崩溃
+export function installEpipeHandlers() {
+  const handler = err => {
+    if (err && (err.code === 'EPIPE' || err.code === 'ERR_STREAM_DESTROYED')) {
+      // 忽略 EPIPE，避免因下游提前关闭管道导致进程崩溃
+      return
+    }
+  }
+  try { process.stdout?.on?.('error', handler) } catch {}
+  try { process.stderr?.on?.('error', handler) } catch {}
+}
+
+// 设置 ONNX Runtime 的默认日志级别，降低冗余警告输出带来的 IO 开销
+export function configureOrtLogging(defaultSeverity = '3') {
+  const sev = String(defaultSeverity)
+  if (!process.env.ORT_LOG_SEVERITY_LEVEL && !process.env.ORT_LOGGING_LEVEL) {
+    process.env.ORT_LOG_SEVERITY_LEVEL = sev
+    process.env.ORT_LOGGING_LEVEL = sev
+  }
+}
+
 export function getAIEventsDirectory() {
   return resolveAIEventsDir()
 }

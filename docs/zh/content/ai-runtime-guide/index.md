@@ -41,10 +41,10 @@ excerpt: >-
    - 基本参数：
 
      ```bash
-     export AI_RUNTIME=node
-     export AI_EMBED_MODEL="transformers-node:sentence-transformers/all-MiniLM-L6-v2"
-     export AI_SUMMARY_MODEL="transformers-node:philschmid/bart-large-cnn-samsum"
-     export AI_QA_MODEL="transformers-node:deepset/roberta-base-squad2"
+    export AI_RUNTIME=node
+    export AI_EMBED_MODEL="transformers-node:sentence-transformers:Xenova/all-MiniLM-L6-v2"
+    export AI_SUMMARY_MODEL="transformers-node:Xenova/distilbart-cnn-12-6"
+    export AI_QA_MODEL="transformers-node:Xenova/deberta-v3-base-squad2"
      ```
 
    - 若当前环境无法直接访问 Hugging Face / ONNX 仓库，请不要启用真实模型；保持 `AI_RUNTIME=placeholder` 或提前在有网络的环境完成 `npm run ai:prepare` 并拷贝 `data/models` 缓存，否则 Telemetry 会把无法下载的模型判定为 “fallback”。
@@ -52,10 +52,11 @@ excerpt: >-
    - 临时使用 CLI 覆盖：
 
      ```bash
-     node scripts/embed-build.mjs --adapter transformers-node:all-MiniLM-L6-v2
+    node scripts/embed-build.mjs --adapter transformers-node:sentence-transformers:Xenova/all-MiniLM-L6-v2
      ```
 
    - 若仅想验证单一适配器，可设定 `AI_EMBED_DISABLE=1` 等环境变量跳过某些阶段。
+
 
 3. **运行准备与冒烟**
 

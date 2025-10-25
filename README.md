@@ -72,7 +72,7 @@ npm run dev
 ### AI 管线配置与回滚
 
 - `AI_RUNTIME`：决定 `ai:prepare`/`ai:smoke` 的运行时（`placeholder`、`node`、`wasm` 等）。未设置时默认为 `placeholder` 并跳过真实模型下载。
-- `AI_EMBED_MODEL`：选择嵌入模型适配器，格式为 `<adapter>:<model>`，示例：`transformers-node:sentence-transformers/all-MiniLM-L6-v2`。未设置或显式指定 `placeholder` 时继续走占位文本导出。
+- `AI_EMBED_MODEL`：选择嵌入模型适配器，格式为 `<adapter>:<model>`，示例：`transformers-node:sentence-transformers:Xenova/all-MiniLM-L6-v2`。未设置或显式指定 `placeholder` 时继续走占位文本导出。
 - `AI_SUMMARY_MODEL`：摘要生成的适配器配置，格式同上；问答脚本默认复用该值，可通过 `AI_QA_MODEL` 覆盖。
 - CLI 覆盖：所有 AI CLI（`scripts/embed-build.mjs`、`scripts/summary.mjs`、`scripts/qa-build.mjs`）均支持 `--adapter <spec>`，用于临时指定 `<adapter>:<model>`，优先级高于环境变量。
 - 已内置适配器：
@@ -86,6 +86,15 @@ npm run dev
 - 回滚策略：清空相关环境变量或设置为 `placeholder`，依次运行 `npm run ai:prepare`（刷新模型缓存与状态）和 `npm run ai:all` 即可恢复占位产物；如遇模型产出异常，可手动删除 `docs/public/data/*.json` 并重新执行命令。若需临时停止遥测事件写入，可设置 `AI_TELEMETRY_DISABLE=1`；需要将事件输出重定向到自定义目录（如测试夹具或沙箱）时，可设置 `AI_TELEMETRY_PATH=<dir>`。
 - 单测：`node --test tests/ai/*.test.mjs` 通过 mock 适配器覆盖默认回退、缓存命中与 CLI 解析逻辑。
 - CI 守门：主干推送与带 `ai-smoke` 标签的 PR 会先执行 `npm run ai:prepare` 再运行 `npm run ai:smoke`，确保缓存可用并在失败时自动降级到占位实现。
+
+推荐模型与验证
+- 嵌入：`transformers-node:sentence-transformers:Xenova/all-MiniLM-L6-v2`
+- 摘要：`transformers-node:Xenova/distilbart-cnn-12-6`
+- 问答：`transformers-node:Xenova/deberta-v3-base-squad2`
+
+快速验证命令
+- `AI_SUMMARY_MODEL="transformers-node:Xenova/distilbart-cnn-12-6" node scripts/summary.mjs | rg 'ai\.summary\.(adapter\.resolved|adapter\.error|complete)'`
+- `AI_QA_MODEL="transformers-node:Xenova/deberta-v3-base-squad2" node scripts/qa-build.mjs | rg 'ai\.qa\.(adapter\.resolved|adapter\.error|complete)'`
 
 ## 当前进展与下一阶段
 - Pagegen 各阶段（collect/sync/collections/feeds/i18n/writer）已模块化并输出指标，CLI 会汇总缓存命中率与写入跳过原因，最新一轮指标会同步写入 telemetry 页面，便于运维直接观测。

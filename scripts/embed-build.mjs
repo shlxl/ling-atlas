@@ -9,7 +9,9 @@ import {
   flushAIEvents,
   logStructured,
   readJSONIfExists,
-  resolveAdapterSpec
+  resolveAdapterSpec,
+  installEpipeHandlers,
+  configureOrtLogging
 } from './ai/utils.mjs'
 import { loadEmbeddingAdapter } from './ai/adapters/index.mjs'
 import { LOCALE_REGISTRY, getPreferredLocale } from './pagegen.locales.mjs'
@@ -20,6 +22,8 @@ const OUTPUT_DIR = path.join(ROOT, 'docs', 'public', 'data')
 const OUTPUT_FILE = path.join(OUTPUT_DIR, 'embeddings.json')
 
 async function main() {
+  installEpipeHandlers()
+  configureOrtLogging('3')
   const scriptStartedAt = Date.now()
   const preferredLocale = getPreferredLocale()
   const items = await collectEmbeddableItems(LOCALE_REGISTRY, preferredLocale)

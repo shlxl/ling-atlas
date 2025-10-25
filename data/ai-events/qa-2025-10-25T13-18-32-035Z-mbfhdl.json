@@ -1,0 +1,68 @@
+{
+  "domain": "qa",
+  "events": [
+    {
+      "event": "ai.qa.start",
+      "timestamp": "2025-10-25T13:18:30.655Z",
+      "locale": "zh",
+      "inputCount": 8,
+      "requestedAdapter": "transformers-node:local:data/\n        models-local/roberta-squad2"
+    },
+    {
+      "event": "ai.qa.adapter.resolved",
+      "timestamp": "2025-10-25T13:18:30.782Z",
+      "requested": "transformers-node:local:data/\n        models-local/roberta-squad2",
+      "adapter": "transformers-node",
+      "model": "local:data/\n        models-local/roberta-squad2",
+      "fallback": false,
+      "reason": null
+    },
+    {
+      "event": "ai.qa.adapter.error",
+      "timestamp": "2025-10-25T13:18:32.029Z",
+      "adapter": "transformers-node",
+      "model": "local:data/\n        models-local/roberta-squad2",
+      "message": "text.split is not a function"
+    },
+    {
+      "event": "ai.qa.batch",
+      "timestamp": "2025-10-25T13:18:32.035Z",
+      "index": 0,
+      "durationMs": 1247,
+      "inputCount": 8,
+      "outputCount": 8,
+      "successRate": 1,
+      "adapter": "placeholder",
+      "model": null,
+      "fallback": true,
+      "retries": 1
+    },
+    {
+      "event": "ai.qa.write",
+      "timestamp": "2025-10-25T13:18:32.035Z",
+      "target": "docs/public/data/qa.json",
+      "bytes": 6934,
+      "durationMs": 1,
+      "items": 8,
+      "cacheReuse": false
+    },
+    {
+      "event": "ai.qa.complete",
+      "timestamp": "2025-10-25T13:18:32.035Z",
+      "adapter": "placeholder",
+      "model": null,
+      "fallback": true,
+      "cacheReuse": false,
+      "count": 8,
+      "inputCount": 8,
+      "outputCount": 8,
+      "successRate": 1,
+      "totalMs": 1392,
+      "inferenceMs": 1247,
+      "writeMs": 1,
+      "batchCount": 1,
+      "target": "docs/public/data/qa.json",
+      "retries": 1
+    }
+  ]
+}

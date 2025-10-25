@@ -40,13 +40,50 @@ function parseModelSpec(spec) {
   return { adapterName: adapterName || 'placeholder', model }
 }
 
+function normalizeModelSpec(adapterName, model) {
+  if (!model) return model
+  if (adapterName === 'transformers-node') {
+    // 常见原仓模型到 Xenova 移植模型的映射（用于 summarization / QA 等）
+    const KNOWN_MAPPINGS = new Map([
+      ['deepset/roberta-base-squad2', 'Xenova/roberta-base-squad2'],
+      ['roberta-base-squad2', 'Xenova/roberta-base-squad2'],
+      ['philschmid/bart-large-cnn-samsum', 'Xenova/distilbart-cnn-12-6'],
+      ['bart-large-cnn-samsum', 'Xenova/distilbart-cnn-12-6']
+    ])
+
+    // 规范化 all-MiniLM-L6-v2 相关别名为期望的返回值
+    const wantPrefix = 'sentence-transformers:Xenova/'
+    if (model.startsWith('sentence-transformers:Xenova/')) return model
+    if (model.startsWith('sentence-transformers/')) {
+      const rest = model.slice('sentence-transformers/'.length)
+      return `${wantPrefix}${rest}`
+    }
+    if (model.startsWith('Xenova/')) {
+      const rest = model.slice('Xenova/'.length)
+      return `${wantPrefix}${rest}`
+    }
+    if (model === 'all-MiniLM-L6-v2' || /(?:^|\/)all-MiniLM-L6-v2$/.test(model)) {
+      return `${wantPrefix}all-MiniLM-L6-v2`
+    }
+
+    // 非 sentence-transformers 域的模型：尝试映射到 Xenova 等价仓
+    if (!model.startsWith('sentence-transformers')) {
+      if (KNOWN_MAPPINGS.has(model)) return KNOWN_MAPPINGS.get(model)
+      const repo = model.includes('/') ? model.split('/').pop() : model
+      if (KNOWN_MAPPINGS.has(repo)) return KNOWN_MAPPINGS.get(repo)
+    }
+  }
+  return model
+}
+
 async function resolveAdapter(method, spec, logger = console) {
   const { adapterName, model } = parseModelSpec(spec)
+  const normalizedModel = normalizeModelSpec(adapterName, model)
   const placeholderResult = {
     adapter: placeholder,
     adapterName: 'placeholder',
     requested: adapterName,
-    model,
+    model: normalizedModel,
     isFallback: adapterName !== 'placeholder',
     reason: adapterName === 'placeholder' ? 'explicit-placeholder' : 'default'
   }
@@ -71,7 +108,7 @@ async function resolveAdapter(method, spec, logger = console) {
       adapter: module,
       adapterName,
       requested: adapterName,
-      model,
+      model: normalizedModel,
       isFallback: false
     }
   } catch (error) {

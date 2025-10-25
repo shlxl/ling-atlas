@@ -1,0 +1,68 @@
+{
+  "domain": "qa",
+  "events": [
+    {
+      "event": "ai.qa.start",
+      "timestamp": "2025-10-25T13:48:05.558Z",
+      "locale": "zh",
+      "inputCount": 8,
+      "requestedAdapter": "transformers-node:Xenova/deberta-v3-base-squad2"
+    },
+    {
+      "event": "ai.qa.adapter.resolved",
+      "timestamp": "2025-10-25T13:48:05.704Z",
+      "requested": "transformers-node:Xenova/deberta-v3-base-squad2",
+      "adapter": "transformers-node",
+      "model": "sentence-transformers:Xenova/deberta-v3-base-squad2",
+      "fallback": false,
+      "reason": null
+    },
+    {
+      "event": "ai.qa.adapter.error",
+      "timestamp": "2025-10-25T13:48:06.789Z",
+      "adapter": "transformers-node",
+      "model": "sentence-transformers:Xenova/deberta-v3-base-squad2",
+      "message": "text.split is not a function"
+    },
+    {
+      "event": "ai.qa.batch",
+      "timestamp": "2025-10-25T13:48:06.797Z",
+      "index": 0,
+      "durationMs": 1086,
+      "inputCount": 8,
+      "outputCount": 8,
+      "successRate": 1,
+      "adapter": "placeholder",
+      "model": null,
+      "fallback": true,
+      "retries": 1
+    },
+    {
+      "event": "ai.qa.write",
+      "timestamp": "2025-10-25T13:48:06.797Z",
+      "target": "docs/public/data/qa.json",
+      "bytes": 6934,
+      "durationMs": 3,
+      "items": 8,
+      "cacheReuse": false
+    },
+    {
+      "event": "ai.qa.complete",
+      "timestamp": "2025-10-25T13:48:06.797Z",
+      "adapter": "placeholder",
+      "model": null,
+      "fallback": true,
+      "cacheReuse": false,
+      "count": 8,
+      "inputCount": 8,
+      "outputCount": 8,
+      "successRate": 1,
+      "totalMs": 1252,
+      "inferenceMs": 1086,
+      "writeMs": 3,
+      "batchCount": 1,
+      "target": "docs/public/data/qa.json",
+      "retries": 1
+    }
+  ]
+}

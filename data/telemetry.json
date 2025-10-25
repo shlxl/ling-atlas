@@ -10,15 +10,15 @@
   },
   "build": {
     "pagegen": {
-      "timestamp": "2025-10-25T11:08:53.473Z",
-      "totalMs": 34.206,
+      "timestamp": "2025-10-25T13:08:34.080Z",
+      "totalMs": 72.568,
       "collect": {
         "locales": 2,
-        "cacheHitRate": 1,
-        "cacheHits": 8,
-        "cacheMisses": 0,
+        "cacheHitRate": 0.875,
+        "cacheHits": 7,
+        "cacheMisses": 1,
         "cacheDisabledLocales": 0,
-        "parsedFiles": 0,
+        "parsedFiles": 1,
         "totalFiles": 8,
         "parseErrors": 0,
         "errorEntries": 0
@@ -100,37 +100,26 @@
       "schemaVersion": "2024-11-01",
       "embed": {
         "schemaVersion": "2024-11-01",
-        "timestamp": "2025-10-25T11:03:01.798Z",
-        "totalMs": 587,
+        "timestamp": "2025-10-25T13:05:15.944Z",
+        "totalMs": 331,
         "adapter": {
-          "name": "placeholder",
-          "model": "sentence-transformers/all-MiniLM-L6-v2",
-          "fallback": true
+          "name": "transformers-node",
+          "model": "sentence-transformers:Xenova/all-MiniLM-L6-v2",
+          "fallback": false
         },
         "inference": {
           "batches": 1,
-          "totalMs": 830,
-          "avgMs": 830,
+          "totalMs": 343,
+          "avgMs": 343,
           "inputCount": 8,
           "outputCount": 8,
           "successRate": 1,
-          "retries": 1,
-          "errors": [
-            {
-              "adapter": "transformers-node",
-              "model": "sentence-transformers/all-MiniLM-L6-v2",
-              "message": "Could not locate file: \"https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/onnx/model_quantized.onnx\"."
-            },
-            {
-              "adapter": "transformers-node",
-              "model": "all-MiniLM-L6-v2",
-              "message": "Unauthorized access to file: \"https://huggingface.co/all-MiniLM-L6-v2/resolve/main/config.json\"."
-            }
-          ]
+          "retries": 0,
+          "errors": []
         },
         "write": {
           "target": "docs/public/data/embeddings.json",
-          "bytes": 2542,
+          "bytes": 94949,
           "durationMs": 1,
           "items": 8,
           "cacheReuse": false
@@ -141,17 +130,17 @@
       },
       "summary": {
         "schemaVersion": "2024-11-01",
-        "timestamp": "2025-10-25T11:02:45.676Z",
-        "totalMs": 144,
+        "timestamp": "2025-10-25T13:06:50.549Z",
+        "totalMs": 94416,
         "adapter": {
           "name": "transformers-node",
-          "model": "philschmid/bart-large-cnn-samsum",
+          "model": "Xenova/distilbart-cnn-12-6",
           "fallback": false
         },
         "inference": {
           "batches": 1,
-          "totalMs": 0,
-          "avgMs": 0,
+          "totalMs": 190247,
+          "avgMs": 190247,
           "inputCount": 8,
           "outputCount": 8,
           "successRate": 1,
@@ -160,7 +149,7 @@
         },
         "write": {
           "target": "docs/public/data/summaries.json",
-          "bytes": 2406,
+          "bytes": 1917,
           "durationMs": 1,
           "items": 8,
           "cacheReuse": false
@@ -171,27 +160,53 @@
       },
       "qa": {
         "schemaVersion": "2024-11-01",
-        "timestamp": "2025-10-25T11:02:46.041Z",
-        "totalMs": 186,
+        "timestamp": "2025-10-25T13:06:55.846Z",
+        "totalMs": 5084,
         "adapter": {
-          "name": "transformers-node",
-          "model": "deepset/roberta-base-squad2",
-          "fallback": false
+          "name": "placeholder",
+          "model": "Xenova/roberta-base-squad2",
+          "fallback": true
         },
         "inference": {
           "batches": 1,
-          "totalMs": 0,
-          "avgMs": 0,
+          "totalMs": 20136,
+          "avgMs": 20136,
           "inputCount": 8,
           "outputCount": 8,
           "successRate": 1,
-          "retries": 0,
-          "errors": []
+          "retries": 1,
+          "errors": [
+            {
+              "adapter": "transformers-node",
+              "model": "Xenova/roberta-base-squad2",
+              "message": "Unauthorized access to file: \"https://huggingface.co/Xenova/roberta-base-squad2/resolve/main/tokenizer_config.json\"."
+            },
+            {
+              "adapter": "transformers-node",
+              "model": "Xenova/roberta-base-squad2",
+              "message": "Unauthorized access to file: \"https://huggingface.co/Xenova/roberta-base-squad2/resolve/main/config.json\"."
+            },
+            {
+              "adapter": "transformers-node",
+              "model": "Xenova/roberta-base-squad2",
+              "message": "Unauthorized access to file: \"https://huggingface.co/Xenova/roberta-base-squad2/resolve/main/tokenizer_config.json\"."
+            },
+            {
+              "adapter": "transformers-node",
+              "model": "Xenova/roberta-base-squad2",
+              "message": "Unauthorized access to file: \"https://huggingface.co/Xenova/roberta-base-squad2/resolve/main/tokenizer_config.json\"."
+            },
+            {
+              "adapter": "transformers-node",
+              "model": "Xenova/roberta-base-squad2",
+              "message": "Unauthorized access to file: \"https://huggingface.co/Xenova/roberta-base-squad2/resolve/main/config.json\"."
+            }
+          ]
         },
         "write": {
           "target": "docs/public/data/qa.json",
           "bytes": 6934,
-          "durationMs": 2,
+          "durationMs": 1,
           "items": 8,
           "cacheReuse": false
         },
@@ -201,7 +216,7 @@
       },
       "overview": {
         "schemaVersion": "2024-11-01",
-        "updatedAt": "2025-10-25T11:03:01.798Z",
+        "updatedAt": "2025-10-25T13:06:55.846Z",
         "status": "degraded",
         "summary": {
           "ok": 2,
@@ -212,51 +227,51 @@
         },
         "domains": {
           "embed": {
-            "status": "fallback",
-            "lastRunAt": "2025-10-25T11:03:01.798Z",
-            "adapter": {
-              "name": "placeholder",
-              "model": "sentence-transformers/all-MiniLM-L6-v2",
-              "fallback": true
-            },
-            "outputCount": 8,
-            "successRate": 1,
-            "cacheReuse": false,
-            "totalMs": 587,
-            "inputCount": 8,
-            "retries": 1,
-            "batches": 1
-          },
-          "summary": {
             "status": "ok",
-            "lastRunAt": "2025-10-25T11:02:45.676Z",
+            "lastRunAt": "2025-10-25T13:05:15.944Z",
             "adapter": {
               "name": "transformers-node",
-              "model": "philschmid/bart-large-cnn-samsum",
+              "model": "sentence-transformers:Xenova/all-MiniLM-L6-v2",
               "fallback": false
             },
             "outputCount": 8,
             "successRate": 1,
             "cacheReuse": false,
-            "totalMs": 144,
+            "totalMs": 331,
+            "inputCount": 8,
+            "retries": 0,
+            "batches": 1
+          },
+          "summary": {
+            "status": "ok",
+            "lastRunAt": "2025-10-25T13:06:50.549Z",
+            "adapter": {
+              "name": "transformers-node",
+              "model": "Xenova/distilbart-cnn-12-6",
+              "fallback": false
+            },
+            "outputCount": 8,
+            "successRate": 1,
+            "cacheReuse": false,
+            "totalMs": 94416,
             "inputCount": 8,
             "retries": 0,
             "batches": 1
           },
           "qa": {
-            "status": "ok",
-            "lastRunAt": "2025-10-25T11:02:46.041Z",
+            "status": "fallback",
+            "lastRunAt": "2025-10-25T13:06:55.846Z",
             "adapter": {
-              "name": "transformers-node",
-              "model": "deepset/roberta-base-squad2",
-              "fallback": false
+              "name": "placeholder",
+              "model": "Xenova/roberta-base-squad2",
+              "fallback": true
             },
             "outputCount": 8,
             "successRate": 1,
             "cacheReuse": false,
-            "totalMs": 186,
+            "totalMs": 5084,
             "inputCount": 8,
-            "retries": 0,
+            "retries": 1,
             "batches": 1
           }
         },
@@ -266,7 +281,7 @@
           "executed": 1,
           "skipped": 0,
           "failed": 0,
-          "verifiedAt": "2025-10-25T11:02:39.865Z"
+          "verifiedAt": "2025-10-25T12:25:19.279Z"
         }
       },
       "smoke": {
@@ -276,7 +291,7 @@
           "executed": 1,
           "skipped": 0,
           "failed": 0,
-          "verifiedAt": "2025-10-25T11:02:39.865Z",
+          "verifiedAt": "2025-10-25T12:25:19.279Z",
           "reason": null,
           "failures": []
         },
@@ -290,7 +305,7 @@
             "smoke": {
               "status": "passed",
               "reason": null,
-              "verifiedAt": "2025-10-25T11:02:39.865Z"
+              "verifiedAt": "2025-10-25T12:25:19.279Z"
             },
             "cache": {
               "status": "ready",
@@ -300,7 +315,7 @@
         ],
         "runtime": "node",
         "fallback": null,
-        "generatedAt": "2025-10-25T11:02:35.038Z"
+        "generatedAt": "2025-10-25T12:25:12.178Z"
       }
     }
   },
