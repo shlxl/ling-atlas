@@ -28,85 +28,89 @@ excerpt: >-
 
 ## 切换到真实模型的步骤
 
-1. **准备运行时依赖**
-   - 选择合适的适配器：目前内置 `transformers-node`、`onnxruntime` 与 `placeholder`。
-   - 安装对应依赖：  
+### 步骤 1：准备运行时依赖
+
+- 选择合适的适配器：目前内置 `transformers-node`、`onnxruntime` 与 `placeholder`。
+- 安装对应依赖：
 
      ```bash
      npm install @xenova/transformers     # 对应 transformers-node 适配器
      npm install onnxruntime-node         # 对应 onnxruntime 适配器
      ```
 
-2. **设置环境变量或 CLI 参数**
-   - 基本参数：
+### 步骤 2：设置环境变量或 CLI 参数
 
-     ```bash
-    export AI_RUNTIME=node
-    export AI_EMBED_MODEL="transformers-node:sentence-transformers:Xenova/all-MiniLM-L6-v2"
-    export AI_SUMMARY_MODEL="transformers-node:Xenova/distilbart-cnn-12-6"
-    export AI_QA_MODEL="transformers-node:Xenova/deberta-v3-base-squad2"
-     ```
+基本参数：
 
-   - 若当前环境无法直接访问 Hugging Face / ONNX 仓库，请不要启用真实模型；保持 `AI_RUNTIME=placeholder` 或提前在有网络的环境完成 `npm run ai:prepare` 并拷贝 `data/models` 缓存，否则 Telemetry 会把无法下载的模型判定为 “fallback”。
+```bash
+export AI_RUNTIME=node
+export AI_EMBED_MODEL="transformers-node:sentence-transformers:Xenova/all-MiniLM-L6-v2"
+export AI_SUMMARY_MODEL="transformers-node:Xenova/distilbart-cnn-12-6"
+export AI_QA_MODEL="transformers-node:Xenova/deberta-v3-base-squad2"
+```
 
-   - 临时使用 CLI 覆盖：
+- 若当前环境无法直接访问 Hugging Face / ONNX 仓库，请不要启用真实模型；保持 `AI_RUNTIME=placeholder` 或提前在有网络的环境完成 `npm run ai:prepare` 并拷贝 `data/models` 缓存，否则 Telemetry 会把无法下载的模型判定为 “fallback”。
 
-     ```bash
-    node scripts/embed-build.mjs --adapter transformers-node:sentence-transformers:Xenova/all-MiniLM-L6-v2
-     ```
+临时使用 CLI 覆盖：
 
-   - 若仅想验证单一适配器，可设定 `AI_EMBED_DISABLE=1` 等环境变量跳过某些阶段。
+```bash
+node scripts/embed-build.mjs --adapter transformers-node:sentence-transformers:Xenova/all-MiniLM-L6-v2
+```
 
+- 若仅想验证单一适配器，可设定 `AI_EMBED_DISABLE=1` 等环境变量跳过某些阶段。
 
-3. **运行准备与冒烟**
+### 步骤 3：运行准备与冒烟
 
-   ```bash
-   npm run ai:prepare   # 下载/校验模型、写入 data/models.json
-   npm run ai:smoke     # 使用 manifest 中定义的 smokeTest 执行最小推理
-   npm run ai:all       # 生成 embeddings / summaries / qa 三个产物
-   ```
+```bash
+npm run ai:prepare   # 下载/校验模型、写入 data/models.json
+npm run ai:smoke     # 使用 manifest 中定义的 smokeTest 执行最小推理
+npm run ai:all       # 生成 embeddings / summaries / qa 三个产物
+```
 
-   - `ai:prepare` 失败：检查网络、checksum、磁盘权限；必要时重试或启用 `AI_MODELS_SCOPE=global` 使用全局缓存。
-   - `ai:smoke` 失败：日志会写入 `data/models.json` 的 `smoke.failures` 字段，并自动把 `runtime` 回退为 `placeholder`。
-   - `ai:all` 失败：Telemetry 会显示 fallback 或 missing，可单独重跑对应阶段（`ai:embed` / `ai:summary` / `ai:qa`）后再次执行 `node scripts/telemetry-merge.mjs`。
+- `ai:prepare` 失败：检查网络、checksum、磁盘权限；必要时重试或启用 `AI_MODELS_SCOPE=global` 使用全局缓存。
+- `ai:smoke` 失败：日志会写入 `data/models.json` 的 `smoke.failures` 字段，并自动把 `runtime` 回退为 `placeholder`。
+- `ai:all` 失败：Telemetry 会显示 fallback 或 missing，可单独重跑对应阶段（`ai:embed` / `ai:summary` / `ai:qa`）后再次执行 `node scripts/telemetry-merge.mjs`。
 
-4. **更新 Telemetry / 观测指标**
-   - 先跑完 `npm run ai:all`，再执行 `npm run gen` 或 `npm run build`（两者内部都会触发 `node scripts/telemetry-merge.mjs`）；完成后 Telemetry 才会显示 `build.ai.overview.status = ok`，并在“观测指标”页同步展示真实输出条数与成功率。
+### 步骤 4：更新 Telemetry / 观测指标
+
+- 先跑完 `npm run ai:all`，再执行 `npm run gen` 或 `npm run build`（两者内部都会触发 `node scripts/telemetry-merge.mjs`）；完成后 Telemetry 才会显示 `build.ai.overview.status = ok`，并在“观测指标”页同步展示真实输出条数与成功率。
 
 ## 回滚与排障
 
 如果真实模型不可用或出现大规模失败，可按照以下步骤回滚：
 
-1. **显式切换回占位**
+### 回滚 1：显式切换回占位
 
-   ```bash
-   export AI_RUNTIME=placeholder
-   npm run ai:prepare
-   npm run ai:smoke   # 此时会输出“占位模式”并自动通过
-   ```
+```bash
+export AI_RUNTIME=placeholder
+npm run ai:prepare
+npm run ai:smoke   # 此时会输出“占位模式”并自动通过
+```
 
-2. **删除或归档生成产物**
-   - 如需彻底回退向量化结果，可以删除 `docs/public/data/embeddings.json` 等产物后再次运行 `npm run ai:all`。
+### 回滚 2：删除或归档生成产物
 
-3. **清理缓存**
+- 如需彻底回退向量化结果，可以删除 `docs/public/data/embeddings.json` 等产物后再次运行 `npm run ai:all`。
 
-   ```bash
-   AI_MODELS_CLEAN=1 npm run ai:prepare   # 仅保留 manifest 中列出的模型
-   ```
+### 回滚 3：清理缓存
 
-4. **网络受限或模型下载失败**
+```bash
+AI_MODELS_CLEAN=1 npm run ai:prepare   # 仅保留 manifest 中列出的模型
+```
 
-   - 无法访问外网时，建议使用如下流程先在可联网环境完成准备工作：  
+### 回滚 4：网络受限或模型下载失败
 
-     ```bash
-     # 在可联网环境
-     export AI_RUNTIME=node
-     npm run ai:prepare
-     tar czf models-cache.tgz data/models
-     ```
+无法访问外网时，建议使用如下流程先在可联网环境完成准备工作：
 
-     将 `data/models` 整个目录复制到离线环境后再运行 `npm run ai:all`。  
-   - 如果已切到真实适配器但下载失败导致 Telemetry 呈 “fallback”，请立即 `export AI_RUNTIME=placeholder && npm run ai:embed` 清除告警，再排查网络或缓存路径（可通过 `TRANSFORMERS_CACHE=/path/to/cache` 指向离线模型）。
+```bash
+# 在可联网环境
+export AI_RUNTIME=node
+npm run ai:prepare
+tar czf models-cache.tgz data/models
+```
+
+将 `data/models` 整个目录复制到离线环境后再运行 `npm run ai:all`。
+
+- 如果已切到真实适配器但下载失败导致 Telemetry 呈 “fallback”，请立即 `export AI_RUNTIME=placeholder && npm run ai:embed` 清除告警，再排查网络或缓存路径（可通过 `TRANSFORMERS_CACHE=/path/to/cache` 指向离线模型）。
 
 ## 常见问题解答
 
