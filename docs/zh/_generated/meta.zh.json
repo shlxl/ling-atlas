@@ -42,6 +42,26 @@
         "year": "2025"
       },
       {
+        "title": "Ling Atlas 项目缘起与系统全貌",
+        "date": "2025-10-20",
+        "updated": "",
+        "status": "published",
+        "category": "管理与协作",
+        "category_slug": "管理与协作",
+        "series": "项目起航手记",
+        "series_slug": "project-kickoff",
+        "tags": [
+          "项目治理",
+          "知识管理",
+          "自动化运维"
+        ],
+        "slug": "project-overview",
+        "path": "/zh/content/project-overview/",
+        "excerpt": "全面梳理 Ling Atlas 的愿景、演进路线与当前落地能力，帮助后续贡献者快速理解“个人向量化知识库”的系统边界与协作模式。",
+        "relative": "project-overview",
+        "year": "2025"
+      },
+      {
         "title": "观测指标导览",
         "date": "2025-10-20",
         "updated": "",
@@ -79,26 +99,6 @@
         "path": "/zh/content/tutorial-authoring-to-publish/",
         "excerpt": "手把手演示从新建文章、预检聚合、观测指标复核到发布与回滚的全流程，配套常用命令与问题排查清单。",
         "relative": "tutorial-authoring-to-publish",
-        "year": "2025"
-      },
-      {
-        "title": "Ling Atlas 项目缘起与系统全貌",
-        "date": "2025-10-20",
-        "updated": "",
-        "status": "published",
-        "category": "管理与协作",
-        "category_slug": "管理与协作",
-        "series": "项目起航手记",
-        "series_slug": "project-kickoff",
-        "tags": [
-          "项目治理",
-          "知识管理",
-          "自动化运维"
-        ],
-        "slug": "project-overview",
-        "path": "/zh/content/project-overview/",
-        "excerpt": "全面梳理 Ling Atlas 的愿景、演进路线与当前落地能力，帮助后续贡献者快速理解“个人向量化知识库”的系统边界与协作模式。",
-        "relative": "project-overview",
         "year": "2025"
       }
     ],
@@ -248,6 +248,26 @@
         "year": "2025"
       },
       {
+        "title": "Ling Atlas 项目缘起与系统全貌",
+        "date": "2025-10-20",
+        "updated": "",
+        "status": "published",
+        "category": "管理与协作",
+        "category_slug": "管理与协作",
+        "series": "项目起航手记",
+        "series_slug": "project-kickoff",
+        "tags": [
+          "项目治理",
+          "知识管理",
+          "自动化运维"
+        ],
+        "slug": "project-overview",
+        "path": "/zh/content/project-overview/",
+        "excerpt": "全面梳理 Ling Atlas 的愿景、演进路线与当前落地能力，帮助后续贡献者快速理解“个人向量化知识库”的系统边界与协作模式。",
+        "relative": "project-overview",
+        "year": "2025"
+      },
+      {
         "title": "观测指标场景案例与排障实录",
         "date": "2025-10-20",
         "updated": "",
@@ -305,26 +325,6 @@
         "path": "/zh/content/tutorial-authoring-to-publish/",
         "excerpt": "手把手演示从新建文章、预检聚合、观测指标复核到发布与回滚的全流程，配套常用命令与问题排查清单。",
         "relative": "tutorial-authoring-to-publish",
-        "year": "2025"
-      },
-      {
-        "title": "Ling Atlas 项目缘起与系统全貌",
-        "date": "2025-10-20",
-        "updated": "",
-        "status": "published",
-        "category": "管理与协作",
-        "category_slug": "管理与协作",
-        "series": "项目起航手记",
-        "series_slug": "project-kickoff",
-        "tags": [
-          "项目治理",
-          "知识管理",
-          "自动化运维"
-        ],
-        "slug": "project-overview",
-        "path": "/zh/content/project-overview/",
-        "excerpt": "全面梳理 Ling Atlas 的愿景、演进路线与当前落地能力，帮助后续贡献者快速理解“个人向量化知识库”的系统边界与协作模式。",
-        "relative": "project-overview",
         "year": "2025"
       }
     ]
@@ -594,6 +594,72 @@
         "year": "2025"
       }
     ],
+    "项目治理": [
+      {
+        "title": "Ling Atlas 项目缘起与系统全貌",
+        "date": "2025-10-20",
+        "updated": "",
+        "status": "published",
+        "category": "管理与协作",
+        "category_slug": "管理与协作",
+        "series": "项目起航手记",
+        "series_slug": "project-kickoff",
+        "tags": [
+          "项目治理",
+          "知识管理",
+          "自动化运维"
+        ],
+        "slug": "project-overview",
+        "path": "/zh/content/project-overview/",
+        "excerpt": "全面梳理 Ling Atlas 的愿景、演进路线与当前落地能力，帮助后续贡献者快速理解“个人向量化知识库”的系统边界与协作模式。",
+        "relative": "project-overview",
+        "year": "2025"
+      }
+    ],
+    "知识管理": [
+      {
+        "title": "Ling Atlas 项目缘起与系统全貌",
+        "date": "2025-10-20",
+        "updated": "",
+        "status": "published",
+        "category": "管理与协作",
+        "category_slug": "管理与协作",
+        "series": "项目起航手记",
+        "series_slug": "project-kickoff",
+        "tags": [
+          "项目治理",
+          "知识管理",
+          "自动化运维"
+        ],
+        "slug": "project-overview",
+        "path": "/zh/content/project-overview/",
+        "excerpt": "全面梳理 Ling Atlas 的愿景、演进路线与当前落地能力，帮助后续贡献者快速理解“个人向量化知识库”的系统边界与协作模式。",
+        "relative": "project-overview",
+        "year": "2025"
+      }
+    ],
+    "自动化运维": [
+      {
+        "title": "Ling Atlas 项目缘起与系统全貌",
+        "date": "2025-10-20",
+        "updated": "",
+        "status": "published",
+        "category": "管理与协作",
+        "category_slug": "管理与协作",
+        "series": "项目起航手记",
+        "series_slug": "project-kickoff",
+        "tags": [
+          "项目治理",
+          "知识管理",
+          "自动化运维"
+        ],
+        "slug": "project-overview",
+        "path": "/zh/content/project-overview/",
+        "excerpt": "全面梳理 Ling Atlas 的愿景、演进路线与当前落地能力，帮助后续贡献者快速理解“个人向量化知识库”的系统边界与协作模式。",
+        "relative": "project-overview",
+        "year": "2025"
+      }
+    ],
     "案例分析": [
       {
         "title": "观测指标场景案例与排障实录",
@@ -791,72 +857,6 @@
         "relative": "tutorial-authoring-to-publish",
         "year": "2025"
       }
-    ],
-    "项目治理": [
-      {
-        "title": "Ling Atlas 项目缘起与系统全貌",
-        "date": "2025-10-20",
-        "updated": "",
-        "status": "published",
-        "category": "管理与协作",
-        "category_slug": "管理与协作",
-        "series": "项目起航手记",
-        "series_slug": "project-kickoff",
-        "tags": [
-          "项目治理",
-          "知识管理",
-          "自动化运维"
-        ],
-        "slug": "project-overview",
-        "path": "/zh/content/project-overview/",
-        "excerpt": "全面梳理 Ling Atlas 的愿景、演进路线与当前落地能力，帮助后续贡献者快速理解“个人向量化知识库”的系统边界与协作模式。",
-        "relative": "project-overview",
-        "year": "2025"
-      }
-    ],
-    "知识管理": [
-      {
-        "title": "Ling Atlas 项目缘起与系统全貌",
-        "date": "2025-10-20",
-        "updated": "",
-        "status": "published",
-        "category": "管理与协作",
-        "category_slug": "管理与协作",
-        "series": "项目起航手记",
-        "series_slug": "project-kickoff",
-        "tags": [
-          "项目治理",
-          "知识管理",
-          "自动化运维"
-        ],
-        "slug": "project-overview",
-        "path": "/zh/content/project-overview/",
-        "excerpt": "全面梳理 Ling Atlas 的愿景、演进路线与当前落地能力，帮助后续贡献者快速理解“个人向量化知识库”的系统边界与协作模式。",
-        "relative": "project-overview",
-        "year": "2025"
-      }
-    ],
-    "自动化运维": [
-      {
-        "title": "Ling Atlas 项目缘起与系统全貌",
-        "date": "2025-10-20",
-        "updated": "",
-        "status": "published",
-        "category": "管理与协作",
-        "category_slug": "管理与协作",
-        "series": "项目起航手记",
-        "series_slug": "project-kickoff",
-        "tags": [
-          "项目治理",
-          "知识管理",
-          "自动化运维"
-        ],
-        "slug": "project-overview",
-        "path": "/zh/content/project-overview/",
-        "excerpt": "全面梳理 Ling Atlas 的愿景、演进路线与当前落地能力，帮助后续贡献者快速理解“个人向量化知识库”的系统边界与协作模式。",
-        "relative": "project-overview",
-        "year": "2025"
-      }
     ]
   },
   "byYear": {
@@ -942,6 +942,26 @@
         "year": "2025"
       },
       {
+        "title": "Ling Atlas 项目缘起与系统全貌",
+        "date": "2025-10-20",
+        "updated": "",
+        "status": "published",
+        "category": "管理与协作",
+        "category_slug": "管理与协作",
+        "series": "项目起航手记",
+        "series_slug": "project-kickoff",
+        "tags": [
+          "项目治理",
+          "知识管理",
+          "自动化运维"
+        ],
+        "slug": "project-overview",
+        "path": "/zh/content/project-overview/",
+        "excerpt": "全面梳理 Ling Atlas 的愿景、演进路线与当前落地能力，帮助后续贡献者快速理解“个人向量化知识库”的系统边界与协作模式。",
+        "relative": "project-overview",
+        "year": "2025"
+      },
+      {
         "title": "观测指标场景案例与排障实录",
         "date": "2025-10-20",
         "updated": "",
@@ -999,26 +1019,6 @@
         "path": "/zh/content/tutorial-authoring-to-publish/",
         "excerpt": "手把手演示从新建文章、预检聚合、观测指标复核到发布与回滚的全流程，配套常用命令与问题排查清单。",
         "relative": "tutorial-authoring-to-publish",
-        "year": "2025"
-      },
-      {
-        "title": "Ling Atlas 项目缘起与系统全貌",
-        "date": "2025-10-20",
-        "updated": "",
-        "status": "published",
-        "category": "管理与协作",
-        "category_slug": "管理与协作",
-        "series": "项目起航手记",
-        "series_slug": "project-kickoff",
-        "tags": [
-          "项目治理",
-          "知识管理",
-          "自动化运维"
-        ],
-        "slug": "project-overview",
-        "path": "/zh/content/project-overview/",
-        "excerpt": "全面梳理 Ling Atlas 的愿景、演进路线与当前落地能力，帮助后续贡献者快速理解“个人向量化知识库”的系统边界与协作模式。",
-        "relative": "project-overview",
         "year": "2025"
       }
     ]
@@ -1105,6 +1105,26 @@
       "year": "2025"
     },
     {
+      "title": "Ling Atlas 项目缘起与系统全貌",
+      "date": "2025-10-20",
+      "updated": "",
+      "status": "published",
+      "category": "管理与协作",
+      "category_slug": "管理与协作",
+      "series": "项目起航手记",
+      "series_slug": "project-kickoff",
+      "tags": [
+        "项目治理",
+        "知识管理",
+        "自动化运维"
+      ],
+      "slug": "project-overview",
+      "path": "/zh/content/project-overview/",
+      "excerpt": "全面梳理 Ling Atlas 的愿景、演进路线与当前落地能力，帮助后续贡献者快速理解“个人向量化知识库”的系统边界与协作模式。",
+      "relative": "project-overview",
+      "year": "2025"
+    },
+    {
       "title": "观测指标场景案例与排障实录",
       "date": "2025-10-20",
       "updated": "",
@@ -1162,26 +1182,6 @@
       "path": "/zh/content/tutorial-authoring-to-publish/",
       "excerpt": "手把手演示从新建文章、预检聚合、观测指标复核到发布与回滚的全流程，配套常用命令与问题排查清单。",
       "relative": "tutorial-authoring-to-publish",
-      "year": "2025"
-    },
-    {
-      "title": "Ling Atlas 项目缘起与系统全貌",
-      "date": "2025-10-20",
-      "updated": "",
-      "status": "published",
-      "category": "管理与协作",
-      "category_slug": "管理与协作",
-      "series": "项目起航手记",
-      "series_slug": "project-kickoff",
-      "tags": [
-        "项目治理",
-        "知识管理",
-        "自动化运维"
-      ],
-      "slug": "project-overview",
-      "path": "/zh/content/project-overview/",
-      "excerpt": "全面梳理 Ling Atlas 的愿景、演进路线与当前落地能力，帮助后续贡献者快速理解“个人向量化知识库”的系统边界与协作模式。",
-      "relative": "project-overview",
       "year": "2025"
     }
   ]

@@ -23,6 +23,9 @@
     "重构": "/zh/_generated/tags/重构/",
     "性能优化": "/zh/_generated/tags/性能优化/",
     "架构演进": "/zh/_generated/tags/架构演进/",
+    "项目治理": "/zh/_generated/tags/项目治理/",
+    "知识管理": "/zh/_generated/tags/知识管理/",
+    "自动化运维": "/zh/_generated/tags/自动化运维/",
     "案例分析": "/zh/_generated/tags/案例分析/",
     "告警处理": "/zh/_generated/tags/告警处理/",
     "故障排查": "/zh/_generated/tags/故障排查/",
@@ -31,9 +34,6 @@
     "运维看板": "/zh/_generated/tags/运维看板/",
     "写作流程": "/zh/_generated/tags/写作流程/",
     "发布管线": "/zh/_generated/tags/发布管线/",
-    "质量守门": "/zh/_generated/tags/质量守门/",
-    "项目治理": "/zh/_generated/tags/项目治理/",
-    "知识管理": "/zh/_generated/tags/知识管理/",
-    "自动化运维": "/zh/_generated/tags/自动化运维/"
+    "质量守门": "/zh/_generated/tags/质量守门/"
   }
 }

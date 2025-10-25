@@ -1,7 +1,7 @@
 {
   "version": 1,
-  "generatedAt": "2025-10-23T13:39:36.495Z",
-  "runtime": "placeholder",
+  "generatedAt": "2025-10-25T11:02:35.038Z",
+  "runtime": "node",
   "cache": {
     "preferred": "local",
     "directory": "./data/models"
@@ -66,7 +66,7 @@
       },
       "cache": {
         "status": "ready",
-        "verifiedAt": "2025-10-23T13:39:36.503Z",
+        "verifiedAt": "2025-10-25T11:02:35.042Z",
         "checksum": "9ff80e1569f657846dc98a0158d5c243a6cc3e1e9ec45de96ef782d14a0ce3e0",
         "bytes": 237,
         "location": {
@@ -76,20 +76,20 @@
         "reason": null
       },
       "smoke": {
-        "status": "skipped",
-        "reason": "Runtime set to placeholder; skipping inference checks.",
-        "verifiedAt": null
+        "status": "passed",
+        "reason": null,
+        "verifiedAt": "2025-10-25T11:02:39.865Z"
       }
     }
   ],
   "fallback": null,
   "smoke": {
-    "status": "skipped",
-    "runtime": "placeholder",
-    "executed": 0,
-    "skipped": 1,
+    "status": "passed",
+    "runtime": "node",
+    "executed": 1,
+    "skipped": 0,
     "failed": 0,
-    "verifiedAt": "2025-10-23T13:39:36.818Z",
-    "reason": "Runtime set to placeholder; skipping inference checks."
+    "verifiedAt": "2025-10-25T11:02:39.865Z",
+    "failures": []
   }
 }
