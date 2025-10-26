@@ -10,28 +10,28 @@
   },
   "build": {
     "pagegen": {
-      "timestamp": "2025-10-25T13:08:34.080Z",
-      "totalMs": 72.568,
+      "timestamp": "2025-10-26T03:15:00.489Z",
+      "totalMs": 72.994,
       "collect": {
         "locales": 2,
-        "cacheHitRate": 0.875,
-        "cacheHits": 7,
-        "cacheMisses": 1,
+        "cacheHitRate": 1,
+        "cacheHits": 8,
+        "cacheMisses": 0,
         "cacheDisabledLocales": 0,
-        "parsedFiles": 1,
+        "parsedFiles": 0,
         "totalFiles": 8,
         "parseErrors": 0,
         "errorEntries": 0
       },
       "write": {
         "total": 37,
-        "written": 0,
-        "skipped": 37,
+        "written": 5,
+        "skipped": 32,
         "failed": 0,
-        "hashMatches": 37,
+        "hashMatches": 32,
         "disabled": false,
         "skippedByReason": {
-          "hash": 37
+          "hash": 32
         }
       },
       "feeds": {
@@ -100,8 +100,8 @@
       "schemaVersion": "2024-11-01",
       "embed": {
         "schemaVersion": "2024-11-01",
-        "timestamp": "2025-10-25T13:05:15.944Z",
-        "totalMs": 331,
+        "timestamp": "2025-10-25T15:23:36.582Z",
+        "totalMs": 463,
         "adapter": {
           "name": "transformers-node",
           "model": "sentence-transformers:Xenova/all-MiniLM-L6-v2",
@@ -109,8 +109,8 @@
         },
         "inference": {
           "batches": 1,
-          "totalMs": 343,
-          "avgMs": 343,
+          "totalMs": 420,
+          "avgMs": 420,
           "inputCount": 8,
           "outputCount": 8,
           "successRate": 1,
@@ -120,7 +120,7 @@
         "write": {
           "target": "docs/public/data/embeddings.json",
           "bytes": 94949,
-          "durationMs": 1,
+          "durationMs": 2,
           "items": 8,
           "cacheReuse": false
         },
@@ -130,8 +130,8 @@
       },
       "summary": {
         "schemaVersion": "2024-11-01",
-        "timestamp": "2025-10-25T13:06:50.549Z",
-        "totalMs": 94416,
+        "timestamp": "2025-10-25T15:25:12.417Z",
+        "totalMs": 95640,
         "adapter": {
           "name": "transformers-node",
           "model": "Xenova/distilbart-cnn-12-6",
@@ -139,8 +139,8 @@
         },
         "inference": {
           "batches": 1,
-          "totalMs": 190247,
-          "avgMs": 190247,
+          "totalMs": 195413,
+          "avgMs": 195413,
           "inputCount": 8,
           "outputCount": 8,
           "successRate": 1,
@@ -150,7 +150,7 @@
         "write": {
           "target": "docs/public/data/summaries.json",
           "bytes": 1917,
-          "durationMs": 1,
+          "durationMs": 3,
           "items": 8,
           "cacheReuse": false
         },
@@ -160,54 +160,28 @@
       },
       "qa": {
         "schemaVersion": "2024-11-01",
-        "timestamp": "2025-10-25T13:06:55.846Z",
-        "totalMs": 5084,
+        "timestamp": "2025-10-25T15:25:16.875Z",
+        "totalMs": 4197,
         "adapter": {
-          "name": "placeholder",
-          "model": "Xenova/roberta-base-squad2",
-          "fallback": true
+          "name": "transformers-node",
+          "model": "Xenova/distilbert-base-uncased-distilled-squad",
+          "fallback": false
         },
         "inference": {
           "batches": 1,
-          "totalMs": 20136,
-          "avgMs": 20136,
+          "totalMs": 7769,
+          "avgMs": 7769,
           "inputCount": 8,
-          "outputCount": 8,
-          "successRate": 1,
-          "retries": 1,
-          "errors": [
-            {
-              "adapter": "transformers-node",
-              "model": "Xenova/roberta-base-squad2",
-              "message": "Unauthorized access to file: \"https://huggingface.co/Xenova/roberta-base-squad2/resolve/main/tokenizer_config.json\"."
-            },
-            {
-              "adapter": "transformers-node",
-              "model": "Xenova/roberta-base-squad2",
-              "message": "Unauthorized access to file: \"https://huggingface.co/Xenova/roberta-base-squad2/resolve/main/config.json\"."
-            },
-            {
-              "adapter": "transformers-node",
-              "model": "Xenova/roberta-base-squad2",
-              "message": "Unauthorized access to file: \"https://huggingface.co/Xenova/roberta-base-squad2/resolve/main/tokenizer_config.json\"."
-            },
-            {
-              "adapter": "transformers-node",
-              "model": "Xenova/roberta-base-squad2",
-              "message": "Unauthorized access to file: \"https://huggingface.co/Xenova/roberta-base-squad2/resolve/main/tokenizer_config.json\"."
-            },
-            {
-              "adapter": "transformers-node",
-              "model": "Xenova/roberta-base-squad2",
-              "message": "Unauthorized access to file: \"https://huggingface.co/Xenova/roberta-base-squad2/resolve/main/config.json\"."
-            }
-          ]
+          "outputCount": 7,
+          "successRate": 0.875,
+          "retries": 0,
+          "errors": []
         },
         "write": {
           "target": "docs/public/data/qa.json",
-          "bytes": 6934,
-          "durationMs": 1,
-          "items": 8,
+          "bytes": 3289,
+          "durationMs": 2,
+          "items": 7,
           "cacheReuse": false
         },
         "cache": {
@@ -216,19 +190,19 @@
       },
       "overview": {
         "schemaVersion": "2024-11-01",
-        "updatedAt": "2025-10-25T13:06:55.846Z",
-        "status": "degraded",
+        "updatedAt": "2025-10-25T15:25:16.875Z",
+        "status": "ok",
         "summary": {
-          "ok": 2,
-          "fallback": 1,
+          "ok": 3,
+          "fallback": 0,
           "empty": 0,
           "missing": 0,
-          "overall": "degraded"
+          "overall": "ok"
         },
         "domains": {
           "embed": {
             "status": "ok",
-            "lastRunAt": "2025-10-25T13:05:15.944Z",
+            "lastRunAt": "2025-10-25T15:23:36.582Z",
             "adapter": {
               "name": "transformers-node",
               "model": "sentence-transformers:Xenova/all-MiniLM-L6-v2",
@@ -237,14 +211,14 @@
             "outputCount": 8,
             "successRate": 1,
             "cacheReuse": false,
-            "totalMs": 331,
+            "totalMs": 463,
             "inputCount": 8,
             "retries": 0,
             "batches": 1
           },
           "summary": {
             "status": "ok",
-            "lastRunAt": "2025-10-25T13:06:50.549Z",
+            "lastRunAt": "2025-10-25T15:25:12.417Z",
             "adapter": {
               "name": "transformers-node",
               "model": "Xenova/distilbart-cnn-12-6",
@@ -253,25 +227,25 @@
             "outputCount": 8,
             "successRate": 1,
             "cacheReuse": false,
-            "totalMs": 94416,
+            "totalMs": 95640,
             "inputCount": 8,
             "retries": 0,
             "batches": 1
           },
           "qa": {
-            "status": "fallback",
-            "lastRunAt": "2025-10-25T13:06:55.846Z",
+            "status": "ok",
+            "lastRunAt": "2025-10-25T15:25:16.875Z",
             "adapter": {
-              "name": "placeholder",
-              "model": "Xenova/roberta-base-squad2",
-              "fallback": true
+              "name": "transformers-node",
+              "model": "Xenova/distilbert-base-uncased-distilled-squad",
+              "fallback": false
             },
-            "outputCount": 8,
-            "successRate": 1,
+            "outputCount": 7,
+            "successRate": 0.875,
             "cacheReuse": false,
-            "totalMs": 5084,
+            "totalMs": 4197,
             "inputCount": 8,
-            "retries": 1,
+            "retries": 0,
             "batches": 1
           }
         },
@@ -281,7 +255,7 @@
           "executed": 1,
           "skipped": 0,
           "failed": 0,
-          "verifiedAt": "2025-10-25T12:25:19.279Z"
+          "verifiedAt": "2025-10-26T03:15:00.221Z"
         }
       },
       "smoke": {
@@ -291,7 +265,7 @@
           "executed": 1,
           "skipped": 0,
           "failed": 0,
-          "verifiedAt": "2025-10-25T12:25:19.279Z",
+          "verifiedAt": "2025-10-26T03:15:00.221Z",
           "reason": null,
           "failures": []
         },
@@ -305,7 +279,7 @@
             "smoke": {
               "status": "passed",
               "reason": null,
-              "verifiedAt": "2025-10-25T12:25:19.279Z"
+              "verifiedAt": "2025-10-26T03:15:00.221Z"
             },
             "cache": {
               "status": "ready",
@@ -315,7 +289,7 @@
         ],
         "runtime": "node",
         "fallback": null,
-        "generatedAt": "2025-10-25T12:25:12.178Z"
+        "generatedAt": "2025-10-26T03:15:00.117Z"
       }
     }
   },
