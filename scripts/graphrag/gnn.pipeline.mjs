@@ -2,6 +2,7 @@
 import 'dotenv/config';
 import process from 'node:process';
 import { readFile } from 'node:fs/promises';
+import { pathToFileURL } from 'node:url';
 
 import { resolveNeo4jConfig, getScriptName } from './config.mjs';
 import { createDriver, verifyConnectivity, withSession } from './neo4j-client.mjs';
@@ -12,6 +13,25 @@ const DEFAULT_GNN_CONFIG = {
       type: 'cypher',
       nodeQuery: 'MATCH (n:Entity) RETURN id(n) AS id, labels(n) AS labels',
       relationshipQuery: 'MATCH (a:Entity)-[r:RELATED]->(b:Entity) RETURN id(a) AS source, id(b) AS target, coalesce(r.weight, 1.0) AS weight',
+      relationshipQueryUndirected: `
+        MATCH (a:Entity)-[r:RELATED]->(b:Entity)
+        WITH id(a) AS source, id(b) AS target, coalesce(r.weight, 1.0) AS weight
+        RETURN source, target, weight
+        UNION
+        MATCH (a:Entity)<-[r:RELATED]-(b:Entity)
+        WITH id(a) AS source, id(b) AS target, coalesce(r.weight, 1.0) AS weight
+        RETURN source, target, weight
+      `,
+      relationshipQueryV3: 'MATCH (a:Entity)-[r:RELATED]->(b:Entity) RETURN id(a) AS source, id(b) AS target, {weight: coalesce(r.weight, 1.0)} AS properties',
+      relationshipQueryUndirectedV3: `
+        MATCH (a:Entity)-[r:RELATED]->(b:Entity)
+        WITH id(a) AS source, id(b) AS target, {weight: coalesce(r.weight, 1.0)} AS properties
+        RETURN source, target, properties
+        UNION
+        MATCH (a:Entity)<-[r:RELATED]-(b:Entity)
+        WITH id(a) AS source, id(b) AS target, {weight: coalesce(r.weight, 1.0)} AS properties
+        RETURN source, target, properties
+      `,
       relationshipProperties: ['weight'],
       undirected: true,
       description: '实体-实体关系图，用于 PageRank/社区检测/Node2Vec',
@@ -20,6 +40,7 @@ const DEFAULT_GNN_CONFIG = {
       type: 'cypher',
       nodeQuery: 'MATCH (n:Doc) RETURN id(n) AS id, labels(n) AS labels UNION MATCH (n:Entity) RETURN id(n) AS id, labels(n) AS labels',
       relationshipQuery: 'MATCH (d:Doc)<-[:PART_OF]-(c:Chunk)-[:MENTIONS]->(e:Entity) RETURN id(d) AS source, id(e) AS target, 1.0 AS weight',
+      relationshipQueryV3: 'MATCH (d:Doc)<-[:PART_OF]-(c:Chunk)-[:MENTIONS]->(e:Entity) RETURN id(d) AS source, id(e) AS target, {weight: 1.0} AS properties',
       relationshipProperties: ['weight'],
       undirected: false,
       description: '文档-实体双模图，可用于 Node2Vec 或双向推荐',
@@ -62,6 +83,35 @@ async function loadGnnConfig() {
   return gnnConfigCache;
 }
 
+let cachedGdsMajorVersion = null;
+
+async function getGdsMajorVersion(session) {
+  if (cachedGdsMajorVersion != null) {
+    return cachedGdsMajorVersion;
+  }
+  try {
+    const result = await session.run('CALL gds.version()');
+    const record = result.records?.[0] ?? null;
+    let versionString = null;
+    if (record) {
+      for (const key of record.keys ?? []) {
+        const value = record.get(key);
+        if (typeof value === 'string') {
+          versionString = value;
+          break;
+        }
+      }
+    }
+    versionString = versionString ?? '2.0.0';
+    const major = Number.parseInt(String(versionString).split('.')[0], 10);
+    cachedGdsMajorVersion = Number.isNaN(major) ? 2 : major;
+  } catch (error) {
+    console.warn('[gnn.pipeline] 无法检测 GDS 版本，默认按 2.x 处理：', error?.message || error);
+    cachedGdsMajorVersion = 2;
+  }
+  return cachedGdsMajorVersion;
+}
+
 function coerceValue(value) {
   if (value === 'true') return true;
   if (value === 'false') return false;
@@ -84,19 +134,62 @@ async function ensureProjection(session, name, spec) {
     return 'exists';
   }
   if (spec.type === 'cypher') {
-    const config = {};
-    if (spec.relationshipProperties?.length) {
-      config.relationshipProperties = spec.relationshipProperties;
+    const strategies = [];
+    const major = await getGdsMajorVersion(session);
+
+    const mapStrategy = () => {
+      const query = spec.undirected
+        ? (spec.relationshipQueryUndirectedV3 ?? spec.relationshipQueryV3 ?? spec.relationshipQueryUndirected ?? spec.relationshipQuery)
+        : (spec.relationshipQueryV3 ?? spec.relationshipQuery);
+      return {
+        relationshipQuery: query,
+        config: {},
+      };
+    };
+
+    const arrayStrategy = () => {
+      const base = {};
+      if (spec.relationshipProperties?.length) {
+        base.relationshipProperties = spec.relationshipProperties;
+      }
+      const query = spec.undirected
+        ? (spec.relationshipQueryUndirected ?? spec.relationshipQuery)
+        : spec.relationshipQuery;
+      return {
+        relationshipQuery: query,
+        config: base,
+      };
+    };
+
+    // 优先尝试根据检测结果选择策略
+    if (major >= 3) {
+      strategies.push(mapStrategy(), arrayStrategy(), mapStrategy());
+    } else {
+      strategies.push(arrayStrategy(), mapStrategy());
     }
-    if (spec.undirected) {
-      config.relationshipOrientation = 'UNDIRECTED';
+
+    let lastError = null;
+    for (const strategy of strategies) {
+      try {
+        await session.run('CALL gds.graph.project.cypher($name, $nodeQuery, $relationshipQuery, $config)', {
+          name,
+          nodeQuery: spec.nodeQuery,
+          relationshipQuery: strategy.relationshipQuery,
+          config: strategy.config,
+        });
+        return 'created';
+      } catch (error) {
+        lastError = error;
+        const message = error?.message || '';
+        if (!/Invalid key: relationshipProperties/i.test(message) && !/Failed to invoke procedure.*gds.graph.project.cypher/i.test(message)) {
+          break;
+        }
+      }
     }
-    await session.run('CALL gds.graph.project.cypher($name, $nodeQuery, $relationshipQuery, $config)', {
-      name,
-      nodeQuery: spec.nodeQuery,
-      relationshipQuery: spec.relationshipQuery,
-      config,
-    });
+
+    if (lastError) {
+      throw lastError;
+    }
     return 'created';
   }
   throw new Error(`暂不支持的投影类型 ${spec.type}`);
@@ -237,7 +330,14 @@ async function main() {
   }
 }
 
-main().catch((error) => {
-  console.error(error.message);
-  process.exitCode = 1;
-});
+if (
+  process.argv[1] &&
+  import.meta.url === pathToFileURL(process.argv[1]).href
+) {
+  main().catch((error) => {
+    console.error(error.message);
+    process.exitCode = 1;
+  });
+}
+
+export { coerceValue, mergeParams, parseArgs };

@@ -550,3 +550,5 @@ export async function searchHybrid(driver, database, params = {}) {
     },
   };
 }
+
+export { resolveAlpha, normalizeCosine, buildStructureReason };

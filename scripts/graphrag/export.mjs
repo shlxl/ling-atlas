@@ -1,12 +1,14 @@
 #!/usr/bin/env node
 import { mkdir, writeFile, readFile, readdir } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
+import { pathToFileURL } from 'node:url';
 import process from 'node:process';
 
 import { resolveNeo4jConfig, getScriptName } from './config.mjs';
 import { createDriver, verifyConnectivity } from './neo4j-client.mjs';
 import { fetchSubgraph } from './retrieval/subgraph.mjs';
 import { fetchTopN } from './retrieval/topn.mjs';
+import { appendGraphragMetric } from './telemetry.mjs';
 
 const DEFAULT_OUTPUT_ROOT = 'docs/graph';
 const DEFAULT_ENTITY_LIMIT = 10;
@@ -138,10 +140,35 @@ function parseArgs(rawArgs) {
   return options;
 }
 
+function normalizeTopicSlug(input) {
+  if (!input) return 'graph-topic';
+  const ascii = String(input)
+    .trim()
+    .replace(/[\s/\\]+/g, '-');
+  const collapsed = ascii
+    .normalize('NFKD')
+    .replace(/[^\w-]+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-+|-+$/g, '');
+  return (collapsed || 'graph-topic').toLowerCase();
+}
+
 function deriveTopic(options) {
-  if (options.topic) return options.topic;
+  if (options.topic) return normalizeTopicSlug(options.topic);
   if (!options.docId) return 'graph-topic';
-  return options.docId.replace(/[\\/]+/g, '-');
+
+  const normalizedDocId = String(options.docId)
+    .replace(/\\/g, '/')
+    .replace(/^\/+|\/+$/g, '');
+  const withoutIndex = normalizedDocId.replace(/\/index$/i, '');
+  const segments = withoutIndex.split('/');
+  let rawSlug = withoutIndex.replace(/\//g, '-');
+
+  if (segments.length >= 3 && segments[1] === 'content') {
+    rawSlug = [segments[0], segments.slice(2).join('-')].join('-');
+  }
+
+  return normalizeTopicSlug(rawSlug);
 }
 
 function sanitizeLabel(text) {
@@ -316,15 +343,12 @@ function buildMermaid(docNode, entities, relationships, categories, tags) {
   });
 
   let linkIndex = 0;
-  const docEntityLinkIndices = [];
-
   entities.forEach((entity) => {
     const node = entity.node;
     const entityId = mermaidId(node.identity, 'ent');
     const label = sanitizeLabel(`${node.data?.type ?? 'Entity'}｜${node.data?.name ?? node.data?.id}`);
     lines.push(`  ${entityId}["${label}"]`);
     lines.push(`  ${docId} -- 频次 ${entity.count} --> ${entityId}`);
-    docEntityLinkIndices.push(linkIndex);
     linkIndex += 1;
 
     const type = node.data?.type ?? 'Entity';
@@ -353,14 +377,6 @@ function buildMermaid(docNode, entities, relationships, categories, tags) {
     '  classDef entityConcept fill:#445760,stroke:#6e7781,color:#ffffff;',
   ];
   lines.push(...classDefLines);
-
-  if (docEntityLinkIndices.length) {
-    lines.push(
-      ...docEntityLinkIndices.map(
-        (index) => `  linkStyle ${index} stroke-width:2px,stroke:#58a6ff;`,
-      ),
-    );
-  }
 
   return lines.join('\n');
 }
@@ -464,7 +480,7 @@ async function updateGraphIndex({ outputRoot, dryRun }) {
   }
 
   const dirents = await readdir(outputRoot, { withFileTypes: true }).catch(() => []);
-  const topics = [];
+  const entries = [];
 
   for (const dirent of dirents) {
     if (!dirent.isDirectory()) continue;
@@ -474,14 +490,83 @@ async function updateGraphIndex({ outputRoot, dryRun }) {
       const metadata = JSON.parse(metadataRaw);
       const title = metadata.doc?.title ?? metadata.doc?.id ?? slug;
       const description = sanitizePreview(metadata.doc?.description ?? metadata.entities?.[0]?.name);
-      topics.push({ slug, title, description });
+      const docId = metadata.doc?.id ?? null;
+      entries.push({ slug, title, description, docId });
     } catch (error) {
       // 忽略缺失 metadata 的主题
       continue;
     }
   }
 
-  if (topics.length === 0) return;
+  if (entries.length === 0) return;
+
+  const { markdown, duplicates } = buildGraphIndexContent(entries);
+  if (duplicates.length) {
+    for (const duplicate of duplicates) {
+      console.warn(
+        `[graphrag:export] 检测到 Doc ${duplicate.docId} 的重复主题目录，已保留 ${duplicate.kept}，跳过 ${duplicate.discarded}`,
+      );
+    }
+  }
+
+  if (!markdown) return;
+
+  const indexPath = join(outputRoot, 'index.md');
+  await writeFileIfNotDryRun(indexPath, markdown, { dryRun });
+}
+
+function dedupeGraphTopics(entries = []) {
+  const topics = [];
+  const seenDocIds = new Map();
+  const duplicates = [];
+
+  for (const entry of entries) {
+    if (!entry.docId) {
+      topics.push(entry);
+      continue;
+    }
+
+    const expectedSlug = deriveTopic({ docId: entry.docId });
+    const existing = seenDocIds.get(entry.docId);
+
+    if (!existing) {
+      seenDocIds.set(entry.docId, { entry, expectedSlug });
+      topics.push(entry);
+      continue;
+    }
+
+    const keepCurrent =
+      entry.slug === expectedSlug && existing.entry.slug !== expectedSlug;
+
+    if (keepCurrent) {
+      duplicates.push({
+        docId: entry.docId,
+        kept: entry.slug,
+        discarded: existing.entry.slug,
+      });
+      const index = topics.findIndex((item) => item === existing.entry);
+      if (index !== -1) {
+        topics.splice(index, 1, entry);
+      }
+      seenDocIds.set(entry.docId, { entry, expectedSlug });
+      continue;
+    }
+
+    duplicates.push({
+      docId: entry.docId,
+      kept: existing.entry.slug,
+      discarded: entry.slug,
+    });
+  }
+
+  return { topics, duplicates };
+}
+
+function buildGraphIndexContent(entries = []) {
+  const { topics, duplicates } = dedupeGraphTopics(entries);
+  if (!topics.length) {
+    return { markdown: null, duplicates };
+  }
 
   topics.sort((a, b) => a.title.localeCompare(b.title, 'zh-Hans-CN'));
 
@@ -501,9 +586,25 @@ async function updateGraphIndex({ outputRoot, dryRun }) {
   lines.push('');
   lines.push('> 本页由 `npm run graphrag:export` 自动更新。');
 
-  const indexContent = `${lines.join('\n')}\n`;
-  const indexPath = join(outputRoot, 'index.md');
-  await writeFileIfNotDryRun(indexPath, indexContent, { dryRun });
+  return { markdown: `${lines.join('\n')}\n`, duplicates };
+}
+
+async function ensureTopicDirCompatibility({ topicDir, docId, dryRun = false }) {
+  if (dryRun) return;
+  try {
+    const existingRaw = await readFile(join(topicDir, 'metadata.json'), 'utf8');
+    const existingMetadata = JSON.parse(existingRaw);
+    const existingDocId = existingMetadata?.doc?.id ?? null;
+    if (existingDocId && existingDocId !== docId) {
+      throw new Error(
+        `主题目录 ${topicDir} 已存在且绑定 Doc ${existingDocId}，与当前 ${docId} 冲突`,
+      );
+    }
+  } catch (error) {
+    if (!error || (error.code !== 'ENOENT' && error.code !== 'ENOTDIR')) {
+      throw error;
+    }
+  }
 }
 
 function buildTopicPageMarkdown({ title, metadata }) {
@@ -649,6 +750,19 @@ async function main() {
   const scriptName = getScriptName(import.meta.url);
   const rawArgs = process.argv.slice(2);
   const options = parseArgs(rawArgs);
+  const startedAt = Date.now();
+  let telemetryContext = null;
+
+  async function recordTelemetrySafely(record) {
+    if (!record) return;
+    try {
+      await appendGraphragMetric(record, { limit: 200 });
+    } catch (error) {
+      console.warn(
+        `[${scriptName}] telemetry 写入失败：${error?.message || error}`,
+      );
+    }
+  }
 
   if (!options.docId) {
     throw new Error('请通过 --doc-id 指定目标文档');
@@ -750,6 +864,12 @@ async function main() {
       generated_at: new Date().toISOString(),
     };
 
+    await ensureTopicDirCompatibility({
+      topicDir,
+      docId: metadata.doc.id,
+      dryRun: options.dryRun,
+    });
+
     const contextMarkdown = buildContextMarkdown({
       docNode,
       entities,
@@ -785,13 +905,61 @@ async function main() {
 
     await updateGraphIndex({ outputRoot, dryRun: options.dryRun });
 
+    telemetryContext = {
+      type: 'export',
+      timestamp: new Date().toISOString(),
+      docId: docNode.data?.id ?? options.docId,
+      docTitle: docNode.data?.title ?? null,
+      topic,
+      locale: options.locale ?? docNode.data?.locale ?? null,
+      durationMs: Date.now() - startedAt,
+      dryRun: Boolean(options.dryRun),
+      totals: {
+        nodes: subgraph.nodes?.length ?? 0,
+        edges: subgraph.edges?.length ?? 0,
+        entities: entities.length,
+        recommendations: recommendations.length,
+      },
+      files: {
+        subgraph: !options.dryRun,
+        context: !options.dryRun,
+        metadata: !options.dryRun,
+        page: !options.dryRun && !options.noPage,
+      },
+      structure: {
+        inferredScore: Number.isFinite(structureSummary.inferredScore)
+          ? Number(structureSummary.inferredScore)
+          : null,
+        pagerankAvg: Number.isFinite(structureSummary.pagerank?.avg)
+          ? Number(structureSummary.pagerank.avg)
+          : null,
+      },
+    };
+
     console.log(`[${scriptName}] 导出完成：${topicDir}`);
   } finally {
     await driver.close();
+    if (telemetryContext) {
+      telemetryContext.durationMs = telemetryContext.durationMs ?? Date.now() - startedAt;
+      await recordTelemetrySafely(telemetryContext);
+    }
   }
 }
 
-main().catch((error) => {
-  console.error(error);
-  process.exitCode = 1;
-});
+if (
+  process.argv[1] &&
+  import.meta.url === pathToFileURL(process.argv[1]).href
+) {
+  main().catch((error) => {
+    console.error(error?.message || error);
+    process.exitCode = 1;
+  });
+}
+
+export {
+  deriveTopic,
+  normalizeTopicSlug,
+  dedupeGraphTopics,
+  buildGraphIndexContent,
+  ensureTopicDirCompatibility,
+};

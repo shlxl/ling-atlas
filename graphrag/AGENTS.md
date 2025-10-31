@@ -129,18 +129,16 @@ NEO4J_DB = neo4j
 - `npm run graphrag:ingest -- --locale zh --adapter transformers`：写入 Doc/Chunk/Entity 等节点；配合 `--changed-only` 可增量运行。
 - `npm run graphrag:retrieve -- --mode <subgraph|path|topn> --input payload.json`：执行 GraphRAG 检索，payload 支持使用 `-` 从 stdin 读取。
 - `npm run graphrag:retrieve -- --mode hybrid --input payload.json [--hybrid-alpha 0.7 0.3]`：语义 + 结构融合检索（默认读取 `gnn_pagerank` 等结构指标），`alpha` 控制语义/结构权重，详情见 `data/graphrag/vector-config.json` 与 `scripts/graphrag/vector-search.mjs`。
+- `npm run graphrag:explore -- --kind question --value "<问题>" --output docs/public/data/graphrag-explorer.json --pretty`：一次性拉取问答、Top-N 文档与子图统计，生成 Explorer JSON，供 `/graph/explorer/` 使用。
 - `npm run graphrag:export -- --doc-id <doc-id> [--topic <slug>] [--title <标题>]`：生成 `docs/graph/<topic>/` 下的 mermaid 子图、`context.md`、`metadata.json`，并自动生成 `index.md` 主题页，可直接在 `/graph/<topic>/` 渲染，现包含结构化指标与 Top-K 实体摘要。
 - `npm run graphrag:gnn -- --graph entity --algo pagerank --write-property gnn_pagerank`：运行 GDS PageRank 并写回结构得分；可重复执行不同算法（如 `labelPropagation`）以输出其他 `gnn_*` 属性供导出/检索使用。
 
 ---
 
 ## 8. 下一阶段增强规划
-- **多跳检索**：扩展 `fetchSubgraph` 支持更高跳数（包含节点/边过滤、统计），确保输出可控。
-- **结构信号深化**：将社区/Node2Vec 结果写回并补充在导出/检索中的展示，支持自定义结构特征与权重配置。
-- **检索增强**：多条最短路径、类型过滤、路径解释信息等，提升 `path` 模式的可读性与可用性。
-- **多模态 KG**：定义多模态节点 schema、附件元数据与向量索引，丰富图谱内容。
-- **可视化交互**：为 GraphMermaid 增加 tooltip/点击跳转/过滤控件，在 `/graph` 页面展示图指标概览。
-- **运维与测试**：新增混合检索 / GNN CLI 的回归测试与 smoke，用于跨环境验证；同步 README 与 WGL 指南，完善换机 checklist。
+- **Hybrid/GNN 回归测试**：补充 `graphrag:retrieve --mode hybrid` 与 `graphrag:gnn` 的端到端用例，验证结构权重、Alpha 参数与投影写回在 CI 中保持一致。
+- **Telemetry 告警历史与严重级**：在 `telemetry-merge` 中保留近期 `warnings` 列表与严重级，支持前端显示时间序列与优先级排序。
+- **Graph Explorer 交互增强**：增加告警跳转/指向操作（如快速定位到最近导出主题或 Explorer payload），并支持多次构建的时间轴浏览。
 
 > 建议执行顺序：多跳 & 向量 → GNN → 多模态 → 前端交互 → 运维测试。
 
@@ -149,7 +147,15 @@ NEO4J_DB = neo4j
 ---
 
 ## 9. 最新交付记录（2025-XX）
-- **结构化指标贯通**：`scripts/graphrag/export.mjs` / `metadata.json` 已输出 `structure.*` 字段，主题页模板展示综合得分、PageRank 统计与 Top-K 实体。
-- **混合检索上线**：`npm run graphrag:retrieve -- --mode hybrid` 默认启用语义 + 结构双权重重排（需先运行 `graphrag:gnn` 写回 `gnn_pagerank` 等属性）。
-- **GNN 管道可执行**：`npm run graphrag:gnn -- --graph entity --algo pagerank` 调用 GDS 投影与算法写回，支持 `labelPropagation` 等扩展；Node2Vec 仍保留 `stream`→写回逻辑。
-- **环境迁移提示**：在新机器（含 Windows11 + WSL2）需先执行 `npm install`、`npm run graphrag:constraints`、`npm run graphrag:gnn -- --graph entity --algo pagerank`，再运行 hybrid 检索与导出，确保结构得分可用。
+- **入图流水线稳态化**：`npm run graphrag:ingest` 已整合 frontmatter 规范化、质量守门（必填字段/黑名单/PII 掩码）、缓存命中与占位实体降级，并在写入前自动确认唯一约束与索引。
+- **混合检索 + 结构权重**：`graphrag:retrieve --mode hybrid` 结合 embeddings（`docs/public/data/embeddings.json`）与 `gnn_pagerank` 等结构信号排序，输出语义 + 结构原因解释，支持 `--hybrid-alpha`、`--include-label` 等限制条件。
+- **GNN 管道闭环**：`graphrag:gnn` 支持 PageRank / LabelPropagation / Node2Vec，自动探测 GDS 版本并回写 `gnn_*` 指标，为混合检索和导出提供结构化特征。
+- **Graph Explorer 与可视化导出**：`graphrag:explore` 合流问题→子图→推荐文档生成 Explorer JSON；`graphrag:export` 生成 `docs/graph/<topic>/` 的 mermaid、context、metadata、index.md，可直接在 `/graph/` 导航中浏览。
+- **导出 slug 去重上线**：`graphrag:export` 现统一规范化 `locale-slug`，阻止重复 Doc 生成多目录；新增单元测试覆盖 slug 与目录冲突检测，并清理历史重复产物。
+- **Graph Index 回归守门**：新增 `buildGraphIndexContent` 单测验证 Markdown 输出与重复告警，确保 `docs/graph/index.md` 自动产物在 CI 中可复现。
+- **Hybrid 权重逻辑回归**：`vector-search` 公开 `resolveAlpha`/`normalizeCosine`/`buildStructureReason`，配套单测验证结构权重归一化与原因文案，保障 `graphrag:retrieve --mode hybrid` 的重排解释稳定。
+- **GNN 参数解析守门**：`gnn.pipeline` 提取 `coerceValue` / `mergeParams` / `parseArgs` 并补单测，确保 CLI 参数与默认值在 CI 中可验证，为后续端到端测试打基础。
+- **Graph Explorer 遥测摘要**：前端 `GraphExplorer.vue` 现读取 `/telemetry.json`，展示最新 ingest/retrieve/export/explore 概览与告警，帮助快速感知 GraphRAG 运行状态。
+- **Telemetry 告警落地**：`telemetry-merge` 生成 `build.graphrag.warnings`，统一记录 Hybrid/Explorer 等异常，前端优先展示结构化告警。
+- **Telemetry 贯通**：`data/graphrag-metrics.json` 持续记录 ingest/export/retrieve/explore 事件，`scripts/telemetry-merge.mjs` 将最新结果汇总到站点遥测并在 `/zh|en/about/metrics` 展示。
+- **环境迁移指引**：README 与本文件同步提示先执行 `graphrag:constraints`、`graphrag:gnn` 后再做 hybrid 检索/导出，确保结构指标可用；Windows11 + WSL2 场景已验证。

@@ -7,6 +7,8 @@ export const AI_TELEMETRY_SCHEMA_VERSION = '2024-11-01'
 
 const AI_DOMAINS = ['embed', 'summary', 'qa']
 
+const MAX_SMOKE_HISTORY = 5
+
 const AI_EVENT_SCHEMA = {
   start: {
     required: ['timestamp', 'inputCount'],
@@ -127,7 +129,7 @@ function defaultState() {
     updatedAt: new Date(0).toISOString(),
     pv: { total: 0, pathsTop: [] },
     search: { queriesTop: [], clicksTop: [] },
-    build: { pagegen: null, ai: normalizeAIState({}) },
+    build: { pagegen: null, ai: normalizeAIState({}), graphrag: null, graphragHistory: [] },
     _internal: {
       paths: {},
       queries: {}, // hash -> { count, lenSum }
@@ -186,6 +188,20 @@ async function writeOutputs(paths, data) {
   await fs.writeFile(paths.publicPath, payload, 'utf8')
   await fs.mkdir(path.dirname(paths.distPath), { recursive: true })
   await fs.writeFile(paths.distPath, payload, 'utf8')
+}
+
+function pickLatestByType(entries = []) {
+  const latest = {}
+  for (const entry of entries) {
+    if (!entry || typeof entry !== 'object') continue
+    const type = entry.type || 'ingest'
+    const ts = entry.timestamp ? Date.parse(entry.timestamp) : 0
+    const current = latest[type]
+    if (!current || Date.parse(current.timestamp || 0) < ts) {
+      latest[type] = entry
+    }
+  }
+  return Object.keys(latest).length ? latest : null
 }
 
 function updateDerivedSections(state) {
@@ -304,12 +320,30 @@ async function loadModelSmokeSummary(root, logger) {
   const summary = sanitizeSmokeSummary(manifest?.smoke, manifest)
   const models = sanitizeModelEntries(manifest?.models)
 
+  let history = []
+  if (Array.isArray(manifest?.history?.smoke)) {
+    history = manifest.history.smoke
+      .map(entry => sanitizeSmokeSummary(entry, manifest))
+      .filter(Boolean)
+  }
+  if (summary) {
+    history = [summary, ...history]
+  }
+  history = history
+    .sort((a, b) => {
+      const timeA = a?.verifiedAt ? Date.parse(a.verifiedAt) : 0
+      const timeB = b?.verifiedAt ? Date.parse(b.verifiedAt) : 0
+      return timeB - timeA
+    })
+    .slice(0, MAX_SMOKE_HISTORY)
+
   return {
     summary,
     models,
     runtime: manifest?.runtime ?? null,
     fallback: manifest?.fallback ?? null,
-    generatedAt: manifest?.generatedAt ?? null
+    generatedAt: manifest?.generatedAt ?? null,
+    history
   }
 }
 
@@ -575,7 +609,7 @@ function resolveOverallStatus(counts) {
 
 function updateAIOverview(state, options = {}) {
   const normalized = normalizeAIState(state)
-  const smokeSummary = options?.smoke || null
+  const smokeSummary = options?.smoke?.summary || options?.smoke || null
   const overview = {
     schemaVersion: AI_TELEMETRY_SCHEMA_VERSION,
     updatedAt: null,
@@ -703,19 +737,116 @@ async function loadLatestPagegenSummary(root) {
   }
 }
 
+async function loadLatestGraphragSummary(root) {
+  const metricsPath = path.join(root, 'data', 'graphrag-metrics.json')
+  let raw
+  try {
+    raw = await fs.readFile(metricsPath, 'utf8')
+  } catch (error) {
+    if (error && (error.code === 'ENOENT' || error.code === 'ENOTDIR')) {
+      return null
+    }
+    throw error
+  }
+
+  if (!raw) return null
+
+  let parsed
+  try {
+    parsed = JSON.parse(raw)
+  } catch (error) {
+    console.warn('[telemetry] skip invalid graphrag metrics:', error?.message || error)
+    return null
+  }
+
+  if (!Array.isArray(parsed) || !parsed.length) return null
+
+  const summary = pickLatestByType(parsed)
+  summary.warnings = computeGraphragWarnings(summary)
+  return summary
+}
+
+function computeGraphragWarnings(summary = {}) {
+  const warnings = []
+  if (!summary || typeof summary !== 'object') return warnings
+
+  function addWarning({ scope, message, severity = 'warning', timestamp }) {
+    warnings.push({
+      scope,
+      message,
+      severity,
+      timestamp: timestamp ?? new Date().toISOString()
+    })
+  }
+
+  const ingest = summary.ingest
+  if (ingest && Number(ingest.write?.written ?? 0) === 0) {
+    addWarning({
+      scope: 'ingest',
+      message: '最新 ingest 未写入任何文档，请检查质量守门与缓存设置。',
+      severity: 'error',
+      timestamp: ingest.timestamp
+    })
+  }
+
+  const retrieve = summary.retrieve
+  if (
+    retrieve?.mode === 'hybrid' &&
+    Array.isArray(retrieve?.totals?.sources) &&
+    !retrieve.totals.sources.includes('structure')
+  ) {
+    addWarning({
+      scope: 'retrieve',
+      message: 'Hybrid 检索未启用结构权重，请确认是否已运行 graphrag:gnn。',
+      severity: 'warning',
+      timestamp: retrieve.timestamp
+    })
+  }
+
+  const exportSummary = summary.export
+  if (exportSummary && exportSummary.files && exportSummary.files.page === false) {
+    addWarning({
+      scope: 'export',
+      message: '最近一次 graphrag:export 未生成主题页，/graph 下可能缺少可视化入口。',
+      severity: 'warning',
+      timestamp: exportSummary.timestamp
+    })
+  }
+
+  const explore = summary.explore
+  if (explore && (explore.truncatedNodes || explore.truncatedEdges)) {
+    addWarning({
+      scope: 'explore',
+      message: 'Graph Explorer 子图存在截断，请检查 --node-limit / --edge-limit 配置。',
+      severity: 'info',
+      timestamp: explore.timestamp
+    })
+  }
+
+  return warnings
+}
+
 export async function mergeTelemetry({ root = process.cwd(), logger = console } = {}) {
   const paths = createPaths(root)
   await ensureDataFileExists(paths)
   const state = await loadJSON(paths.dataPath, defaultState())
 
   if (!state.build || typeof state.build !== 'object') {
-    state.build = { pagegen: null, ai: normalizeAIState({}) }
+    state.build = { pagegen: null, ai: normalizeAIState({}), graphrag: null, graphragHistory: [] }
   } else {
     if (!Object.prototype.hasOwnProperty.call(state.build, 'pagegen')) {
       state.build.pagegen = state.build.pagegen ?? null
     }
     if (!Object.prototype.hasOwnProperty.call(state.build, 'ai')) {
       state.build.ai = normalizeAIState({})
+    }
+    if (!Object.prototype.hasOwnProperty.call(state.build, 'graphrag')) {
+      state.build.graphrag = state.build.graphrag ?? null
+    }
+    if (!Object.prototype.hasOwnProperty.call(state.build, 'graphragHistory')) {
+      state.build.graphragHistory = Array.isArray(state.build.graphragHistory)
+        ? state.build.graphragHistory
+        : []
     }
   }
 
@@ -728,9 +859,43 @@ export async function mergeTelemetry({ root = process.cwd(), logger = console } 
 
   const modelSmoke = await loadModelSmokeSummary(root, logger)
 
-  state.build.ai = updateAIOverview(state.build.ai, { smoke: modelSmoke?.summary })
-  state.build.ai.smoke = modelSmoke
+  state.build.ai = updateAIOverview(state.build.ai, { smoke: modelSmoke })
+  state.build.ai.smoke = {
+    summary: modelSmoke?.summary ?? null,
+    models: modelSmoke?.models ?? [],
+    runtime: modelSmoke?.runtime ?? null,
+    fallback: modelSmoke?.fallback ?? null,
+    generatedAt: modelSmoke?.generatedAt ?? null,
+    history: modelSmoke?.history ?? []
+  }
   logAIOverview(state.build.ai, logger)
+
+  const graphragSummary = await loadLatestGraphragSummary(root)
+  state.build.graphrag = graphragSummary ?? null
+  if (!Array.isArray(state.build.graphragHistory)) {
+    state.build.graphragHistory = []
+  }
+  if (graphragSummary) {
+    const referenceTimestamp =
+      graphragSummary.explore?.timestamp ??
+      graphragSummary.retrieve?.timestamp ??
+      graphragSummary.export?.timestamp ??
+      graphragSummary.ingest?.timestamp ??
+      new Date().toISOString()
+
+    const entry = {
+      timestamp: referenceTimestamp,
+      warnings: graphragSummary.warnings ?? []
+    }
+
+    const lastEntry = state.build.graphragHistory[0]
+    if (!lastEntry || JSON.stringify(lastEntry) !== JSON.stringify(entry)) {
+      state.build.graphragHistory.unshift(entry)
+    }
+    if (state.build.graphragHistory.length > 10) {
+      state.build.graphragHistory = state.build.graphragHistory.slice(0, 10)
+    }
+  }
 
   let tmp
   try {
