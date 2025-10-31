@@ -1,0 +1,50 @@
+{
+  "zh/content/ai-placeholder-retrospective/index": {
+    "hash": "c28e3e0acf929c2d4b833855975e79a9e9457050fac1631fc0cd95a960047376",
+    "locale": "zh",
+    "updatedAt": "2025-10-20T00:00:00.000Z",
+    "writtenAt": "2025-10-31T07:12:58.138Z"
+  },
+  "zh/content/ai-runtime-guide/index": {
+    "hash": "02d677e71655615f62b9c59d993caee413ae4743dd5d1116db299e0dfb6741d0",
+    "locale": "zh",
+    "updatedAt": "2025-10-20T00:00:00.000Z",
+    "writtenAt": "2025-10-31T07:12:58.138Z"
+  },
+  "zh/content/pagegen-handbook/index": {
+    "hash": "63c8be050be20dd477903bb9ba13267b55374db8664d310ccb09c3534288e9d5",
+    "locale": "zh",
+    "updatedAt": "2025-10-20T00:00:00.000Z",
+    "writtenAt": "2025-10-31T07:12:58.138Z"
+  },
+  "zh/content/pagegen-retrospective/index": {
+    "hash": "8a1b6af8c1bd5eb1a12a9b558a05ae4feeb869d21b95a73fb1da598b93e7d3fd",
+    "locale": "zh",
+    "updatedAt": "2025-10-20T00:00:00.000Z",
+    "writtenAt": "2025-10-31T07:12:58.138Z"
+  },
+  "zh/content/project-overview/index": {
+    "hash": "7f1de70bdc6bbc8dcc166292d279ef910d565e43f1b969042d3eab8d94c9793a",
+    "locale": "zh",
+    "updatedAt": "2025-10-20T00:00:00.000Z",
+    "writtenAt": "2025-10-31T07:12:58.138Z"
+  },
+  "zh/content/telemetry-cases/index": {
+    "hash": "11bc5b353e8172dbb215065a0e20516c5d21f3317478fec59637b9cbf2ee880b",
+    "locale": "zh",
+    "updatedAt": "2025-10-20T00:00:00.000Z",
+    "writtenAt": "2025-10-31T07:12:58.138Z"
+  },
+  "zh/content/telemetry-guide/index": {
+    "hash": "9a2e159230b5ca43672e84feb62a8a31700822663eed0e566bd7a45f5802dd4c",
+    "locale": "zh",
+    "updatedAt": "2025-10-20T00:00:00.000Z",
+    "writtenAt": "2025-10-31T07:12:58.138Z"
+  },
+  "zh/content/tutorial-authoring-to-publish/index": {
+    "hash": "9019aece11922120fc48d809b419d6975cb257372142b3fc7e7acc0da1c0b9c0",
+    "locale": "zh",
+    "updatedAt": "2025-10-20T00:00:00.000Z",
+    "writtenAt": "2025-10-31T07:12:58.138Z"
+  }
+}

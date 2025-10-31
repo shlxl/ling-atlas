@@ -1,0 +1,13 @@
+{
+  "requiredFields": ["title", "description", "updatedAt", "categories"],
+  "blacklistPatterns": [
+    "http://",
+    "example-phishing.com",
+    ".*\\.onion"
+  ],
+  "piiPatterns": {
+    "email": "[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}",
+    "phone": "\\\\+?[0-9][0-9\\\\s-]{7,}[0-9]"
+  },
+  "maxTagCount": 8
+}

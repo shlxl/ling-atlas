@@ -1,0 +1,13 @@
+{
+  "defaultIndex": "doc-default",
+  "indexes": [
+    {
+      "name": "doc-default",
+      "type": "document",
+      "embeddingsPath": "docs/public/data/embeddings.json",
+      "model": "Xenova/all-MiniLM-L6-v2",
+      "normalize": true,
+      "description": "默认文档语义向量（来自 AI 自演进生成的 embeddings.json）"
+    }
+  ]
+}

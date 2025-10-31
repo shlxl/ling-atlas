@@ -60,7 +60,14 @@ npm run dev
 - `npm run build`：构建站点（串联 `ai:prepare` → `ai:smoke` → `gen` → `knowledge:build`），自动生成中英双语 RSS/Sitemap
 - `npm run pwa:build`：独立构建 PWA 产物（`sw.js`、`manifest.webmanifest`、`icons/`）
 - `npm run dev`：本地开发（前置 `gen`）
+- `npm run dev:site`：读取 `.env` 中的 `BASE`（默认 `/ling-atlas/`）并启动 dev server，例如访问 `http://127.0.0.1:5173/ling-atlas/`
 - `npm run knowledge:build`：单独更新 `/api/knowledge.json`（段落级知识数据）
+- `npm run graphrag:constraints`：为 GraphRAG 入图准备 Neo4j 唯一约束与索引
+- `npm run graphrag:ingest -- --locale zh --adapter transformers`：写入 Doc/Chunk/Entity/Tag 结构，可配合 `--changed-only` 增量同步
+- `npm run graphrag:retrieve -- --mode <subgraph|path|topn> --input payload.json`：执行子图、最短路径或 Top-N 查询（payload 支持使用 `-` 从 stdin 读取）
+- `npm run graphrag:retrieve -- --mode hybrid --input payload.json [--hybrid-alpha 0.7 0.3]`：语义 + 结构融合检索（默认读取 `gnn_pagerank` 等结构指标），`alpha` 控制语义/结构权重。
+- `npm run graphrag:gnn -- --graph entity --algo pagerank --write-property gnn_pagerank`：GDS/GNN 管道（投影、算法写回），配置详见 `data/graphrag/gnn-config.json`。
+- `npm run graphrag:export -- --doc-id <doc-id> [--topic <slug>] [--title <标题>]`：生成 `docs/graph/<topic>/` 下的 mermaid / context / metadata 产物，供站点展示
 - `npm run ai:prepare`：读取 `data/models.json`、写入模型缓存目录（默认 `data/models/`），并校验 SHA256 与缓存状态
 - `npm run ai:smoke`：在已准备的缓存上运行最小推理验证，失败会写入结构化日志并将 manifest 回退到占位运行时；`AI_RUNTIME=placeholder` 或相关 `AI_*_DISABLE` 时自动跳过
 - `npm run ai:all`：执行 AI 自演进管线（文本嵌入 / 摘要 / 问答，占位实现）
@@ -68,6 +75,39 @@ npm run dev
 - `npm run license`：汇总第三方许可证（`license-checker --summary`）
 - `npm run sbom`：生成 CycloneDX SBOM（输出到 `docs/public/.well-known/sbom.json` 并同步 dist）
 - 离线验证：`npm run build` → `npx vitepress preview docs --host 127.0.0.1 --port 4173`，在浏览器中访问站点、打开 DevTools → Application → Service Workers，勾选 “Offline” 后刷新确认最近访问页和搜索仍能使用缓存；同时观察底部“检测到新版本/已缓存”提示条触发刷新
+
+### GraphRAG 工作流快速上手
+
+```bash
+# 1. 启动 Neo4j（可参考 docker-compose.neo4j.yml），首次建立约束
+npm run graphrag:constraints
+
+# 2. 将 Markdown 入图，可配合 --changed-only 增量写入
+npm run graphrag:ingest -- --locale zh --adapter transformers
+
+# 3. 调用子图 / 最短路径 / Top-N 检索
+npm run graphrag:retrieve -- --mode subgraph --input payload.json --pretty
+
+# 4. 运行 GNN 算法写回结构指标（示例）
+npm run graphrag:gnn -- --graph entity --algo pagerank --write-property gnn_pagerank
+
+# 5. 导出 mermaid / context / metadata，并生成布局页
+npm run graphrag:export -- \
+  --doc-id zh/content/ai-runtime-guide/index \
+  --topic zh-ai-runtime \
+  --title "AI 管线占位与切换指南" \
+  --locale zh
+
+# 6. 打开 /graph/ 或 /graph/<topic>/ 查看可视化页面
+```
+
+混合检索示例：
+```bash
+npm run graphrag:retrieve -- --mode hybrid --input hybrid.example.json --pretty
+```
+> `hybrid.example.json` 可包含 `{"question":"..."}` 或显式 `embedding`，脚本会使用 `data/graphrag/vector-config.json` 的默认索引与模型，并结合 Neo4j 中的 `gnn_*` 结构得分进行重排。若尚未运行 `graphrag:gnn` 写回图算法结果，可通过 `--hybrid-alpha 1 0` 暂时只看语义分数。
+
+导出目录包含 `subgraph.mmd`（Mermaid 子图）、`context.md`（实体统计与推荐阅读）、`metadata.json` 与自动生成的 `index.md` 主题页，可直接被 VitePress 渲染。所有 GraphRAG 主题会在 [`docs/graph/index.md`](docs/graph/index.md) 列出，便于在站点导航中访问。
 
 ### AI 管线配置与回滚
 

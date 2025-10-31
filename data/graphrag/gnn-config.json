@@ -1,0 +1,46 @@
+{
+  "graphs": {
+    "entity": {
+      "type": "cypher",
+      "nodeQuery": "MATCH (n:Entity) RETURN id(n) AS id, labels(n) AS labels",
+      "relationshipQuery": "MATCH (a:Entity)-[r:RELATED]->(b:Entity) RETURN id(a) AS source, id(b) AS target, coalesce(r.weight, 1.0) AS weight",
+      "relationshipProperties": ["weight"],
+      "undirected": true,
+      "description": "实体-实体关系图，用于 PageRank/社区检测/Node2Vec"
+    },
+    "doc_entity": {
+      "type": "cypher",
+      "nodeQuery": "MATCH (n:Doc) RETURN id(n) AS id, labels(n) AS labels UNION MATCH (n:Entity) RETURN id(n) AS id, labels(n) AS labels",
+      "relationshipQuery": "MATCH (d:Doc)<-[:PART_OF]-(c:Chunk)-[:MENTIONS]->(e:Entity) RETURN id(d) AS source, id(e) AS target, 1.0 AS weight",
+      "relationshipProperties": ["weight"],
+      "undirected": false,
+      "description": "文档-实体双模图，可用于 Node2Vec 或双向推荐"
+    }
+  },
+  "defaults": {
+    "entity": {
+      "pagerank": {
+        "relationshipWeightProperty": "weight"
+      },
+      "labelPropagation": {
+        "relationshipWeightProperty": "weight"
+      },
+      "node2vec": {
+        "embeddingDimension": 64,
+        "walkLength": 80,
+        "walksPerNode": 10,
+        "inOutFactor": 1.0,
+        "returnFactor": 1.0
+      }
+    },
+    "doc_entity": {
+      "node2vec": {
+        "embeddingDimension": 64,
+        "walkLength": 60,
+        "walksPerNode": 8,
+        "inOutFactor": 1.0,
+        "returnFactor": 1.0
+      }
+    }
+  }
+}
