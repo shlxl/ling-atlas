@@ -38,6 +38,12 @@
     "config:nav": "node scripts/validate-nav-config.mjs",
     "config:seo": "node scripts/validate-seo-config.mjs",
     "config:tags": "node scripts/validate-tag-alias.mjs",
+    "graphrag:constraints": "node scripts/graphrag/ensure-constraints.mjs",
+    "graphrag:ingest": "node scripts/graphrag/ingest.pipeline.mjs",
+    "graphrag:export": "node scripts/graphrag/export.mjs",
+    "graphrag:retrieve": "node scripts/graphrag/retrieve.mjs",
+    "graphrag:explore": "node scripts/graphrag/explore.mjs",
+    "graphrag:gnn": "node scripts/graphrag/gnn.pipeline.mjs",
     "audit": "npm audit --omit=dev || true",
     "license": "license-checker --summary",
     "sbom": "node scripts/sbom.mjs",
@@ -75,7 +81,11 @@
   },
   "dependencies": {
     "20": "^3.1.9",
+    "@huggingface/transformers": "^3.7.6",
     "@xenova/transformers": "^2.17.2",
+    "dotenv": "^16.4.5",
+    "mermaid": "^10.9.1",
+    "neo4j-driver": "^5.28.2",
     "onnxruntime-node": "^1.23.0"
   }
 }

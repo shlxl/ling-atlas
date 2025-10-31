@@ -51,17 +51,17 @@ Pagegen 当前为串行的单体脚本，承担同步内容、解析元数据、
 - ✅ 遥测扩展：`scripts/telemetry-merge.mjs` 现输出带 `schemaVersion` 的 `build.ai` 节点，并将调度/插件概览同步到 metrics（`scheduler`、`plugins`）。
 - ✅ 插件化与并行：调度器支持 `--parallel-stage` / `PAGEGEN_PARALLEL_STAGES` 覆盖并发度，`--plugin` / `PAGEGEN_PLUGINS` 动态加载阶段，并提供 `--no-plugins`、`--ignore-plugin-errors` 回退。
 - ✅ 模型生命周期：`npm run ai:prepare`、`npm run ai:smoke` 已纳入 `codex run publish` 与 `npm run build`，失败时会写入 manifest 降级信息并回退占位实现。
-- 🔜 Telemetry 可视化：在站点“观测指标”页落地 scheduler / AI 指标图表，并补齐阈值告警脚本。
+- ✅ Telemetry 可视化：在站点“观测指标”页落地 scheduler / AI 指标图表，并补齐阈值告警脚本（`docs/.vitepress/theme/components/TelemetryOverview.vue` 支持多语言展示、告警提示与调度/插件摘要）。
+- ✅ GraphRAG 遥测基础：`scripts/graphrag/ingest.pipeline.mjs` 将入图统计写入 `data/graphrag-metrics.json`，`scripts/telemetry-merge.mjs` 与前端面板同步渲染 ingest 结果与跳过原因。
 - ✅ 插件示例：产出官方 Pagegen 插件与端到端用例（`scripts/pagegen/plugins/example.mjs` + `node --test tests/pagegen/plugin-example.integration.test.mjs`），验证 `--plugin` 协议与回滚测试夹具。
 - 🔜 冒烟遥测：将 `ai:smoke` 结果写回 telemetry，生成结构化失败清单并与 `build.ai` 概览打通。
 - 🔜 文档同步：更新 README / AGENTS / 规划文档，汇总并发覆盖、插件加载与 AI 守门的运维回滚案例。
 
 ### 执行顺序建议
 
-1. 先补齐 Telemetry 页面与告警基线，确保 scheduler / AI 指标可视化到位。
-2. 随后把 `ai:smoke` 结果写入 telemetry，与 `build.ai` overview 联动降级路径。
-3. 完善插件示例后的运维/回滚文档，对接更多实际插件场景。
-4. 最后统一更新 README、AGENTS 与规划文档，沉淀新的运维与回滚指引。
+1. 把 `ai:smoke` 结果写入 telemetry，与 `build.ai` overview 联动降级路径。
+2. 完善插件示例后的运维/回滚文档，对接更多实际插件场景。
+3. 统一更新 README、AGENTS 与规划文档，沉淀新的运维与回滚指引。
 
 ## 风险与应对
 
@@ -80,4 +80,4 @@ Pagegen 当前为串行的单体脚本，承担同步内容、解析元数据、
 - **协作约束梳理**：完成 `AGENTS.md`、README 与 `.codex/` 指南的交叉检查，产出 README《协作约束速查》以便快速上手。
 - **模块盘点回顾**：`schema/`、`scripts/`、`docs/zh/plans/` 与 `tests/` 的资产现已补写 orchestrator 契约说明与依赖矩阵，确保变更有据可查。
 - **Pagegen 深入检查跟进**：端到端测试现覆盖导航/i18n 故障、缓存命中指标与失败回滚路径；`npm run test:pagegen` 已模拟完整生成流程并对 metrics 导出做断言。
-- **反馈同步机制**：本节会随巡检推进持续更新，关键结论亦会同步至 `AGENTS.md` 第 10 节，确保多代理协作信息一致。当前迭代聚焦于 Telemetry 可视化与 `ai:smoke` 遥测回写的收尾，以及插件运维文档的拓展。
+- **反馈同步机制**：本节会随巡检推进持续更新，关键结论亦会同步至 `AGENTS.md` 第 10 节，确保多代理协作信息一致。当前迭代聚焦于 `ai:smoke` 遥测回写与插件运维文档的拓展，并在完成后补齐跨文档指引。

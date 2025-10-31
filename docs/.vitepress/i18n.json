@@ -11,7 +11,11 @@
       "guides": "指南",
       "deploy": "部署指南",
       "migration": "迁移与重写",
-      "chat": "知识问答"
+      "chat": "知识问答",
+      "graph": "GraphRAG",
+      "graphOverview": "GraphRAG 导航",
+      "graphTelemetry": "Telemetry 指南",
+      "graphExplorer": "Graph Explorer"
     },
     "en": {
       "latest": "Latest",
@@ -24,7 +28,11 @@
       "guides": "Guides",
       "deploy": "Deployment",
       "migration": "Migration",
-      "chat": "Chat"
+      "chat": "Chat",
+      "graph": "GraphRAG",
+      "graphOverview": "GraphRAG Overview",
+      "graphTelemetry": "Telemetry Guide",
+      "graphExplorer": "Graph Explorer"
     }
   },
   "locales": {

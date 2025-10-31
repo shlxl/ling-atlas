@@ -4,6 +4,8 @@ import os from 'node:os'
 import { fileURLToPath } from 'node:url'
 import { readJSONIfExists, logStructured } from './utils.mjs'
 
+const MAX_SMOKE_HISTORY = 5
+
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const ROOT = path.resolve(__dirname, '..', '..')
 const MANIFEST_PATH = path.join(ROOT, 'data', 'models.json')
@@ -346,6 +348,38 @@ async function main() {
   }
 
   updatedManifest.smoke = summary
+
+  const existingHistory = Array.isArray(updatedManifest.history?.smoke)
+    ? updatedManifest.history.smoke.map(entry => ({
+        status: entry?.status ?? 'unknown',
+        runtime: entry?.runtime ?? null,
+        executed: Number(entry?.executed ?? 0),
+        skipped: Number(entry?.skipped ?? 0),
+        failed: Number(entry?.failed ?? 0),
+        verifiedAt: entry?.verifiedAt ?? null,
+        reason: entry?.reason ?? null,
+        failures: Array.isArray(entry?.failures)
+          ? entry.failures.map(item => ({
+              id: item?.id ?? null,
+              reason: item?.reason ?? null
+            }))
+          : []
+      }))
+    : []
+
+  const mergedHistory = [summary, ...existingHistory]
+    .filter(entry => entry)
+    .sort((a, b) => {
+      const tsA = a?.verifiedAt ? Date.parse(a.verifiedAt) : 0
+      const tsB = b?.verifiedAt ? Date.parse(b.verifiedAt) : 0
+      return tsB - tsA
+    })
+    .slice(0, MAX_SMOKE_HISTORY)
+
+  updatedManifest.history = {
+    ...(updatedManifest.history || {}),
+    smoke: mergedHistory
+  }
 
   if (failed > 0 && runtime !== 'placeholder' && runtime !== 'none') {
     const fallbackInfo = {

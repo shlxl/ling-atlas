@@ -43,6 +43,18 @@
     "guides.migration": {
       "href": "{routeRoot}/MIGRATION.html",
       "labelKey": "nav.migration"
+    },
+    "graph.overview": {
+      "href": "/graph/",
+      "labelKey": "nav.graphOverview"
+    },
+    "graph.telemetry": {
+      "href": "/graph/zh-telemetry-guide/",
+      "labelKey": "nav.graphTelemetry"
+    },
+    "graph.explorer": {
+      "href": "/graph/explorer/",
+      "labelKey": "nav.graphExplorer"
     }
   },
   "sections": [
@@ -69,6 +81,16 @@
       "kind": "aggregate",
       "titleKey": "nav.tags",
       "aggregateKey": "tags"
+    },
+    {
+      "key": "graph",
+      "kind": "group",
+      "titleKey": "nav.graph",
+      "items": [
+        { "key": "graph.overview", "link": "{links.graph.overview}", "labelKey": "nav.graphOverview" },
+        { "key": "graph.telemetry", "link": "{links.graph.telemetry}", "labelKey": "nav.graphTelemetry" },
+        { "key": "graph.explorer", "link": "{links.graph.explorer}", "labelKey": "nav.graphExplorer" }
+      ]
     },
     {
       "key": "about",

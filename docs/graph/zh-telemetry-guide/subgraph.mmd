@@ -1,0 +1,35 @@
+graph LR
+  doc163["Doc｜观测指标导览"]
+  cat0163______["Category｜管理与协作"]
+  doc163 --> cat0163______
+  tag0163_____["Tag｜运维看板"]
+  doc163 --> tag0163_____
+  tag1163_____["Tag｜指标治理"]
+  doc163 --> tag1163_____
+  tag2163___["Tag｜遥测"]
+  doc163 --> tag2163___
+  ent233["Concept｜遥测"]
+  doc163 -- 频次 1 --> ent233
+  ent234["Concept｜指标治理"]
+  doc163 -- 频次 1 --> ent234
+  ent235["Concept｜运维看板"]
+  doc163 -- 频次 1 --> ent235
+  class doc163 docNode;
+  class cat0163______ categoryNode;
+  class tag0163_____ tagNode;
+  class tag1163_____ tagNode;
+  class tag2163___ tagNode;
+  class ent233 entityConcept;
+  class ent234 entityConcept;
+  class ent235 entityConcept;
+  classDef docNode fill:#1f6feb,stroke:#0d419d,color:#ffffff,font-weight:600;
+  classDef categoryNode fill:#0d1117,stroke:#30363d,color:#f0f6fc;
+  classDef tagNode fill:#161b22,stroke:#30363d,color:#79c0ff;
+  classDef entityNode fill:#1b4d3e,stroke:#2ea043,color:#ffffff;
+  classDef entityPerson fill:#653c9d,stroke:#8957e5,color:#ffffff;
+  classDef entityOrg fill:#1158c7,stroke:#1f6feb,color:#ffffff;
+  classDef entityLocation fill:#7c4400,stroke:#b76100,color:#ffffff;
+  classDef entityConcept fill:#445760,stroke:#6e7781,color:#ffffff;
+  linkStyle 0 stroke-width:2px,stroke:#58a6ff;
+  linkStyle 1 stroke-width:2px,stroke:#58a6ff;
+  linkStyle 2 stroke-width:2px,stroke:#58a6ff;

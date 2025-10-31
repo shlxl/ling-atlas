@@ -64,10 +64,11 @@ npm run dev
 - `npm run knowledge:build`：单独更新 `/api/knowledge.json`（段落级知识数据）
 - `npm run graphrag:constraints`：为 GraphRAG 入图准备 Neo4j 唯一约束与索引
 - `npm run graphrag:ingest -- --locale zh --adapter transformers`：写入 Doc/Chunk/Entity/Tag 结构，可配合 `--changed-only` 增量同步
-- `npm run graphrag:retrieve -- --mode <subgraph|path|topn> --input payload.json`：执行子图、最短路径或 Top-N 查询（payload 支持使用 `-` 从 stdin 读取）
+- `npm run graphrag:retrieve -- --mode <subgraph|path|topn> --input payload.json`：执行子图、最短路径或 Top-N 查询（payload 支持使用 `-` 从 stdin 读取）。`subgraph` 模式可加上 `--max-hops`、`--node-limit`、`--edge-limit`、`--include-label <Label>`、`--include-edge-type <TYPE>` 精细控制跳数、节点/边阈值与过滤条件。
 - `npm run graphrag:retrieve -- --mode hybrid --input payload.json [--hybrid-alpha 0.7 0.3]`：语义 + 结构融合检索（默认读取 `gnn_pagerank` 等结构指标），`alpha` 控制语义/结构权重。
 - `npm run graphrag:gnn -- --graph entity --algo pagerank --write-property gnn_pagerank`：GDS/GNN 管道（投影、算法写回），配置详见 `data/graphrag/gnn-config.json`。
 - `npm run graphrag:export -- --doc-id <doc-id> [--topic <slug>] [--title <标题>]`：生成 `docs/graph/<topic>/` 下的 mermaid / context / metadata 产物，供站点展示
+- `npm run graphrag:explore -- --kind question --value "<问题>" --output docs/public/data/graphrag-explorer.json --pretty`：生成 Graph Explorer 统一 JSON（整合问答、文档、子图指标），前端可在 `/graph/explorer/` 展示
 - `npm run ai:prepare`：读取 `data/models.json`、写入模型缓存目录（默认 `data/models/`），并校验 SHA256 与缓存状态
 - `npm run ai:smoke`：在已准备的缓存上运行最小推理验证，失败会写入结构化日志并将 manifest 回退到占位运行时；`AI_RUNTIME=placeholder` 或相关 `AI_*_DISABLE` 时自动跳过
 - `npm run ai:all`：执行 AI 自演进管线（文本嵌入 / 摘要 / 问答，占位实现）
@@ -85,8 +86,15 @@ npm run graphrag:constraints
 # 2. 将 Markdown 入图，可配合 --changed-only 增量写入
 npm run graphrag:ingest -- --locale zh --adapter transformers
 
-# 3. 调用子图 / 最短路径 / Top-N 检索
-npm run graphrag:retrieve -- --mode subgraph --input payload.json --pretty
+# 3. 调用子图 / 最短路径 / Top-N 检索（示例增加 4 跳、仅保留 Entity 节点与 MENTIONS 边）
+npm run graphrag:retrieve -- \
+  --mode subgraph \
+  --input payload.json \
+  --max-hops 4 \
+  --node-limit 120 \
+  --include-label Entity \
+  --include-edge-type MENTIONS \
+  --pretty
 
 # 4. 运行 GNN 算法写回结构指标（示例）
 npm run graphrag:gnn -- --graph entity --algo pagerank --write-property gnn_pagerank
@@ -98,7 +106,9 @@ npm run graphrag:export -- \
   --title "AI 管线占位与切换指南" \
   --locale zh
 
-# 6. 打开 /graph/ 或 /graph/<topic>/ 查看可视化页面
+# 6. （可选）生成 Graph Explorer 数据，并在 `/graph/explorer/` 浏览问答+图谱结果
+#    npm run graphrag:explore -- --kind question --value "GraphRAG 集成的最新交付内容是什么？" --output docs/public/data/graphrag-explorer.json --pretty
+# 7. 打开 /graph/ 或 /graph/<topic>/ 查看可视化页面
 ```
 
 混合检索示例：

@@ -188,6 +188,9 @@ test('ai events flushed and merged into telemetry snapshot', async t => {
   assert.equal(telemetry.build.ai.overview?.smoke?.status, 'passed')
   assert.equal(telemetry.build.ai.smoke?.summary?.status, 'passed')
   assert.equal(telemetry.build.ai.smoke?.summary?.executed, 2)
+  assert.ok(Array.isArray(telemetry.build.ai.smoke?.history))
+  assert.ok((telemetry.build.ai.smoke?.history?.length ?? 0) >= 1)
+  assert.equal(telemetry.build.ai.smoke?.history?.[0]?.status, 'passed')
   assert.equal(telemetry.build.ai.smoke?.models?.length, 1)
   const embedOverview = telemetry.build.ai.overview?.domains?.embed
   assert.ok(embedOverview, 'embed overview should exist')

@@ -1,0 +1,600 @@
+[
+  {
+    "type": "explore",
+    "mode": "question",
+    "question": "GraphRAG 集成的最新交付内容是什么？",
+    "docId": "zh/content/tutorial-authoring-to-publish/index",
+    "docs": 7,
+    "nodes": 29,
+    "edges": 28,
+    "truncatedNodes": false,
+    "truncatedEdges": false,
+    "durationMs": 387,
+    "sources": [
+      "vector",
+      "structure"
+    ],
+    "timestamp": "2025-10-31T20:07:52.589Z"
+  },
+  {
+    "type": "explore",
+    "mode": "question",
+    "question": "GraphRAG 集成的最新交付内容是什么？",
+    "docId": "zh/content/tutorial-authoring-to-publish/index",
+    "docs": 7,
+    "nodes": 29,
+    "edges": 28,
+    "truncatedNodes": false,
+    "truncatedEdges": false,
+    "durationMs": 373,
+    "sources": [
+      "vector",
+      "structure"
+    ],
+    "timestamp": "2025-10-31T20:05:18.956Z"
+  },
+  {
+    "type": "explore",
+    "mode": "question",
+    "question": "GraphRAG 集成的最新交付内容是什么？",
+    "docId": "zh/content/tutorial-authoring-to-publish/index",
+    "docs": 7,
+    "nodes": 29,
+    "edges": 28,
+    "truncatedNodes": false,
+    "truncatedEdges": false,
+    "durationMs": 334,
+    "sources": [
+      "vector",
+      "structure"
+    ],
+    "timestamp": "2025-10-31T20:03:08.505Z"
+  },
+  {
+    "type": "explore",
+    "mode": "question",
+    "question": "GraphRAG 集成的最新交付内容是什么？",
+    "docId": "zh/content/tutorial-authoring-to-publish/index",
+    "docs": 7,
+    "nodes": 29,
+    "edges": 28,
+    "truncatedNodes": false,
+    "truncatedEdges": false,
+    "durationMs": 376,
+    "sources": [
+      "vector",
+      "structure"
+    ],
+    "timestamp": "2025-10-31T20:02:26.673Z"
+  },
+  {
+    "type": "explore",
+    "mode": "question",
+    "question": "GraphRAG 集成的最新交付内容是什么？",
+    "docId": "zh/content/tutorial-authoring-to-publish/index",
+    "docs": 7,
+    "nodes": 29,
+    "edges": 28,
+    "truncatedNodes": false,
+    "truncatedEdges": false,
+    "durationMs": 1008,
+    "sources": [
+      "vector",
+      "structure"
+    ],
+    "timestamp": "2025-10-31T19:55:31.487Z"
+  },
+  {
+    "type": "export",
+    "timestamp": "2025-10-31T17:57:23.564Z",
+    "docId": "zh/content/telemetry-guide/index",
+    "docTitle": "观测指标导览",
+    "topic": "zh-telemetry-guide",
+    "locale": "zh",
+    "durationMs": 102,
+    "dryRun": false,
+    "totals": {
+      "nodes": 39,
+      "edges": 38,
+      "entities": 3,
+      "recommendations": 5
+    },
+    "files": {
+      "subgraph": true,
+      "context": true,
+      "metadata": true,
+      "page": true
+    },
+    "structure": {
+      "inferredScore": 0.15000000000000002,
+      "pagerankAvg": 0.15000000000000002
+    }
+  },
+  {
+    "type": "export",
+    "timestamp": "2025-10-31T17:51:34.638Z",
+    "docId": "zh/content/telemetry-guide/index",
+    "docTitle": "观测指标导览",
+    "topic": "zh-content-telemetry-guide-index",
+    "locale": "zh",
+    "durationMs": 94,
+    "dryRun": false,
+    "totals": {
+      "nodes": 39,
+      "edges": 38,
+      "entities": 3,
+      "recommendations": 5
+    },
+    "files": {
+      "subgraph": true,
+      "context": true,
+      "metadata": true,
+      "page": true
+    },
+    "structure": {
+      "inferredScore": 0.15000000000000002,
+      "pagerankAvg": 0.15000000000000002
+    }
+  },
+  {
+    "type": "export",
+    "timestamp": "2025-10-31T17:45:19.461Z",
+    "docId": "zh/content/telemetry-guide/index",
+    "docTitle": "观测指标导览",
+    "topic": "zh-content-telemetry-guide-index",
+    "locale": "zh",
+    "durationMs": 753,
+    "dryRun": false,
+    "totals": {
+      "nodes": 39,
+      "edges": 38,
+      "entities": 3,
+      "recommendations": 5
+    },
+    "files": {
+      "subgraph": true,
+      "context": true,
+      "metadata": true,
+      "page": true
+    },
+    "structure": {
+      "inferredScore": 0.15000000000000002,
+      "pagerankAvg": 0.15000000000000002
+    }
+  },
+  {
+    "type": "retrieve",
+    "timestamp": "2025-10-31T16:46:02.410Z",
+    "mode": "hybrid",
+    "durationMs": 7489,
+    "output": null,
+    "query": {
+      "question": "GraphRAG 集成的最新交付内容是什么？",
+      "vectorIndex": null,
+      "limit": 5
+    },
+    "totals": {
+      "items": 5,
+      "sources": [
+        "vector",
+        "structure"
+      ]
+    }
+  },
+  {
+    "type": "ingest",
+    "timestamp": "2025-10-31T16:01:53.993Z",
+    "durationMs": 1341,
+    "locale": "zh",
+    "includeDrafts": true,
+    "changedOnly": false,
+    "noCache": true,
+    "dryRun": false,
+    "adapter": "placeholder",
+    "adapterModel": null,
+    "totals": {
+      "collected": 54,
+      "normalized": 54,
+      "readyForWrite": 8,
+      "processed": 8
+    },
+    "skipped": {
+      "total": 46,
+      "reasons": [
+        {
+          "reason": "自动生成产物，默认跳过",
+          "count": 28,
+          "sampleDocId": "zh/_generated/archive/2025/index"
+        },
+        {
+          "reason": "质量守门失败",
+          "count": 18,
+          "sampleDocId": "zh/DEPLOYMENT"
+        }
+      ],
+      "samples": [
+        {
+          "docId": "zh/DEPLOYMENT",
+          "reason": "质量守门失败"
+        },
+        {
+          "docId": "zh/MIGRATION",
+          "reason": "质量守门失败"
+        },
+        {
+          "docId": "zh/index",
+          "reason": "质量守门失败"
+        }
+      ]
+    },
+    "write": {
+      "attempted": 8,
+      "written": 8,
+      "cacheUpdated": false
+    }
+  },
+  {
+    "type": "ingest",
+    "timestamp": "2025-10-31T15:59:51.199Z",
+    "durationMs": 643,
+    "locale": "zh",
+    "includeDrafts": true,
+    "changedOnly": false,
+    "noCache": true,
+    "dryRun": false,
+    "adapter": "placeholder",
+    "adapterModel": null,
+    "totals": {
+      "collected": 54,
+      "normalized": 54,
+      "readyForWrite": 8,
+      "processed": 8
+    },
+    "skipped": {
+      "total": 46,
+      "reasons": [
+        {
+          "reason": "自动生成产物，默认跳过",
+          "count": 28,
+          "sampleDocId": "zh/_generated/categories/管理与协作/index"
+        },
+        {
+          "reason": "质量守门失败",
+          "count": 18,
+          "sampleDocId": "zh/DEPLOYMENT"
+        }
+      ],
+      "samples": [
+        {
+          "docId": "zh/DEPLOYMENT",
+          "reason": "质量守门失败"
+        },
+        {
+          "docId": "zh/MIGRATION",
+          "reason": "质量守门失败"
+        },
+        {
+          "docId": "zh/index",
+          "reason": "质量守门失败"
+        }
+      ]
+    },
+    "write": {
+      "attempted": 8,
+      "written": 8,
+      "cacheUpdated": false
+    }
+  },
+  {
+    "type": "ingest",
+    "timestamp": "2025-10-31T15:58:04.321Z",
+    "durationMs": 615,
+    "locale": "zh",
+    "includeDrafts": true,
+    "changedOnly": false,
+    "noCache": true,
+    "dryRun": false,
+    "adapter": "placeholder",
+    "adapterModel": null,
+    "totals": {
+      "collected": 54,
+      "normalized": 54,
+      "readyForWrite": 8,
+      "processed": 8
+    },
+    "skipped": {
+      "total": 46,
+      "reasons": [
+        {
+          "reason": "自动生成产物，默认跳过",
+          "count": 28,
+          "sampleDocId": "zh/_generated/categories/工程笔记/index"
+        },
+        {
+          "reason": "质量守门失败",
+          "count": 18,
+          "sampleDocId": "zh/DEPLOYMENT"
+        }
+      ],
+      "samples": [
+        {
+          "docId": "zh/DEPLOYMENT",
+          "reason": "质量守门失败"
+        },
+        {
+          "docId": "zh/MIGRATION",
+          "reason": "质量守门失败"
+        },
+        {
+          "docId": "zh/index",
+          "reason": "质量守门失败"
+        }
+      ]
+    },
+    "write": {
+      "attempted": 8,
+      "written": 8,
+      "cacheUpdated": false
+    }
+  },
+  {
+    "type": "ingest",
+    "timestamp": "2025-10-31T15:57:07.288Z",
+    "durationMs": 628,
+    "locale": "zh",
+    "includeDrafts": true,
+    "changedOnly": false,
+    "noCache": true,
+    "dryRun": false,
+    "adapter": "placeholder",
+    "adapterModel": null,
+    "totals": {
+      "collected": 54,
+      "normalized": 54,
+      "readyForWrite": 8,
+      "processed": 8
+    },
+    "skipped": {
+      "total": 46,
+      "reasons": [
+        {
+          "reason": "自动生成产物，默认跳过",
+          "count": 28,
+          "sampleDocId": "zh/_generated/archive/2025/index"
+        },
+        {
+          "reason": "质量守门失败",
+          "count": 18,
+          "sampleDocId": "zh/DEPLOYMENT"
+        }
+      ],
+      "samples": [
+        {
+          "docId": "zh/DEPLOYMENT",
+          "reason": "质量守门失败"
+        },
+        {
+          "docId": "zh/MIGRATION",
+          "reason": "质量守门失败"
+        },
+        {
+          "docId": "zh/index",
+          "reason": "质量守门失败"
+        }
+      ]
+    },
+    "write": {
+      "attempted": 8,
+      "written": 8,
+      "cacheUpdated": false
+    }
+  },
+  {
+    "type": "ingest",
+    "timestamp": "2025-10-31T15:52:24.310Z",
+    "durationMs": 703,
+    "locale": "zh",
+    "includeDrafts": true,
+    "changedOnly": false,
+    "noCache": true,
+    "dryRun": false,
+    "adapter": "placeholder",
+    "adapterModel": null,
+    "totals": {
+      "collected": 54,
+      "normalized": 54,
+      "readyForWrite": 8,
+      "processed": 8
+    },
+    "skipped": {
+      "total": 46,
+      "reasons": [
+        {
+          "reason": "自动生成产物，默认跳过",
+          "count": 28,
+          "sampleDocId": "zh/_generated/categories/工程笔记/index"
+        },
+        {
+          "reason": "质量守门失败",
+          "count": 18,
+          "sampleDocId": "zh/DEPLOYMENT"
+        }
+      ],
+      "samples": [
+        {
+          "docId": "zh/DEPLOYMENT",
+          "reason": "质量守门失败"
+        },
+        {
+          "docId": "zh/MIGRATION",
+          "reason": "质量守门失败"
+        },
+        {
+          "docId": "zh/index",
+          "reason": "质量守门失败"
+        }
+      ]
+    },
+    "write": {
+      "attempted": 8,
+      "written": 8,
+      "cacheUpdated": false
+    }
+  },
+  {
+    "type": "ingest",
+    "timestamp": "2025-10-31T15:50:47.015Z",
+    "durationMs": 1108,
+    "locale": "zh",
+    "includeDrafts": true,
+    "changedOnly": false,
+    "noCache": true,
+    "dryRun": false,
+    "adapter": "placeholder",
+    "adapterModel": null,
+    "totals": {
+      "collected": 54,
+      "normalized": 54,
+      "readyForWrite": 8,
+      "processed": 8
+    },
+    "skipped": {
+      "total": 46,
+      "reasons": [
+        {
+          "reason": "自动生成产物，默认跳过",
+          "count": 28,
+          "sampleDocId": "zh/_generated/archive/2025/index"
+        },
+        {
+          "reason": "质量守门失败",
+          "count": 18,
+          "sampleDocId": "zh/DEPLOYMENT"
+        }
+      ],
+      "samples": [
+        {
+          "docId": "zh/DEPLOYMENT",
+          "reason": "质量守门失败"
+        },
+        {
+          "docId": "zh/MIGRATION",
+          "reason": "质量守门失败"
+        },
+        {
+          "docId": "zh/index",
+          "reason": "质量守门失败"
+        }
+      ]
+    },
+    "write": {
+      "attempted": 8,
+      "written": 8,
+      "cacheUpdated": false
+    }
+  },
+  {
+    "type": "ingest",
+    "timestamp": "2025-10-31T15:50:15.252Z",
+    "durationMs": 64,
+    "locale": "all",
+    "includeDrafts": false,
+    "changedOnly": false,
+    "noCache": false,
+    "dryRun": true,
+    "adapter": "placeholder",
+    "adapterModel": null,
+    "totals": {
+      "collected": 61,
+      "normalized": 61,
+      "readyForWrite": 8,
+      "processed": 8
+    },
+    "skipped": {
+      "total": 53,
+      "reasons": [
+        {
+          "reason": "自动生成产物，默认跳过",
+          "count": 28,
+          "sampleDocId": "zh/_generated/archive/2025/index"
+        },
+        {
+          "reason": "质量守门失败",
+          "count": 25,
+          "sampleDocId": "404"
+        }
+      ],
+      "samples": [
+        {
+          "docId": "404",
+          "reason": "质量守门失败"
+        },
+        {
+          "docId": "index",
+          "reason": "质量守门失败"
+        },
+        {
+          "docId": "en/DEPLOYMENT",
+          "reason": "质量守门失败"
+        }
+      ]
+    },
+    "write": {
+      "attempted": 8,
+      "written": 0,
+      "cacheUpdated": false
+    }
+  },
+  {
+    "type": "ingest",
+    "timestamp": "2025-10-31T15:06:38.582Z",
+    "durationMs": 1431,
+    "locale": "all",
+    "includeDrafts": false,
+    "changedOnly": false,
+    "noCache": false,
+    "dryRun": false,
+    "adapter": "placeholder",
+    "adapterModel": null,
+    "totals": {
+      "collected": 61,
+      "normalized": 61,
+      "readyForWrite": 8,
+      "processed": 8
+    },
+    "skipped": {
+      "total": 53,
+      "reasons": [
+        {
+          "reason": "自动生成产物，默认跳过",
+          "count": 28,
+          "sampleDocId": "zh/_generated/archive/2025/index"
+        },
+        {
+          "reason": "质量守门失败",
+          "count": 25,
+          "sampleDocId": "404"
+        }
+      ],
+      "samples": [
+        {
+          "docId": "404",
+          "reason": "质量守门失败"
+        },
+        {
+          "docId": "index",
+          "reason": "质量守门失败"
+        },
+        {
+          "docId": "en/DEPLOYMENT",
+          "reason": "质量守门失败"
+        }
+      ]
+    },
+    "write": {
+      "attempted": 8,
+      "written": 8,
+      "cacheUpdated": true
+    }
+  }
+]

@@ -1,0 +1,195 @@
+{
+  "doc": {
+    "id": "zh/content/telemetry-guide/index",
+    "title": "观测指标导览",
+    "description": "解读 Ling Atlas 观测指标页的各类数据来源、告警含义与排障流程，帮助维护者快速判断个人向量化知识库的运行健康度。",
+    "locale": "zh",
+    "updated_at": "2025-10-20T00:00:00.000Z",
+    "source_path": "docs/zh/content/telemetry-guide/index.md"
+  },
+  "categories": [
+    "管理与协作"
+  ],
+  "tags": [
+    "运维看板",
+    "指标治理",
+    "遥测"
+  ],
+  "entities": [
+    {
+      "name": "遥测",
+      "type": "Concept",
+      "count": 1,
+      "avg_confidence": 0.5,
+      "structure_scores": {
+        "gnn_pagerank": 0.15,
+        "gnn_labelPropagation": 233
+      }
+    },
+    {
+      "name": "指标治理",
+      "type": "Concept",
+      "count": 1,
+      "avg_confidence": 0.5,
+      "structure_scores": {
+        "gnn_pagerank": 0.15,
+        "gnn_labelPropagation": 234
+      }
+    },
+    {
+      "name": "运维看板",
+      "type": "Concept",
+      "count": 1,
+      "avg_confidence": 0.5,
+      "structure_scores": {
+        "gnn_pagerank": 0.15,
+        "gnn_labelPropagation": 235
+      }
+    }
+  ],
+  "recommendations": [
+    {
+      "doc_id": "zh/content/ai-placeholder-retrospective/index",
+      "title": "AI 占位阶段总结与实践",
+      "updated_at": "2025-10-20T00:00:00.000Z",
+      "score": 20.481,
+      "tags": [
+        "回滚",
+        "模型冒烟",
+        "占位运行"
+      ],
+      "categories": [
+        "管理与协作"
+      ],
+      "reasons": [
+        "分类匹配 管理与协作",
+        "最近更新：2025-10-20T00:00:00.000Z"
+      ]
+    },
+    {
+      "doc_id": "zh/content/ai-runtime-guide/index",
+      "title": "AI 管线占位与切换指南",
+      "updated_at": "2025-10-20T00:00:00.000Z",
+      "score": 20.481,
+      "tags": [
+        "运行时切换",
+        "冒烟测试",
+        "AI管线"
+      ],
+      "categories": [
+        "管理与协作"
+      ],
+      "reasons": [
+        "分类匹配 管理与协作",
+        "最近更新：2025-10-20T00:00:00.000Z"
+      ]
+    },
+    {
+      "doc_id": "zh/content/project-overview/index",
+      "title": "Ling Atlas 项目缘起与系统全貌",
+      "updated_at": "2025-10-20T00:00:00.000Z",
+      "score": 20.481,
+      "tags": [
+        "项目治理",
+        "自动化运维",
+        "知识管理"
+      ],
+      "categories": [
+        "管理与协作"
+      ],
+      "reasons": [
+        "分类匹配 管理与协作",
+        "最近更新：2025-10-20T00:00:00.000Z"
+      ]
+    },
+    {
+      "doc_id": "zh/content/tutorial-authoring-to-publish/index",
+      "title": "写作到发布的完整流程",
+      "updated_at": "2025-10-20T00:00:00.000Z",
+      "score": 20.481,
+      "tags": [
+        "发布管线",
+        "写作流程",
+        "质量守门"
+      ],
+      "categories": [
+        "管理与协作"
+      ],
+      "reasons": [
+        "分类匹配 管理与协作",
+        "最近更新：2025-10-20T00:00:00.000Z"
+      ]
+    },
+    {
+      "doc_id": "zh/content/pagegen-handbook/index",
+      "title": "Pagegen 运行手册",
+      "updated_at": "2025-10-20T00:00:00.000Z",
+      "score": 20.381,
+      "tags": [
+        "调度插件",
+        "缓存优化",
+        "生成管线"
+      ],
+      "categories": [
+        "工程笔记"
+      ],
+      "reasons": [
+        "最近更新：2025-10-20T00:00:00.000Z"
+      ]
+    }
+  ],
+  "structure": {
+    "score": 0.15,
+    "doc": {},
+    "pagerank": {
+      "avg": 0.15,
+      "max": 0.15,
+      "sum": 0.45,
+      "count": 3
+    },
+    "communities": [
+      {
+        "community": "233",
+        "count": 1
+      },
+      {
+        "community": "234",
+        "count": 1
+      },
+      {
+        "community": "235",
+        "count": 1
+      }
+    ],
+    "top_entities": [
+      {
+        "name": "遥测",
+        "type": "Concept",
+        "pagerank": 0.15,
+        "structure_scores": {
+          "gnn_pagerank": 0.15,
+          "gnn_labelPropagation": 233
+        }
+      },
+      {
+        "name": "指标治理",
+        "type": "Concept",
+        "pagerank": 0.15,
+        "structure_scores": {
+          "gnn_pagerank": 0.15,
+          "gnn_labelPropagation": 234
+        }
+      },
+      {
+        "name": "运维看板",
+        "type": "Concept",
+        "pagerank": 0.15,
+        "structure_scores": {
+          "gnn_pagerank": 0.15,
+          "gnn_labelPropagation": 235
+        }
+      }
+    ]
+  },
+  "generated_at": "2025-10-31T17:57:23.548Z"
+}

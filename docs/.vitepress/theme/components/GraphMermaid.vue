@@ -12,7 +12,14 @@
 <script setup>
 import { onMounted, ref, watch } from 'vue'
 import { withBase } from 'vitepress'
-import mermaid from 'mermaid'
+
+let mermaidInstance = null
+async function ensureMermaid() {
+  if (mermaidInstance) return mermaidInstance
+  const mod = await import('mermaid/dist/mermaid.esm.mjs')
+  mermaidInstance = mod?.default ?? mod
+  return mermaidInstance
+}
 
 const props = defineProps({
   path: {
@@ -41,6 +48,7 @@ async function loadGraphText() {
 
 async function renderGraph(text) {
   if (!container.value) return
+  const mermaid = await ensureMermaid()
   mermaid.initialize({ startOnLoad: false })
   loading.value = true
   try {
@@ -52,11 +60,26 @@ async function renderGraph(text) {
   }
 }
 
+function normalizeMermaid(text) {
+  if (!text) return ''
+  return text
+    .replace(/^\ufeff/, '')
+    .replace(/\r\n/g, '\n')
+    .replace(/\r/g, '\n')
+    .replace(/linkStyle\s+\d+[^\n]*/g, '')
+    .trim()
+}
+
 async function loadAndRender() {
   try {
-    const text = await loadGraphText()
-    graphText.value = text
-    await renderGraph(text)
+    const raw = await loadGraphText()
+    const normalized = normalizeMermaid(raw)
+    graphText.value = normalized
+    const mermaid = await ensureMermaid()
+    mermaid.parseError = error => {
+      console.error('[GraphMermaid] 语法解析失败:', error)
+    }
+    await renderGraph(normalized)
   } catch (error) {
     console.error('[GraphMermaid] 渲染失败:', error)
     if (container.value) {

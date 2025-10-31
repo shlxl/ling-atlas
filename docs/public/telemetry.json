@@ -10,8 +10,8 @@
   },
   "build": {
     "pagegen": {
-      "timestamp": "2025-10-26T03:15:00.489Z",
-      "totalMs": 72.994,
+      "timestamp": "2025-10-31T20:15:17.463Z",
+      "totalMs": 90.885,
       "collect": {
         "locales": 2,
         "cacheHitRate": 1,
@@ -255,7 +255,7 @@
           "executed": 1,
           "skipped": 0,
           "failed": 0,
-          "verifiedAt": "2025-10-26T03:15:00.221Z"
+          "verifiedAt": "2025-10-31T17:25:37.457Z"
         }
       },
       "smoke": {
@@ -265,7 +265,7 @@
           "executed": 1,
           "skipped": 0,
           "failed": 0,
-          "verifiedAt": "2025-10-26T03:15:00.221Z",
+          "verifiedAt": "2025-10-31T17:25:37.457Z",
           "reason": null,
           "failures": []
         },
@@ -279,7 +279,7 @@
             "smoke": {
               "status": "passed",
               "reason": null,
-              "verifiedAt": "2025-10-26T03:15:00.221Z"
+              "verifiedAt": "2025-10-31T17:25:37.457Z"
             },
             "cache": {
               "status": "ready",
@@ -289,7 +289,145 @@
         ],
         "runtime": "node",
         "fallback": null,
-        "generatedAt": "2025-10-26T03:15:00.117Z"
+        "generatedAt": "2025-10-31T17:25:37.330Z",
+        "history": [
+          {
+            "status": "passed",
+            "runtime": "node",
+            "executed": 1,
+            "skipped": 0,
+            "failed": 0,
+            "verifiedAt": "2025-10-31T17:25:37.457Z",
+            "reason": null,
+            "failures": []
+          },
+          {
+            "status": "passed",
+            "runtime": "node",
+            "executed": 1,
+            "skipped": 0,
+            "failed": 0,
+            "verifiedAt": "2025-10-31T17:25:37.457Z",
+            "reason": null,
+            "failures": []
+          }
+        ]
+      }
+    },
+    "graphrag": {
+      "explore": {
+        "type": "explore",
+        "mode": "question",
+        "question": "GraphRAG 集成的最新交付内容是什么？",
+        "docId": "zh/content/tutorial-authoring-to-publish/index",
+        "docs": 7,
+        "nodes": 29,
+        "edges": 28,
+        "truncatedNodes": false,
+        "truncatedEdges": false,
+        "durationMs": 387,
+        "sources": [
+          "vector",
+          "structure"
+        ],
+        "timestamp": "2025-10-31T20:07:52.589Z"
+      },
+      "export": {
+        "type": "export",
+        "timestamp": "2025-10-31T17:57:23.564Z",
+        "docId": "zh/content/telemetry-guide/index",
+        "docTitle": "观测指标导览",
+        "topic": "zh-telemetry-guide",
+        "locale": "zh",
+        "durationMs": 102,
+        "dryRun": false,
+        "totals": {
+          "nodes": 39,
+          "edges": 38,
+          "entities": 3,
+          "recommendations": 5
+        },
+        "files": {
+          "subgraph": true,
+          "context": true,
+          "metadata": true,
+          "page": true
+        },
+        "structure": {
+          "inferredScore": 0.15000000000000002,
+          "pagerankAvg": 0.15000000000000002
+        }
+      },
+      "retrieve": {
+        "type": "retrieve",
+        "timestamp": "2025-10-31T16:46:02.410Z",
+        "mode": "hybrid",
+        "durationMs": 7489,
+        "output": null,
+        "query": {
+          "question": "GraphRAG 集成的最新交付内容是什么？",
+          "vectorIndex": null,
+          "limit": 5
+        },
+        "totals": {
+          "items": 5,
+          "sources": [
+            "vector",
+            "structure"
+          ]
+        }
+      },
+      "ingest": {
+        "type": "ingest",
+        "timestamp": "2025-10-31T16:01:53.993Z",
+        "durationMs": 1341,
+        "locale": "zh",
+        "includeDrafts": true,
+        "changedOnly": false,
+        "noCache": true,
+        "dryRun": false,
+        "adapter": "placeholder",
+        "adapterModel": null,
+        "totals": {
+          "collected": 54,
+          "normalized": 54,
+          "readyForWrite": 8,
+          "processed": 8
+        },
+        "skipped": {
+          "total": 46,
+          "reasons": [
+            {
+              "reason": "自动生成产物，默认跳过",
+              "count": 28,
+              "sampleDocId": "zh/_generated/archive/2025/index"
+            },
+            {
+              "reason": "质量守门失败",
+              "count": 18,
+              "sampleDocId": "zh/DEPLOYMENT"
+            }
+          ],
+          "samples": [
+            {
+              "docId": "zh/DEPLOYMENT",
+              "reason": "质量守门失败"
+            },
+            {
+              "docId": "zh/MIGRATION",
+              "reason": "质量守门失败"
+            },
+            {
+              "docId": "zh/index",
+              "reason": "质量守门失败"
+            }
+          ]
+        },
+        "write": {
+          "attempted": 8,
+          "written": 8,
+          "cacheUpdated": false
+        }
       }
     }
   }

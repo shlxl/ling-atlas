@@ -10,6 +10,7 @@ import { normalizeDocument } from './ingest/normalize-metadata.mjs';
 import { extractEntities } from './ingest/extract-entities.mjs';
 import { buildPayload } from './ingest/build-payload.mjs';
 import { createQualityChecker } from './quality-check.mjs';
+import { appendGraphragMetric } from './telemetry.mjs';
 import {
   loadIngestCache,
   saveIngestCache,
@@ -94,12 +95,86 @@ function buildSummary({ documents, payloads, skipped }) {
   };
 }
 
+function summarizeSkippedReasons(entries, limit = 5) {
+  const buckets = new Map();
+  for (const entry of entries || []) {
+    if (!entry || typeof entry !== 'object') continue;
+    const reason = entry.reason || 'unknown';
+    const bucket = buckets.get(reason) || { reason, count: 0, sampleDocId: null };
+    bucket.count += 1;
+    if (!bucket.sampleDocId && entry.docId) {
+      bucket.sampleDocId = entry.docId;
+    }
+    buckets.set(reason, bucket);
+  }
+  return Array.from(buckets.values())
+    .sort((a, b) => b.count - a.count)
+    .slice(0, limit);
+}
+
+function createIngestTelemetryRecord({
+  options,
+  summary,
+  processedCount,
+  adapterName,
+  adapterModel,
+  durationMs,
+  written,
+  dryRun,
+}) {
+  return {
+    type: 'ingest',
+    timestamp: new Date().toISOString(),
+    durationMs,
+    locale: options.locale ?? 'all',
+    includeDrafts: Boolean(options.includeDrafts),
+    changedOnly: Boolean(options.changedOnly),
+    noCache: Boolean(options.noCache),
+    dryRun: Boolean(dryRun),
+    adapter: adapterName,
+    adapterModel: adapterModel ?? null,
+    totals: {
+      collected: summary.totalDocuments,
+      normalized: summary.normalized,
+      readyForWrite: summary.readyForWrite,
+      processed: processedCount,
+    },
+    skipped: {
+      total: summary.skipped,
+      reasons: summarizeSkippedReasons(summary.skippedReasons),
+      samples: summary.skippedReasons
+        ? summary.skippedReasons.slice(0, 3).map((item) => ({
+            docId: item?.docId ?? null,
+            reason: item?.reason ?? 'unknown',
+          }))
+        : [],
+    },
+    write: {
+      attempted: summary.readyForWrite,
+      written: Number(written ?? 0),
+      cacheUpdated: !options.noCache && Number(written ?? 0) > 0,
+    },
+  };
+}
+
 async function main() {
   const scriptName = getScriptName(import.meta.url);
   const rawArgs = process.argv.slice(2);
   const options = parsePipelineOptions(rawArgs);
   const neo4jConfig = resolveNeo4jConfig(rawArgs, { requirePassword: false });
   const noWriteMode = options.noWrite || neo4jConfig.dryRun;
+  const startedAt = Date.now();
+
+  async function recordTelemetrySafely(record) {
+    if (!record) return;
+    try {
+      await appendGraphragMetric(record, { limit: 200 });
+    } catch (error) {
+      console.warn(
+        `[${scriptName}] telemetry 写入失败：${error?.message || error}`,
+      );
+    }
+  }
 
   if (!noWriteMode && !neo4jConfig.password) {
     throw new Error('缺少 Neo4j 密码，无法写入数据库');
@@ -198,9 +273,22 @@ async function main() {
 
   if (noWriteMode) {
     console.log(`[${scriptName}] dry-run/no-write 模式，跳过 Neo4j 写入`);
+    const durationMs = Date.now() - startedAt;
     if (options.jsonOutput) {
       console.log(JSON.stringify(summary, null, 2));
     }
+    await recordTelemetrySafely(
+      createIngestTelemetryRecord({
+        options,
+        summary,
+        processedCount: processedDocs.length,
+        adapterName,
+        adapterModel,
+        durationMs,
+        written: 0,
+        dryRun: true,
+      }),
+    );
     return;
   }
 
@@ -232,6 +320,20 @@ async function main() {
     if (options.jsonOutput) {
       console.log(JSON.stringify({ ...summary, written: result.written }, null, 2));
     }
+
+    const durationMs = Date.now() - startedAt;
+    await recordTelemetrySafely(
+      createIngestTelemetryRecord({
+        options,
+        summary,
+        processedCount: processedDocs.length,
+        adapterName,
+        adapterModel,
+        durationMs,
+        written: result.written,
+        dryRun: false,
+      }),
+    );
   } finally {
     await driver.close();
   }

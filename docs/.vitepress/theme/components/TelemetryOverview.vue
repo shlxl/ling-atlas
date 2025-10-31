@@ -1,176 +1,410 @@
 <template>
   <div v-if="error" class="telemetry-error">
-    加载失败：{{ error }}
+    {{ copy.loadFailed }}{{ error }}
   </div>
   <div v-else-if="!telemetry" class="telemetry-loading">
-    正在载入指标…
+    {{ copy.loading }}
   </div>
   <div v-else class="telemetry-report">
-    <p><strong>更新于：</strong> {{ formatDate(telemetry.updatedAt) }}</p>
+    <p><strong>{{ copy.updatedLabel }}</strong> {{ formatDate(telemetry.updatedAt) }}</p>
 
     <section v-if="alerts.length" class="telemetry-alerts">
-      <h2>告警</h2>
+      <h2>{{ copy.sections.alerts }}</h2>
       <ul>
         <li v-for="(item, index) in alerts" :key="index" :class="['alert-item', `alert-${item.level}`]">
           <strong>{{ item.message }}</strong>
-          <span v-if="item.detail"> — {{ item.detail }}</span>
+          <span v-if="item.detail">{{ copy.common.reasonSeparator }}{{ item.detail }}</span>
         </li>
       </ul>
     </section>
 
     <section>
-      <h2>页面访问</h2>
-      <p><strong>累计 PV：</strong> {{ telemetry.pv.total }}</p>
+      <h2>{{ copy.sections.pageViews }}</h2>
+      <p><strong>{{ copy.pageViews.totalLabel }}</strong> {{ formatNumber(telemetry.pv.total) }}</p>
       <table v-if="telemetry.pv.pathsTop.length">
         <thead>
-          <tr><th>路径</th><th>次数</th></tr>
+          <tr>
+            <th>{{ copy.pageViews.tableHeaders.path }}</th>
+            <th>{{ copy.pageViews.tableHeaders.count }}</th>
+          </tr>
         </thead>
         <tbody>
           <tr v-for="item in telemetry.pv.pathsTop" :key="item.path">
             <td><code>{{ item.path }}</code></td>
-            <td>{{ item.count }}</td>
+            <td>{{ formatNumber(item.count) }}</td>
           </tr>
         </tbody>
       </table>
-      <p v-else>暂无数据。</p>
+      <p v-else>{{ copy.common.noData }}</p>
     </section>
 
     <section>
-      <h2>搜索查询 Top</h2>
+      <h2>{{ copy.sections.searchQueries }}</h2>
       <table v-if="telemetry.search.queriesTop.length">
         <thead>
-          <tr><th>Hash</th><th>次数</th><th>平均长度</th></tr>
+          <tr>
+            <th>{{ copy.search.queriesHeaders.hash }}</th>
+            <th>{{ copy.search.queriesHeaders.count }}</th>
+            <th>{{ copy.search.queriesHeaders.avgLen }}</th>
+          </tr>
         </thead>
         <tbody>
           <tr v-for="item in telemetry.search.queriesTop" :key="item.hash">
             <td><code>{{ item.hash }}</code></td>
-            <td>{{ item.count }}</td>
-            <td>{{ item.avgLen ?? '-' }}</td>
+            <td>{{ formatNumber(item.count) }}</td>
+            <td>{{ item.avgLen == null ? copy.common.notAvailable : formatNumber(item.avgLen) }}</td>
           </tr>
         </tbody>
       </table>
-      <p v-else>暂无数据。</p>
+      <p v-else>{{ copy.common.noData }}</p>
     </section>
 
     <section>
-      <h2>搜索点击 Top</h2>
+      <h2>{{ copy.sections.searchClicks }}</h2>
       <table v-if="telemetry.search.clicksTop.length">
         <thead>
-          <tr><th>查询 Hash</th><th>链接</th><th>次数</th><th>平均 Rank</th></tr>
+          <tr>
+            <th>{{ copy.search.clicksHeaders.hash }}</th>
+            <th>{{ copy.search.clicksHeaders.url }}</th>
+            <th>{{ copy.search.clicksHeaders.count }}</th>
+            <th>{{ copy.search.clicksHeaders.avgRank }}</th>
+          </tr>
         </thead>
         <tbody>
           <tr v-for="item in telemetry.search.clicksTop" :key="item.hash + item.url">
             <td><code>{{ item.hash }}</code></td>
             <td><code>{{ item.url }}</code></td>
-            <td>{{ item.count }}</td>
-            <td>{{ item.avgRank ?? '-' }}</td>
+            <td>{{ formatNumber(item.count) }}</td>
+            <td>{{ item.avgRank == null ? copy.common.notAvailable : formatNumber(item.avgRank) }}</td>
           </tr>
         </tbody>
       </table>
-      <p v-else>暂无数据。</p>
+      <p v-else>{{ copy.common.noData }}</p>
     </section>
 
     <section>
-      <h2>Pagegen 构建指标</h2>
-      <p v-if="!pagegen">暂无构建遥测。</p>
+      <h2>{{ copy.sections.pagegen }}</h2>
+      <p v-if="!pagegen">{{ copy.pagegen.noTelemetry }}</p>
       <div v-else class="pagegen-details">
-        <p><strong>最近运行：</strong> {{ formatDate(pagegen.timestamp) }}</p>
+        <p><strong>{{ copy.pagegen.lastRun }}</strong> {{ formatDate(pagegen.timestamp) }}</p>
         <p>
-          <strong>采集阶段：</strong>
-          {{ pagegen.collect.locales ?? 0 }} 个语言，
-          缓存命中率 {{
-            pagegen.collect.cacheHitRate == null
-              ? 'n/a'
-              : formatPercent(pagegen.collect.cacheHitRate)
-          }}，
-          已解析 {{ pagegen.collect.parsedFiles ?? 0 }}/{{ pagegen.collect.totalFiles ?? 0 }} 篇，
-          禁用缓存 {{ pagegen.collect.cacheDisabledLocales ?? 0 }} 个语言
+          <strong>{{ copy.pagegen.collectTitle }}</strong>
+          {{ pagegenCollectSummary }}
         </p>
         <p>
-          <strong>写入阶段：</strong>
-          实际写入 {{ pagegen.write.written ?? 0 }} / {{ pagegen.write.total ?? 0 }}，
-          跳过 {{ pagegen.write.skipped ?? 0 }}（内容哈希命中 {{ pagegen.write.hashMatches ?? 0 }}），
-          失败 {{ pagegen.write.failed ?? 0 }}
-          <span v-if="pagegen.write.disabled">— 批量写入未启用</span>
+          <strong>{{ copy.pagegen.writeTitle }}</strong>
+          {{ pagegenWriteSummary }}
+          <span v-if="pagegen.write.disabled">{{ copy.pagegen.batchDisabledNote }}</span>
         </p>
         <div v-if="Object.keys(pagegen.write.skippedByReason || {}).length">
           <details>
-            <summary>跳过原因明细</summary>
+            <summary>{{ copy.pagegen.skipReasonsTitle }}</summary>
             <ul>
               <li v-for="(count, reason) in pagegen.write.skippedByReason" :key="reason">
-                <code>{{ reason }}</code>：{{ count }}
+                <code>{{ reason }}</code>{{ copy.common.reasonSeparator }}{{ formatNumber(count) }}
               </li>
             </ul>
           </details>
         </div>
         <div v-if="scheduler" class="scheduler-summary">
-          <h3>调度配置</h3>
-          <p>
-            并行：<span :class="statusClass(scheduler.parallelEnabled ? 'ok' : 'missing')">
-              {{ scheduler.parallelEnabled ? '启用' : '禁用' }}
-            </span>
-            ，默认并发 {{ scheduler.effectiveParallelLimit }}（请求 {{ scheduler.requestedParallelLimit }}）
-          </p>
+          <h3>{{ copy.pagegen.schedulerTitle }}</h3>
+          <p>{{ schedulerSummaryText }}</p>
           <table v-if="schedulerOverrides.length">
             <thead>
-              <tr><th>阶段</th><th>启用</th><th>并发上限</th></tr>
+              <tr>
+                <th>{{ copy.pagegen.schedulerHeaders.stage }}</th>
+                <th>{{ copy.pagegen.schedulerHeaders.enabled }}</th>
+                <th>{{ copy.pagegen.schedulerHeaders.limit }}</th>
+              </tr>
             </thead>
             <tbody>
               <tr v-for="item in schedulerOverrides" :key="item.stage">
                 <td><code>{{ item.stage }}</code></td>
-                <td>{{ item.cfg.enabled ? '是' : '否' }}</td>
-                <td>{{ item.cfg.limit == null ? '默认' : item.cfg.limit }}</td>
+                <td>{{ boolLabel(item.cfg.enabled) }}</td>
+                <td>{{ item.cfg.limit == null ? copy.pagegen.defaultLabel : formatNumber(item.cfg.limit) }}</td>
               </tr>
             </tbody>
           </table>
-          <p v-else>未覆写阶段并发设置。</p>
+          <p v-else>{{ copy.pagegen.schedulerNoOverrides }}</p>
         </div>
         <div v-if="plugins" class="plugin-summary">
-          <h3>插件执行</h3>
+          <h3>{{ copy.pagegen.pluginTitle }}</h3>
           <p>
-            请求插件：
-            <span v-if="plugins.requested.length">{{ plugins.requested.join(', ') }}</span>
-            <span v-else>无</span>
-            ，忽略错误：{{ plugins.ignoreErrors ? '是' : '否' }}，已禁用：{{ plugins.disabled ? '是' : '否' }}
+            {{ pluginSummary.requested }}{{ copy.common.segmentSeparator }}{{ pluginSummary.ignoreErrors }}{{ copy.common.segmentSeparator }}{{ pluginSummary.disabled }}
           </p>
           <table v-if="pluginResults.length">
             <thead>
-              <tr><th>插件</th><th>状态</th><th>详情</th></tr>
+              <tr>
+                <th>{{ copy.pagegen.pluginHeaders.plugin }}</th>
+                <th>{{ copy.pagegen.pluginHeaders.status }}</th>
+                <th>{{ copy.pagegen.pluginHeaders.detail }}</th>
+              </tr>
             </thead>
             <tbody>
               <tr v-for="(result, index) in pluginResults" :key="result.specifier || index">
-                <td><code>{{ result.specifier ?? 'unknown' }}</code></td>
-                <td><span :class="pluginStatusClass(result.status)">{{ result.status ?? 'n/a' }}</span></td>
-                <td>{{ result.error ?? result.reason ?? '-' }}</td>
+                <td><code>{{ result.specifier ?? copy.common.unknownModel }}</code></td>
+                <td><span :class="pluginStatusClass(result.status)">{{ result.status ?? copy.common.notAvailable }}</span></td>
+                <td>{{ result.error ?? result.reason ?? copy.common.notAvailable }}</td>
               </tr>
             </tbody>
           </table>
-          <p v-else>暂无插件运行记录。</p>
+          <p v-else>{{ copy.pagegen.pluginNoRuns }}</p>
         </div>
       </div>
     </section>
 
     <section>
-      <h2>AI 构建指标</h2>
-      <p v-if="!ai">尚未采集 AI 构建遥测数据。</p>
+      <h2>{{ copy.sections.graphrag }}</h2>
+      <p class="graphrag-index-link">
+        <a :href="graphIndexLink" target="_blank" rel="noreferrer">{{ copy.graphrag.viewIndex }}</a>
+      </p>
+      <p v-if="!graphragIngest && !graphragExport && !graphragRetrieve && !graphragExplore">{{ copy.graphrag.noTelemetry }}</p>
+      <div v-else class="graphrag-cards">
+        <div v-if="graphragIngest" class="graphrag-card">
+          <h3>{{ copy.graphrag.ingestTitle }}</h3>
+          <p>
+            <strong>{{ copy.graphrag.lastRun }}</strong>
+            {{ formatDate(graphragIngest.timestamp) }}
+            — {{ copy.graphrag.localeLabel }} <code>{{ graphragIngest.locale ?? 'all' }}</code>
+            <span v-if="graphragIngest.adapter">
+              {{ copy.graphrag.adapterLabel }} <code>{{ graphragIngest.adapter }}</code>
+              <span v-if="graphragIngest.adapterModel"> ({{ graphragIngest.adapterModel }})</span>
+            </span>
+          </p>
+          <p>
+            <strong>{{ copy.graphrag.durationLabel }}</strong>
+            {{ graphragIngest.durationMs == null ? copy.common.notAvailable : formatNumber(graphragIngest.durationMs) + ' ms' }}
+          </p>
+          <table>
+            <thead>
+              <tr>
+                <th>{{ copy.graphrag.summaryHeaders.metric }}</th>
+                <th>{{ copy.graphrag.summaryHeaders.value }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>{{ copy.graphrag.summaryMetrics.collected }}</td>
+                <td>{{ formatNumber(graphragIngest.totals?.collected) }}</td>
+              </tr>
+              <tr>
+                <td>{{ copy.graphrag.summaryMetrics.normalized }}</td>
+                <td>{{ formatNumber(graphragIngest.totals?.normalized) }}</td>
+              </tr>
+              <tr>
+                <td>{{ copy.graphrag.summaryMetrics.readyForWrite }}</td>
+                <td>{{ formatNumber(graphragIngest.totals?.readyForWrite) }}</td>
+              </tr>
+              <tr>
+                <td>{{ copy.graphrag.summaryMetrics.processed }}</td>
+                <td>{{ formatNumber(graphragIngest.totals?.processed) }}</td>
+              </tr>
+              <tr>
+                <td>{{ copy.graphrag.summaryMetrics.written }}</td>
+                <td>{{ formatNumber(graphragIngest.write?.written) }}</td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="graphrag-reasons" v-if="graphragReasons.length">
+            <h4>{{ copy.graphrag.reasonsTitle }}</h4>
+            <ul>
+              <li v-for="item in graphragReasons" :key="item.reason">
+                <code>{{ item.reason }}</code>{{ copy.common.reasonSeparator }}{{ formatNumber(item.count) }}
+                <span v-if="item.sampleDocId">
+                  — {{ copy.graphrag.sampleLabel }}
+                  <template v-if="docLinkFromId(item.sampleDocId)">
+                    <a :href="docLinkFromId(item.sampleDocId)" target="_blank" rel="noreferrer"><code>{{ item.sampleDocId }}</code></a>
+                  </template>
+                  <template v-else>
+                    <code>{{ item.sampleDocId }}</code>
+                  </template>
+                </span>
+              </li>
+            </ul>
+          </div>
+          <p v-else class="graphrag-reasons-empty">{{ copy.graphrag.noSkipped }}</p>
+        </div>
+
+        <div v-if="graphragExport" class="graphrag-card">
+          <h3>{{ copy.graphrag.exportTitle }}</h3>
+          <p>
+            <strong>{{ copy.graphrag.lastRun }}</strong>
+            {{ formatDate(graphragExport.timestamp) }}
+            — {{ copy.graphrag.docLabel }}
+            <template v-if="graphragExportDocLink">
+              <a :href="graphragExportDocLink" target="_blank" rel="noreferrer"><code>{{ graphragExport.docId }}</code></a>
+            </template>
+            <template v-else>
+              <code>{{ graphragExport.docId ?? copy.common.notAvailable }}</code>
+            </template>
+            <span v-if="graphragExport.topic">
+              {{ copy.graphrag.topicLabel }}
+              <template v-if="graphragExportTopicLink">
+                <a :href="graphragExportTopicLink" target="_blank" rel="noreferrer"><code>{{ graphragExport.topic }}</code></a>
+              </template>
+              <template v-else>
+                <code>{{ graphragExport.topic }}</code>
+              </template>
+              <span v-if="graphragExportTopicLink" class="graphrag-topic-link">
+                · <a :href="graphragExportTopicLink" target="_blank" rel="noreferrer">{{ copy.graphrag.topicLinkText }}</a>
+              </span>
+            </span>
+          </p>
+          <p>
+            <strong>{{ copy.graphrag.durationLabel }}</strong>
+            {{ graphragExport.durationMs == null ? copy.common.notAvailable : formatNumber(graphragExport.durationMs) + ' ms' }}
+          </p>
+          <table>
+            <thead>
+              <tr>
+                <th>{{ copy.graphrag.summaryHeaders.metric }}</th>
+                <th>{{ copy.graphrag.summaryHeaders.value }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>{{ copy.graphrag.exportMetrics.nodes }}</td>
+                <td>{{ formatNumber(graphragExport.totals?.nodes) }}</td>
+              </tr>
+              <tr>
+                <td>{{ copy.graphrag.exportMetrics.edges }}</td>
+                <td>{{ formatNumber(graphragExport.totals?.edges) }}</td>
+              </tr>
+              <tr>
+                <td>{{ copy.graphrag.exportMetrics.entities }}</td>
+                <td>{{ formatNumber(graphragExport.totals?.entities) }}</td>
+              </tr>
+              <tr>
+                <td>{{ copy.graphrag.exportMetrics.recommendations }}</td>
+                <td>{{ formatNumber(graphragExport.totals?.recommendations) }}</td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="graphrag-files" v-if="graphragExportFiles.length">
+            <h4>{{ copy.graphrag.filesTitle }}</h4>
+            <ul>
+              <li v-for="(file, index) in graphragExportFiles" :key="index">
+                <code>{{ file }}</code>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <div v-if="graphragRetrieve" class="graphrag-card">
+          <h3>{{ copy.graphrag.retrieveTitle }}</h3>
+          <p>
+            <strong>{{ copy.graphrag.lastRun }}</strong>
+            {{ formatDate(graphragRetrieve.timestamp) }}
+            — {{ copy.graphrag.modeLabel }} <code>{{ graphragRetrieve.mode }}</code>
+          </p>
+          <p>
+            <strong>{{ copy.graphrag.durationLabel }}</strong>
+            {{ graphragRetrieve.durationMs == null ? copy.common.notAvailable : formatNumber(graphragRetrieve.durationMs) + ' ms' }}
+          </p>
+          <table>
+            <thead>
+              <tr>
+                <th>{{ copy.graphrag.retrieveHeaders.metric }}</th>
+                <th>{{ copy.graphrag.retrieveHeaders.value }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-if="graphragRetrieve.totals?.items != null">
+                <td>{{ copy.graphrag.retrieveMetrics.items }}</td>
+                <td>{{ formatNumber(graphragRetrieve.totals?.items) }}</td>
+              </tr>
+              <tr v-if="graphragRetrieve.totals?.nodes != null">
+                <td>{{ copy.graphrag.retrieveMetrics.nodes }}</td>
+                <td>{{ formatNumber(graphragRetrieve.totals?.nodes) }}</td>
+              </tr>
+              <tr v-if="graphragRetrieve.totals?.edges != null">
+                <td>{{ copy.graphrag.retrieveMetrics.edges }}</td>
+                <td>{{ formatNumber(graphragRetrieve.totals?.edges) }}</td>
+              </tr>
+              <tr v-if="graphragRetrieve.totals?.length != null">
+                <td>{{ copy.graphrag.retrieveMetrics.length }}</td>
+                <td>{{ formatNumber(graphragRetrieve.totals?.length) }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div v-if="graphragExplore" class="graphrag-card">
+          <h3>{{ copy.graphrag.exploreTitle }}</h3>
+          <p>
+            <strong>{{ copy.graphrag.lastRun }}</strong>
+            {{ formatDate(graphragExplore.timestamp) }}
+            <span v-if="graphragExplore.durationMs != null">
+              — {{ copy.graphrag.durationLabel }}{{ formatNumber(graphragExplore.durationMs) }} ms
+            </span>
+          </p>
+          <p>
+            <strong>{{ copy.graphrag.exploreModeLabel }}</strong>
+            {{ graphragExplore.mode }}
+            <span v-if="graphragExplore.sources?.length"
+              class="graphrag-topic-link">· {{ graphragExplore.sources.join(', ') }}</span>
+          </p>
+          <ul class="graphrag-list-inline">
+            <li>
+              {{ copy.graphrag.exploreDocsLabel }}：{{ formatNumber(graphragExplore.docs) }}
+            </li>
+            <li>
+              {{ copy.graphrag.exploreNodesLabel }}：{{ formatNumber(graphragExplore.nodes) }}
+              <span v-if="graphragExplore.truncatedNodes" class="graphrag-badge">截断</span>
+            </li>
+            <li>
+              {{ copy.graphrag.exploreEdgesLabel }}：{{ formatNumber(graphragExplore.edges) }}
+              <span v-if="graphragExplore.truncatedEdges" class="graphrag-badge">截断</span>
+            </li>
+          </ul>
+          <p v-if="graphragExplore.question" class="graphrag-explore-question">
+            Q：{{ graphragExplore.question }}
+          </p>
+          <p v-if="graphragExplore.docId">
+            {{ copy.graphrag.docLabel }}：
+            <template v-if="graphragExploreDocLink">
+              <a :href="graphragExploreDocLink" target="_blank" rel="noreferrer"><code>{{ graphragExplore.docId }}</code></a>
+            </template>
+            <template v-else>
+              <code>{{ graphragExplore.docId }}</code>
+            </template>
+          </p>
+          <p>
+            <a :href="withBase('/graph/explorer/')" target="_blank" rel="noreferrer">{{ copy.graphrag.exploreLinkText }}</a>
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>{{ copy.sections.ai }}</h2>
+      <p v-if="!ai">{{ copy.ai.noTelemetry }}</p>
       <div v-else class="ai-details">
         <p>
-          <strong>整体状态：</strong>
+          <strong>{{ copy.ai.overallLabel }}</strong>
           <span :class="statusClass(aiOverview?.status)">{{ formatStatus(aiOverview?.status) }}</span>
-          <span v-if="aiOverview?.schemaVersion" class="schema-tag">schema {{ aiOverview.schemaVersion }}</span>
-          <span v-if="aiOverview?.updatedAt">，最近更新 {{ formatDate(aiOverview.updatedAt) }}</span>
+          <span v-if="aiOverview?.schemaVersion" class="schema-tag">{{ copy.ai.schemaTagPrefix }}{{ aiOverview.schemaVersion }}</span>
+          <span v-if="aiOverview?.updatedAt">{{ copy.ai.updatedPrefix }}{{ formatDate(aiOverview.updatedAt) }}</span>
         </p>
         <p v-if="aiSmokeSummary">
-          <strong>冒烟结果：</strong>
+          <strong>{{ copy.ai.smokeLabel }}</strong>
           <span :class="statusClass(aiSmokeSummary.status)">{{ formatStatus(aiSmokeSummary.status) }}</span>
-          <span v-if="aiSmokeSummary.runtime">（运行时：{{ aiSmokeSummary.runtime }}）</span>
-          ，执行 {{ aiSmokeSummary.executed ?? 0 }} · 跳过 {{ aiSmokeSummary.skipped ?? 0 }} · 失败 {{ aiSmokeSummary.failed ?? 0 }}
-          <span v-if="aiSmokeSummary.verifiedAt">，记录时间 {{ formatDate(aiSmokeSummary.verifiedAt) }}</span>
-          <span v-if="aiSmokeSummary.reason"> — {{ aiSmokeSummary.reason }}</span>
+          <span v-if="aiSmokeSummary.runtime">{{ copy.ai.runtimePrefix }}{{ aiSmokeSummary.runtime }}{{ copy.ai.runtimeSuffix }}</span>
+          {{ aiSmokeStatsText }}
+          <span v-if="aiSmokeSummary.verifiedAt">{{ copy.ai.verifiedPrefix }}{{ formatDate(aiSmokeSummary.verifiedAt) }}</span>
+          <span v-if="aiSmokeSummary.reason">{{ copy.common.reasonSeparator }}{{ aiSmokeSummary.reason }}</span>
         </p>
         <table v-if="aiDomains.length">
           <thead>
-            <tr><th>模块</th><th>状态</th><th>适配器</th><th>输出条目</th><th>成功率</th><th>最近运行</th><th>缓存复用</th></tr>
+            <tr>
+              <th>{{ copy.ai.tableHeaders.module }}</th>
+              <th>{{ copy.ai.tableHeaders.status }}</th>
+              <th>{{ copy.ai.tableHeaders.adapter }}</th>
+              <th>{{ copy.ai.tableHeaders.outputs }}</th>
+              <th>{{ copy.ai.tableHeaders.successRate }}</th>
+              <th>{{ copy.ai.tableHeaders.lastRun }}</th>
+              <th>{{ copy.ai.tableHeaders.cacheReuse }}</th>
+            </tr>
           </thead>
           <tbody>
             <tr v-for="domain in aiDomains" :key="domain.name">
@@ -180,7 +414,7 @@
                 <code v-if="domain.info.adapter?.name">
                   {{ domain.info.adapter.name }}<span v-if="domain.info.adapter?.model"> ({{ domain.info.adapter.model }})</span>
                 </code>
-                <span v-else>未知</span>
+                <span v-else>{{ copy.common.unknown }}</span>
               </td>
               <td>{{ formatNumber(domain.info.outputCount) }}</td>
               <td>{{ formatPercent(domain.info.successRate ?? null) }}</td>
@@ -189,35 +423,69 @@
             </tr>
           </tbody>
         </table>
-        <p v-else>未找到模块级遥测数据。</p>
+        <p v-else>{{ copy.ai.noModules }}</p>
 
         <details v-if="aiErrors.length">
-          <summary>适配器错误明细</summary>
+          <summary>{{ copy.ai.errorsTitle }}</summary>
           <ul>
             <li v-for="(err, index) in aiErrors" :key="index">
-              <code>{{ err.domain }}</code>：{{ err.message || 'unknown error' }}
+              <code>{{ err.domain }}</code>{{ copy.common.reasonSeparator }}{{ err.message || copy.common.unknownError }}
             </li>
           </ul>
         </details>
         <div v-if="aiSmokeModels.length" class="smoke-summary">
-          <h3>模型冒烟状态</h3>
+          <h3>{{ copy.ai.smokeTitle }}</h3>
           <table>
             <thead>
-              <tr><th>模型</th><th>任务</th><th>状态</th><th>原因</th><th>验证时间</th></tr>
+              <tr>
+                <th>{{ copy.ai.smokeTableHeaders.model }}</th>
+                <th>{{ copy.ai.smokeTableHeaders.tasks }}</th>
+                <th>{{ copy.ai.smokeTableHeaders.status }}</th>
+                <th>{{ copy.ai.smokeTableHeaders.reason }}</th>
+                <th>{{ copy.ai.smokeTableHeaders.verifiedAt }}</th>
+              </tr>
             </thead>
             <tbody>
               <tr v-for="(model, index) in aiSmokeModels" :key="model.id ?? model.name ?? index">
-                <td><code>{{ model.id ?? model.name ?? 'unknown' }}</code></td>
-                <td>{{ model.tasks && model.tasks.length ? model.tasks.join(', ') : '-' }}</td>
+                <td><code>{{ model.id ?? model.name ?? copy.common.unknownModel }}</code></td>
+                <td>{{ listToText(model.tasks) }}</td>
                 <td>
                   <span :class="statusClass(model.smoke?.status)">{{ formatStatus(model.smoke?.status) }}</span>
                 </td>
-                <td>{{ model.smoke?.reason ?? '-' }}</td>
+                <td>{{ model.smoke?.reason ?? copy.common.notAvailable }}</td>
                 <td>{{ formatDate(model.smoke?.verifiedAt) }}</td>
               </tr>
             </tbody>
           </table>
         </div>
+        <div v-if="aiSmokeHistory.length" class="smoke-history">
+          <h3>{{ copy.ai.smokeHistoryTitle }}</h3>
+          <table>
+            <thead>
+              <tr>
+                <th>{{ copy.ai.smokeHistoryHeaders.status }}</th>
+                <th>{{ copy.ai.smokeHistoryHeaders.runtime }}</th>
+                <th>{{ copy.ai.smokeHistoryHeaders.executed }}</th>
+                <th>{{ copy.ai.smokeHistoryHeaders.skipped }}</th>
+                <th>{{ copy.ai.smokeHistoryHeaders.failed }}</th>
+                <th>{{ copy.ai.smokeHistoryHeaders.verifiedAt }}</th>
+                <th>{{ copy.ai.smokeHistoryHeaders.reason }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="(item, index) in aiSmokeHistory" :key="item.verifiedAt ?? index">
+                <td><span :class="statusClass(item.status)">{{ formatStatus(item.status) }}</span></td>
+                <td>{{ item.runtime ?? copy.common.notAvailable }}</td>
+                <td>{{ formatNumber(item.executed) }}</td>
+                <td>{{ formatNumber(item.skipped) }}</td>
+                <td>{{ formatNumber(item.failed) }}</td>
+                <td>{{ formatDate(item.verifiedAt) }}</td>
+                <td>{{ item.reason ?? copy.common.notAvailable }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p v-else class="smoke-history-empty">{{ copy.ai.smokeHistoryEmpty }}</p>
       </div>
     </section>
   </div>
@@ -386,6 +654,323 @@ interface AIDomainError {
   message?: string | null
 }
 
+const props = withDefaults(defineProps<{ locale?: 'zh' | 'en' }>(), { locale: 'zh' })
+const locale = computed<'zh' | 'en'>(() => (props.locale === 'en' ? 'en' : 'zh'))
+const localeTag = computed(() => (locale.value === 'en' ? 'en-US' : 'zh-CN'))
+
+const COPY_MAP = {
+  zh: {
+    loadFailed: '加载失败：',
+    loading: '正在载入指标…',
+    updatedLabel: '更新于：',
+    sections: {
+      alerts: '告警',
+      pageViews: '页面访问',
+      searchQueries: '搜索查询 Top',
+      searchClicks: '搜索点击 Top',
+      pagegen: 'Pagegen 构建指标',
+      graphrag: 'GraphRAG 管线指标',
+      ai: 'AI 构建指标'
+    },
+    pageViews: {
+      totalLabel: '累计 PV：',
+      tableHeaders: { path: '路径', count: '次数' }
+    },
+    search: {
+      queriesHeaders: { hash: 'Hash', count: '次数', avgLen: '平均长度' },
+      clicksHeaders: { hash: '查询 Hash', url: '链接', count: '次数', avgRank: '平均 Rank' }
+    },
+    pagegen: {
+      title: 'Pagegen 构建指标',
+      noTelemetry: '暂无构建遥测。',
+      lastRun: '最近运行：',
+      collectTitle: '采集阶段：',
+      writeTitle: '写入阶段：',
+      skipReasonsTitle: '跳过原因明细',
+      schedulerTitle: '调度配置',
+      schedulerNoOverrides: '未覆写阶段并发设置。',
+      pluginTitle: '插件执行',
+      pluginRequestedLabel: '请求插件：',
+      pluginNone: '无',
+      pluginIgnoreErrorsLabel: '忽略错误：',
+      pluginDisabledLabel: '已禁用：',
+      pluginNoRuns: '暂无插件运行记录。',
+      batchDisabledNote: '— 批量写入未启用',
+      schedulerHeaders: { stage: '阶段', enabled: '启用', limit: '并发上限' },
+      pluginHeaders: { plugin: '插件', status: '状态', detail: '详情' },
+      defaultLabel: '默认'
+    },
+    graphrag: {
+      title: 'GraphRAG 管线指标',
+      noTelemetry: '尚未采集 GraphRAG 遥测数据。',
+      viewIndex: '查看 GraphRAG 全部主题',
+      ingestTitle: '入图统计',
+      exportTitle: '导出产物统计',
+      retrieveTitle: '检索摘要',
+      exploreTitle: '问答与可视化',
+      lastRun: '最近运行：',
+      localeLabel: '语言',
+      adapterLabel: '实体抽取适配器',
+      docLabel: '文档',
+      topicLabel: '主题',
+      exploreModeLabel: '模式',
+      exploreDocsLabel: '返回文档',
+      exploreNodesLabel: '节点',
+      exploreEdgesLabel: '边',
+      exploreLinkText: '打开 Explorer 页面',
+      topicLinkText: '打开可视化',
+      modeLabel: '模式',
+      durationLabel: '耗时：',
+      summaryHeaders: { metric: '指标', value: '数值' },
+      summaryMetrics: {
+        collected: '收集文档',
+        normalized: '归一化条目',
+        readyForWrite: '待写入批次',
+        processed: '通过质量闸门',
+        written: '写入成功'
+      },
+      exportMetrics: {
+        nodes: '子图节点',
+        edges: '子图边',
+        entities: '实体数量',
+        recommendations: '推荐数量'
+      },
+      filesTitle: '写入文件',
+      retrieveHeaders: { metric: '指标', value: '数值' },
+      retrieveMetrics: {
+        items: '结果条目',
+        nodes: '节点数',
+        edges: '边数',
+        length: '路径长度'
+      },
+      reasonsTitle: '跳过原因 Top',
+      sampleLabel: '示例文档',
+      noSkipped: '未记录跳过的文档。'
+    },
+    ai: {
+      title: 'AI 构建指标',
+      noTelemetry: '尚未采集 AI 构建遥测数据。',
+      overallLabel: '整体状态：',
+      schemaTagPrefix: 'schema ',
+      updatedPrefix: '，最近更新 ',
+      smokeLabel: '冒烟结果：',
+      runtimePrefix: '（运行时：',
+      runtimeSuffix: '）',
+      verifiedPrefix: '，记录时间 ',
+      tableHeaders: {
+        module: '模块',
+        status: '状态',
+        adapter: '适配器',
+        outputs: '输出条目',
+        successRate: '成功率',
+        lastRun: '最近运行',
+        cacheReuse: '缓存复用'
+      },
+      noModules: '未找到模块级遥测数据。',
+      errorsTitle: '适配器错误明细',
+      smokeTitle: '模型冒烟状态',
+      smokeTableHeaders: {
+        model: '模型',
+        tasks: '任务',
+        status: '状态',
+        reason: '原因',
+        verifiedAt: '验证时间'
+      },
+      smokeHistoryTitle: '冒烟历史',
+      smokeHistoryHeaders: {
+        status: '状态',
+        runtime: '运行时',
+        executed: '执行',
+        skipped: '跳过',
+        failed: '失败',
+        verifiedAt: '验证时间',
+        reason: '原因'
+      },
+      smokeHistoryEmpty: '暂无历史记录'
+    },
+    common: {
+      noData: '暂无数据。',
+      notAvailable: 'n/a',
+      unknown: '未知',
+      yes: '是',
+      no: '否',
+      listSeparator: '、',
+      segmentSeparator: '，',
+      reasonSeparator: ' — ',
+      unknownError: '未知错误',
+      unknownReason: '未提供原因',
+      unknownModel: 'unknown'
+    },
+    statuses: {
+      ok: '正常',
+      degraded: '降级',
+      fallback: '回退',
+      empty: '为空',
+      missing: '缺失',
+      passed: '通过',
+      failed: '失败',
+      skipped: '跳过'
+    }
+  },
+  en: {
+    loadFailed: 'Failed to load telemetry: ',
+    loading: 'Loading metrics…',
+    updatedLabel: 'Updated:',
+    sections: {
+      alerts: 'Alerts',
+      pageViews: 'Page Views',
+      searchQueries: 'Search Queries Top',
+      searchClicks: 'Search Clicks Top',
+      pagegen: 'Pagegen Build Metrics',
+      graphrag: 'GraphRAG Pipeline Metrics',
+      ai: 'AI Build Metrics'
+    },
+    pageViews: {
+      totalLabel: 'Total PV:',
+      tableHeaders: { path: 'Path', count: 'Hits' }
+    },
+    search: {
+      queriesHeaders: { hash: 'Hash', count: 'Count', avgLen: 'Avg Length' },
+      clicksHeaders: { hash: 'Query Hash', url: 'Link', count: 'Count', avgRank: 'Avg Rank' }
+    },
+    pagegen: {
+      title: 'Pagegen Build Metrics',
+      noTelemetry: 'No build telemetry yet.',
+      lastRun: 'Last Run:',
+      collectTitle: 'Collect:',
+      writeTitle: 'Write:',
+      skipReasonsTitle: 'Skip reasons',
+      schedulerTitle: 'Scheduler Configuration',
+      schedulerNoOverrides: 'No stage-level overrides.',
+      pluginTitle: 'Plugin Execution',
+      pluginRequestedLabel: 'Requested plugins:',
+      pluginNone: 'none',
+      pluginIgnoreErrorsLabel: 'Ignore errors:',
+      pluginDisabledLabel: 'Disabled:',
+      pluginNoRuns: 'No plugin runs recorded.',
+      batchDisabledNote: '— batching disabled',
+      schedulerHeaders: { stage: 'Stage', enabled: 'Enabled', limit: 'Concurrency Limit' },
+      pluginHeaders: { plugin: 'Plugin', status: 'Status', detail: 'Detail' },
+      defaultLabel: 'default'
+    },
+    graphrag: {
+      title: 'GraphRAG Pipeline Metrics',
+      noTelemetry: 'No GraphRAG telemetry collected yet.',
+      viewIndex: 'View all GraphRAG topics',
+      ingestTitle: 'Ingest stats',
+      exportTitle: 'Export summary',
+      retrieveTitle: 'Retrieval summary',
+      exploreTitle: 'Q&A & Explorer',
+      lastRun: 'Last run:',
+      localeLabel: 'Locale',
+      adapterLabel: 'Entity adapter',
+      docLabel: 'Doc',
+      topicLabel: 'Topic',
+      exploreModeLabel: 'Mode',
+      exploreDocsLabel: 'Returned docs',
+      exploreNodesLabel: 'Nodes',
+      exploreEdgesLabel: 'Edges',
+      exploreLinkText: 'Open Explorer page',
+      topicLinkText: 'Open visualization',
+      modeLabel: 'Mode',
+      durationLabel: 'Duration:',
+      summaryHeaders: { metric: 'Metric', value: 'Value' },
+      summaryMetrics: {
+        collected: 'Collected docs',
+        normalized: 'Normalized entries',
+        readyForWrite: 'Batches ready',
+        processed: 'Passed quality gate',
+        written: 'Written'
+      },
+      exportMetrics: {
+        nodes: 'Subgraph nodes',
+        edges: 'Subgraph edges',
+        entities: 'Entities',
+        recommendations: 'Recommendations'
+      },
+      filesTitle: 'Written files',
+      retrieveHeaders: { metric: 'Metric', value: 'Value' },
+      retrieveMetrics: {
+        items: 'Items',
+        nodes: 'Nodes',
+        edges: 'Edges',
+        length: 'Path length'
+      },
+      reasonsTitle: 'Top skip reasons',
+      sampleLabel: 'Sample doc',
+      noSkipped: 'No skipped documents recorded.'
+    },
+    ai: {
+      title: 'AI Build Metrics',
+      noTelemetry: 'No AI build telemetry collected yet.',
+      overallLabel: 'Overall status:',
+      schemaTagPrefix: 'schema ',
+      updatedPrefix: ', updated ',
+      smokeLabel: 'Smoke test:',
+      runtimePrefix: ' (runtime: ',
+      runtimeSuffix: ')',
+      verifiedPrefix: ', recorded ',
+      tableHeaders: {
+        module: 'Module',
+        status: 'Status',
+        adapter: 'Adapter',
+        outputs: 'Outputs',
+        successRate: 'Success Rate',
+        lastRun: 'Last Run',
+        cacheReuse: 'Cache Reuse'
+      },
+      noModules: 'No module-level telemetry found.',
+      errorsTitle: 'Adapter errors',
+      smokeTitle: 'Model smoke status',
+      smokeTableHeaders: {
+        model: 'Model',
+        tasks: 'Tasks',
+        status: 'Status',
+        reason: 'Reason',
+        verifiedAt: 'Verified'
+      },
+      smokeHistoryTitle: 'Smoke history',
+      smokeHistoryHeaders: {
+        status: 'Status',
+        runtime: 'Runtime',
+        executed: 'Executed',
+        skipped: 'Skipped',
+        failed: 'Failed',
+        verifiedAt: 'Verified',
+        reason: 'Reason'
+      },
+      smokeHistoryEmpty: 'No smoke history yet.'
+    },
+    common: {
+      noData: 'No data yet.',
+      notAvailable: 'n/a',
+      unknown: 'Unknown',
+      yes: 'Yes',
+      no: 'No',
+      listSeparator: ', ',
+      segmentSeparator: '; ',
+      reasonSeparator: ' — ',
+      unknownError: 'unknown error',
+      unknownReason: 'no reason provided',
+      unknownModel: 'unknown'
+    },
+    statuses: {
+      ok: 'OK',
+      degraded: 'Degraded',
+      fallback: 'Fallback',
+      empty: 'Empty',
+      missing: 'Missing',
+      passed: 'Passed',
+      failed: 'Failed',
+      skipped: 'Skipped'
+    }
+  }
+} as const
+
+type Copy = typeof COPY_MAP['zh']
+
+const copy = computed(() => COPY_MAP[locale.value])
+
 const telemetry = ref<TelemetryData | null>(null)
 const error = ref<string | null>(null)
 const alerts = ref<AlertItem[]>([])
@@ -413,27 +998,122 @@ const aiDomains = computed(() => {
 const aiSmoke = computed(() => ai.value?.smoke ?? null)
 const aiSmokeSummary = computed(() => aiSmoke.value?.summary ?? null)
 const aiSmokeModels = computed(() => aiSmoke.value?.models ?? [])
+const aiSmokeHistory = computed(() => {
+  const history = Array.isArray(aiSmoke.value?.history) ? aiSmoke.value?.history : []
+  return history
+    .filter(entry => entry)
+    .map(entry => ({
+      status: entry?.status ?? 'unknown',
+      runtime: entry?.runtime ?? null,
+      executed: entry?.executed ?? null,
+      skipped: entry?.skipped ?? null,
+      failed: entry?.failed ?? null,
+      verifiedAt: entry?.verifiedAt ?? null,
+      reason: entry?.reason ?? null
+    }))
+})
+
+const graphrag = computed(() => telemetry.value?.build?.graphrag ?? null)
+const graphragIngest = computed(() => graphrag.value?.ingest ?? null)
+const graphragExport = computed(() => graphrag.value?.export ?? null)
+const graphragRetrieve = computed(() => graphrag.value?.retrieve ?? null)
+const graphragExplore = computed(() => graphrag.value?.explore ?? null)
+const graphragExportDocLink = computed(() => docLinkFromId(graphragExport.value?.docId))
+const graphragExportTopicLink = computed(() => {
+  const topic = graphragExport.value?.topic
+  if (!topic) return null
+  const normalized = topic.replace(/^\/+/, '')
+  return withBase(`/graph/${normalized}/`)
+})
+const graphIndexLink = computed(() => withBase('/graph/'))
+const graphragExploreDocLink = computed(() => docLinkFromId(graphragExplore.value?.docId))
+const graphragReasons = computed(() => {
+  const reasons = graphragIngest.value?.skipped?.reasons
+  if (!Array.isArray(reasons)) return [] as Array<{ reason: string; count: number; sampleDocId?: string | null }>
+  return reasons.map(entry => ({
+    reason: entry?.reason ?? 'unknown',
+    count: entry?.count ?? 0,
+    sampleDocId: entry?.sampleDocId ?? null
+  }))
+})
+const graphragExportFiles = computed(() => {
+  const files = graphragExport.value?.files ?? {}
+  return Object.entries(files)
+    .filter(([, written]) => Boolean(written))
+    .map(([key]) => key)
+})
 
 const aiErrors = computed<AIDomainError[]>(() => {
   const entries: AIDomainError[] = []
+  const fallback = copy.value.common.unknownError
   if (ai.value?.embed?.inference?.errors) {
-    entries.push(...ai.value.embed.inference.errors.map(err => ({ domain: 'embed', message: err.message })))
+    entries.push(...ai.value.embed.inference.errors.map(err => ({ domain: 'embed', message: err.message || fallback })))
   }
   if (ai.value?.summary?.inference?.errors) {
-    entries.push(...ai.value.summary.inference.errors.map(err => ({ domain: 'summary', message: err.message })))
+    entries.push(...ai.value.summary.inference.errors.map(err => ({ domain: 'summary', message: err.message || fallback })))
   }
   if (ai.value?.qa?.inference?.errors) {
-    entries.push(...ai.value.qa.inference.errors.map(err => ({ domain: 'qa', message: err.message })))
+    entries.push(...ai.value.qa.inference.errors.map(err => ({ domain: 'qa', message: err.message || fallback })))
   }
   if (aiSmokeSummary.value?.failures?.length) {
     entries.push(
       ...aiSmokeSummary.value.failures.map((failure, index) => ({
         domain: failure.id ? `smoke:${failure.id}` : `smoke-${index + 1}`,
-        message: failure.reason || '冒烟失败'
+        message: failure.reason || copy.value.common.unknownReason
       }))
     )
   }
   return entries
+})
+
+const pagegenCollectSummary = computed(() => {
+  const summary = pagegen.value
+  if (!summary) return ''
+  const collect = summary.collect || {}
+  return renderCollectSummary({
+    locales: collect.locales ?? 0,
+    cacheHitRate: collect.cacheHitRate ?? null,
+    parsed: collect.parsedFiles ?? 0,
+    total: collect.totalFiles ?? 0,
+    disabledLocales: collect.cacheDisabledLocales ?? 0
+  })
+})
+
+const pagegenWriteSummary = computed(() => {
+  const summary = pagegen.value
+  if (!summary) return ''
+  const write = summary.write || { skippedByReason: {} }
+  return renderWriteSummary({
+    total: write.total ?? 0,
+    written: write.written ?? 0,
+    skipped: write.skipped ?? 0,
+    failed: write.failed ?? 0,
+    hashMatches: write.hashMatches ?? 0
+  })
+})
+
+const schedulerSummaryText = computed(() => {
+  const summary = scheduler.value
+  if (!summary) return ''
+  return renderSchedulerSummary(summary)
+})
+
+const pluginSummary = computed(() => {
+  const info = plugins.value
+  if (!info) {
+    return {
+      requested: '',
+      ignoreErrors: '',
+      disabled: ''
+    }
+  }
+  return renderPluginSummary(info)
+})
+
+const aiSmokeStatsText = computed(() => {
+  const summary = aiSmokeSummary.value
+  if (!summary) return ''
+  return renderSmokeStats(summary)
 })
 
 onMounted(async () => {
@@ -447,12 +1127,12 @@ onMounted(async () => {
   }
 })
 
-watch(telemetry, snapshot => {
+watch([telemetry, locale], ([snapshot]) => {
   if (!snapshot) {
     alerts.value = []
     return
   }
-  alerts.value = evaluateAlerts(snapshot)
+  alerts.value = evaluateAlerts(snapshot, locale.value, copy.value)
   for (const alert of alerts.value) {
     const detail = alert.detail ? ` - ${alert.detail}` : ''
     if (alert.level === 'danger') {
@@ -463,45 +1143,55 @@ watch(telemetry, snapshot => {
   }
 }, { immediate: true })
 
-function evaluateAlerts(snapshot: TelemetryData): AlertItem[] {
+function evaluateAlerts(snapshot: TelemetryData, currentLocale: 'zh' | 'en', currentCopy: Copy): AlertItem[] {
   const list: AlertItem[] = []
   const pg = snapshot.build?.pagegen
+  const lowCacheMessage = currentLocale === 'en' ? 'Pagegen cache hit rate is low' : 'Pagegen 缓存命中率偏低'
+  const parseErrorMessage = currentLocale === 'en' ? 'Pagegen parsing errors detected' : 'Pagegen 解析出现错误'
+  const writeFailMessage = currentLocale === 'en' ? 'Pagegen write failures' : 'Pagegen 写入失败'
+
   if (pg?.collect?.cacheHitRate != null && pg.collect.cacheHitRate < 0.6) {
     list.push({
       level: 'warning',
-      message: 'Pagegen 缓存命中率偏低',
-      detail: `缓存命中率 ${formatPercent(pg.collect.cacheHitRate)}`
+      message: lowCacheMessage,
+      detail: (currentLocale === 'en' ? 'cache hit rate ' : '缓存命中率 ') + formatPercent(pg.collect.cacheHitRate)
     })
   }
   if ((pg?.collect?.parseErrors ?? 0) > 0 || (pg?.collect?.errorEntries ?? 0) > 0) {
     list.push({
       level: 'danger',
-      message: 'Pagegen 解析出现错误',
-      detail: `parseErrors=${pg?.collect?.parseErrors ?? 0}, errorEntries=${pg?.collect?.errorEntries ?? 0}`
+      message: parseErrorMessage,
+      detail: `parseErrors=${formatNumber(pg?.collect?.parseErrors ?? 0)}, errorEntries=${formatNumber(pg?.collect?.errorEntries ?? 0)}`
     })
   }
   if ((pg?.write?.failed ?? 0) > 0) {
     list.push({
       level: 'danger',
-      message: 'Pagegen 写入失败',
-      detail: `失败条目：${pg?.write?.failed ?? 0}`
+      message: writeFailMessage,
+      detail: (currentLocale === 'en' ? 'failed items: ' : '失败条目：') + formatNumber(pg?.write?.failed ?? 0)
     })
   }
 
   const overview = snapshot.build?.ai?.overview
   if (overview) {
-    if (overview.status !== 'ok') {
+    if ((overview.status || '').toLowerCase() !== 'ok') {
+      const severity = overview.status === 'degraded' ? 'warning' : 'danger'
       list.push({
-        level: overview.status === 'degraded' ? 'warning' : 'danger',
-        message: 'AI 构建状态异常',
-        detail: `整体状态：${formatStatus(overview.status)}`
+        level: severity,
+        message: currentLocale === 'en' ? 'AI build status issue' : 'AI 构建状态异常',
+        detail: (currentLocale === 'en' ? 'overall status: ' : '整体状态：') + formatStatus(overview.status)
       })
     }
     for (const [domain, info] of Object.entries(overview.domains || {})) {
-      if (['fallback', 'empty', 'missing'].includes(info.status)) {
+      if (!info.status) continue
+      const normalized = info.status.toLowerCase()
+      if (['fallback', 'empty', 'missing'].includes(normalized)) {
+        const severity = normalized === 'fallback' ? 'warning' : 'danger'
         list.push({
-          level: info.status === 'fallback' ? 'warning' : 'danger',
-          message: `AI 模块 ${domain} 状态 ${formatStatus(info.status)}`,
+          level: severity as 'warning' | 'danger',
+          message: currentLocale === 'en'
+            ? `AI module ${domain} status ${formatStatus(info.status)}`
+            : `AI 模块 ${domain} 状态 ${formatStatus(info.status)}`,
           detail: info.adapter?.name ? `adapter=${info.adapter.name}` : undefined
         })
       }
@@ -514,21 +1204,23 @@ function evaluateAlerts(snapshot: TelemetryData): AlertItem[] {
     if (status === 'failed') {
       list.push({
         level: 'danger',
-        message: 'AI 冒烟测试失败',
-        detail: `失败模型 ${smokeSummary.failures?.length ?? 0} 个`
+        message: currentLocale === 'en' ? 'AI smoke tests failed' : 'AI 冒烟测试失败',
+        detail: (currentLocale === 'en' ? 'failed models ' : '失败模型 ') + formatNumber(smokeSummary.failures?.length ?? 0)
       })
     } else if (status === 'skipped') {
       list.push({
         level: 'warning',
-        message: 'AI 冒烟测试被跳过',
-        detail: smokeSummary.reason ?? '请检查运行配置'
+        message: currentLocale === 'en' ? 'AI smoke tests skipped' : 'AI 冒烟测试被跳过',
+        detail: smokeSummary.reason ?? currentCopy.common.unknownReason
       })
     }
     for (const failure of smokeSummary.failures || []) {
       list.push({
         level: 'danger',
-        message: `模型 ${failure.id ?? 'unknown'} 冒烟失败`,
-        detail: failure.reason ?? 'unknown reason'
+        message: currentLocale === 'en'
+          ? `Model ${failure.id ?? currentCopy.common.unknownModel} smoke failed`
+          : `模型 ${failure.id ?? currentCopy.common.unknownModel} 冒烟失败`,
+        detail: failure.reason ?? currentCopy.common.unknownReason
       })
     }
   }
@@ -539,75 +1231,203 @@ function evaluateAlerts(snapshot: TelemetryData): AlertItem[] {
       if (result.status === 'failed') {
         list.push({
           level: 'danger',
-          message: `插件 ${result.specifier ?? 'unknown'} 加载失败`,
-          detail: result.error ?? 'unknown error'
+          message: currentLocale === 'en'
+            ? `Plugin ${result.specifier ?? currentCopy.common.unknownModel} failed`
+            : `插件 ${result.specifier ?? currentCopy.common.unknownModel} 加载失败`,
+          detail: result.error ?? currentCopy.common.unknownError
         })
       } else if (result.status === 'ignored') {
         list.push({
           level: 'warning',
-          message: `插件 ${result.specifier ?? 'unknown'} 被忽略`,
-          detail: result.reason ?? '未提供原因'
+          message: currentLocale === 'en'
+            ? `Plugin ${result.specifier ?? currentCopy.common.unknownModel} ignored`
+            : `插件 ${result.specifier ?? currentCopy.common.unknownModel} 被忽略`,
+          detail: result.reason ?? currentCopy.common.unknownReason
         })
       }
+    }
+  }
+
+  const graphragIngest = snapshot.build?.graphrag?.ingest
+  if (graphragIngest) {
+    const skippedTotal = graphragIngest.skipped?.total ?? 0
+    if (skippedTotal > 0) {
+      list.push({
+        level: 'warning',
+        message: currentLocale === 'en' ? 'GraphRAG ingest skipped documents' : 'GraphRAG 入图有文档被跳过',
+        detail: `${currentLocale === 'en' ? 'skipped' : '跳过'} ${formatNumber(skippedTotal)}`
+      })
+    }
+    const attempted = graphragIngest.write?.attempted ?? 0
+    const written = graphragIngest.write?.written ?? 0
+    if (!graphragIngest.dryRun && attempted > 0 && written === 0) {
+      list.push({
+        level: 'danger',
+        message: currentLocale === 'en' ? 'GraphRAG ingest produced no writes' : 'GraphRAG 入图未写入任何文档',
+        detail: `${currentLocale === 'en' ? 'attempted' : '待写入'} ${formatNumber(attempted)}`
+      })
+    }
+  }
+
+  const graphragExport = snapshot.build?.graphrag?.export
+  if (graphragExport && !graphragExport.dryRun) {
+    const nodes = graphragExport.totals?.nodes ?? 0
+    const recommendations = graphragExport.totals?.recommendations ?? 0
+    if (nodes === 0) {
+      list.push({
+        level: 'warning',
+        message: currentLocale === 'en' ? 'GraphRAG export produced empty subgraph' : 'GraphRAG 导出生成空子图',
+        detail: `${currentLocale === 'en' ? 'doc' : '文档'} ${graphragExport.docId ?? 'unknown'}`
+      })
+    }
+    if (recommendations === 0) {
+      list.push({
+        level: 'warning',
+        message: currentLocale === 'en' ? 'GraphRAG export returned no recommendations' : 'GraphRAG 导出未生成推荐列表',
+        detail: `${currentLocale === 'en' ? 'doc' : '文档'} ${graphragExport.docId ?? 'unknown'}`
+      })
+    }
+  }
+
+  const graphragRetrieve = snapshot.build?.graphrag?.retrieve
+  if (graphragRetrieve) {
+    const items = graphragRetrieve.totals?.items ?? null
+    if (items !== null && items === 0) {
+      list.push({
+        level: 'warning',
+        message: currentLocale === 'en' ? `GraphRAG ${graphragRetrieve.mode ?? 'retrieve'} returned no results` : `GraphRAG ${graphragRetrieve.mode ?? '检索'} 未返回结果`,
+        detail: graphragRetrieve.query?.question ?? graphragRetrieve.query?.docId ?? undefined
+      })
     }
   }
 
   return list
 }
 
+function renderCollectSummary(ctx: { locales: number; cacheHitRate: number | null; parsed: number; total: number; disabledLocales: number }): string {
+  if (locale.value === 'en') {
+    const localeWord = ctx.locales === 1 ? 'locale' : 'locales'
+    const disabledWord = ctx.disabledLocales === 1 ? 'locale' : 'locales'
+    return [
+      `${formatNumber(ctx.locales)} ${localeWord}`,
+      `cache hit rate ${formatPercent(ctx.cacheHitRate)}`,
+      `parsed ${formatNumber(ctx.parsed)}/${formatNumber(ctx.total)} files`,
+      `${formatNumber(ctx.disabledLocales)} ${disabledWord} with cache disabled`
+    ].join(', ')
+  }
+  return [
+    `${formatNumber(ctx.locales)} 个语言`,
+    `缓存命中率 ${formatPercent(ctx.cacheHitRate)}`,
+    `已解析 ${formatNumber(ctx.parsed)}/${formatNumber(ctx.total)} 篇`,
+    `禁用缓存 ${formatNumber(ctx.disabledLocales)} 个语言`
+  ].join('，')
+}
+
+function renderWriteSummary(ctx: { total: number; written: number; skipped: number; failed: number; hashMatches: number }): string {
+  if (locale.value === 'en') {
+    return [
+      `written ${formatNumber(ctx.written)} / ${formatNumber(ctx.total)}`,
+      `skipped ${formatNumber(ctx.skipped)} (hash matches ${formatNumber(ctx.hashMatches)})`,
+      `failed ${formatNumber(ctx.failed)}`
+    ].join(', ')
+  }
+  return [
+    `实际写入 ${formatNumber(ctx.written)} / ${formatNumber(ctx.total)}`,
+    `跳过 ${formatNumber(ctx.skipped)}（内容哈希命中 ${formatNumber(ctx.hashMatches)}）`,
+    `失败 ${formatNumber(ctx.failed)}`
+  ].join('，')
+}
+
+function renderSchedulerSummary(summary: SchedulerSummary): string {
+  if (locale.value === 'en') {
+    return `Parallel: ${boolLabel(summary.parallelEnabled)}, default concurrency ${formatNumber(summary.effectiveParallelLimit)} (requested ${formatNumber(summary.requestedParallelLimit)})`
+  }
+  return `并行：${boolLabel(summary.parallelEnabled)}，默认并发 ${formatNumber(summary.effectiveParallelLimit)}（请求 ${formatNumber(summary.requestedParallelLimit)}）`
+}
+
+function renderPluginSummary(info: PluginSummary) {
+  const isEnglish = locale.value === 'en'
+  const requestedNames = info.requested.length ? joinList(info.requested) : copy.value.pagegen.pluginNone
+  const requested = isEnglish
+    ? `${copy.value.pagegen.pluginRequestedLabel} ${requestedNames}`
+    : `${copy.value.pagegen.pluginRequestedLabel}${requestedNames}`
+  const ignoreErrors = isEnglish
+    ? `${copy.value.pagegen.pluginIgnoreErrorsLabel} ${boolLabel(info.ignoreErrors)}`
+    : `${copy.value.pagegen.pluginIgnoreErrorsLabel}${boolLabel(info.ignoreErrors)}`
+  const disabled = isEnglish
+    ? `${copy.value.pagegen.pluginDisabledLabel} ${boolLabel(info.disabled)}`
+    : `${copy.value.pagegen.pluginDisabledLabel}${boolLabel(info.disabled)}`
+  return { requested, ignoreErrors, disabled }
+}
+
+function renderSmokeStats(summary: AISmokeRunSummary): string {
+  const executed = formatNumber(summary.executed ?? 0)
+  const skipped = formatNumber(summary.skipped ?? 0)
+  const failed = formatNumber(summary.failed ?? 0)
+  if (locale.value === 'en') {
+    return `executed ${executed} · skipped ${skipped} · failed ${failed}`
+  }
+  return `执行 ${executed} · 跳过 ${skipped} · 失败 ${failed}`
+}
+
 function formatPercent(value: number | null | undefined, digits = 1) {
-  if (value == null || !Number.isFinite(value)) return 'n/a'
+  if (value == null || !Number.isFinite(value)) return copy.value.common.notAvailable
   return `${(value * 100).toFixed(digits)}%`
 }
 
 function formatStatus(status?: string | null) {
-  if (!status) return '未知'
-  switch (status) {
-    case 'ok':
-      return '正常'
-    case 'degraded':
-      return '降级'
-    case 'fallback':
-      return '回退'
-    case 'empty':
-      return '为空'
-    case 'missing':
-      return '缺失'
-    case 'passed':
-      return '通过'
-    case 'failed':
-      return '失败'
-    case 'skipped':
-      return '跳过'
-    default:
-      return status
-  }
+  if (!status) return copy.value.common.unknown
+  const normalized = status.toLowerCase()
+  return copy.value.statuses[normalized as keyof Copy['statuses']] ?? status
 }
 
 function statusClass(status?: string | null) {
   if (!status) return 'status-chip'
   const normalized = status.toLowerCase()
-  if (['ok', 'passed'].includes(normalized)) return 'status-chip status-ok'
-  if (['degraded', 'fallback', 'skipped'].includes(normalized)) return 'status-chip status-warn'
+  if (['ok', 'passed', 'success'].includes(normalized)) return 'status-chip status-ok'
+  if (['degraded', 'fallback', 'skipped', 'ignored'].includes(normalized)) return 'status-chip status-warn'
   return 'status-chip status-danger'
 }
 
+function docLinkFromId(docId?: string | null): string | null {
+  if (!docId) return null
+  const normalized = docId.replace(/^\/+/, '')
+  return withBase(`/${normalized}.html`)
+}
+
+function pluginStatusClass(status?: string | null) {
+  if (!status) return 'status-chip'
+  const normalized = status.toLowerCase()
+  if (['ok', 'passed', 'success', 'completed'].includes(normalized)) return 'status-chip status-ok'
+  if (['ignored', 'skipped', 'warn', 'warning'].includes(normalized)) return 'status-chip status-warn'
+  if (['failed', 'error', 'fatal'].includes(normalized)) return 'status-chip status-danger'
+  return 'status-chip'
+}
+
 function boolLabel(value?: boolean | null) {
-  if (value == null) return '未知'
-  return value ? '是' : '否'
+  if (value == null) return copy.value.common.unknown
+  return value ? copy.value.common.yes : copy.value.common.no
 }
 
 function formatDate(value?: string | null) {
-  if (!value) return '未知'
+  if (!value) return copy.value.common.unknown
   const parsed = new Date(value)
   if (Number.isNaN(parsed.getTime())) return value
-  return parsed.toLocaleString()
+  return parsed.toLocaleString(localeTag.value)
 }
 
 function formatNumber(value?: number | null) {
-  if (value == null) return 'n/a'
-  if (!Number.isFinite(value)) return String(value)
-  return value.toLocaleString()
+  if (value == null || !Number.isFinite(value)) return copy.value.common.notAvailable
+  return new Intl.NumberFormat(localeTag.value).format(value)
+}
+
+function joinList(values: string[]): string {
+  return values.join(copy.value.common.listSeparator)
+}
+
+function listToText(values?: string[] | null): string {
+  if (!values || !values.length) return copy.value.common.notAvailable
+  return joinList(values)
 }
 </script>
 
@@ -687,5 +1507,77 @@ function formatNumber(value?: number | null) {
 }
 .smoke-summary table {
   margin-top: 0.5rem;
+}
+.smoke-history {
+  margin-top: 1rem;
+}
+.smoke-history table {
+  margin-top: 0.5rem;
+}
+.smoke-history-empty {
+  margin-top: 0.5rem;
+  color: rgba(60, 60, 67, 0.6);
+}
+.graphrag-cards {
+  margin-top: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+.graphrag-index-link {
+  margin: 0.25rem 0 0.75rem;
+}
+.graphrag-index-link a,
+.graphrag-topic-link a {
+  font-size: 0.9rem;
+  color: var(--vp-c-brand);
+}
+.graphrag-topic-link {
+  margin-left: 0.4rem;
+}
+.graphrag-card {
+  border: 1px solid rgba(60, 60, 67, 0.12);
+  border-radius: 8px;
+  padding: 1rem;
+  background: rgba(60, 60, 67, 0.02);
+}
+.graphrag-card table {
+  margin-top: 0.5rem;
+}
+.graphrag-list-inline {
+  margin: 0.5rem 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+.graphrag-badge {
+  display: inline-block;
+  margin-left: 0.35rem;
+  padding: 0.1rem 0.45rem;
+  border-radius: 999px;
+  background: rgba(255, 193, 7, 0.24);
+  color: #ad5f00;
+  font-size: 0.75rem;
+}
+.graphrag-explore-question {
+  margin: 0.5rem 0;
+  color: rgba(60, 60, 67, 0.85);
+  font-style: italic;
+}
+.graphrag-reasons,
+.graphrag-files {
+  margin-top: 0.75rem;
+}
+.graphrag-reasons ul,
+.graphrag-files ul {
+  padding-left: 1.2rem;
+  margin: 0;
+}
+.graphrag-reasons-empty,
+.graphrag-empty {
+  margin-top: 0.5rem;
+  color: rgba(60, 60, 67, 0.6);
 }
 </style>
