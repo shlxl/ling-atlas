@@ -104,7 +104,7 @@ function finalizeLocale(code, config = {}) {
     defaultValue: path.join(generatedDir, navManifestFile)
   })
 
-  const outMetaFile = config.outMetaFile || `meta.${code}.json`
+  const outMetaFile = config.outMetaFile || `meta.json`
   const outMeta = resolvePath(config.outMeta, { defaultValue: path.join(generatedDir, outMetaFile) })
 
   const labels = composeLabels(config.labels)
@@ -322,6 +322,7 @@ function composeLabels(raw = {}) {
     category: createLabelFormatter(template.category),
     series: createLabelFormatter(template.series),
     tag: createLabelFormatter(template.tag),
+    tagsIndex: createLabelFormatter(template.tagsIndex),
     archive: createLabelFormatter(template.archive),
     rssTitle: template.rssTitle || '',
     rssDesc: template.rssDesc || ''

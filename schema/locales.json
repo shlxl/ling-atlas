@@ -10,6 +10,7 @@
         "category": "分类 · {value}",
         "series": "连载 · {value}",
         "tag": "标签 · {value}",
+        "tagsIndex": "所有标签",
         "archive": "归档 · {value}",
         "rssTitle": "Ling Atlas",
         "rssDesc": "最新更新"
@@ -44,6 +45,7 @@
         "category": "Category · {value}",
         "series": "Series · {value}",
         "tag": "Tag · {value}",
+        "tagsIndex": "All Tags",
         "archive": "Archive · {value}",
         "rssTitle": "Ling Atlas (EN)",
         "rssDesc": "Latest updates"

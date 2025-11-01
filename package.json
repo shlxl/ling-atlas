@@ -14,7 +14,7 @@
     "knowledge:build": "node scripts/chunk-build.mjs",
     "eval:offline": "node scripts/eval/offline.mjs",
     "build": "npm run ai:prepare && npm run ai:smoke && npm run gen && vitepress build docs && node scripts/telemetry-merge.mjs && node scripts/postbuild-aliases.mjs && node scripts/postbuild-pwa.mjs",
-    "dev": "npm run gen && vitepress dev docs",
+    "dev": "npm run gen && NODE_ICU_DATA=node_modules/full-icu vitepress dev docs",
     "md:lint": "markdownlint-cli2 'docs/**/*.md'",
     "build:search": "npm run embeddings:build && npm run build && npm run search:index && node -e \"import('node:fs').then(fs=>fs.cpSync('docs/public/pagefind','docs/.vitepress/dist/pagefind',{recursive:true}))\" && node scripts/generate-headers.mjs && node scripts/sri.mjs",
     "check": "npm run precheck && npm run build",
@@ -84,6 +84,7 @@
     "@huggingface/transformers": "^3.7.6",
     "@xenova/transformers": "^2.17.2",
     "dotenv": "^16.4.5",
+    "full-icu": "^1.5.0",
     "mermaid": "^10.9.1",
     "neo4j-driver": "^5.28.2",
     "onnxruntime-node": "^1.23.0"

@@ -72,6 +72,28 @@ export async function writeCollections(lang, meta, writer, options = {}) {
     navEntries.archive.set(year, taxonomyPath('archive', year, lang))
   }
 
+  // Generate a top-level index for all tags
+  const allTags = Object.keys(meta.byTag || {}).sort((a, b) => a.localeCompare(b, lang.code === 'en' ? 'en' : 'zh-CN'));
+  if (allTags.length > 0) {
+    const indexTitle = lang.labels.tagsIndex ? lang.labels.tagsIndex() : 'All Tags';
+    const indexFileContent = `---\ntitle: ${indexTitle}\n---\n\n# ${indexTitle}\n\n${allTags.map(tag => `- [${tag}](./${slug(tag)}/)`).join('\n')}\n`;
+    const indexOutPath = path.join(lang.generatedDir, 'tags', 'index.md');
+    if (writer && !dryRun) {
+        writer.addFileTask({
+            stage,
+            locale: lang.manifestLocale,
+            target: indexOutPath,
+            content: indexFileContent
+        });
+    } else if (!dryRun) {
+        await fs.mkdir(path.dirname(indexOutPath), { recursive: true });
+        await fs.writeFile(indexOutPath, indexFileContent);
+    }
+    // Manually construct the path for the index page, as taxonomyPath() requires a slug.
+    const indexLink = `${lang.localeRoot === '/' ? '' : lang.localeRoot.replace(/\/$/, '')}/_generated/tags/`;
+    navEntries.tags.set('__index__', indexLink);
+  }
+
   return navEntries
 }
 

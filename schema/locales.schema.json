@@ -53,6 +53,7 @@
               "category": { "type": "string" },
               "series": { "type": "string" },
               "tag": { "type": "string" },
+              "tagsIndex": { "type": "string" },
               "archive": { "type": "string" },
               "rssTitle": { "type": "string" },
               "rssDesc": { "type": "string" }

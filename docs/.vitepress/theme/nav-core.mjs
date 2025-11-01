@@ -1,3 +1,4 @@
+import { pinyin } from 'pinyin-pro'
 import path from 'node:path'
 import fs from 'node:fs'
 import { fileURLToPath } from 'node:url'
@@ -113,8 +114,20 @@ function renderAggregateSection(section, context) {
   const entries = buildAggregateEntries(aggregate, context)
   if (!entries?.length) return null
 
-  if (aggregate.type === 'tag' || aggregate.type === 'archive') {
+  if (aggregate.type === 'archive') {
     return markAggregate({ text, link: entries[0].link })
+  }
+
+  if (aggregate.type === 'tag') {
+    const indexLink = context.manifest?.tags?.['__index__'];
+    if (indexLink) {
+      return markAggregate({ text, link: indexLink });
+    }
+    // Fallback to the first tag if the index link isn't in the manifest
+    if (entries[0]?.link) {
+      return markAggregate({ text, link: entries[0].link });
+    }
+    return null;
   }
 
   return markAggregate({ text, items: entries })
@@ -212,7 +225,7 @@ function buildAggregateEntries(aggregate, context) {
         return { text: tag, link }
       })
       .filter(Boolean)
-      .sort((a, b) => collator.compare(a.text, b.text))
+      .sort((a, b) => pinyin(a.text, { toneType: 'none' }).localeCompare(pinyin(b.text, { toneType: 'none' })))
   }
 
   return []
