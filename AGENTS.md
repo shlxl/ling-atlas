@@ -155,6 +155,7 @@ node --test tests/pagegen/plugin-example.integration.test.mjs
 - ✅ 阶段 4（进行中）：`schema/locales.json` + `schema/locales.schema.json` 已接管语言配置，`scripts/pagegen.locales.mjs` 运行时会读取并校验 JSON Schema，计算结果缓存到 `.codex/cache/pagegen-locales.cache.json`。前端主题的 Locale 列表、主题切换文案与 Landing 语言卡片同样复用该 JSON，确保 Pagegen / 主题保持一致；README/AGENTS 已补充运维指引。后续若新增语言，请编辑 JSON 配置并运行 `npm run gen` 验证。
 - ✅ 导航配置初稿上线：`schema/nav.json` + `schema/nav.schema.json` 描述聚合/固定链接/分组结构，Pagegen 在生成 nav manifest 时读取配置，VitePress 主题也会同步解析；如需增减导航入口，请先修改 JSON 再运行 `npm run gen` + `npm run test:theme` 校验。
 - ✅ 阶段 1 后续：已补齐 orchestrator 输入/输出契约说明，扩展 `npm run test:pagegen` 端到端用例并统一阶段/语言/目标路径错误日志格式。
+- ✅ GraphRAG 管线：实体抽取整合进 `app.py`，`--no-chunks`/`--no-frontmatter` 开关提供纯实体/关系图谱。Doc 仅通过 `HAS_ENTITY` 连接选出的主题实体（按标题或类型优先级挑选），实体按名称归一化并保留更具体类型。
 - 📌 规划文档：`docs/zh/plans/refactor-optimization.md`（提案）、`docs/zh/plans/pagegen-refactor-roadmap.md`（路线图）、`docs/zh/plans/pagegen-validation-checklist.md`（产物守门）。
 
 ## 10. 当前协作与审查计划（2024-XX）
