@@ -57,7 +57,8 @@ function normalizeGeneratedPrefix(prefix) {
 function finalizeLocale(code, config = {}) {
   const preferred = Boolean(config.preferred)
   const mirrorContentToRoot = Boolean(config.mirrorContentToRoot)
-  const manifestLocale = config.manifestLocale || code
+  const manifestLocaleRaw = typeof config.manifestLocale === 'string' ? config.manifestLocale.trim() : ''
+  const manifestLocale = manifestLocaleRaw || code
   const aliasLocaleIds = Array.isArray(config.aliasLocaleIds) ? config.aliasLocaleIds : []
   const vitepressLocaleKey = config.vitepressLocaleKey || code
 
@@ -104,7 +105,9 @@ function finalizeLocale(code, config = {}) {
     defaultValue: path.join(generatedDir, navManifestFile)
   })
 
-  const outMetaFile = config.outMetaFile || `meta.json`
+  const configuredOutMetaFile = typeof config.outMetaFile === 'string' ? config.outMetaFile.trim() : ''
+  const inferredOutMetaFile = manifestLocale ? `meta.${manifestLocale}.json` : 'meta.json'
+  const outMetaFile = configuredOutMetaFile || inferredOutMetaFile
   const outMeta = resolvePath(config.outMeta, { defaultValue: path.join(generatedDir, outMetaFile) })
 
   const labels = composeLabels(config.labels)

@@ -61,13 +61,13 @@ test('writer reports failures from task generators', async t => {
     }
   })
 
-  const result = await writer.flush()
-  assert.equal(result.failed, 1)
-  assert.equal(result.written, 0)
-  assert.equal(result.skipped, 0)
-  assert.equal(result.errors.length, 1)
-  assert.match(result.errors[0].message, /boom/)
-  assert.ok(result.errors[0].stack.includes('Error: boom'))
+  await assert.rejects(
+    () => writer.flush(),
+    {
+      name: 'Error',
+      message: /pagegen flush: 1 write operations failed. Errors: boom/
+    }
+  )
 })
 
 test('writer clears tasks after flush to avoid duplicate writes', async t => {

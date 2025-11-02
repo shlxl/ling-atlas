@@ -1,4 +1,5 @@
 import fs from 'node:fs/promises'
+import { writeSync } from 'node:fs'
 import path from 'node:path'
 import { performance } from 'node:perf_hooks'
 import { fileURLToPath, pathToFileURL } from 'url'
@@ -768,7 +769,8 @@ await (async () => {
   }
 
   if (metricsStdout) {
-    process.stdout.write(`${JSON.stringify(metricsEntry, null, 2)}\n`)
+    const metricsJson = `${JSON.stringify(metricsEntry, null, 2)}\n`
+    writeSync(1, metricsJson)
   } else {
     await appendMetricsLog(metricsEntry)
   }

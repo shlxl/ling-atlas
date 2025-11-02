@@ -93,6 +93,24 @@ export function createWriter(options = {}) {
 
     tasks.length = 0
 
+    if (results.failed > 0) {
+      const messages = results.errors.map(e => e.message).join(', ')
+      const detailLines = results.errors
+        .map(err => {
+          if (!err) return ''
+          const stage = err.stage || 'write'
+          const locale = err.locale || 'n/a'
+          const target = err.target || 'n/a'
+          const message = err.message || 'Unknown write error'
+          return `[pagegen] error stage=${stage} locale=${locale} target=${target}: ${message}`
+        })
+        .filter(Boolean)
+      const header = `pagegen flush: ${results.failed} write operations failed. Errors: ${messages}`
+      const error = new Error(detailLines.length ? `${header}\n${detailLines.join('\n')}` : header)
+      error.pagegenResults = results
+      throw error
+    }
+
     return results
   }
 
