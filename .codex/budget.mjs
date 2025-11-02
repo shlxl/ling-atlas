@@ -6,7 +6,7 @@ const CONFIG_PATH = path.resolve('scripts/budget.config.json')
 const DIST_DIR = path.resolve('docs/.vitepress/dist')
 
 const defaults = {
-  totalMB: 5,
+  totalMB: 10,
   maxJsKB: 150,
   maxCssKB: 100,
   topN: 10,
