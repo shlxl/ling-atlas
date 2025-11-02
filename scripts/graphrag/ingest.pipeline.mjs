@@ -23,6 +23,8 @@ const VALUE_OPTIONS = new Map([
   ['--docs-root', 'docsRoot'],
   ['--adapter', 'adapter'],
   ['--adapter-model', 'adapterModel'],
+  ['--include-only', 'includeOnly'],
+  ['--ignore-file', 'ignoreFile'],
 ]);
 
 const BOOLEAN_OPTIONS = new Map([
@@ -32,6 +34,8 @@ const BOOLEAN_OPTIONS = new Map([
   ['--skip-schema', 'skipSchema'],
   ['--no-cache', 'noCache'],
   ['--json', 'jsonOutput'],
+  ['--no-chunks', 'noChunks'],
+  ['--no-frontmatter', 'noFrontmatter'],
 ]);
 
 function parsePipelineOptions(rawArgs) {
@@ -45,6 +49,10 @@ function parsePipelineOptions(rawArgs) {
     jsonOutput: false,
     adapter: undefined,
     adapterModel: undefined,
+    noChunks: false,
+    noFrontmatter: false,
+    includeOnly: undefined,
+    ignoreFile: undefined,
   };
 
   for (let index = 0; index < rawArgs.length; index += 1) {
@@ -191,6 +199,8 @@ async function main() {
       skipSchema: options.skipSchema,
       jsonOutput: options.jsonOutput,
       adapter: options.adapter ?? process.env.GRAPHRAG_ENTITY_ADAPTER ?? 'placeholder',
+      noChunks: Boolean(options.noChunks),
+      noFrontmatter: Boolean(options.noFrontmatter),
     })}`,
   );
 
@@ -202,8 +212,27 @@ async function main() {
 
   console.log(`[${scriptName}] 已收集文档：${documents.length} 篇`);
 
-  const normalizedDocs = documents.map(normalizeDocument);
+  let normalizedDocs = documents.map(normalizeDocument);
   const skipped = [];
+
+  if (options.includeOnly) {
+    const { readFilterFile } = await import('./ingest/filter-files.mjs');
+    const includeSet = await readFilterFile(options.includeOnly);
+    if (includeSet.size > 0) {
+      console.log(`[${scriptName}] 白名单模式：只处理 ${options.includeOnly} 文件中定义的 ${includeSet.size} 个文档`);
+      normalizedDocs = normalizedDocs.filter(doc => includeSet.has(doc.relativePath));
+    }
+  } else if (options.ignoreFile) {
+    const { readFilterFile } = await import('./ingest/filter-files.mjs');
+    const ignoreSet = await readFilterFile(options.ignoreFile);
+    if (ignoreSet.size > 0) {
+      console.log(`[${scriptName}] 忽略列表模式：跳过 ${options.ignoreFile} 文件中定义的 ${ignoreSet.size} 个文档`);
+      const originalCount = normalizedDocs.length;
+      normalizedDocs = normalizedDocs.filter(doc => !ignoreSet.has(doc.relativePath));
+      const ignoredCount = originalCount - normalizedDocs.length;
+      console.log(`[${scriptName}] 已根据忽略列表跳过 ${ignoredCount} 个文档`);
+    }
+  }
   const payloads = [];
   const processedDocs = [];
   const qualityChecker = await createQualityChecker();
@@ -223,6 +252,16 @@ async function main() {
     });
     console.log(
       `[${scriptName}] 已加载 Transformers.js NER 适配器（model=${adapterModel ?? '默认'})`,
+    );
+  } else if (adapterName === 'gemini') {
+    const { loadGeminiAdapter } = await import(
+      './adapters/gemini.mjs'
+    );
+    adapter = await loadGeminiAdapter({
+      model: adapterModel,
+    });
+    console.log(
+      `[${scriptName}] 已加载 Gemini NER 适配器（model=${adapterModel ?? '默认'})`,
     );
   }
   const cacheState = options.noCache
@@ -260,8 +299,29 @@ async function main() {
       continue;
     }
 
-    const entities = await extractEntities(doc, { adapter });
-    payloads.push(buildPayload(doc, entities));
+    let entities;
+    try {
+      entities = await extractEntities(doc, { adapter });
+    } catch (error) {
+      const message = error?.message ?? String(error);
+      console.warn(
+        `[${scriptName}] 文档 ${doc.id} 的实体提取失败：${message}`,
+      );
+      skipped.push({
+        docId: doc.id,
+        reason: 'adapter-error',
+        errors: [message],
+      });
+      continue;
+    }
+
+    payloads.push(
+      buildPayload(doc, entities, {
+        includeChunks: !options.noChunks,
+        includeMentions: !options.noChunks,
+        includeFrontmatter: !options.noFrontmatter,
+      }),
+    );
     processedDocs.push(doc);
   }
 

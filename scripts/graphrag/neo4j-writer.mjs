@@ -15,8 +15,8 @@ function pickProps(source, keys) {
 
 function prepareEntities(entities = []) {
   return entities.map((entity) => ({
-    type: entity.type,
     name: entity.name,
+    type: entity.type,
     ...pickProps(entity, ENTITY_PROP_KEYS),
   }));
 }
@@ -97,8 +97,9 @@ async function upsertEntities(tx, entities) {
 
   await tx.run(
     `UNWIND $entities AS entity
-     MERGE (e:Entity {type: entity.type, name: entity.name})
-     SET e.salience = entity.salience,
+     MERGE (e:Entity {name: entity.name})
+     SET e.type = entity.type,
+         e.salience = entity.salience,
          e.description = entity.description,
          e.summary = entity.summary,
          e.source = entity.source,
@@ -136,6 +137,20 @@ async function upsertRelationships(tx, relationships) {
   );
 }
 
+async function upsertDocEntityEdges(tx, payload) {
+  const roots = payload.docEntityRoots || [];
+  if (!roots.length) return
+
+  await tx.run(
+    `MATCH (d:Doc {id: $docId})
+     UNWIND $roots AS root
+     MERGE (e:Entity {name: root.name})
+     SET e.type = root.type
+     MERGE (d)-[:HAS_ENTITY]->(e)`,
+    { docId: payload.doc.id, roots },
+  );
+}
+
 export async function writePayloads(driver, database, payloads) {
   if (!payloads.length) {
     return { written: 0 };
@@ -153,6 +168,7 @@ export async function writePayloads(driver, database, payloads) {
         await upsertEntities(tx, prepareEntities(payload.entities));
         await upsertMentions(tx, prepareMentions(payload.mentions));
         await upsertRelationships(tx, prepareRelationships(payload.relationships));
+        await upsertDocEntityEdges(tx, payload);
       });
       written += 1;
     }
