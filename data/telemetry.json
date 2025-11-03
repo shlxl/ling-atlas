@@ -10,15 +10,15 @@
   },
   "build": {
     "pagegen": {
-      "timestamp": "2025-11-03T06:20:58.357Z",
-      "totalMs": 103.635,
+      "timestamp": "2025-11-03T06:47:35.728Z",
+      "totalMs": 114.347,
       "collect": {
         "locales": 2,
-        "cacheHitRate": 0.889,
-        "cacheHits": 8,
-        "cacheMisses": 1,
+        "cacheHitRate": 1,
+        "cacheHits": 9,
+        "cacheMisses": 0,
         "cacheDisabledLocales": 0,
-        "parsedFiles": 1,
+        "parsedFiles": 0,
         "totalFiles": 9,
         "parseErrors": 0,
         "errorEntries": 0
