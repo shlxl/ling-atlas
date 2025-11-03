@@ -15,7 +15,7 @@
     "eval:offline": "node scripts/eval/offline.mjs",
     "build": "npm run ai:prepare && npm run ai:smoke && npm run gen && vitepress build docs && node scripts/telemetry-merge.mjs && node scripts/postbuild-aliases.mjs && node scripts/postbuild-pwa.mjs",
     "dev": "npm run gen && NODE_ICU_DATA=node_modules/full-icu vitepress dev docs",
-    "md:lint": "markdownlint-cli2 'docs/**/*.md'",
+    "md:lint": "markdownlint-cli2 'docs/**/*.md' --ignore 'docs/**/_generated/**'",
     "build:search": "npm run embeddings:build && npm run build && npm run search:index && node -e \"import('node:fs').then(fs=>fs.cpSync('docs/public/pagefind','docs/.vitepress/dist/pagefind',{recursive:true}))\" && node scripts/generate-headers.mjs && node scripts/sri.mjs",
     "check": "npm run precheck && npm run build",
     "preview": "vitepress preview docs",
@@ -40,7 +40,7 @@
     "graphrag:explore": "node scripts/graphrag/explore.mjs",
     "graphrag:gnn": "node scripts/graphrag/gnn.pipeline.mjs",
     "license": "license-checker --summary",
-    "sbom": "cyclonedx-bom -o sbom.json"
+    "sbom": "cyclonedx-npm -o sbom.json"
   },
   "devDependencies": {
     "@cyclonedx/bom": "^4.1.2",
