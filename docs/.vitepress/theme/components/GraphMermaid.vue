@@ -16,9 +16,11 @@ import { withBase } from 'vitepress'
 let mermaidInstance = null
 async function ensureMermaid() {
   if (mermaidInstance) return mermaidInstance
-  const mod = await import('mermaid/dist/mermaid.esm.mjs')
-  mermaidInstance = mod?.default ?? mod
-  return mermaidInstance
+  if (window.mermaid) {
+    mermaidInstance = window.mermaid
+    return mermaidInstance
+  }
+  return Promise.reject('Mermaid not found on window')
 }
 
 const props = defineProps({

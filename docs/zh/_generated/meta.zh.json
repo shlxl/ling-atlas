@@ -280,26 +280,6 @@
         "year": "2025"
       },
       {
-        "title": "Pagegen 重构回顾（含占位阶段）",
-        "date": "2025-10-20",
-        "updated": "",
-        "status": "published",
-        "category": "工程笔记",
-        "category_slug": "工程笔记",
-        "series": "项目起航手记",
-        "series_slug": "project-kickoff",
-        "tags": [
-          "重构",
-          "性能优化",
-          "架构演进"
-        ],
-        "slug": "pagegen-retrospective",
-        "path": "/zh/content/pagegen-retrospective/",
-        "excerpt": "复盘 Pagegen 从单体脚本到模块化/并发/插件化的演进过程，记录收益、风险与仍需打磨的环节，并补充占位阶段的取舍与经验。",
-        "relative": "pagegen-retrospective",
-        "year": "2025"
-      },
-      {
         "title": "Ling Atlas 项目缘起与系统全貌",
         "date": "2025-10-20",
         "updated": "",
@@ -317,6 +297,26 @@
         "path": "/zh/content/project-overview/",
         "excerpt": "全面梳理 Ling Atlas 的愿景、演进路线与当前落地能力，帮助后续贡献者快速理解“个人向量化知识库”的系统边界与协作模式。",
         "relative": "project-overview",
+        "year": "2025"
+      },
+      {
+        "title": "Pagegen 重构回顾（含占位阶段）",
+        "date": "2025-10-20",
+        "updated": "",
+        "status": "published",
+        "category": "工程笔记",
+        "category_slug": "工程笔记",
+        "series": "项目起航手记",
+        "series_slug": "project-kickoff",
+        "tags": [
+          "重构",
+          "性能优化",
+          "架构演进"
+        ],
+        "slug": "pagegen-retrospective",
+        "path": "/zh/content/pagegen-retrospective/",
+        "excerpt": "复盘 Pagegen 从单体脚本到模块化/并发/插件化的演进过程，记录收益、风险与仍需打磨的环节，并补充占位阶段的取舍与经验。",
+        "relative": "pagegen-retrospective",
         "year": "2025"
       },
       {
@@ -762,72 +762,6 @@
         "year": "2025"
       }
     ],
-    "重构": [
-      {
-        "title": "Pagegen 重构回顾（含占位阶段）",
-        "date": "2025-10-20",
-        "updated": "",
-        "status": "published",
-        "category": "工程笔记",
-        "category_slug": "工程笔记",
-        "series": "项目起航手记",
-        "series_slug": "project-kickoff",
-        "tags": [
-          "重构",
-          "性能优化",
-          "架构演进"
-        ],
-        "slug": "pagegen-retrospective",
-        "path": "/zh/content/pagegen-retrospective/",
-        "excerpt": "复盘 Pagegen 从单体脚本到模块化/并发/插件化的演进过程，记录收益、风险与仍需打磨的环节，并补充占位阶段的取舍与经验。",
-        "relative": "pagegen-retrospective",
-        "year": "2025"
-      }
-    ],
-    "性能优化": [
-      {
-        "title": "Pagegen 重构回顾（含占位阶段）",
-        "date": "2025-10-20",
-        "updated": "",
-        "status": "published",
-        "category": "工程笔记",
-        "category_slug": "工程笔记",
-        "series": "项目起航手记",
-        "series_slug": "project-kickoff",
-        "tags": [
-          "重构",
-          "性能优化",
-          "架构演进"
-        ],
-        "slug": "pagegen-retrospective",
-        "path": "/zh/content/pagegen-retrospective/",
-        "excerpt": "复盘 Pagegen 从单体脚本到模块化/并发/插件化的演进过程，记录收益、风险与仍需打磨的环节，并补充占位阶段的取舍与经验。",
-        "relative": "pagegen-retrospective",
-        "year": "2025"
-      }
-    ],
-    "架构演进": [
-      {
-        "title": "Pagegen 重构回顾（含占位阶段）",
-        "date": "2025-10-20",
-        "updated": "",
-        "status": "published",
-        "category": "工程笔记",
-        "category_slug": "工程笔记",
-        "series": "项目起航手记",
-        "series_slug": "project-kickoff",
-        "tags": [
-          "重构",
-          "性能优化",
-          "架构演进"
-        ],
-        "slug": "pagegen-retrospective",
-        "path": "/zh/content/pagegen-retrospective/",
-        "excerpt": "复盘 Pagegen 从单体脚本到模块化/并发/插件化的演进过程，记录收益、风险与仍需打磨的环节，并补充占位阶段的取舍与经验。",
-        "relative": "pagegen-retrospective",
-        "year": "2025"
-      }
-    ],
     "项目治理": [
       {
         "title": "Ling Atlas 项目缘起与系统全貌",
@@ -891,6 +825,72 @@
         "path": "/zh/content/project-overview/",
         "excerpt": "全面梳理 Ling Atlas 的愿景、演进路线与当前落地能力，帮助后续贡献者快速理解“个人向量化知识库”的系统边界与协作模式。",
         "relative": "project-overview",
+        "year": "2025"
+      }
+    ],
+    "重构": [
+      {
+        "title": "Pagegen 重构回顾（含占位阶段）",
+        "date": "2025-10-20",
+        "updated": "",
+        "status": "published",
+        "category": "工程笔记",
+        "category_slug": "工程笔记",
+        "series": "项目起航手记",
+        "series_slug": "project-kickoff",
+        "tags": [
+          "重构",
+          "性能优化",
+          "架构演进"
+        ],
+        "slug": "pagegen-retrospective",
+        "path": "/zh/content/pagegen-retrospective/",
+        "excerpt": "复盘 Pagegen 从单体脚本到模块化/并发/插件化的演进过程，记录收益、风险与仍需打磨的环节，并补充占位阶段的取舍与经验。",
+        "relative": "pagegen-retrospective",
+        "year": "2025"
+      }
+    ],
+    "性能优化": [
+      {
+        "title": "Pagegen 重构回顾（含占位阶段）",
+        "date": "2025-10-20",
+        "updated": "",
+        "status": "published",
+        "category": "工程笔记",
+        "category_slug": "工程笔记",
+        "series": "项目起航手记",
+        "series_slug": "project-kickoff",
+        "tags": [
+          "重构",
+          "性能优化",
+          "架构演进"
+        ],
+        "slug": "pagegen-retrospective",
+        "path": "/zh/content/pagegen-retrospective/",
+        "excerpt": "复盘 Pagegen 从单体脚本到模块化/并发/插件化的演进过程，记录收益、风险与仍需打磨的环节，并补充占位阶段的取舍与经验。",
+        "relative": "pagegen-retrospective",
+        "year": "2025"
+      }
+    ],
+    "架构演进": [
+      {
+        "title": "Pagegen 重构回顾（含占位阶段）",
+        "date": "2025-10-20",
+        "updated": "",
+        "status": "published",
+        "category": "工程笔记",
+        "category_slug": "工程笔记",
+        "series": "项目起航手记",
+        "series_slug": "project-kickoff",
+        "tags": [
+          "重构",
+          "性能优化",
+          "架构演进"
+        ],
+        "slug": "pagegen-retrospective",
+        "path": "/zh/content/pagegen-retrospective/",
+        "excerpt": "复盘 Pagegen 从单体脚本到模块化/并发/插件化的演进过程，记录收益、风险与仍需打磨的环节，并补充占位阶段的取舍与经验。",
+        "relative": "pagegen-retrospective",
         "year": "2025"
       }
     ],
@@ -1180,26 +1180,6 @@
         "year": "2025"
       },
       {
-        "title": "Pagegen 重构回顾（含占位阶段）",
-        "date": "2025-10-20",
-        "updated": "",
-        "status": "published",
-        "category": "工程笔记",
-        "category_slug": "工程笔记",
-        "series": "项目起航手记",
-        "series_slug": "project-kickoff",
-        "tags": [
-          "重构",
-          "性能优化",
-          "架构演进"
-        ],
-        "slug": "pagegen-retrospective",
-        "path": "/zh/content/pagegen-retrospective/",
-        "excerpt": "复盘 Pagegen 从单体脚本到模块化/并发/插件化的演进过程，记录收益、风险与仍需打磨的环节，并补充占位阶段的取舍与经验。",
-        "relative": "pagegen-retrospective",
-        "year": "2025"
-      },
-      {
         "title": "Ling Atlas 项目缘起与系统全貌",
         "date": "2025-10-20",
         "updated": "",
@@ -1217,6 +1197,26 @@
         "path": "/zh/content/project-overview/",
         "excerpt": "全面梳理 Ling Atlas 的愿景、演进路线与当前落地能力，帮助后续贡献者快速理解“个人向量化知识库”的系统边界与协作模式。",
         "relative": "project-overview",
+        "year": "2025"
+      },
+      {
+        "title": "Pagegen 重构回顾（含占位阶段）",
+        "date": "2025-10-20",
+        "updated": "",
+        "status": "published",
+        "category": "工程笔记",
+        "category_slug": "工程笔记",
+        "series": "项目起航手记",
+        "series_slug": "project-kickoff",
+        "tags": [
+          "重构",
+          "性能优化",
+          "架构演进"
+        ],
+        "slug": "pagegen-retrospective",
+        "path": "/zh/content/pagegen-retrospective/",
+        "excerpt": "复盘 Pagegen 从单体脚本到模块化/并发/插件化的演进过程，记录收益、风险与仍需打磨的环节，并补充占位阶段的取舍与经验。",
+        "relative": "pagegen-retrospective",
         "year": "2025"
       },
       {
@@ -1367,26 +1367,6 @@
       "year": "2025"
     },
     {
-      "title": "Pagegen 重构回顾（含占位阶段）",
-      "date": "2025-10-20",
-      "updated": "",
-      "status": "published",
-      "category": "工程笔记",
-      "category_slug": "工程笔记",
-      "series": "项目起航手记",
-      "series_slug": "project-kickoff",
-      "tags": [
-        "重构",
-        "性能优化",
-        "架构演进"
-      ],
-      "slug": "pagegen-retrospective",
-      "path": "/zh/content/pagegen-retrospective/",
-      "excerpt": "复盘 Pagegen 从单体脚本到模块化/并发/插件化的演进过程，记录收益、风险与仍需打磨的环节，并补充占位阶段的取舍与经验。",
-      "relative": "pagegen-retrospective",
-      "year": "2025"
-    },
-    {
       "title": "Ling Atlas 项目缘起与系统全貌",
       "date": "2025-10-20",
       "updated": "",
@@ -1404,6 +1384,26 @@
       "path": "/zh/content/project-overview/",
       "excerpt": "全面梳理 Ling Atlas 的愿景、演进路线与当前落地能力，帮助后续贡献者快速理解“个人向量化知识库”的系统边界与协作模式。",
       "relative": "project-overview",
+      "year": "2025"
+    },
+    {
+      "title": "Pagegen 重构回顾（含占位阶段）",
+      "date": "2025-10-20",
+      "updated": "",
+      "status": "published",
+      "category": "工程笔记",
+      "category_slug": "工程笔记",
+      "series": "项目起航手记",
+      "series_slug": "project-kickoff",
+      "tags": [
+        "重构",
+        "性能优化",
+        "架构演进"
+      ],
+      "slug": "pagegen-retrospective",
+      "path": "/zh/content/pagegen-retrospective/",
+      "excerpt": "复盘 Pagegen 从单体脚本到模块化/并发/插件化的演进过程，记录收益、风险与仍需打磨的环节，并补充占位阶段的取舍与经验。",
+      "relative": "pagegen-retrospective",
       "year": "2025"
     },
     {

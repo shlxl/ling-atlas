@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generatedAt": "2025-11-03T07:01:39.796Z",
+  "generatedAt": "2025-11-03T07:08:55.306Z",
   "runtime": "node",
   "cache": {
     "preferred": "local",
@@ -66,7 +66,7 @@
       },
       "cache": {
         "status": "ready",
-        "verifiedAt": "2025-11-03T07:01:39.808Z",
+        "verifiedAt": "2025-11-03T07:08:55.311Z",
         "checksum": "9ff80e1569f657846dc98a0158d5c243a6cc3e1e9ec45de96ef782d14a0ce3e0",
         "bytes": 237,
         "location": {
@@ -78,7 +78,7 @@
       "smoke": {
         "status": "passed",
         "reason": null,
-        "verifiedAt": "2025-11-03T07:01:39.998Z"
+        "verifiedAt": "2025-11-03T07:08:55.413Z"
       }
     }
   ],
@@ -89,7 +89,7 @@
     "executed": 1,
     "skipped": 0,
     "failed": 0,
-    "verifiedAt": "2025-11-03T07:01:39.999Z",
+    "verifiedAt": "2025-11-03T07:08:55.413Z",
     "failures": []
   },
   "history": {
@@ -100,7 +100,17 @@
         "executed": 1,
         "skipped": 0,
         "failed": 0,
+        "verifiedAt": "2025-11-03T07:08:55.413Z",
+        "failures": []
+      },
+      {
+        "status": "passed",
+        "runtime": "node",
+        "executed": 1,
+        "skipped": 0,
+        "failed": 0,
         "verifiedAt": "2025-11-03T07:01:39.999Z",
+        "reason": null,
         "failures": []
       },
       {

@@ -38,7 +38,9 @@
     "graphrag:export": "node scripts/graphrag/export.mjs",
     "graphrag:retrieve": "node scripts/graphrag/retrieve.mjs",
     "graphrag:explore": "node scripts/graphrag/explore.mjs",
-    "graphrag:gnn": "node scripts/graphrag/gnn.pipeline.mjs"
+    "graphrag:gnn": "node scripts/graphrag/gnn.pipeline.mjs",
+    "license": "license-checker --summary",
+    "sbom": "cyclonedx-bom -o sbom.json"
   },
   "devDependencies": {
     "@cyclonedx/bom": "^4.1.2",

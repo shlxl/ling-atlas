@@ -140,7 +140,8 @@ jobs:
       - name: Bundle budget check
         run: node .codex/budget.mjs
       - name: npm audit (non-blocking)
-        run: npm run audit
+        continue-on-error: true
+        run: npm audit
       - name: License summary
         run: npm run license
       - name: Generate SBOM
