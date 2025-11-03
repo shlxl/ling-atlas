@@ -214,7 +214,7 @@ const cspTemplate = loadCspTemplate()
 const cspContent = cspTemplate ? serializeCsp(cspTemplate) : null
 const head: HeadConfig[] = [
   ['meta', { name: 'referrer', content: 'no-referrer' }],
-  ['script', { src: 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs' }]
+  ['script', { src: 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js' }]
 ]
 
 const supportedLocalesMeta = SUPPORTED_LOCALES.map(locale => locale.code).join(',')
