@@ -10,44 +10,44 @@
   },
   "build": {
     "pagegen": {
-      "timestamp": "2025-10-31T20:15:17.463Z",
-      "totalMs": 90.885,
+      "timestamp": "2025-11-02T18:03:03.758Z",
+      "totalMs": 107.749,
       "collect": {
         "locales": 2,
         "cacheHitRate": 1,
-        "cacheHits": 8,
+        "cacheHits": 9,
         "cacheMisses": 0,
         "cacheDisabledLocales": 0,
         "parsedFiles": 0,
-        "totalFiles": 8,
+        "totalFiles": 9,
         "parseErrors": 0,
         "errorEntries": 0
       },
       "write": {
-        "total": 37,
+        "total": 47,
         "written": 5,
-        "skipped": 32,
+        "skipped": 42,
         "failed": 0,
-        "hashMatches": 32,
+        "hashMatches": 42,
         "disabled": false,
         "skippedByReason": {
-          "hash": 32
+          "hash": 42
         }
       },
       "feeds": {
         "summary": {
           "locales": 2,
-          "rssTotal": 8,
+          "rssTotal": 9,
           "rssLimitedLocales": 0,
-          "sitemapTotal": 8,
+          "sitemapTotal": 9,
           "emptyLocales": 1
         },
         "locales": [
           {
             "locale": "zh",
-            "rssCount": 8,
+            "rssCount": 9,
             "rssLimited": false,
-            "sitemapCount": 8
+            "sitemapCount": 9
           },
           {
             "locale": "en",
@@ -61,17 +61,17 @@
         "summary": {
           "locales": 2,
           "emptyLocales": 1,
-          "categoriesTotal": 2,
-          "seriesTotal": 1,
-          "tagsTotal": 24,
+          "categoriesTotal": 3,
+          "seriesTotal": 2,
+          "tagsTotal": 32,
           "archiveTotal": 1
         },
         "locales": [
           {
             "locale": "zh",
-            "categories": 2,
-            "series": 1,
-            "tags": 24,
+            "categories": 3,
+            "series": 2,
+            "tags": 32,
             "archive": 1
           },
           {
@@ -315,6 +315,34 @@
       }
     },
     "graphrag": {
+      "ingest": {
+        "type": "ingest",
+        "timestamp": "2025-11-02T17:04:19.165Z",
+        "durationMs": 43870,
+        "locale": "all",
+        "includeDrafts": false,
+        "changedOnly": false,
+        "noCache": true,
+        "dryRun": false,
+        "adapter": "gemini",
+        "adapterModel": "gemini-2.5-pro",
+        "totals": {
+          "collected": 76,
+          "normalized": 1,
+          "readyForWrite": 1,
+          "processed": 1
+        },
+        "skipped": {
+          "total": 0,
+          "reasons": [],
+          "samples": []
+        },
+        "write": {
+          "attempted": 1,
+          "written": 1,
+          "cacheUpdated": false
+        }
+      },
       "explore": {
         "type": "explore",
         "mode": "question",
@@ -377,59 +405,14 @@
           ]
         }
       },
-      "ingest": {
-        "type": "ingest",
-        "timestamp": "2025-10-31T16:01:53.993Z",
-        "durationMs": 1341,
-        "locale": "zh",
-        "includeDrafts": true,
-        "changedOnly": false,
-        "noCache": true,
-        "dryRun": false,
-        "adapter": "placeholder",
-        "adapterModel": null,
-        "totals": {
-          "collected": 54,
-          "normalized": 54,
-          "readyForWrite": 8,
-          "processed": 8
-        },
-        "skipped": {
-          "total": 46,
-          "reasons": [
-            {
-              "reason": "自动生成产物，默认跳过",
-              "count": 28,
-              "sampleDocId": "zh/_generated/archive/2025/index"
-            },
-            {
-              "reason": "质量守门失败",
-              "count": 18,
-              "sampleDocId": "zh/DEPLOYMENT"
-            }
-          ],
-          "samples": [
-            {
-              "docId": "zh/DEPLOYMENT",
-              "reason": "质量守门失败"
-            },
-            {
-              "docId": "zh/MIGRATION",
-              "reason": "质量守门失败"
-            },
-            {
-              "docId": "zh/index",
-              "reason": "质量守门失败"
-            }
-          ]
-        },
-        "write": {
-          "attempted": 8,
-          "written": 8,
-          "cacheUpdated": false
-        }
+      "warnings": []
+    },
+    "graphragHistory": [
+      {
+        "timestamp": "2025-10-31T20:07:52.589Z",
+        "warnings": []
       }
-    }
+    ]
   },
   "_internal": {
     "paths": {},

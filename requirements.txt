@@ -1,0 +1,4 @@
+pydantic
+langchain-google-genai
+python-dotenv
+google-api-core

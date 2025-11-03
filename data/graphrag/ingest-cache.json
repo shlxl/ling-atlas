@@ -3,48 +3,54 @@
     "hash": "a98db53dded05bb512de69d82c585fed33ac6f82af5ebbdcbca7d7597785fa0f",
     "locale": "zh",
     "updatedAt": "2025-10-20T00:00:00.000Z",
-    "writtenAt": "2025-10-31T15:06:38.581Z"
+    "writtenAt": "2025-11-03T05:15:23.682Z"
   },
   "zh/content/ai-runtime-guide/index": {
     "hash": "c255526d10c0e3afdae8d5fe80ee03aedad30c095467386aaa18afc60844d632",
     "locale": "zh",
     "updatedAt": "2025-10-20T00:00:00.000Z",
-    "writtenAt": "2025-10-31T15:06:38.581Z"
+    "writtenAt": "2025-11-03T05:15:23.682Z"
   },
   "zh/content/pagegen-handbook/index": {
     "hash": "7002a79f172eecd3ec73486c8e98f70af9e2505df10d9f3d1096fafb96d900d7",
     "locale": "zh",
     "updatedAt": "2025-10-20T00:00:00.000Z",
-    "writtenAt": "2025-10-31T15:06:38.581Z"
+    "writtenAt": "2025-11-03T05:15:23.682Z"
   },
   "zh/content/pagegen-retrospective/index": {
     "hash": "6945b2f12660fd2aa9ce27fb8444151c7cff12851b938ce446c3b4b52b1d5988",
     "locale": "zh",
     "updatedAt": "2025-10-20T00:00:00.000Z",
-    "writtenAt": "2025-10-31T15:06:38.581Z"
+    "writtenAt": "2025-11-03T05:15:23.682Z"
   },
   "zh/content/project-overview/index": {
     "hash": "c2e4766c83ada5fd0f58f239fcf582e70fbbd6a26ece822da0ec5c115d86a180",
     "locale": "zh",
     "updatedAt": "2025-10-20T00:00:00.000Z",
-    "writtenAt": "2025-10-31T15:06:38.581Z"
+    "writtenAt": "2025-11-03T05:15:23.682Z"
   },
   "zh/content/telemetry-cases/index": {
     "hash": "06913f03d4b8a89310d0e557eb924e044eecd053a56c4f527f7580e1973de7e4",
     "locale": "zh",
     "updatedAt": "2025-10-20T00:00:00.000Z",
-    "writtenAt": "2025-10-31T15:06:38.581Z"
+    "writtenAt": "2025-11-03T05:15:23.682Z"
   },
   "zh/content/telemetry-guide/index": {
     "hash": "4f9209b6491dd40faa125a8630ad1c648dace968045bde631b178da95e69e05e",
     "locale": "zh",
     "updatedAt": "2025-10-20T00:00:00.000Z",
-    "writtenAt": "2025-10-31T15:06:38.581Z"
+    "writtenAt": "2025-11-03T05:15:23.682Z"
   },
   "zh/content/tutorial-authoring-to-publish/index": {
     "hash": "5c611413f5effcdc358c4683674707472e1cfd86ca10928d41944e960f261b99",
     "locale": "zh",
     "updatedAt": "2025-10-20T00:00:00.000Z",
-    "writtenAt": "2025-10-31T15:06:38.581Z"
+    "writtenAt": "2025-11-03T05:15:23.682Z"
+  },
+  "zh/content/graphrag-research/index": {
+    "hash": "616d523dd6eaf4bf48dbd81b8d86c0d909ababde0f47c06957ba36bdb716f32a",
+    "locale": "zh",
+    "updatedAt": "2025-11-01T00:00:00.000Z",
+    "writtenAt": "2025-11-03T05:15:23.682Z"
   }
 }

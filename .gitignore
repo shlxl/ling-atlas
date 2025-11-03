@@ -36,3 +36,6 @@ docs/public/api/
 # tool context
 .codex/
 GEMINI.md
+
+# venv
+.venv/

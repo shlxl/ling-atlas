@@ -1,0 +1,5 @@
+FROM openai
+
+PARAMETER name "deepseek-v3.1"
+PARAMETER base_url "https://api.deepseek.com/v1"
+PARAMETER api_key "${DEEPSEEK_API_KEY}"

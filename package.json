@@ -32,23 +32,13 @@
     "ai:all": "npm run ai:embed && (npm run ai:summary || true) && (npm run ai:qa || true)",
     "test:pagegen": "node --test tests/pagegen/*.test.mjs",
     "test:links": "node --test tests/check-links/*.test.mjs",
-    "test:theme": "node --test tests/locale-map/*.test.mjs tests/theme/*.test.mjs",
-    "config:collections": "node scripts/validate-collections-template.mjs",
-    "config:feeds": "node scripts/validate-feeds-template.mjs",
-    "config:nav": "node scripts/validate-nav-config.mjs",
-    "config:seo": "node scripts/validate-seo-config.mjs",
-    "config:tags": "node scripts/validate-tag-alias.mjs",
+    "test:theme": "node --test tests/locale-map/core.test.mjs tests/theme/nav-core.test.mjs tests/theme/preferred-locale.test.mjs",
     "graphrag:constraints": "node scripts/graphrag/ensure-constraints.mjs",
     "graphrag:ingest": "node scripts/graphrag/ingest.pipeline.mjs",
     "graphrag:export": "node scripts/graphrag/export.mjs",
     "graphrag:retrieve": "node scripts/graphrag/retrieve.mjs",
     "graphrag:explore": "node scripts/graphrag/explore.mjs",
-    "graphrag:gnn": "node scripts/graphrag/gnn.pipeline.mjs",
-    "audit": "npm audit --omit=dev || true",
-    "license": "license-checker --summary",
-    "sbom": "node scripts/sbom.mjs",
-    "chrome-devtools": "npx chrome-devtools-mcp@latest",
-    "prepare": "husky"
+    "graphrag:gnn": "node scripts/graphrag/gnn.pipeline.mjs"
   },
   "devDependencies": {
     "@cyclonedx/bom": "^4.1.2",
@@ -87,6 +77,9 @@
     "full-icu": "^1.5.0",
     "mermaid": "^10.9.1",
     "neo4j-driver": "^5.28.2",
-    "onnxruntime-node": "^1.23.0"
+    "onnxruntime-node": "^1.23.0",
+    "@langchain/core": "^0.2.1",
+    "@langchain/google-genai": "^0.0.17",
+    "zod": "^3.23.8"
   }
 }

@@ -64,6 +64,9 @@ npm run dev
 - `npm run knowledge:build`：单独更新 `/api/knowledge.json`（段落级知识数据）
 - `npm run graphrag:constraints`：为 GraphRAG 入图准备 Neo4j 唯一约束与索引
 - `npm run graphrag:ingest -- --locale zh --adapter transformers`：写入 Doc/Chunk/Entity/Tag 结构，可配合 `--changed-only` 增量同步
+  - 也可使用 `--adapter gemini --adapter-model gemini-1.5-pro` 来调用 Gemini API 进行实体提取（需配置 `GEMINI_API_KEY`），默认模型为 `gemini-1.5-pro`。
+- `npm run graphrag:ingest -- --include-only <file>`：白名单模式，只处理指定文件（每行一个相对路径）中列出的文章
+- `npm run graphrag:ingest -- --ignore-file <file>`：忽略列表模式，跳过指定文件（每行一个相对路径）中列出的文章
 - `npm run graphrag:retrieve -- --mode <subgraph|path|topn> --input payload.json`：执行子图、最短路径或 Top-N 查询（payload 支持使用 `-` 从 stdin 读取）。`subgraph` 模式可加上 `--max-hops`、`--node-limit`、`--edge-limit`、`--include-label <Label>`、`--include-edge-type <TYPE>` 精细控制跳数、节点/边阈值与过滤条件。
 - `npm run graphrag:retrieve -- --mode hybrid --input payload.json [--hybrid-alpha 0.7 0.3]`：语义 + 结构融合检索（默认读取 `gnn_pagerank` 等结构指标），`alpha` 控制语义/结构权重。
 - `npm run graphrag:gnn -- --graph entity --algo pagerank --write-property gnn_pagerank`：GDS/GNN 管道（投影、算法写回），配置详见 `data/graphrag/gnn-config.json`。
@@ -123,6 +126,9 @@ npm run graphrag:retrieve -- --mode hybrid --input hybrid.example.json --pretty
 
 - `AI_RUNTIME`：决定 `ai:prepare`/`ai:smoke` 的运行时（`placeholder`、`node`、`wasm` 等）。未设置时默认为 `placeholder` 并跳过真实模型下载。
 - `AI_EMBED_MODEL`：选择嵌入模型适配器，格式为 `<adapter>:<model>`；**未设置时默认尝试** `transformers-node:sentence-transformers:Xenova/all-MiniLM-L6-v2`，若需停用请显式设置为 `placeholder`。
+- `GEMINI_API_KEY`：用于 Gemini 适配器，请在 `.env` 文件中配置您的 Gemini API 密钥。
+- `AI_ENTITY_ADAPTER`：选择实体提取适配器，例如 `transformers` 或 `gemini`。默认值为 `placeholder`。
+- `AI_ENTITY_MODEL`：当使用 `gemini` 适配器时，指定要使用的 Gemini 模型，例如 `gemini-1.5-pro` 或 `gemini-1.5-flash`。默认值为 `gemini-1.5-pro`。
 - `AI_SUMMARY_MODEL`：摘要生成的适配器配置，格式同上；默认值为 `transformers-node:Xenova/distilbart-cnn-12-6`，问答脚本默认复用该值，可通过 `AI_QA_MODEL` 覆盖。
 - `AI_QA_MODEL`：问答生成适配器，默认 `transformers-node:Xenova/distilbert-base-uncased-distilled-squad`；如需占位请显式设置 `placeholder`。
 - CLI 覆盖：所有 AI CLI（`scripts/embed-build.mjs`、`scripts/summary.mjs`、`scripts/qa-build.mjs`）均支持 `--adapter <spec>`，用于临时指定 `<adapter>:<model>`，优先级高于环境变量。
