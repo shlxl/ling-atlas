@@ -300,26 +300,6 @@
         "year": "2025"
       },
       {
-        "title": "观测指标场景案例与排障实录",
-        "date": "2025-10-20",
-        "updated": "",
-        "status": "published",
-        "category": "工程笔记",
-        "category_slug": "工程笔记",
-        "series": "项目起航手记",
-        "series_slug": "project-kickoff",
-        "tags": [
-          "案例分析",
-          "告警处理",
-          "故障排查"
-        ],
-        "slug": "telemetry-cases",
-        "path": "/zh/content/telemetry-cases/",
-        "excerpt": "以真实场景为线索，逐步演示如何通过 Telemetry + CLI 日志定位 Pagegen 与 AI 管线告警，并给出可复现的修复步骤。",
-        "relative": "telemetry-cases",
-        "year": "2025"
-      },
-      {
         "title": "Ling Atlas 项目缘起与系统全貌",
         "date": "2025-10-20",
         "updated": "",
@@ -337,6 +317,26 @@
         "path": "/zh/content/project-overview/",
         "excerpt": "全面梳理 Ling Atlas 的愿景、演进路线与当前落地能力，帮助后续贡献者快速理解“个人向量化知识库”的系统边界与协作模式。",
         "relative": "project-overview",
+        "year": "2025"
+      },
+      {
+        "title": "观测指标场景案例与排障实录",
+        "date": "2025-10-20",
+        "updated": "",
+        "status": "published",
+        "category": "工程笔记",
+        "category_slug": "工程笔记",
+        "series": "项目起航手记",
+        "series_slug": "project-kickoff",
+        "tags": [
+          "案例分析",
+          "告警处理",
+          "故障排查"
+        ],
+        "slug": "telemetry-cases",
+        "path": "/zh/content/telemetry-cases/",
+        "excerpt": "以真实场景为线索，逐步演示如何通过 Telemetry + CLI 日志定位 Pagegen 与 AI 管线告警，并给出可复现的修复步骤。",
+        "relative": "telemetry-cases",
         "year": "2025"
       },
       {
@@ -828,72 +828,6 @@
         "year": "2025"
       }
     ],
-    "案例分析": [
-      {
-        "title": "观测指标场景案例与排障实录",
-        "date": "2025-10-20",
-        "updated": "",
-        "status": "published",
-        "category": "工程笔记",
-        "category_slug": "工程笔记",
-        "series": "项目起航手记",
-        "series_slug": "project-kickoff",
-        "tags": [
-          "案例分析",
-          "告警处理",
-          "故障排查"
-        ],
-        "slug": "telemetry-cases",
-        "path": "/zh/content/telemetry-cases/",
-        "excerpt": "以真实场景为线索，逐步演示如何通过 Telemetry + CLI 日志定位 Pagegen 与 AI 管线告警，并给出可复现的修复步骤。",
-        "relative": "telemetry-cases",
-        "year": "2025"
-      }
-    ],
-    "告警处理": [
-      {
-        "title": "观测指标场景案例与排障实录",
-        "date": "2025-10-20",
-        "updated": "",
-        "status": "published",
-        "category": "工程笔记",
-        "category_slug": "工程笔记",
-        "series": "项目起航手记",
-        "series_slug": "project-kickoff",
-        "tags": [
-          "案例分析",
-          "告警处理",
-          "故障排查"
-        ],
-        "slug": "telemetry-cases",
-        "path": "/zh/content/telemetry-cases/",
-        "excerpt": "以真实场景为线索，逐步演示如何通过 Telemetry + CLI 日志定位 Pagegen 与 AI 管线告警，并给出可复现的修复步骤。",
-        "relative": "telemetry-cases",
-        "year": "2025"
-      }
-    ],
-    "故障排查": [
-      {
-        "title": "观测指标场景案例与排障实录",
-        "date": "2025-10-20",
-        "updated": "",
-        "status": "published",
-        "category": "工程笔记",
-        "category_slug": "工程笔记",
-        "series": "项目起航手记",
-        "series_slug": "project-kickoff",
-        "tags": [
-          "案例分析",
-          "告警处理",
-          "故障排查"
-        ],
-        "slug": "telemetry-cases",
-        "path": "/zh/content/telemetry-cases/",
-        "excerpt": "以真实场景为线索，逐步演示如何通过 Telemetry + CLI 日志定位 Pagegen 与 AI 管线告警，并给出可复现的修复步骤。",
-        "relative": "telemetry-cases",
-        "year": "2025"
-      }
-    ],
     "项目治理": [
       {
         "title": "Ling Atlas 项目缘起与系统全貌",
@@ -957,6 +891,72 @@
         "path": "/zh/content/project-overview/",
         "excerpt": "全面梳理 Ling Atlas 的愿景、演进路线与当前落地能力，帮助后续贡献者快速理解“个人向量化知识库”的系统边界与协作模式。",
         "relative": "project-overview",
+        "year": "2025"
+      }
+    ],
+    "案例分析": [
+      {
+        "title": "观测指标场景案例与排障实录",
+        "date": "2025-10-20",
+        "updated": "",
+        "status": "published",
+        "category": "工程笔记",
+        "category_slug": "工程笔记",
+        "series": "项目起航手记",
+        "series_slug": "project-kickoff",
+        "tags": [
+          "案例分析",
+          "告警处理",
+          "故障排查"
+        ],
+        "slug": "telemetry-cases",
+        "path": "/zh/content/telemetry-cases/",
+        "excerpt": "以真实场景为线索，逐步演示如何通过 Telemetry + CLI 日志定位 Pagegen 与 AI 管线告警，并给出可复现的修复步骤。",
+        "relative": "telemetry-cases",
+        "year": "2025"
+      }
+    ],
+    "告警处理": [
+      {
+        "title": "观测指标场景案例与排障实录",
+        "date": "2025-10-20",
+        "updated": "",
+        "status": "published",
+        "category": "工程笔记",
+        "category_slug": "工程笔记",
+        "series": "项目起航手记",
+        "series_slug": "project-kickoff",
+        "tags": [
+          "案例分析",
+          "告警处理",
+          "故障排查"
+        ],
+        "slug": "telemetry-cases",
+        "path": "/zh/content/telemetry-cases/",
+        "excerpt": "以真实场景为线索，逐步演示如何通过 Telemetry + CLI 日志定位 Pagegen 与 AI 管线告警，并给出可复现的修复步骤。",
+        "relative": "telemetry-cases",
+        "year": "2025"
+      }
+    ],
+    "故障排查": [
+      {
+        "title": "观测指标场景案例与排障实录",
+        "date": "2025-10-20",
+        "updated": "",
+        "status": "published",
+        "category": "工程笔记",
+        "category_slug": "工程笔记",
+        "series": "项目起航手记",
+        "series_slug": "project-kickoff",
+        "tags": [
+          "案例分析",
+          "告警处理",
+          "故障排查"
+        ],
+        "slug": "telemetry-cases",
+        "path": "/zh/content/telemetry-cases/",
+        "excerpt": "以真实场景为线索，逐步演示如何通过 Telemetry + CLI 日志定位 Pagegen 与 AI 管线告警，并给出可复现的修复步骤。",
+        "relative": "telemetry-cases",
         "year": "2025"
       }
     ],
@@ -1200,26 +1200,6 @@
         "year": "2025"
       },
       {
-        "title": "观测指标场景案例与排障实录",
-        "date": "2025-10-20",
-        "updated": "",
-        "status": "published",
-        "category": "工程笔记",
-        "category_slug": "工程笔记",
-        "series": "项目起航手记",
-        "series_slug": "project-kickoff",
-        "tags": [
-          "案例分析",
-          "告警处理",
-          "故障排查"
-        ],
-        "slug": "telemetry-cases",
-        "path": "/zh/content/telemetry-cases/",
-        "excerpt": "以真实场景为线索，逐步演示如何通过 Telemetry + CLI 日志定位 Pagegen 与 AI 管线告警，并给出可复现的修复步骤。",
-        "relative": "telemetry-cases",
-        "year": "2025"
-      },
-      {
         "title": "Ling Atlas 项目缘起与系统全貌",
         "date": "2025-10-20",
         "updated": "",
@@ -1237,6 +1217,26 @@
         "path": "/zh/content/project-overview/",
         "excerpt": "全面梳理 Ling Atlas 的愿景、演进路线与当前落地能力，帮助后续贡献者快速理解“个人向量化知识库”的系统边界与协作模式。",
         "relative": "project-overview",
+        "year": "2025"
+      },
+      {
+        "title": "观测指标场景案例与排障实录",
+        "date": "2025-10-20",
+        "updated": "",
+        "status": "published",
+        "category": "工程笔记",
+        "category_slug": "工程笔记",
+        "series": "项目起航手记",
+        "series_slug": "project-kickoff",
+        "tags": [
+          "案例分析",
+          "告警处理",
+          "故障排查"
+        ],
+        "slug": "telemetry-cases",
+        "path": "/zh/content/telemetry-cases/",
+        "excerpt": "以真实场景为线索，逐步演示如何通过 Telemetry + CLI 日志定位 Pagegen 与 AI 管线告警，并给出可复现的修复步骤。",
+        "relative": "telemetry-cases",
         "year": "2025"
       },
       {
@@ -1387,26 +1387,6 @@
       "year": "2025"
     },
     {
-      "title": "观测指标场景案例与排障实录",
-      "date": "2025-10-20",
-      "updated": "",
-      "status": "published",
-      "category": "工程笔记",
-      "category_slug": "工程笔记",
-      "series": "项目起航手记",
-      "series_slug": "project-kickoff",
-      "tags": [
-        "案例分析",
-        "告警处理",
-        "故障排查"
-      ],
-      "slug": "telemetry-cases",
-      "path": "/zh/content/telemetry-cases/",
-      "excerpt": "以真实场景为线索，逐步演示如何通过 Telemetry + CLI 日志定位 Pagegen 与 AI 管线告警，并给出可复现的修复步骤。",
-      "relative": "telemetry-cases",
-      "year": "2025"
-    },
-    {
       "title": "Ling Atlas 项目缘起与系统全貌",
       "date": "2025-10-20",
       "updated": "",
@@ -1424,6 +1404,26 @@
       "path": "/zh/content/project-overview/",
       "excerpt": "全面梳理 Ling Atlas 的愿景、演进路线与当前落地能力，帮助后续贡献者快速理解“个人向量化知识库”的系统边界与协作模式。",
       "relative": "project-overview",
+      "year": "2025"
+    },
+    {
+      "title": "观测指标场景案例与排障实录",
+      "date": "2025-10-20",
+      "updated": "",
+      "status": "published",
+      "category": "工程笔记",
+      "category_slug": "工程笔记",
+      "series": "项目起航手记",
+      "series_slug": "project-kickoff",
+      "tags": [
+        "案例分析",
+        "告警处理",
+        "故障排查"
+      ],
+      "slug": "telemetry-cases",
+      "path": "/zh/content/telemetry-cases/",
+      "excerpt": "以真实场景为线索，逐步演示如何通过 Telemetry + CLI 日志定位 Pagegen 与 AI 管线告警，并给出可复现的修复步骤。",
+      "relative": "telemetry-cases",
       "year": "2025"
     },
     {

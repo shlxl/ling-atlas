@@ -10,8 +10,8 @@
   },
   "build": {
     "pagegen": {
-      "timestamp": "2025-11-03T06:47:35.728Z",
-      "totalMs": 114.347,
+      "timestamp": "2025-11-03T07:01:40.540Z",
+      "totalMs": 135.883,
       "collect": {
         "locales": 2,
         "cacheHitRate": 1,
@@ -25,13 +25,13 @@
       },
       "write": {
         "total": 47,
-        "written": 6,
-        "skipped": 41,
+        "written": 5,
+        "skipped": 42,
         "failed": 0,
-        "hashMatches": 41,
+        "hashMatches": 42,
         "disabled": false,
         "skippedByReason": {
-          "hash": 41
+          "hash": 42
         }
       },
       "feeds": {
@@ -255,7 +255,7 @@
           "executed": 1,
           "skipped": 0,
           "failed": 0,
-          "verifiedAt": "2025-10-31T17:25:37.457Z"
+          "verifiedAt": "2025-11-03T07:01:39.999Z"
         }
       },
       "smoke": {
@@ -265,7 +265,7 @@
           "executed": 1,
           "skipped": 0,
           "failed": 0,
-          "verifiedAt": "2025-10-31T17:25:37.457Z",
+          "verifiedAt": "2025-11-03T07:01:39.999Z",
           "reason": null,
           "failures": []
         },
@@ -279,7 +279,7 @@
             "smoke": {
               "status": "passed",
               "reason": null,
-              "verifiedAt": "2025-10-31T17:25:37.457Z"
+              "verifiedAt": "2025-11-03T07:01:39.998Z"
             },
             "cache": {
               "status": "ready",
@@ -289,7 +289,7 @@
         ],
         "runtime": "node",
         "fallback": null,
-        "generatedAt": "2025-10-31T17:25:37.330Z",
+        "generatedAt": "2025-11-03T07:01:39.796Z",
         "history": [
           {
             "status": "passed",
@@ -297,7 +297,27 @@
             "executed": 1,
             "skipped": 0,
             "failed": 0,
-            "verifiedAt": "2025-10-31T17:25:37.457Z",
+            "verifiedAt": "2025-11-03T07:01:39.999Z",
+            "reason": null,
+            "failures": []
+          },
+          {
+            "status": "passed",
+            "runtime": "node",
+            "executed": 1,
+            "skipped": 0,
+            "failed": 0,
+            "verifiedAt": "2025-11-03T07:01:39.999Z",
+            "reason": null,
+            "failures": []
+          },
+          {
+            "status": "passed",
+            "runtime": "node",
+            "executed": 1,
+            "skipped": 0,
+            "failed": 0,
+            "verifiedAt": "2025-11-03T07:00:54.795Z",
             "reason": null,
             "failures": []
           },
