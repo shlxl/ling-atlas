@@ -12,7 +12,7 @@ tags_zh:
   - 图神经网络
   - 多模态知识图谱
 series: GraphRAG
-series_slug: GraphRAG
+series_slug: graphrag
 slug: graphrag-research
 excerpt: 研究GraphRAG当前状况与最新发展方向，包括多跳图检索、向量融合、混合检索、子图提取与图路径检索、图神经网络、多模态知识图谱等前沿方向。
 ---

@@ -10,28 +10,28 @@
   },
   "build": {
     "pagegen": {
-      "timestamp": "2025-11-02T18:03:03.758Z",
-      "totalMs": 107.749,
+      "timestamp": "2025-11-03T06:20:58.357Z",
+      "totalMs": 103.635,
       "collect": {
         "locales": 2,
-        "cacheHitRate": 1,
-        "cacheHits": 9,
-        "cacheMisses": 0,
+        "cacheHitRate": 0.889,
+        "cacheHits": 8,
+        "cacheMisses": 1,
         "cacheDisabledLocales": 0,
-        "parsedFiles": 0,
+        "parsedFiles": 1,
         "totalFiles": 9,
         "parseErrors": 0,
         "errorEntries": 0
       },
       "write": {
         "total": 47,
-        "written": 5,
-        "skipped": 42,
+        "written": 6,
+        "skipped": 41,
         "failed": 0,
-        "hashMatches": 42,
+        "hashMatches": 41,
         "disabled": false,
         "skippedByReason": {
-          "hash": 42
+          "hash": 41
         }
       },
       "feeds": {
@@ -317,29 +317,40 @@
     "graphrag": {
       "ingest": {
         "type": "ingest",
-        "timestamp": "2025-11-02T17:04:19.165Z",
-        "durationMs": 43870,
+        "timestamp": "2025-11-03T05:26:22.842Z",
+        "durationMs": 88773,
         "locale": "all",
         "includeDrafts": false,
         "changedOnly": false,
         "noCache": true,
-        "dryRun": false,
+        "dryRun": true,
         "adapter": "gemini",
         "adapterModel": "gemini-2.5-pro",
         "totals": {
           "collected": 76,
           "normalized": 1,
-          "readyForWrite": 1,
-          "processed": 1
+          "readyForWrite": 0,
+          "processed": 0
         },
         "skipped": {
-          "total": 0,
-          "reasons": [],
-          "samples": []
+          "total": 1,
+          "reasons": [
+            {
+              "reason": "adapter-error",
+              "count": 1,
+              "sampleDocId": "zh/content/graphrag-research/index"
+            }
+          ],
+          "samples": [
+            {
+              "docId": "zh/content/graphrag-research/index",
+              "reason": "adapter-error"
+            }
+          ]
         },
         "write": {
-          "attempted": 1,
-          "written": 1,
+          "attempted": 0,
+          "written": 0,
           "cacheUpdated": false
         }
       },
@@ -405,9 +416,27 @@
           ]
         }
       },
-      "warnings": []
+      "warnings": [
+        {
+          "scope": "ingest",
+          "message": "最新 ingest 未写入任何文档，请检查质量守门与缓存设置。",
+          "severity": "error",
+          "timestamp": "2025-11-03T05:26:22.842Z"
+        }
+      ]
     },
     "graphragHistory": [
+      {
+        "timestamp": "2025-10-31T20:07:52.589Z",
+        "warnings": [
+          {
+            "scope": "ingest",
+            "message": "最新 ingest 未写入任何文档，请检查质量守门与缓存设置。",
+            "severity": "error",
+            "timestamp": "2025-11-03T05:26:22.842Z"
+          }
+        ]
+      },
       {
         "timestamp": "2025-10-31T20:07:52.589Z",
         "warnings": []

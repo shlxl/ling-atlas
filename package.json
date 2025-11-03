@@ -6,7 +6,7 @@
     "docs/**/*.md": "npm run md:lint"
   },
   "scripts": {
-    "precheck": "node scripts/validate-frontmatter.mjs && npm run config:collections && npm run config:feeds && npm run config:nav && npm run config:seo && npm run config:tags",
+    "precheck": "node scripts/validate-frontmatter.mjs && node scripts/validate-collections-template.mjs && node scripts/validate-feeds-template.mjs && node scripts/validate-nav-config.mjs && node scripts/validate-seo-config.mjs && node scripts/validate-tag-alias.mjs",
     "tags:normalize": "node scripts/normalize-tags.mjs",
     "stats:lint": "node scripts/stats-lint.mjs",
     "stats:diff": "node scripts/stats-diff.mjs",
