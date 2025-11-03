@@ -10,9 +10,9 @@ from typing import Dict, List, Optional
 
 from dotenv import load_dotenv
 from langchain_google_genai import ChatGoogleGenerativeAI
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator, model_validator
 
-load_dotenv()
+load_dotenv(override=True)
 
 API_KEY = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
 DEFAULT_MODEL = os.getenv("GEMINI_DEFAULT_MODEL", "gemini-1.5-pro")
@@ -54,12 +54,42 @@ class Node(BaseModel):
     type: str = Field("Concept")
     properties: Optional[dict] = Field(default=None)
 
+    @field_validator('properties', mode='before')
+    def properties_validate(cls, v):
+        if isinstance(v, str):
+            try:
+                return json.loads(v)
+            except json.JSONDecodeError:
+                raise ValueError('Invalid JSON string for properties')
+        return v
+
+    @model_validator(mode='after')
+    def move_type_from_properties(self):
+        if self.properties and 'type' in self.properties:
+            self.type = self.properties.pop('type')
+        return self
+
 
 class Relationship(BaseModel):
     source: Node
     target: Node
     type: str = Field("RELATED")
     properties: Optional[dict] = Field(default=None)
+
+    @field_validator('properties', mode='before')
+    def properties_validate(cls, v):
+        if isinstance(v, str):
+            try:
+                return json.loads(v)
+            except json.JSONDecodeError:
+                raise ValueError('Invalid JSON string for properties')
+        return v
+
+    @model_validator(mode='after')
+    def move_type_from_properties(self):
+        if self.properties and 'type' in self.properties:
+            self.type = self.properties.pop('type')
+        return self
 
 
 class KnowledgeGraph(BaseModel):
@@ -223,7 +253,7 @@ def main() -> None:
             print(graph.model_dump_json())
             return
         except Exception as error:  # pragma: no cover
-            if "速率" in str(error) and attempt < retries - 1:
+            if ("速率" in str(error) or "ServiceUnavailable" in str(error) or "overloaded" in str(error)) and attempt < retries - 1:
                 delay = base_delay * (2**attempt) + random.uniform(0, 1)
                 time.sleep(delay)
                 continue
