@@ -10,7 +10,7 @@
 
 <script setup>
 import { onMounted, ref, watch } from 'vue'
-import { withBase } from 'vitepress'
+import { useRoute, withBase } from 'vitepress'
 
 let mermaidInstance = null
 async function ensureMermaid() {
@@ -38,8 +38,22 @@ const loading = ref(true)
 const graphText = ref('')
 let renderAbort = false
 
+const route = useRoute()
+
+function resolveGraphUrl(rawPath) {
+  if (!rawPath) return rawPath
+  if (/^(https?:)?\/\//.test(rawPath)) return rawPath
+  if (rawPath.startsWith('/')) return withBase(rawPath)
+
+  const relativePath = route.data?.relativePath ?? ''
+  const baseUrl = new URL(relativePath || '.', 'http://mermaid.local/')
+  const resolved = new URL(rawPath, baseUrl)
+
+  return withBase(resolved.pathname)
+}
+
 async function loadGraphText() {
-  const url = withBase(props.path)
+  const url = resolveGraphUrl(props.path)
   const response = await fetch(url, { cache: 'no-cache' })
   if (!response.ok) {
     throw new Error(`获取 mermaid 文件失败：${response.status}`)
@@ -104,7 +118,7 @@ onMounted(() => {
 })
 
 watch(
-  () => props.path,
+  () => [props.path, route.data?.relativePath],
   () => {
     renderAbort = true
     setTimeout(() => { renderAbort = false }, 0)
