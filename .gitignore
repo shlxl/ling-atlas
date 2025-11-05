@@ -39,3 +39,7 @@ GEMINI.md
 
 # venv
 .venv/
+
+# .env files
+.env
+.env.local

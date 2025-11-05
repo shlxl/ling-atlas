@@ -1,6 +1,764 @@
 [
   {
     "type": "ingest",
+    "timestamp": "2025-11-03T14:09:16.865Z",
+    "durationMs": 41379,
+    "locale": "all",
+    "includeDrafts": false,
+    "changedOnly": false,
+    "noCache": true,
+    "dryRun": false,
+    "adapter": "gemini",
+    "adapterModel": "gemini-2.5-pro",
+    "totals": {
+      "collected": 76,
+      "normalized": 1,
+      "readyForWrite": 1,
+      "processed": 1
+    },
+    "skipped": {
+      "total": 0,
+      "reasons": [],
+      "samples": []
+    },
+    "write": {
+      "attempted": 1,
+      "written": 1,
+      "cacheUpdated": false
+    }
+  },
+  {
+    "type": "ingest",
+    "timestamp": "2025-11-03T14:04:02.212Z",
+    "durationMs": 174624,
+    "locale": "all",
+    "includeDrafts": false,
+    "changedOnly": false,
+    "noCache": true,
+    "dryRun": false,
+    "adapter": "gemini",
+    "adapterModel": "gemini-2.5-pro",
+    "totals": {
+      "collected": 76,
+      "normalized": 1,
+      "readyForWrite": 0,
+      "processed": 0
+    },
+    "skipped": {
+      "total": 1,
+      "reasons": [
+        {
+          "reason": "adapter-error",
+          "count": 1,
+          "sampleDocId": "zh/content/graphrag-research/index"
+        }
+      ],
+      "samples": [
+        {
+          "docId": "zh/content/graphrag-research/index",
+          "reason": "adapter-error"
+        }
+      ]
+    },
+    "write": {
+      "attempted": 0,
+      "written": 0,
+      "cacheUpdated": false
+    }
+  },
+  {
+    "type": "ingest",
+    "timestamp": "2025-11-03T13:58:41.488Z",
+    "durationMs": 3426,
+    "locale": "all",
+    "includeDrafts": false,
+    "changedOnly": false,
+    "noCache": true,
+    "dryRun": false,
+    "adapter": "gemini",
+    "adapterModel": "gemini-2.5-pro",
+    "totals": {
+      "collected": 76,
+      "normalized": 1,
+      "readyForWrite": 0,
+      "processed": 0
+    },
+    "skipped": {
+      "total": 1,
+      "reasons": [
+        {
+          "reason": "adapter-error",
+          "count": 1,
+          "sampleDocId": "zh/content/graphrag-research/index"
+        }
+      ],
+      "samples": [
+        {
+          "docId": "zh/content/graphrag-research/index",
+          "reason": "adapter-error"
+        }
+      ]
+    },
+    "write": {
+      "attempted": 0,
+      "written": 0,
+      "cacheUpdated": false
+    }
+  },
+  {
+    "type": "ingest",
+    "timestamp": "2025-11-03T13:52:57.515Z",
+    "durationMs": 82364,
+    "locale": "all",
+    "includeDrafts": false,
+    "changedOnly": false,
+    "noCache": true,
+    "dryRun": false,
+    "adapter": "gemini",
+    "adapterModel": "gemini-2.5-pro",
+    "totals": {
+      "collected": 76,
+      "normalized": 1,
+      "readyForWrite": 0,
+      "processed": 0
+    },
+    "skipped": {
+      "total": 1,
+      "reasons": [
+        {
+          "reason": "adapter-error",
+          "count": 1,
+          "sampleDocId": "zh/content/graphrag-research/index"
+        }
+      ],
+      "samples": [
+        {
+          "docId": "zh/content/graphrag-research/index",
+          "reason": "adapter-error"
+        }
+      ]
+    },
+    "write": {
+      "attempted": 0,
+      "written": 0,
+      "cacheUpdated": false
+    }
+  },
+  {
+    "type": "ingest",
+    "timestamp": "2025-11-03T13:51:18.121Z",
+    "durationMs": 123801,
+    "locale": "all",
+    "includeDrafts": false,
+    "changedOnly": false,
+    "noCache": true,
+    "dryRun": false,
+    "adapter": "gemini",
+    "adapterModel": "gemini-2.5-pro",
+    "totals": {
+      "collected": 76,
+      "normalized": 1,
+      "readyForWrite": 0,
+      "processed": 0
+    },
+    "skipped": {
+      "total": 1,
+      "reasons": [
+        {
+          "reason": "adapter-error",
+          "count": 1,
+          "sampleDocId": "zh/content/graphrag-research/index"
+        }
+      ],
+      "samples": [
+        {
+          "docId": "zh/content/graphrag-research/index",
+          "reason": "adapter-error"
+        }
+      ]
+    },
+    "write": {
+      "attempted": 0,
+      "written": 0,
+      "cacheUpdated": false
+    }
+  },
+  {
+    "type": "ingest",
+    "timestamp": "2025-11-03T13:37:38.581Z",
+    "durationMs": 39711,
+    "locale": "all",
+    "includeDrafts": false,
+    "changedOnly": false,
+    "noCache": true,
+    "dryRun": false,
+    "adapter": "gemini",
+    "adapterModel": "gemini-2.5-pro",
+    "totals": {
+      "collected": 76,
+      "normalized": 1,
+      "readyForWrite": 1,
+      "processed": 1
+    },
+    "skipped": {
+      "total": 0,
+      "reasons": [],
+      "samples": []
+    },
+    "write": {
+      "attempted": 1,
+      "written": 1,
+      "cacheUpdated": false
+    }
+  },
+  {
+    "type": "ingest",
+    "timestamp": "2025-11-03T13:36:00.239Z",
+    "durationMs": 61348,
+    "locale": "all",
+    "includeDrafts": false,
+    "changedOnly": false,
+    "noCache": true,
+    "dryRun": false,
+    "adapter": "gemini",
+    "adapterModel": "gemini-2.5-pro",
+    "totals": {
+      "collected": 76,
+      "normalized": 1,
+      "readyForWrite": 0,
+      "processed": 0
+    },
+    "skipped": {
+      "total": 1,
+      "reasons": [
+        {
+          "reason": "adapter-error",
+          "count": 1,
+          "sampleDocId": "zh/content/graphrag-research/index"
+        }
+      ],
+      "samples": [
+        {
+          "docId": "zh/content/graphrag-research/index",
+          "reason": "adapter-error"
+        }
+      ]
+    },
+    "write": {
+      "attempted": 0,
+      "written": 0,
+      "cacheUpdated": false
+    }
+  },
+  {
+    "type": "ingest",
+    "timestamp": "2025-11-03T13:33:59.104Z",
+    "durationMs": 16434,
+    "locale": "all",
+    "includeDrafts": false,
+    "changedOnly": false,
+    "noCache": true,
+    "dryRun": false,
+    "adapter": "gemini",
+    "adapterModel": "gemini-2.5-pro",
+    "totals": {
+      "collected": 76,
+      "normalized": 1,
+      "readyForWrite": 0,
+      "processed": 0
+    },
+    "skipped": {
+      "total": 1,
+      "reasons": [
+        {
+          "reason": "adapter-error",
+          "count": 1,
+          "sampleDocId": "zh/content/graphrag-research/index"
+        }
+      ],
+      "samples": [
+        {
+          "docId": "zh/content/graphrag-research/index",
+          "reason": "adapter-error"
+        }
+      ]
+    },
+    "write": {
+      "attempted": 0,
+      "written": 0,
+      "cacheUpdated": false
+    }
+  },
+  {
+    "type": "ingest",
+    "timestamp": "2025-11-03T13:31:21.220Z",
+    "durationMs": 45153,
+    "locale": "all",
+    "includeDrafts": false,
+    "changedOnly": false,
+    "noCache": true,
+    "dryRun": false,
+    "adapter": "gemini",
+    "adapterModel": "gemini-2.5-pro",
+    "totals": {
+      "collected": 76,
+      "normalized": 1,
+      "readyForWrite": 0,
+      "processed": 0
+    },
+    "skipped": {
+      "total": 1,
+      "reasons": [
+        {
+          "reason": "adapter-error",
+          "count": 1,
+          "sampleDocId": "zh/content/graphrag-research/index"
+        }
+      ],
+      "samples": [
+        {
+          "docId": "zh/content/graphrag-research/index",
+          "reason": "adapter-error"
+        }
+      ]
+    },
+    "write": {
+      "attempted": 0,
+      "written": 0,
+      "cacheUpdated": false
+    }
+  },
+  {
+    "type": "ingest",
+    "timestamp": "2025-11-03T13:26:23.898Z",
+    "durationMs": 614,
+    "locale": "all",
+    "includeDrafts": false,
+    "changedOnly": false,
+    "noCache": true,
+    "dryRun": false,
+    "adapter": "gemini",
+    "adapterModel": "gemini-2.5-pro",
+    "totals": {
+      "collected": 76,
+      "normalized": 1,
+      "readyForWrite": 0,
+      "processed": 0
+    },
+    "skipped": {
+      "total": 1,
+      "reasons": [
+        {
+          "reason": "adapter-error",
+          "count": 1,
+          "sampleDocId": "zh/content/graphrag-research/index"
+        }
+      ],
+      "samples": [
+        {
+          "docId": "zh/content/graphrag-research/index",
+          "reason": "adapter-error"
+        }
+      ]
+    },
+    "write": {
+      "attempted": 0,
+      "written": 0,
+      "cacheUpdated": false
+    }
+  },
+  {
+    "type": "ingest",
+    "timestamp": "2025-11-03T13:09:55.404Z",
+    "durationMs": 1668,
+    "locale": "all",
+    "includeDrafts": false,
+    "changedOnly": false,
+    "noCache": true,
+    "dryRun": false,
+    "adapter": "gemini",
+    "adapterModel": "gemini-2.5-pro",
+    "totals": {
+      "collected": 76,
+      "normalized": 1,
+      "readyForWrite": 0,
+      "processed": 0
+    },
+    "skipped": {
+      "total": 1,
+      "reasons": [
+        {
+          "reason": "adapter-error",
+          "count": 1,
+          "sampleDocId": "zh/content/graphrag-research/index"
+        }
+      ],
+      "samples": [
+        {
+          "docId": "zh/content/graphrag-research/index",
+          "reason": "adapter-error"
+        }
+      ]
+    },
+    "write": {
+      "attempted": 0,
+      "written": 0,
+      "cacheUpdated": false
+    }
+  },
+  {
+    "type": "ingest",
+    "timestamp": "2025-11-03T13:03:51.214Z",
+    "durationMs": 1717,
+    "locale": "all",
+    "includeDrafts": false,
+    "changedOnly": false,
+    "noCache": true,
+    "dryRun": false,
+    "adapter": "gemini",
+    "adapterModel": "gemini-2.5-pro",
+    "totals": {
+      "collected": 76,
+      "normalized": 1,
+      "readyForWrite": 0,
+      "processed": 0
+    },
+    "skipped": {
+      "total": 1,
+      "reasons": [
+        {
+          "reason": "adapter-error",
+          "count": 1,
+          "sampleDocId": "zh/content/graphrag-research/index"
+        }
+      ],
+      "samples": [
+        {
+          "docId": "zh/content/graphrag-research/index",
+          "reason": "adapter-error"
+        }
+      ]
+    },
+    "write": {
+      "attempted": 0,
+      "written": 0,
+      "cacheUpdated": false
+    }
+  },
+  {
+    "type": "ingest",
+    "timestamp": "2025-11-03T13:01:14.587Z",
+    "durationMs": 1993,
+    "locale": "all",
+    "includeDrafts": false,
+    "changedOnly": false,
+    "noCache": true,
+    "dryRun": false,
+    "adapter": "gemini",
+    "adapterModel": "gemini-2.5-pro",
+    "totals": {
+      "collected": 76,
+      "normalized": 1,
+      "readyForWrite": 0,
+      "processed": 0
+    },
+    "skipped": {
+      "total": 1,
+      "reasons": [
+        {
+          "reason": "adapter-error",
+          "count": 1,
+          "sampleDocId": "zh/content/graphrag-research/index"
+        }
+      ],
+      "samples": [
+        {
+          "docId": "zh/content/graphrag-research/index",
+          "reason": "adapter-error"
+        }
+      ]
+    },
+    "write": {
+      "attempted": 0,
+      "written": 0,
+      "cacheUpdated": false
+    }
+  },
+  {
+    "type": "ingest",
+    "timestamp": "2025-11-03T12:59:41.445Z",
+    "durationMs": 274,
+    "locale": "all",
+    "includeDrafts": false,
+    "changedOnly": false,
+    "noCache": true,
+    "dryRun": false,
+    "adapter": "gemini",
+    "adapterModel": "gemini-2.5-pro",
+    "totals": {
+      "collected": 76,
+      "normalized": 1,
+      "readyForWrite": 0,
+      "processed": 0
+    },
+    "skipped": {
+      "total": 1,
+      "reasons": [
+        {
+          "reason": "adapter-error",
+          "count": 1,
+          "sampleDocId": "zh/content/graphrag-research/index"
+        }
+      ],
+      "samples": [
+        {
+          "docId": "zh/content/graphrag-research/index",
+          "reason": "adapter-error"
+        }
+      ]
+    },
+    "write": {
+      "attempted": 0,
+      "written": 0,
+      "cacheUpdated": false
+    }
+  },
+  {
+    "type": "ingest",
+    "timestamp": "2025-11-03T11:55:27.037Z",
+    "durationMs": 2463,
+    "locale": "all",
+    "includeDrafts": false,
+    "changedOnly": false,
+    "noCache": true,
+    "dryRun": false,
+    "adapter": "gemini",
+    "adapterModel": "gemini-2.5-pro",
+    "totals": {
+      "collected": 76,
+      "normalized": 1,
+      "readyForWrite": 0,
+      "processed": 0
+    },
+    "skipped": {
+      "total": 1,
+      "reasons": [
+        {
+          "reason": "adapter-error",
+          "count": 1,
+          "sampleDocId": "zh/content/graphrag-research/index"
+        }
+      ],
+      "samples": [
+        {
+          "docId": "zh/content/graphrag-research/index",
+          "reason": "adapter-error"
+        }
+      ]
+    },
+    "write": {
+      "attempted": 0,
+      "written": 0,
+      "cacheUpdated": false
+    }
+  },
+  {
+    "type": "ingest",
+    "timestamp": "2025-11-03T10:49:38.427Z",
+    "durationMs": 2623,
+    "locale": "all",
+    "includeDrafts": false,
+    "changedOnly": false,
+    "noCache": true,
+    "dryRun": false,
+    "adapter": "gemini",
+    "adapterModel": "gemini-2.5-pro",
+    "totals": {
+      "collected": 76,
+      "normalized": 1,
+      "readyForWrite": 0,
+      "processed": 0
+    },
+    "skipped": {
+      "total": 1,
+      "reasons": [
+        {
+          "reason": "adapter-error",
+          "count": 1,
+          "sampleDocId": "zh/content/graphrag-research/index"
+        }
+      ],
+      "samples": [
+        {
+          "docId": "zh/content/graphrag-research/index",
+          "reason": "adapter-error"
+        }
+      ]
+    },
+    "write": {
+      "attempted": 0,
+      "written": 0,
+      "cacheUpdated": false
+    }
+  },
+  {
+    "type": "ingest",
+    "timestamp": "2025-11-03T10:48:56.829Z",
+    "durationMs": 2260,
+    "locale": "all",
+    "includeDrafts": false,
+    "changedOnly": false,
+    "noCache": true,
+    "dryRun": false,
+    "adapter": "gemini",
+    "adapterModel": "gemini-2.5-pro",
+    "totals": {
+      "collected": 76,
+      "normalized": 1,
+      "readyForWrite": 0,
+      "processed": 0
+    },
+    "skipped": {
+      "total": 1,
+      "reasons": [
+        {
+          "reason": "adapter-error",
+          "count": 1,
+          "sampleDocId": "zh/content/graphrag-research/index"
+        }
+      ],
+      "samples": [
+        {
+          "docId": "zh/content/graphrag-research/index",
+          "reason": "adapter-error"
+        }
+      ]
+    },
+    "write": {
+      "attempted": 0,
+      "written": 0,
+      "cacheUpdated": false
+    }
+  },
+  {
+    "type": "ingest",
+    "timestamp": "2025-11-03T10:48:15.256Z",
+    "durationMs": 2238,
+    "locale": "all",
+    "includeDrafts": false,
+    "changedOnly": false,
+    "noCache": true,
+    "dryRun": false,
+    "adapter": "gemini",
+    "adapterModel": null,
+    "totals": {
+      "collected": 76,
+      "normalized": 1,
+      "readyForWrite": 0,
+      "processed": 0
+    },
+    "skipped": {
+      "total": 1,
+      "reasons": [
+        {
+          "reason": "adapter-error",
+          "count": 1,
+          "sampleDocId": "zh/content/graphrag-research/index"
+        }
+      ],
+      "samples": [
+        {
+          "docId": "zh/content/graphrag-research/index",
+          "reason": "adapter-error"
+        }
+      ]
+    },
+    "write": {
+      "attempted": 0,
+      "written": 0,
+      "cacheUpdated": false
+    }
+  },
+  {
+    "type": "ingest",
+    "timestamp": "2025-11-03T10:43:22.603Z",
+    "durationMs": 2236,
+    "locale": "all",
+    "includeDrafts": false,
+    "changedOnly": false,
+    "noCache": true,
+    "dryRun": false,
+    "adapter": "gemini",
+    "adapterModel": null,
+    "totals": {
+      "collected": 76,
+      "normalized": 1,
+      "readyForWrite": 0,
+      "processed": 0
+    },
+    "skipped": {
+      "total": 1,
+      "reasons": [
+        {
+          "reason": "adapter-error",
+          "count": 1,
+          "sampleDocId": "zh/content/graphrag-research/index"
+        }
+      ],
+      "samples": [
+        {
+          "docId": "zh/content/graphrag-research/index",
+          "reason": "adapter-error"
+        }
+      ]
+    },
+    "write": {
+      "attempted": 0,
+      "written": 0,
+      "cacheUpdated": false
+    }
+  },
+  {
+    "type": "ingest",
+    "timestamp": "2025-11-03T10:06:53.359Z",
+    "durationMs": 3839,
+    "locale": "all",
+    "includeDrafts": false,
+    "changedOnly": false,
+    "noCache": true,
+    "dryRun": false,
+    "adapter": "gemini",
+    "adapterModel": null,
+    "totals": {
+      "collected": 76,
+      "normalized": 1,
+      "readyForWrite": 0,
+      "processed": 0
+    },
+    "skipped": {
+      "total": 1,
+      "reasons": [
+        {
+          "reason": "adapter-error",
+          "count": 1,
+          "sampleDocId": "zh/content/graphrag-research/index"
+        }
+      ],
+      "samples": [
+        {
+          "docId": "zh/content/graphrag-research/index",
+          "reason": "adapter-error"
+        }
+      ]
+    },
+    "write": {
+      "attempted": 0,
+      "written": 0,
+      "cacheUpdated": false
+    }
+  },
+  {
+    "type": "ingest",
     "timestamp": "2025-11-03T05:26:22.842Z",
     "durationMs": 88773,
     "locale": "all",

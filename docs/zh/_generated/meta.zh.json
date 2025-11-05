@@ -130,26 +130,6 @@
     ],
     "工程笔记": [
       {
-        "title": "Pagegen 运行手册",
-        "date": "2025-10-20",
-        "updated": "",
-        "status": "published",
-        "category": "工程笔记",
-        "category_slug": "工程笔记",
-        "series": "项目起航手记",
-        "series_slug": "project-kickoff",
-        "tags": [
-          "生成管线",
-          "调度插件",
-          "缓存优化"
-        ],
-        "slug": "pagegen-handbook",
-        "path": "/zh/content/pagegen-handbook/",
-        "excerpt": "总结 Pagegen orchestrator 的阶段划分、CLI 参数、缓存策略与插件机制，帮助维护者快速定位生成问题并扩展新的自动化能力。",
-        "relative": "pagegen-handbook",
-        "year": "2025"
-      },
-      {
         "title": "Pagegen 重构回顾（含占位阶段）",
         "date": "2025-10-20",
         "updated": "",
@@ -187,6 +167,26 @@
         "path": "/zh/content/telemetry-cases/",
         "excerpt": "以真实场景为线索，逐步演示如何通过 Telemetry + CLI 日志定位 Pagegen 与 AI 管线告警，并给出可复现的修复步骤。",
         "relative": "telemetry-cases",
+        "year": "2025"
+      },
+      {
+        "title": "Pagegen 运行手册",
+        "date": "2025-10-20",
+        "updated": "",
+        "status": "published",
+        "category": "工程笔记",
+        "category_slug": "工程笔记",
+        "series": "项目起航手记",
+        "series_slug": "project-kickoff",
+        "tags": [
+          "生成管线",
+          "调度插件",
+          "缓存优化"
+        ],
+        "slug": "pagegen-handbook",
+        "path": "/zh/content/pagegen-handbook/",
+        "excerpt": "总结 Pagegen orchestrator 的阶段划分、CLI 参数、缓存策略与插件机制，帮助维护者快速定位生成问题并扩展新的自动化能力。",
+        "relative": "pagegen-handbook",
         "year": "2025"
       }
     ]
@@ -260,7 +260,7 @@
         "year": "2025"
       },
       {
-        "title": "Pagegen 运行手册",
+        "title": "Pagegen 重构回顾（含占位阶段）",
         "date": "2025-10-20",
         "updated": "",
         "status": "published",
@@ -269,14 +269,14 @@
         "series": "项目起航手记",
         "series_slug": "project-kickoff",
         "tags": [
-          "生成管线",
-          "调度插件",
-          "缓存优化"
+          "重构",
+          "性能优化",
+          "架构演进"
         ],
-        "slug": "pagegen-handbook",
-        "path": "/zh/content/pagegen-handbook/",
-        "excerpt": "总结 Pagegen orchestrator 的阶段划分、CLI 参数、缓存策略与插件机制，帮助维护者快速定位生成问题并扩展新的自动化能力。",
-        "relative": "pagegen-handbook",
+        "slug": "pagegen-retrospective",
+        "path": "/zh/content/pagegen-retrospective/",
+        "excerpt": "复盘 Pagegen 从单体脚本到模块化/并发/插件化的演进过程，记录收益、风险与仍需打磨的环节，并补充占位阶段的取舍与经验。",
+        "relative": "pagegen-retrospective",
         "year": "2025"
       },
       {
@@ -300,26 +300,6 @@
         "year": "2025"
       },
       {
-        "title": "Pagegen 重构回顾（含占位阶段）",
-        "date": "2025-10-20",
-        "updated": "",
-        "status": "published",
-        "category": "工程笔记",
-        "category_slug": "工程笔记",
-        "series": "项目起航手记",
-        "series_slug": "project-kickoff",
-        "tags": [
-          "重构",
-          "性能优化",
-          "架构演进"
-        ],
-        "slug": "pagegen-retrospective",
-        "path": "/zh/content/pagegen-retrospective/",
-        "excerpt": "复盘 Pagegen 从单体脚本到模块化/并发/插件化的演进过程，记录收益、风险与仍需打磨的环节，并补充占位阶段的取舍与经验。",
-        "relative": "pagegen-retrospective",
-        "year": "2025"
-      },
-      {
         "title": "观测指标场景案例与排障实录",
         "date": "2025-10-20",
         "updated": "",
@@ -337,6 +317,26 @@
         "path": "/zh/content/telemetry-cases/",
         "excerpt": "以真实场景为线索，逐步演示如何通过 Telemetry + CLI 日志定位 Pagegen 与 AI 管线告警，并给出可复现的修复步骤。",
         "relative": "telemetry-cases",
+        "year": "2025"
+      },
+      {
+        "title": "Pagegen 运行手册",
+        "date": "2025-10-20",
+        "updated": "",
+        "status": "published",
+        "category": "工程笔记",
+        "category_slug": "工程笔记",
+        "series": "项目起航手记",
+        "series_slug": "project-kickoff",
+        "tags": [
+          "生成管线",
+          "调度插件",
+          "缓存优化"
+        ],
+        "slug": "pagegen-handbook",
+        "path": "/zh/content/pagegen-handbook/",
+        "excerpt": "总结 Pagegen orchestrator 的阶段划分、CLI 参数、缓存策略与插件机制，帮助维护者快速定位生成问题并扩展新的自动化能力。",
+        "relative": "pagegen-handbook",
         "year": "2025"
       },
       {
@@ -696,9 +696,9 @@
         "year": "2025"
       }
     ],
-    "生成管线": [
+    "重构": [
       {
-        "title": "Pagegen 运行手册",
+        "title": "Pagegen 重构回顾（含占位阶段）",
         "date": "2025-10-20",
         "updated": "",
         "status": "published",
@@ -707,20 +707,20 @@
         "series": "项目起航手记",
         "series_slug": "project-kickoff",
         "tags": [
-          "生成管线",
-          "调度插件",
-          "缓存优化"
+          "重构",
+          "性能优化",
+          "架构演进"
         ],
-        "slug": "pagegen-handbook",
-        "path": "/zh/content/pagegen-handbook/",
-        "excerpt": "总结 Pagegen orchestrator 的阶段划分、CLI 参数、缓存策略与插件机制，帮助维护者快速定位生成问题并扩展新的自动化能力。",
-        "relative": "pagegen-handbook",
+        "slug": "pagegen-retrospective",
+        "path": "/zh/content/pagegen-retrospective/",
+        "excerpt": "复盘 Pagegen 从单体脚本到模块化/并发/插件化的演进过程，记录收益、风险与仍需打磨的环节，并补充占位阶段的取舍与经验。",
+        "relative": "pagegen-retrospective",
         "year": "2025"
       }
     ],
-    "调度插件": [
+    "性能优化": [
       {
-        "title": "Pagegen 运行手册",
+        "title": "Pagegen 重构回顾（含占位阶段）",
         "date": "2025-10-20",
         "updated": "",
         "status": "published",
@@ -729,20 +729,20 @@
         "series": "项目起航手记",
         "series_slug": "project-kickoff",
         "tags": [
-          "生成管线",
-          "调度插件",
-          "缓存优化"
+          "重构",
+          "性能优化",
+          "架构演进"
         ],
-        "slug": "pagegen-handbook",
-        "path": "/zh/content/pagegen-handbook/",
-        "excerpt": "总结 Pagegen orchestrator 的阶段划分、CLI 参数、缓存策略与插件机制，帮助维护者快速定位生成问题并扩展新的自动化能力。",
-        "relative": "pagegen-handbook",
+        "slug": "pagegen-retrospective",
+        "path": "/zh/content/pagegen-retrospective/",
+        "excerpt": "复盘 Pagegen 从单体脚本到模块化/并发/插件化的演进过程，记录收益、风险与仍需打磨的环节，并补充占位阶段的取舍与经验。",
+        "relative": "pagegen-retrospective",
         "year": "2025"
       }
     ],
-    "缓存优化": [
+    "架构演进": [
       {
-        "title": "Pagegen 运行手册",
+        "title": "Pagegen 重构回顾（含占位阶段）",
         "date": "2025-10-20",
         "updated": "",
         "status": "published",
@@ -751,14 +751,14 @@
         "series": "项目起航手记",
         "series_slug": "project-kickoff",
         "tags": [
-          "生成管线",
-          "调度插件",
-          "缓存优化"
+          "重构",
+          "性能优化",
+          "架构演进"
         ],
-        "slug": "pagegen-handbook",
-        "path": "/zh/content/pagegen-handbook/",
-        "excerpt": "总结 Pagegen orchestrator 的阶段划分、CLI 参数、缓存策略与插件机制，帮助维护者快速定位生成问题并扩展新的自动化能力。",
-        "relative": "pagegen-handbook",
+        "slug": "pagegen-retrospective",
+        "path": "/zh/content/pagegen-retrospective/",
+        "excerpt": "复盘 Pagegen 从单体脚本到模块化/并发/插件化的演进过程，记录收益、风险与仍需打磨的环节，并补充占位阶段的取舍与经验。",
+        "relative": "pagegen-retrospective",
         "year": "2025"
       }
     ],
@@ -828,72 +828,6 @@
         "year": "2025"
       }
     ],
-    "重构": [
-      {
-        "title": "Pagegen 重构回顾（含占位阶段）",
-        "date": "2025-10-20",
-        "updated": "",
-        "status": "published",
-        "category": "工程笔记",
-        "category_slug": "工程笔记",
-        "series": "项目起航手记",
-        "series_slug": "project-kickoff",
-        "tags": [
-          "重构",
-          "性能优化",
-          "架构演进"
-        ],
-        "slug": "pagegen-retrospective",
-        "path": "/zh/content/pagegen-retrospective/",
-        "excerpt": "复盘 Pagegen 从单体脚本到模块化/并发/插件化的演进过程，记录收益、风险与仍需打磨的环节，并补充占位阶段的取舍与经验。",
-        "relative": "pagegen-retrospective",
-        "year": "2025"
-      }
-    ],
-    "性能优化": [
-      {
-        "title": "Pagegen 重构回顾（含占位阶段）",
-        "date": "2025-10-20",
-        "updated": "",
-        "status": "published",
-        "category": "工程笔记",
-        "category_slug": "工程笔记",
-        "series": "项目起航手记",
-        "series_slug": "project-kickoff",
-        "tags": [
-          "重构",
-          "性能优化",
-          "架构演进"
-        ],
-        "slug": "pagegen-retrospective",
-        "path": "/zh/content/pagegen-retrospective/",
-        "excerpt": "复盘 Pagegen 从单体脚本到模块化/并发/插件化的演进过程，记录收益、风险与仍需打磨的环节，并补充占位阶段的取舍与经验。",
-        "relative": "pagegen-retrospective",
-        "year": "2025"
-      }
-    ],
-    "架构演进": [
-      {
-        "title": "Pagegen 重构回顾（含占位阶段）",
-        "date": "2025-10-20",
-        "updated": "",
-        "status": "published",
-        "category": "工程笔记",
-        "category_slug": "工程笔记",
-        "series": "项目起航手记",
-        "series_slug": "project-kickoff",
-        "tags": [
-          "重构",
-          "性能优化",
-          "架构演进"
-        ],
-        "slug": "pagegen-retrospective",
-        "path": "/zh/content/pagegen-retrospective/",
-        "excerpt": "复盘 Pagegen 从单体脚本到模块化/并发/插件化的演进过程，记录收益、风险与仍需打磨的环节，并补充占位阶段的取舍与经验。",
-        "relative": "pagegen-retrospective",
-        "year": "2025"
-      }
-    ],
     "案例分析": [
       {
         "title": "观测指标场景案例与排障实录",
@@ -957,6 +891,72 @@
         "path": "/zh/content/telemetry-cases/",
         "excerpt": "以真实场景为线索，逐步演示如何通过 Telemetry + CLI 日志定位 Pagegen 与 AI 管线告警，并给出可复现的修复步骤。",
         "relative": "telemetry-cases",
+        "year": "2025"
+      }
+    ],
+    "生成管线": [
+      {
+        "title": "Pagegen 运行手册",
+        "date": "2025-10-20",
+        "updated": "",
+        "status": "published",
+        "category": "工程笔记",
+        "category_slug": "工程笔记",
+        "series": "项目起航手记",
+        "series_slug": "project-kickoff",
+        "tags": [
+          "生成管线",
+          "调度插件",
+          "缓存优化"
+        ],
+        "slug": "pagegen-handbook",
+        "path": "/zh/content/pagegen-handbook/",
+        "excerpt": "总结 Pagegen orchestrator 的阶段划分、CLI 参数、缓存策略与插件机制，帮助维护者快速定位生成问题并扩展新的自动化能力。",
+        "relative": "pagegen-handbook",
+        "year": "2025"
+      }
+    ],
+    "调度插件": [
+      {
+        "title": "Pagegen 运行手册",
+        "date": "2025-10-20",
+        "updated": "",
+        "status": "published",
+        "category": "工程笔记",
+        "category_slug": "工程笔记",
+        "series": "项目起航手记",
+        "series_slug": "project-kickoff",
+        "tags": [
+          "生成管线",
+          "调度插件",
+          "缓存优化"
+        ],
+        "slug": "pagegen-handbook",
+        "path": "/zh/content/pagegen-handbook/",
+        "excerpt": "总结 Pagegen orchestrator 的阶段划分、CLI 参数、缓存策略与插件机制，帮助维护者快速定位生成问题并扩展新的自动化能力。",
+        "relative": "pagegen-handbook",
+        "year": "2025"
+      }
+    ],
+    "缓存优化": [
+      {
+        "title": "Pagegen 运行手册",
+        "date": "2025-10-20",
+        "updated": "",
+        "status": "published",
+        "category": "工程笔记",
+        "category_slug": "工程笔记",
+        "series": "项目起航手记",
+        "series_slug": "project-kickoff",
+        "tags": [
+          "生成管线",
+          "调度插件",
+          "缓存优化"
+        ],
+        "slug": "pagegen-handbook",
+        "path": "/zh/content/pagegen-handbook/",
+        "excerpt": "总结 Pagegen orchestrator 的阶段划分、CLI 参数、缓存策略与插件机制，帮助维护者快速定位生成问题并扩展新的自动化能力。",
+        "relative": "pagegen-handbook",
         "year": "2025"
       }
     ],
@@ -1160,7 +1160,7 @@
         "year": "2025"
       },
       {
-        "title": "Pagegen 运行手册",
+        "title": "Pagegen 重构回顾（含占位阶段）",
         "date": "2025-10-20",
         "updated": "",
         "status": "published",
@@ -1169,14 +1169,14 @@
         "series": "项目起航手记",
         "series_slug": "project-kickoff",
         "tags": [
-          "生成管线",
-          "调度插件",
-          "缓存优化"
+          "重构",
+          "性能优化",
+          "架构演进"
         ],
-        "slug": "pagegen-handbook",
-        "path": "/zh/content/pagegen-handbook/",
-        "excerpt": "总结 Pagegen orchestrator 的阶段划分、CLI 参数、缓存策略与插件机制，帮助维护者快速定位生成问题并扩展新的自动化能力。",
-        "relative": "pagegen-handbook",
+        "slug": "pagegen-retrospective",
+        "path": "/zh/content/pagegen-retrospective/",
+        "excerpt": "复盘 Pagegen 从单体脚本到模块化/并发/插件化的演进过程，记录收益、风险与仍需打磨的环节，并补充占位阶段的取舍与经验。",
+        "relative": "pagegen-retrospective",
         "year": "2025"
       },
       {
@@ -1200,26 +1200,6 @@
         "year": "2025"
       },
       {
-        "title": "Pagegen 重构回顾（含占位阶段）",
-        "date": "2025-10-20",
-        "updated": "",
-        "status": "published",
-        "category": "工程笔记",
-        "category_slug": "工程笔记",
-        "series": "项目起航手记",
-        "series_slug": "project-kickoff",
-        "tags": [
-          "重构",
-          "性能优化",
-          "架构演进"
-        ],
-        "slug": "pagegen-retrospective",
-        "path": "/zh/content/pagegen-retrospective/",
-        "excerpt": "复盘 Pagegen 从单体脚本到模块化/并发/插件化的演进过程，记录收益、风险与仍需打磨的环节，并补充占位阶段的取舍与经验。",
-        "relative": "pagegen-retrospective",
-        "year": "2025"
-      },
-      {
         "title": "观测指标场景案例与排障实录",
         "date": "2025-10-20",
         "updated": "",
@@ -1237,6 +1217,26 @@
         "path": "/zh/content/telemetry-cases/",
         "excerpt": "以真实场景为线索，逐步演示如何通过 Telemetry + CLI 日志定位 Pagegen 与 AI 管线告警，并给出可复现的修复步骤。",
         "relative": "telemetry-cases",
+        "year": "2025"
+      },
+      {
+        "title": "Pagegen 运行手册",
+        "date": "2025-10-20",
+        "updated": "",
+        "status": "published",
+        "category": "工程笔记",
+        "category_slug": "工程笔记",
+        "series": "项目起航手记",
+        "series_slug": "project-kickoff",
+        "tags": [
+          "生成管线",
+          "调度插件",
+          "缓存优化"
+        ],
+        "slug": "pagegen-handbook",
+        "path": "/zh/content/pagegen-handbook/",
+        "excerpt": "总结 Pagegen orchestrator 的阶段划分、CLI 参数、缓存策略与插件机制，帮助维护者快速定位生成问题并扩展新的自动化能力。",
+        "relative": "pagegen-handbook",
         "year": "2025"
       },
       {
@@ -1347,7 +1347,7 @@
       "year": "2025"
     },
     {
-      "title": "Pagegen 运行手册",
+      "title": "Pagegen 重构回顾（含占位阶段）",
       "date": "2025-10-20",
       "updated": "",
       "status": "published",
@@ -1356,14 +1356,14 @@
       "series": "项目起航手记",
       "series_slug": "project-kickoff",
       "tags": [
-        "生成管线",
-        "调度插件",
-        "缓存优化"
+        "重构",
+        "性能优化",
+        "架构演进"
       ],
-      "slug": "pagegen-handbook",
-      "path": "/zh/content/pagegen-handbook/",
-      "excerpt": "总结 Pagegen orchestrator 的阶段划分、CLI 参数、缓存策略与插件机制，帮助维护者快速定位生成问题并扩展新的自动化能力。",
-      "relative": "pagegen-handbook",
+      "slug": "pagegen-retrospective",
+      "path": "/zh/content/pagegen-retrospective/",
+      "excerpt": "复盘 Pagegen 从单体脚本到模块化/并发/插件化的演进过程，记录收益、风险与仍需打磨的环节，并补充占位阶段的取舍与经验。",
+      "relative": "pagegen-retrospective",
       "year": "2025"
     },
     {
@@ -1387,26 +1387,6 @@
       "year": "2025"
     },
     {
-      "title": "Pagegen 重构回顾（含占位阶段）",
-      "date": "2025-10-20",
-      "updated": "",
-      "status": "published",
-      "category": "工程笔记",
-      "category_slug": "工程笔记",
-      "series": "项目起航手记",
-      "series_slug": "project-kickoff",
-      "tags": [
-        "重构",
-        "性能优化",
-        "架构演进"
-      ],
-      "slug": "pagegen-retrospective",
-      "path": "/zh/content/pagegen-retrospective/",
-      "excerpt": "复盘 Pagegen 从单体脚本到模块化/并发/插件化的演进过程，记录收益、风险与仍需打磨的环节，并补充占位阶段的取舍与经验。",
-      "relative": "pagegen-retrospective",
-      "year": "2025"
-    },
-    {
       "title": "观测指标场景案例与排障实录",
       "date": "2025-10-20",
       "updated": "",
@@ -1424,6 +1404,26 @@
       "path": "/zh/content/telemetry-cases/",
       "excerpt": "以真实场景为线索，逐步演示如何通过 Telemetry + CLI 日志定位 Pagegen 与 AI 管线告警，并给出可复现的修复步骤。",
       "relative": "telemetry-cases",
+      "year": "2025"
+    },
+    {
+      "title": "Pagegen 运行手册",
+      "date": "2025-10-20",
+      "updated": "",
+      "status": "published",
+      "category": "工程笔记",
+      "category_slug": "工程笔记",
+      "series": "项目起航手记",
+      "series_slug": "project-kickoff",
+      "tags": [
+        "生成管线",
+        "调度插件",
+        "缓存优化"
+      ],
+      "slug": "pagegen-handbook",
+      "path": "/zh/content/pagegen-handbook/",
+      "excerpt": "总结 Pagegen orchestrator 的阶段划分、CLI 参数、缓存策略与插件机制，帮助维护者快速定位生成问题并扩展新的自动化能力。",
+      "relative": "pagegen-handbook",
       "year": "2025"
     },
     {

@@ -5,7 +5,6 @@
     :aria-busy="loading"
     :aria-live="loading ? 'polite' : 'off'"
   >
-    <div v-if="loading" class="graph-mermaid__loading">正在加载图表…</div>
   </div>
 </template>
 
@@ -50,13 +49,23 @@ async function loadGraphText() {
 
 async function renderGraph(text) {
   if (!container.value) return
+
+  // Set loading message directly
+  container.value.innerHTML = '<div class="graph-mermaid__loading">正在加载图表…</div>';
+
   const mermaid = await ensureMermaid()
   mermaid.initialize({ startOnLoad: false })
-  loading.value = true
+  loading.value = true // Keep for aria attributes
+
   try {
     const { svg } = await mermaid.render(`${props.chartId}-${Date.now()}`, text)
     if (renderAbort || !container.value) return
     container.value.innerHTML = svg
+  } catch (error) {
+    console.error('[GraphMermaid] 渲染失败:', error)
+    if (container.value) {
+      container.value.innerHTML = `<pre class="graph-mermaid__error">${String(error)}</pre>`
+    }
   } finally {
     loading.value = false
   }
@@ -98,7 +107,7 @@ watch(
   () => props.path,
   () => {
     renderAbort = true
-    renderAbort = false
+    setTimeout(() => { renderAbort = false }, 0)
     loadAndRender()
   }
 )

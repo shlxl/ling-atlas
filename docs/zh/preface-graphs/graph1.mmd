@@ -1,0 +1,12 @@
+flowchart LR
+  A(学习) --> B(记忆) --> C(复述)
+  A2(学习) --> B2(组织) --> C2(生成)
+  classDef traditional fill:#d3e8ff,stroke:#1a73e8
+  classDef ai fill:#fff3cd,stroke:#fbbc05
+  class A,B,C traditional
+  class A2,B2,C2 ai
+  D(["传统阶段"]):::caption
+  E(["AI阶段"]):::caption
+  D -.-> A
+  E -.-> A2
+  classDef caption fill:none,stroke:none,color:#777;
