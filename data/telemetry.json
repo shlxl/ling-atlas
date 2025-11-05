@@ -10,8 +10,8 @@
   },
   "build": {
     "pagegen": {
-      "timestamp": "2025-11-05T06:51:36.724Z",
-      "totalMs": 34.323,
+      "timestamp": "2025-11-05T09:57:55.286Z",
+      "totalMs": 32.489,
       "collect": {
         "locales": 2,
         "cacheHitRate": 1,
@@ -25,13 +25,13 @@
       },
       "write": {
         "total": 47,
-        "written": 0,
-        "skipped": 47,
+        "written": 5,
+        "skipped": 42,
         "failed": 0,
-        "hashMatches": 47,
+        "hashMatches": 42,
         "disabled": false,
         "skippedByReason": {
-          "hash": 47
+          "hash": 42
         }
       },
       "feeds": {
@@ -255,7 +255,7 @@
           "executed": 1,
           "skipped": 0,
           "failed": 0,
-          "verifiedAt": "2025-11-03T07:08:55.413Z"
+          "verifiedAt": "2025-11-05T09:57:54.797Z"
         }
       },
       "smoke": {
@@ -265,7 +265,7 @@
           "executed": 1,
           "skipped": 0,
           "failed": 0,
-          "verifiedAt": "2025-11-03T07:08:55.413Z",
+          "verifiedAt": "2025-11-05T09:57:54.797Z",
           "reason": null,
           "failures": []
         },
@@ -279,7 +279,7 @@
             "smoke": {
               "status": "passed",
               "reason": null,
-              "verifiedAt": "2025-11-03T07:08:55.413Z"
+              "verifiedAt": "2025-11-05T09:57:54.797Z"
             },
             "cache": {
               "status": "ready",
@@ -289,7 +289,7 @@
         ],
         "runtime": "node",
         "fallback": null,
-        "generatedAt": "2025-11-03T07:08:55.306Z",
+        "generatedAt": "2025-11-05T09:57:54.437Z",
         "history": [
           {
             "status": "passed",
@@ -297,7 +297,17 @@
             "executed": 1,
             "skipped": 0,
             "failed": 0,
-            "verifiedAt": "2025-11-03T07:08:55.413Z",
+            "verifiedAt": "2025-11-05T09:57:54.797Z",
+            "reason": null,
+            "failures": []
+          },
+          {
+            "status": "passed",
+            "runtime": "node",
+            "executed": 1,
+            "skipped": 0,
+            "failed": 0,
+            "verifiedAt": "2025-11-05T09:57:54.797Z",
             "reason": null,
             "failures": []
           },
@@ -330,16 +340,6 @@
             "verifiedAt": "2025-11-03T07:00:54.795Z",
             "reason": null,
             "failures": []
-          },
-          {
-            "status": "passed",
-            "runtime": "node",
-            "executed": 1,
-            "skipped": 0,
-            "failed": 0,
-            "verifiedAt": "2025-10-31T17:25:37.457Z",
-            "reason": null,
-            "failures": []
           }
         ]
       }
@@ -347,18 +347,18 @@
     "graphrag": {
       "export": {
         "type": "export",
-        "timestamp": "2025-11-05T06:46:28.750Z",
+        "timestamp": "2025-11-05T08:54:00.818Z",
         "docId": "zh/content/graphrag-research/index",
         "docTitle": "GraphRAG 研究概述与综述",
         "topic": "zh-graphrag-research",
         "locale": "zh",
-        "durationMs": 57,
+        "durationMs": 80,
         "dryRun": false,
         "totals": {
-          "nodes": 22,
-          "edges": 21,
-          "entities": 0,
-          "recommendations": 0
+          "nodes": 75,
+          "edges": 74,
+          "entities": 7,
+          "recommendations": 5
         },
         "files": {
           "subgraph": true,
@@ -367,14 +367,14 @@
           "page": true
         },
         "structure": {
-          "inferredScore": null,
-          "pagerankAvg": null
+          "inferredScore": 0.15000000000000005,
+          "pagerankAvg": 0.15000000000000005
         }
       },
       "ingest": {
         "type": "ingest",
-        "timestamp": "2025-11-05T06:38:42.020Z",
-        "durationMs": 40280,
+        "timestamp": "2025-11-05T07:02:27.075Z",
+        "durationMs": 38859,
         "locale": "all",
         "includeDrafts": false,
         "changedOnly": false,
