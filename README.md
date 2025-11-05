@@ -27,6 +27,17 @@ npm run gen
 npm run dev
 ```
 
+## 环境配置
+
+在运行项目之前，您需要在项目根目录创建一个 `.env` 文件来配置环境变量。
+
+```bash
+# .env
+GRAPHRAG_ENTITY_PROVIDER=auto
+```
+
+该文件已被列在 `.gitignore` 中，不会被提交到版本库。
+
 ## 目录结构
 ```
 .
@@ -83,7 +94,7 @@ npm run dev
 ### GraphRAG 工作流快速上手
 
 ```bash
-# 1. 启动 Neo4j（可参考 docker-compose.neo4j.yml），首次建立约束
+# 1. 启动 Neo4j（可参考 [docker-compose.neo4j.yml](docker-compose.neo4j.yml)），首次建立约束
 npm run graphrag:constraints
 
 # 2. 将 Markdown 入图，可配合 --changed-only 增量写入
