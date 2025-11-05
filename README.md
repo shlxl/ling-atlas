@@ -33,7 +33,18 @@ npm run dev
 
 ```bash
 # .env
+BASE=/ling-atlas/
+SITE_ORIGIN=https://shlxl.github.io/ling-atlas
+NEO4J_URI=bolt://localhost:7687
+NEO4J_USER=neo4j
+NEO4J_PASSWORD=YOUR_PASSWORD
+NEO4J_DB=neo4j
 GRAPHRAG_ENTITY_PROVIDER=auto
+GEMINI_API_KEY=YOUR_GOOGLE_GEMINI_API_KEY_HERE
+DEEPSEEK_API_KEY=YOUR_DEEPSEEK_API_KEY_HERE
+DEEPSEEK_API_BASE=https://api.deepseek.com/v1
+DEEPSEEK_MODEL=deepseek-chat
+DEEPSEEK_TEMPERATURE=0.2
 ```
 
 该文件已被列在 `.gitignore` 中，不会被提交到版本库。
@@ -41,9 +52,11 @@ GRAPHRAG_ENTITY_PROVIDER=auto
 ## 目录结构
 ```
 .
+├─ .markdownlint-cli2.jsonc # Markdown linting 配置文件
 ├─ docs/                 # 站点根
 │  ├─ <locale>/          # 语言子目录（例如 zh、en），结构由 schema/locales.json 决定
 │  │  ├─ content/        # 对应语言的内容源（每篇文章一个文件夹）
+│  │  ├─ preface-graphs/ # 序言中的 Mermaid 图表定义文件
 │  │  └─ _generated/     # 对应语言的聚合页、meta等生成产物
 │  ├─ public/            # 静态文件（rss.xml、sitemap.xml 由脚本生成）
 │  └─ .vitepress/        # VitePress 配置与主题
