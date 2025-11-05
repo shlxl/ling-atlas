@@ -9,7 +9,7 @@
 </template>
 
 <script setup>
-import { onMounted, ref, watch } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, withBase } from 'vitepress'
 
 let mermaidInstance = null
@@ -39,21 +39,58 @@ const graphText = ref('')
 let renderAbort = false
 
 const route = useRoute()
+const mermaidSources = import.meta.glob('../../../**/*.mmd', { as: 'raw' })
 
-function resolveGraphUrl(rawPath) {
-  if (!rawPath) return rawPath
-  if (/^(https?:)?\/\//.test(rawPath)) return rawPath
-  if (rawPath.startsWith('/')) return withBase(rawPath)
+const resolvedPath = computed(() => resolveGraphPath(props.path))
+
+function buildModuleKey(pathname) {
+  if (!pathname) return null
+  const normalized = pathname.replace(/^\/+/, '')
+  if (!normalized) return null
+  return `../../../${normalized}`
+}
+
+function resolveGraphPath(rawPath) {
+  if (!rawPath) {
+    return { url: rawPath, moduleKey: null }
+  }
+
+  if (/^(https?:)?\/\//.test(rawPath)) {
+    return { url: rawPath, moduleKey: null }
+  }
+
+  if (rawPath.startsWith('/')) {
+    return {
+      url: withBase(rawPath),
+      moduleKey: buildModuleKey(rawPath)
+    }
+  }
 
   const relativePath = route.data?.relativePath ?? ''
   const baseUrl = new URL(relativePath || '.', 'http://mermaid.local/')
   const resolved = new URL(rawPath, baseUrl)
+  const pathname = resolved.pathname
 
-  return withBase(resolved.pathname)
+  return {
+    url: withBase(pathname),
+    moduleKey: buildModuleKey(pathname)
+  }
 }
 
 async function loadGraphText() {
-  const url = resolveGraphUrl(props.path)
+  const { url, moduleKey } = resolvedPath.value
+
+  if (moduleKey && mermaidSources[moduleKey]) {
+    const loader = mermaidSources[moduleKey]
+    const loaded = await loader()
+    if (typeof loaded === 'string') {
+      return loaded
+    }
+    if (loaded && typeof loaded === 'object' && 'default' in loaded) {
+      return loaded.default
+    }
+  }
+
   const response = await fetch(url, { cache: 'no-cache' })
   if (!response.ok) {
     throw new Error(`获取 mermaid 文件失败：${response.status}`)
@@ -118,7 +155,7 @@ onMounted(() => {
 })
 
 watch(
-  () => [props.path, route.data?.relativePath],
+  () => [resolvedPath.value.url, resolvedPath.value.moduleKey, route.data?.relativePath],
   () => {
     renderAbort = true
     setTimeout(() => { renderAbort = false }, 0)
