@@ -571,8 +571,6 @@ function buildGraphIndexContent(entries = []) {
   lines.push('description: 已导出的 GraphRAG 主题导航。');
   lines.push('---');
   lines.push('');
-  lines.push('# GraphRAG 主题导航');
-  lines.push('');
   lines.push('| 主题 | 说明 | 链接 |');
   lines.push('| --- | --- | --- |');
   for (const topic of topics) {
