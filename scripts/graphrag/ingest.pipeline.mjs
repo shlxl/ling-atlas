@@ -353,6 +353,7 @@ async function main() {
   }
 
   const driver = createDriver(neo4jConfig);
+  let result = { written: 0 };
   try {
     await verifyConnectivity(driver);
     console.log(`[${scriptName}] 已验证 Neo4j 连接`);
@@ -363,40 +364,59 @@ async function main() {
       }
     });
 
-    const result = await writePayloads(driver, neo4jConfig.database, payloads);
-    console.log(
-      `[${scriptName}] 写入完成：${result.written} 文档`,
+    result = await writePayloads(driver, neo4jConfig.database, payloads);
+    console.log(`[${scriptName}] 写入完成：${result.written} 文档`);
+  } catch (writeError) {
+    console.error(
+      `[${scriptName}] 写入 Neo4j 失败: ${writeError.message || writeError}`,
     );
-
-    if (!options.noCache && result.written > 0) {
-      const timestamp = new Date().toISOString();
-      for (const doc of processedDocs) {
-        updateCacheEntry(cacheState.cache, doc, { writtenAt: timestamp });
-      }
-      const cachePath = await saveIngestCache(cacheState.cache, cacheState.path);
-      console.log(`[${scriptName}] 已更新缓存：${cachePath}`);
-    }
-
-    if (options.jsonOutput) {
-      console.log(JSON.stringify({ ...summary, written: result.written }, null, 2));
-    }
-
-    const durationMs = Date.now() - startedAt;
-    await recordTelemetrySafely(
-      createIngestTelemetryRecord({
-        options,
-        summary,
-        processedCount: processedDocs.length,
-        adapterName,
-        adapterModel,
-        durationMs,
-        written: result.written,
-        dryRun: false,
-      }),
-    );
+    // Optionally re-throw or handle the error as needed
   } finally {
     await driver.close();
   }
+
+  const written = Number(result?.written ?? 0);
+  const durationMs = Date.now() - startedAt;
+
+  if (!options.noCache && written > 0 && cacheState?.cache) {
+    const writtenAt = new Date().toISOString();
+    for (const doc of processedDocs) {
+      updateCacheEntry(cacheState.cache, doc, { writtenAt });
+    }
+    try {
+      const cachePath = cacheState.path ?? undefined;
+      const savedPath = await saveIngestCache(cacheState.cache, cachePath);
+      console.log(`[${scriptName}] 已更新 ingest 缓存：${savedPath}`);
+    } catch (cacheError) {
+      console.warn(
+        `[${scriptName}] 写入 ingest 缓存失败：${cacheError?.message || cacheError}`,
+      );
+    }
+  }
+
+  const finalSummary = {
+    ...summary,
+    processed: processedDocs.length,
+    written,
+    durationMs,
+  };
+
+  if (options.jsonOutput) {
+    console.log(JSON.stringify(finalSummary, null, 2));
+  }
+
+  await recordTelemetrySafely(
+    createIngestTelemetryRecord({
+      options,
+      summary,
+      processedCount: processedDocs.length,
+      adapterName,
+      adapterModel,
+      durationMs,
+      written,
+      dryRun: false,
+    }),
+  );
 }
 
 main().catch((error) => {

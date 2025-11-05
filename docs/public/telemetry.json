@@ -10,8 +10,8 @@
   },
   "build": {
     "pagegen": {
-      "timestamp": "2025-11-05T02:37:17.653Z",
-      "totalMs": 32.932,
+      "timestamp": "2025-11-05T06:51:36.724Z",
+      "totalMs": 34.323,
       "collect": {
         "locales": 2,
         "cacheHitRate": 1,
@@ -25,13 +25,13 @@
       },
       "write": {
         "total": 47,
-        "written": 5,
-        "skipped": 42,
+        "written": 0,
+        "skipped": 47,
         "failed": 0,
-        "hashMatches": 42,
+        "hashMatches": 47,
         "disabled": false,
         "skippedByReason": {
-          "hash": 42
+          "hash": 47
         }
       },
       "feeds": {
@@ -345,10 +345,36 @@
       }
     },
     "graphrag": {
+      "export": {
+        "type": "export",
+        "timestamp": "2025-11-05T06:46:28.750Z",
+        "docId": "zh/content/graphrag-research/index",
+        "docTitle": "GraphRAG 研究概述与综述",
+        "topic": "zh-graphrag-research",
+        "locale": "zh",
+        "durationMs": 57,
+        "dryRun": false,
+        "totals": {
+          "nodes": 22,
+          "edges": 21,
+          "entities": 0,
+          "recommendations": 0
+        },
+        "files": {
+          "subgraph": true,
+          "context": true,
+          "metadata": true,
+          "page": true
+        },
+        "structure": {
+          "inferredScore": null,
+          "pagerankAvg": null
+        }
+      },
       "ingest": {
         "type": "ingest",
-        "timestamp": "2025-11-03T14:09:16.865Z",
-        "durationMs": 41379,
+        "timestamp": "2025-11-05T06:38:42.020Z",
+        "durationMs": 40280,
         "locale": "all",
         "includeDrafts": false,
         "changedOnly": false,
@@ -357,7 +383,7 @@
         "adapter": "gemini",
         "adapterModel": "gemini-2.5-pro",
         "totals": {
-          "collected": 76,
+          "collected": 78,
           "normalized": 1,
           "readyForWrite": 1,
           "processed": 1
@@ -376,45 +402,18 @@
       "explore": {
         "type": "explore",
         "mode": "question",
-        "question": "GraphRAG 集成的最新交付内容是什么？",
-        "docId": "zh/content/tutorial-authoring-to-publish/index",
-        "docs": 7,
-        "nodes": 29,
-        "edges": 28,
+        "question": "GraphRAG 最新研究包含哪些方向？",
+        "docId": null,
+        "docs": 5,
+        "nodes": 0,
+        "edges": 0,
         "truncatedNodes": false,
         "truncatedEdges": false,
-        "durationMs": 387,
+        "durationMs": 282,
         "sources": [
-          "vector",
-          "structure"
+          "vector"
         ],
-        "timestamp": "2025-10-31T20:07:52.589Z"
-      },
-      "export": {
-        "type": "export",
-        "timestamp": "2025-10-31T17:57:23.564Z",
-        "docId": "zh/content/telemetry-guide/index",
-        "docTitle": "观测指标导览",
-        "topic": "zh-telemetry-guide",
-        "locale": "zh",
-        "durationMs": 102,
-        "dryRun": false,
-        "totals": {
-          "nodes": 39,
-          "edges": 38,
-          "entities": 3,
-          "recommendations": 5
-        },
-        "files": {
-          "subgraph": true,
-          "context": true,
-          "metadata": true,
-          "page": true
-        },
-        "structure": {
-          "inferredScore": 0.15000000000000002,
-          "pagerankAvg": 0.15000000000000002
-        }
+        "timestamp": "2025-11-05T06:02:38.110Z"
       },
       "retrieve": {
         "type": "retrieve",
@@ -438,6 +437,10 @@
       "warnings": []
     },
     "graphragHistory": [
+      {
+        "timestamp": "2025-11-05T06:02:38.110Z",
+        "warnings": []
+      },
       {
         "timestamp": "2025-10-31T20:07:52.589Z",
         "warnings": []

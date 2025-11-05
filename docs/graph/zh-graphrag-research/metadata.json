@@ -1,0 +1,269 @@
+{
+  "doc": {
+    "id": "zh/content/graphrag-research/index",
+    "title": "GraphRAG 研究概述与综述",
+    "description": "研究GraphRAG当前状况与最新发展方向，包括多跳图检索、向量融合、混合检索、子图提取与图路径检索、图神经网络、多模态知识图谱等前沿方向。",
+    "locale": "zh",
+    "updated_at": "2025-11-01T00:00:00.000Z",
+    "source_path": "docs/zh/content/graphrag-research/index.md"
+  },
+  "categories": [
+    "RAG实战"
+  ],
+  "tags": [
+    "生图检索增强生成",
+    "多跳图检索",
+    "向量融合",
+    "混合检索",
+    "子图提取与图路径检索",
+    "图神经网络",
+    "多模态知识图谱"
+  ],
+  "entities": [
+    {
+      "name": "生图检索增强生成",
+      "type": "Concept",
+      "count": 1,
+      "avg_confidence": 0,
+      "structure_scores": {
+        "gnn_community": 143,
+        "gnn_pagerank": 0.15
+      }
+    },
+    {
+      "name": "多跳图检索",
+      "type": "Concept",
+      "count": 1,
+      "avg_confidence": 0,
+      "structure_scores": {
+        "gnn_community": 144,
+        "gnn_pagerank": 0.15
+      }
+    },
+    {
+      "name": "向量融合",
+      "type": "Concept",
+      "count": 1,
+      "avg_confidence": 0,
+      "structure_scores": {
+        "gnn_community": 145,
+        "gnn_pagerank": 0.15
+      }
+    },
+    {
+      "name": "混合检索",
+      "type": "Concept",
+      "count": 1,
+      "avg_confidence": 0,
+      "structure_scores": {
+        "gnn_community": 146,
+        "gnn_pagerank": 0.15
+      }
+    },
+    {
+      "name": "子图提取与图路径检索",
+      "type": "Concept",
+      "count": 1,
+      "avg_confidence": 0,
+      "structure_scores": {
+        "gnn_community": 147,
+        "gnn_pagerank": 0.15
+      }
+    },
+    {
+      "name": "图神经网络",
+      "type": "Concept",
+      "count": 1,
+      "avg_confidence": 0,
+      "structure_scores": {
+        "gnn_community": 148,
+        "gnn_pagerank": 0.15
+      }
+    },
+    {
+      "name": "多模态知识图谱",
+      "type": "Concept",
+      "count": 1,
+      "avg_confidence": 0,
+      "structure_scores": {
+        "gnn_community": 149,
+        "gnn_pagerank": 0.15
+      }
+    }
+  ],
+  "recommendations": [
+    {
+      "doc_id": "zh/content/ai-runtime-guide/index",
+      "title": "AI 管线占位与切换指南",
+      "updated_at": "2025-10-20T00:00:00.000Z",
+      "score": 20.381,
+      "tags": [
+        "冒烟测试",
+        "运行时切换",
+        "AI管线"
+      ],
+      "categories": [
+        "管理与协作"
+      ],
+      "reasons": [
+        "最近更新：2025-10-20T00:00:00.000Z"
+      ]
+    },
+    {
+      "doc_id": "zh/content/pagegen-handbook/index",
+      "title": "Pagegen 运行手册",
+      "updated_at": "2025-10-20T00:00:00.000Z",
+      "score": 20.381,
+      "tags": [
+        "调度插件",
+        "缓存优化",
+        "生成管线"
+      ],
+      "categories": [
+        "工程笔记"
+      ],
+      "reasons": [
+        "最近更新：2025-10-20T00:00:00.000Z"
+      ]
+    },
+    {
+      "doc_id": "zh/content/pagegen-retrospective/index",
+      "title": "Pagegen 重构回顾（含占位阶段）",
+      "updated_at": "2025-10-20T00:00:00.000Z",
+      "score": 20.381,
+      "tags": [
+        "重构",
+        "架构演进",
+        "性能优化"
+      ],
+      "categories": [
+        "工程笔记"
+      ],
+      "reasons": [
+        "最近更新：2025-10-20T00:00:00.000Z"
+      ]
+    },
+    {
+      "doc_id": "zh/content/project-overview/index",
+      "title": "Ling Atlas 项目缘起与系统全貌",
+      "updated_at": "2025-10-20T00:00:00.000Z",
+      "score": 20.381,
+      "tags": [
+        "自动化运维",
+        "项目治理",
+        "知识管理"
+      ],
+      "categories": [
+        "管理与协作"
+      ],
+      "reasons": [
+        "最近更新：2025-10-20T00:00:00.000Z"
+      ]
+    },
+    {
+      "doc_id": "zh/content/telemetry-cases/index",
+      "title": "观测指标场景案例与排障实录",
+      "updated_at": "2025-10-20T00:00:00.000Z",
+      "score": 20.381,
+      "tags": [
+        "故障排查",
+        "告警处理",
+        "案例分析"
+      ],
+      "categories": [
+        "工程笔记"
+      ],
+      "reasons": [
+        "最近更新：2025-10-20T00:00:00.000Z"
+      ]
+    }
+  ],
+  "structure": {
+    "score": 0.15,
+    "doc": {},
+    "pagerank": {
+      "avg": 0.15,
+      "max": 0.15,
+      "sum": 1.05,
+      "count": 7
+    },
+    "communities": [
+      {
+        "community": "143",
+        "count": 1
+      },
+      {
+        "community": "144",
+        "count": 1
+      },
+      {
+        "community": "145",
+        "count": 1
+      },
+      {
+        "community": "146",
+        "count": 1
+      },
+      {
+        "community": "147",
+        "count": 1
+      },
+      {
+        "community": "148",
+        "count": 1
+      },
+      {
+        "community": "149",
+        "count": 1
+      }
+    ],
+    "top_entities": [
+      {
+        "name": "143",
+        "type": "Entity",
+        "pagerank": 0.15,
+        "structure_scores": {
+          "gnn_community": 143,
+          "gnn_pagerank": 0.15
+        }
+      },
+      {
+        "name": "144",
+        "type": "Entity",
+        "pagerank": 0.15,
+        "structure_scores": {
+          "gnn_community": 144,
+          "gnn_pagerank": 0.15
+        }
+      },
+      {
+        "name": "145",
+        "type": "Entity",
+        "pagerank": 0.15,
+        "structure_scores": {
+          "gnn_community": 145,
+          "gnn_pagerank": 0.15
+        }
+      },
+      {
+        "name": "146",
+        "type": "Entity",
+        "pagerank": 0.15,
+        "structure_scores": {
+          "gnn_community": 146,
+          "gnn_pagerank": 0.15
+        }
+      },
+      {
+        "name": "147",
+        "type": "Entity",
+        "pagerank": 0.15,
+        "structure_scores": {
+          "gnn_community": 147,
+          "gnn_pagerank": 0.15
+        }
+      }
+    ]
+  },
+  "generated_at": "2025-11-05T08:54:00.802Z"
+}

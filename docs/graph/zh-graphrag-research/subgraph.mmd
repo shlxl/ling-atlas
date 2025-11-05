@@ -1,0 +1,56 @@
+graph LR
+  doc84["Doc｜GraphRAG 研究概述与综述"]
+  cat084_RAG__["Category｜RAG实战"]
+  doc84 --> cat084_RAG__
+  tag084_________["Tag｜生图检索增强生成"]
+  doc84 --> tag084_________
+  tag184______["Tag｜多跳图检索"]
+  doc84 --> tag184______
+  tag284_____["Tag｜向量融合"]
+  doc84 --> tag284_____
+  tag384_____["Tag｜混合检索"]
+  doc84 --> tag384_____
+  tag484___________["Tag｜子图提取与图路径检索"]
+  doc84 --> tag484___________
+  tag584______["Tag｜图神经网络"]
+  doc84 --> tag584______
+  tag684________["Tag｜多模态知识图谱"]
+  doc84 --> tag684________
+  ent143["Concept｜生图检索增强生成"]
+  doc84 -- 频次 1 --> ent143
+  ent144["Concept｜多跳图检索"]
+  doc84 -- 频次 1 --> ent144
+  ent145["Concept｜向量融合"]
+  doc84 -- 频次 1 --> ent145
+  ent146["Concept｜混合检索"]
+  doc84 -- 频次 1 --> ent146
+  ent147["Concept｜子图提取与图路径检索"]
+  doc84 -- 频次 1 --> ent147
+  ent148["Concept｜图神经网络"]
+  doc84 -- 频次 1 --> ent148
+  ent149["Concept｜多模态知识图谱"]
+  doc84 -- 频次 1 --> ent149
+  class doc84 docNode;
+  class cat084_RAG__ categoryNode;
+  class tag084_________ tagNode;
+  class tag184______ tagNode;
+  class tag284_____ tagNode;
+  class tag384_____ tagNode;
+  class tag484___________ tagNode;
+  class tag584______ tagNode;
+  class tag684________ tagNode;
+  class ent143 entityConcept;
+  class ent144 entityConcept;
+  class ent145 entityConcept;
+  class ent146 entityConcept;
+  class ent147 entityConcept;
+  class ent148 entityConcept;
+  class ent149 entityConcept;
+  classDef docNode fill:#1f6feb,stroke:#0d419d,color:#ffffff,font-weight:600;
+  classDef categoryNode fill:#0d1117,stroke:#30363d,color:#f0f6fc;
+  classDef tagNode fill:#161b22,stroke:#30363d,color:#79c0ff;
+  classDef entityNode fill:#1b4d3e,stroke:#2ea043,color:#ffffff;
+  classDef entityPerson fill:#653c9d,stroke:#8957e5,color:#ffffff;
+  classDef entityOrg fill:#1158c7,stroke:#1f6feb,color:#ffffff;
+  classDef entityLocation fill:#7c4400,stroke:#b76100,color:#ffffff;
+  classDef entityConcept fill:#445760,stroke:#6e7781,color:#ffffff;

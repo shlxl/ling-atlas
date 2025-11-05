@@ -93,16 +93,15 @@ function buildDocContext(doc) {
 }
 
 function buildMentions(doc, nodes) {
-  if (!Array.isArray(nodes) || !nodes.length) return [];
-  const chunks = doc?.chunks ?? [];
-  if (!chunks.length) return [];
-
-  const mentions = [];
-  for (const node of nodes) {
-    if (!node?.id) continue;
-    const needle = node.id.toLowerCase();
-    let mentionCount = 0;
-
+      if (!Array.isArray(nodes) || !nodes.length) return [];
+      const chunks = doc?.chunks ?? [];
+      if (!chunks.length) return [];
+  
+      const mentions = [];
+      for (const node of nodes) {
+        if (!node?.id) continue;
+        const needle = (node.properties?.name ?? node.id).toLowerCase();
+        let mentionCount = 0;
     for (const chunk of chunks) {
       if (!chunk?.text || !chunk?.id) continue;
       if (mentionCount >= MAX_MENTIONS_PER_NODE) break;

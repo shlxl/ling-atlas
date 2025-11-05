@@ -212,7 +212,7 @@ function buildEntitySummary(subgraph, docNode) {
   for (const [identity, stat] of stats.entries()) {
     const node = nodeById.get(identity);
     if (!node) continue;
-    const structureScores = extractGnnScores(node.data ?? {});
+    const structureScores = extractGnnScores(node.properties ?? {});
     entities.push({
       identity,
       node,
@@ -235,13 +235,13 @@ function extractCategories(subgraph, docNode) {
     if (edge.type === 'IN_CATEGORY' && edge.source === docNode.identity) {
       const node = nodeById.get(edge.target);
       if (node?.labels.includes('Category')) {
-        categories.add(node.data?.name ?? node.data?.slug ?? '');
+        categories.add(node.properties?.name ?? node.properties?.slug ?? '');
       }
     }
     if (edge.type === 'HAS_TAG' && edge.source === docNode.identity) {
       const node = nodeById.get(edge.target);
       if (node?.labels.includes('Tag')) {
-        tags.add(node.data?.name ?? node.data?.slug ?? '');
+        tags.add(node.properties?.name ?? node.properties?.slug ?? '');
       }
     }
   }
@@ -252,7 +252,7 @@ function extractCategories(subgraph, docNode) {
 }
 
 function summarizeStructure(docNode, entities) {
-  const docScores = extractGnnScores(docNode?.data ?? {});
+  const docScores = extractGnnScores(docNode?.properties ?? {});
 
   const pagerankValues = [];
   const communityCounts = new Map();
@@ -324,7 +324,7 @@ function buildRelationships(subgraph, entityIdentities) {
 function buildMermaid(docNode, entities, relationships, categories, tags) {
   const lines = ['graph LR'];
   const docId = mermaidId(docNode.identity, 'doc');
-  const docLabel = sanitizeLabel(docNode.data?.title ?? docNode.data?.id ?? 'Doc');
+  const docLabel = sanitizeLabel(docNode.properties?.title ?? docNode.properties?.id ?? 'Doc');
   lines.push(`  ${docId}["Doc｜${docLabel}"]`);
   const classLines = [`  class ${docId} docNode;`];
 
@@ -346,12 +346,12 @@ function buildMermaid(docNode, entities, relationships, categories, tags) {
   entities.forEach((entity) => {
     const node = entity.node;
     const entityId = mermaidId(node.identity, 'ent');
-    const label = sanitizeLabel(`${node.data?.type ?? 'Entity'}｜${node.data?.name ?? node.data?.id}`);
+    const label = sanitizeLabel(`${node.properties?.type ?? 'Entity'}｜${node.properties?.name ?? node.properties?.id}`);
     lines.push(`  ${entityId}["${label}"]`);
     lines.push(`  ${docId} -- 频次 ${entity.count} --> ${entityId}`);
     linkIndex += 1;
 
-    const type = node.data?.type ?? 'Entity';
+    const type = node.properties?.type ?? 'Entity';
     const className = ENTITY_CLASS_MAP[type] ?? 'entityNode';
     classLines.push(`  class ${entityId} ${className};`);
   });
@@ -389,23 +389,18 @@ function buildContextMarkdown({
   categories,
   structure,
 }) {
-  const docTitle = docNode.data?.title ?? docNode.data?.id;
-  const docUpdated = docNode.data?.updated_at ?? docNode.data?.updated ?? ''; 
+  const docTitle = docNode.properties?.title ?? docNode.properties?.id;
+  const docUpdated = docNode.properties?.updated_at ?? docNode.properties?.updated ?? ''; 
   const lines = [];
   lines.push(`# ${docTitle}`);
   lines.push('');
-  lines.push('- 原始文档：`' + docNode.data?.id + '`');
+  lines.push('- 原始文档：`' + docNode.properties?.id + '`');
   if (docUpdated) {
     lines.push(`- 最近更新：${docUpdated}`);
   }
   if (categories.length) {
     lines.push(`- 分类：${categories.join('、')}`);
   }
-  lines.push('');
-  lines.push('## 子图概览');
-  lines.push('```mermaid');
-  lines.push(mermaid);
-  lines.push('```');
   lines.push('');
 
   if (structure) {
@@ -452,7 +447,7 @@ function buildContextMarkdown({
   lines.push('| --- | --- | --- | --- | --- |');
   entities.forEach((entity) => {
     const structureText = formatStructureScores(entity.structureScores);
-    lines.push(`| ${entity.node.data?.name ?? entity.node.identity} | ${entity.node.data?.type ?? 'Entity'} | ${entity.count} | ${entity.avgConfidence.toFixed(3)} | ${structureText || '—'} |`);
+    lines.push(`| ${entity.node.properties?.name ?? entity.node.identity} | ${entity.node.properties?.type ?? 'Entity'} | ${entity.count} | ${entity.avgConfidence.toFixed(3)} | ${structureText || '—'} |`);
   });
   lines.push('');
   if (recommendations?.length) {
@@ -575,8 +570,6 @@ function buildGraphIndexContent(entries = []) {
   lines.push('title: GraphRAG 主题列表');
   lines.push('description: 已导出的 GraphRAG 主题导航。');
   lines.push('---');
-  lines.push('');
-  lines.push('# GraphRAG 主题导航');
   lines.push('');
   lines.push('| 主题 | 说明 | 链接 |');
   lines.push('| --- | --- | --- |');
@@ -799,7 +792,7 @@ async function main() {
     const recommendedEntities = options.entities?.length
       ? options.entities
       : entities
-          .map((entity) => entity.node.data?.name)
+          .map((entity) => entity.node.properties?.name)
           .filter(Boolean)
           .slice(0, 5);
 
@@ -808,29 +801,29 @@ async function main() {
       topn = await fetchTopN(driver, neo4jConfig.database, {
         entityNames: recommendedEntities,
         category: categories[0] ?? null,
-        language: options.locale ?? docNode.data?.locale ?? null,
+        language: options.locale ?? docNode.properties?.locale ?? null,
         limit: DEFAULT_TOPN_LIMIT + 1,
       });
     }
 
     const recommendations = (topn.items ?? []).filter(
-      (item) => item.doc_id !== docNode.data?.id,
+      (item) => item.doc_id !== docNode.properties?.id,
     ).slice(0, DEFAULT_TOPN_LIMIT);
 
     const metadata = {
       doc: {
-        id: docNode.data?.id,
-        title: docNode.data?.title,
-        description: docNode.data?.description,
-        locale: docNode.data?.locale,
-        updated_at: docNode.data?.updated_at ?? docNode.data?.updated ?? null,
-        source_path: docNode.data?.source_path,
+        id: docNode.properties?.id,
+        title: docNode.properties?.title,
+        description: docNode.properties?.description,
+        locale: docNode.properties?.locale,
+        updated_at: docNode.properties?.updated_at ?? docNode.properties?.updated ?? null,
+        source_path: docNode.properties?.source_path,
       },
       categories,
       tags,
       entities: entities.map((entity) => ({
-        name: entity.node.data?.name,
-        type: entity.node.data?.type ?? 'Entity',
+        name: entity.node.properties?.name,
+        type: entity.node.properties?.type ?? 'Entity',
         count: entity.count,
         avg_confidence: Number(entity.avgConfidence.toFixed(3)),
         structure_scores: roundScoreMap(entity.structureScores),
@@ -908,10 +901,10 @@ async function main() {
     telemetryContext = {
       type: 'export',
       timestamp: new Date().toISOString(),
-      docId: docNode.data?.id ?? options.docId,
-      docTitle: docNode.data?.title ?? null,
+      docId: docNode.properties?.id ?? options.docId,
+      docTitle: docNode.properties?.title ?? null,
       topic,
-      locale: options.locale ?? docNode.data?.locale ?? null,
+      locale: options.locale ?? docNode.properties?.locale ?? null,
       durationMs: Date.now() - startedAt,
       dryRun: Boolean(options.dryRun),
       totals: {
