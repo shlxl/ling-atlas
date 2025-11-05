@@ -2,7 +2,7 @@
 title: 所有标签
 ---
 
-# 所有标签
+## 所有标签
 
 - [案例分析](/zh/_generated/tags/案例分析/)
 - [调度插件](/zh/_generated/tags/调度插件/)
