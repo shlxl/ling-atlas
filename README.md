@@ -125,6 +125,7 @@ npm run graphrag:retrieve -- \
 
 # 4. 运行 GNN 算法写回结构指标（示例）
 npm run graphrag:gnn -- --graph entity --algo pagerank --write-property gnn_pagerank
+npm run graphrag:gnn -- --graph entity --algo labelPropagation --write-property gnn_community
 
 # 5. 导出 mermaid / context / metadata，并生成布局页
 npm run graphrag:export -- \
@@ -245,6 +246,7 @@ These are convenience helpers — edit `.vscode/tasks.json` to add or adjust scr
 
 ## 近期进展
 
+- GraphRAG 导出工作流修复：诊断并修复了 `export.mjs` 脚本中的一系列问题，包括属性访问错误、`docId` 不匹配、因缺少 `mentions` 导致的推荐列表为空，以及因未运行 GNN 管道导致的结构化指标缺失。完善了 `ingest` -> `gnn` -> `export` 的完整工作流文档和示例。
 - 完成 feeds 模板配置化，CLI/metrics 会区分各语言模板的写入结果，`tests/pagegen/feeds.test.mjs` 已覆盖自定义与限流场景。
 - 新增 `tests/pagegen/check-links.integration.test.mjs`，对 `node scripts/check-links.mjs` 的 nav manifest/i18n 缺失路径进行回归，CI 现会立即阻断缺链提交。
 - 站点级 SEO/OpenGraph Schema (`schema/seo.json`) 与 README/运维指引同步落地，主题 `<meta>` 回归测试已补齐。

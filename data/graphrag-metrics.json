@@ -1,5 +1,519 @@
 [
   {
+    "type": "export",
+    "timestamp": "2025-11-05T08:54:00.818Z",
+    "docId": "zh/content/graphrag-research/index",
+    "docTitle": "GraphRAG 研究概述与综述",
+    "topic": "zh-graphrag-research",
+    "locale": "zh",
+    "durationMs": 80,
+    "dryRun": false,
+    "totals": {
+      "nodes": 75,
+      "edges": 74,
+      "entities": 7,
+      "recommendations": 5
+    },
+    "files": {
+      "subgraph": true,
+      "context": true,
+      "metadata": true,
+      "page": true
+    },
+    "structure": {
+      "inferredScore": 0.15000000000000005,
+      "pagerankAvg": 0.15000000000000005
+    }
+  },
+  {
+    "type": "export",
+    "timestamp": "2025-11-05T08:47:30.422Z",
+    "docId": "zh/content/graphrag-research/index",
+    "docTitle": "GraphRAG 研究概述与综述",
+    "topic": "zh-graphrag-research",
+    "locale": "zh",
+    "durationMs": 79,
+    "dryRun": false,
+    "totals": {
+      "nodes": 75,
+      "edges": 74,
+      "entities": 7,
+      "recommendations": 5
+    },
+    "files": {
+      "subgraph": true,
+      "context": true,
+      "metadata": true,
+      "page": true
+    },
+    "structure": {
+      "inferredScore": 0.15000000000000005,
+      "pagerankAvg": 0.15000000000000005
+    }
+  },
+  {
+    "type": "export",
+    "timestamp": "2025-11-05T08:36:56.154Z",
+    "docId": "zh/content/graphrag-research/index",
+    "docTitle": "GraphRAG 研究概述与综述",
+    "topic": "zh-graphrag-research",
+    "locale": "zh",
+    "durationMs": 84,
+    "dryRun": false,
+    "totals": {
+      "nodes": 75,
+      "edges": 74,
+      "entities": 7,
+      "recommendations": 5
+    },
+    "files": {
+      "subgraph": true,
+      "context": true,
+      "metadata": true,
+      "page": true
+    },
+    "structure": {
+      "inferredScore": null,
+      "pagerankAvg": null
+    }
+  },
+  {
+    "type": "export",
+    "timestamp": "2025-11-05T08:28:51.516Z",
+    "docId": "zh/content/graphrag-research/index",
+    "docTitle": "GraphRAG 研究概述与综述",
+    "topic": "zh-graphrag-research",
+    "locale": "zh",
+    "durationMs": 87,
+    "dryRun": false,
+    "totals": {
+      "nodes": 75,
+      "edges": 74,
+      "entities": 7,
+      "recommendations": 5
+    },
+    "files": {
+      "subgraph": true,
+      "context": true,
+      "metadata": true,
+      "page": true
+    },
+    "structure": {
+      "inferredScore": null,
+      "pagerankAvg": null
+    }
+  },
+  {
+    "type": "export",
+    "timestamp": "2025-11-05T08:25:59.110Z",
+    "docId": "zh/content/graphrag-research/index",
+    "docTitle": "GraphRAG 研究概述与综述",
+    "topic": "zh-graphrag-research",
+    "locale": "zh",
+    "durationMs": 115,
+    "dryRun": false,
+    "totals": {
+      "nodes": 75,
+      "edges": 74,
+      "entities": 7,
+      "recommendations": 5
+    },
+    "files": {
+      "subgraph": true,
+      "context": true,
+      "metadata": true,
+      "page": true
+    },
+    "structure": {
+      "inferredScore": null,
+      "pagerankAvg": null
+    }
+  },
+  {
+    "type": "export",
+    "timestamp": "2025-11-05T08:06:44.687Z",
+    "docId": "zh/content/graphrag-research/index",
+    "docTitle": "GraphRAG 研究概述与综述",
+    "topic": "zh-graphrag-research",
+    "locale": "zh",
+    "durationMs": 277,
+    "dryRun": false,
+    "totals": {
+      "nodes": 75,
+      "edges": 74,
+      "entities": 7,
+      "recommendations": 0
+    },
+    "files": {
+      "subgraph": true,
+      "context": true,
+      "metadata": true,
+      "page": true
+    },
+    "structure": {
+      "inferredScore": null,
+      "pagerankAvg": null
+    }
+  },
+  {
+    "type": "export",
+    "timestamp": "2025-11-05T08:00:29.207Z",
+    "docId": "zh/content/graphrag-research/index",
+    "docTitle": "GraphRAG 研究概述与综述",
+    "topic": "zh-graphrag-research",
+    "locale": "zh",
+    "durationMs": 229,
+    "dryRun": false,
+    "totals": {
+      "nodes": 9,
+      "edges": 8,
+      "entities": 0,
+      "recommendations": 0
+    },
+    "files": {
+      "subgraph": true,
+      "context": true,
+      "metadata": true,
+      "page": true
+    },
+    "structure": {
+      "inferredScore": null,
+      "pagerankAvg": null
+    }
+  },
+  {
+    "type": "export",
+    "timestamp": "2025-11-05T07:46:06.420Z",
+    "docId": "zh/content/graphrag-research/index",
+    "docTitle": "GraphRAG 研究概述与综述",
+    "topic": "zh-graphrag-research",
+    "locale": "zh",
+    "durationMs": 64,
+    "dryRun": false,
+    "totals": {
+      "nodes": 22,
+      "edges": 21,
+      "entities": 0,
+      "recommendations": 0
+    },
+    "files": {
+      "subgraph": true,
+      "context": true,
+      "metadata": true,
+      "page": true
+    },
+    "structure": {
+      "inferredScore": null,
+      "pagerankAvg": null
+    }
+  },
+  {
+    "type": "export",
+    "timestamp": "2025-11-05T07:31:25.169Z",
+    "docId": "zh/content/graphrag-research/index",
+    "docTitle": "GraphRAG 研究概述与综述",
+    "topic": "zh-graphrag-research",
+    "locale": "zh",
+    "durationMs": 86,
+    "dryRun": false,
+    "totals": {
+      "nodes": 22,
+      "edges": 21,
+      "entities": 0,
+      "recommendations": 0
+    },
+    "files": {
+      "subgraph": true,
+      "context": true,
+      "metadata": true,
+      "page": true
+    },
+    "structure": {
+      "inferredScore": null,
+      "pagerankAvg": null
+    }
+  },
+  {
+    "type": "export",
+    "timestamp": "2025-11-05T07:26:50.014Z",
+    "docId": "zh/content/graphrag-research/index",
+    "docTitle": "GraphRAG 研究概述与综述",
+    "topic": "zh-graphrag-research",
+    "locale": "zh",
+    "durationMs": 56,
+    "dryRun": false,
+    "totals": {
+      "nodes": 22,
+      "edges": 21,
+      "entities": 0,
+      "recommendations": 0
+    },
+    "files": {
+      "subgraph": true,
+      "context": true,
+      "metadata": true,
+      "page": true
+    },
+    "structure": {
+      "inferredScore": null,
+      "pagerankAvg": null
+    }
+  },
+  {
+    "type": "export",
+    "timestamp": "2025-11-05T07:24:08.021Z",
+    "docId": "zh/content/graphrag-research/index",
+    "docTitle": "GraphRAG 研究概述与综述",
+    "topic": "zh-graphrag-research",
+    "locale": "zh",
+    "durationMs": 54,
+    "dryRun": false,
+    "totals": {
+      "nodes": 22,
+      "edges": 21,
+      "entities": 0,
+      "recommendations": 0
+    },
+    "files": {
+      "subgraph": true,
+      "context": true,
+      "metadata": true,
+      "page": true
+    },
+    "structure": {
+      "inferredScore": null,
+      "pagerankAvg": null
+    }
+  },
+  {
+    "type": "ingest",
+    "timestamp": "2025-11-05T07:02:27.075Z",
+    "durationMs": 38859,
+    "locale": "all",
+    "includeDrafts": false,
+    "changedOnly": false,
+    "noCache": true,
+    "dryRun": false,
+    "adapter": "gemini",
+    "adapterModel": "gemini-2.5-pro",
+    "totals": {
+      "collected": 78,
+      "normalized": 1,
+      "readyForWrite": 1,
+      "processed": 1
+    },
+    "skipped": {
+      "total": 0,
+      "reasons": [],
+      "samples": []
+    },
+    "write": {
+      "attempted": 1,
+      "written": 1,
+      "cacheUpdated": false
+    }
+  },
+  {
+    "type": "export",
+    "timestamp": "2025-11-05T06:58:56.114Z",
+    "docId": "zh/content/graphrag-research/index",
+    "docTitle": "GraphRAG 研究概述与综述",
+    "topic": "zh-graphrag-research",
+    "locale": "zh",
+    "durationMs": 50,
+    "dryRun": false,
+    "totals": {
+      "nodes": 22,
+      "edges": 21,
+      "entities": 0,
+      "recommendations": 0
+    },
+    "files": {
+      "subgraph": true,
+      "context": true,
+      "metadata": true,
+      "page": true
+    },
+    "structure": {
+      "inferredScore": null,
+      "pagerankAvg": null
+    }
+  },
+  {
+    "type": "export",
+    "timestamp": "2025-11-05T06:46:28.750Z",
+    "docId": "zh/content/graphrag-research/index",
+    "docTitle": "GraphRAG 研究概述与综述",
+    "topic": "zh-graphrag-research",
+    "locale": "zh",
+    "durationMs": 57,
+    "dryRun": false,
+    "totals": {
+      "nodes": 22,
+      "edges": 21,
+      "entities": 0,
+      "recommendations": 0
+    },
+    "files": {
+      "subgraph": true,
+      "context": true,
+      "metadata": true,
+      "page": true
+    },
+    "structure": {
+      "inferredScore": null,
+      "pagerankAvg": null
+    }
+  },
+  {
+    "type": "export",
+    "timestamp": "2025-11-05T06:43:17.844Z",
+    "docId": "zh/content/graphrag-research/index",
+    "docTitle": null,
+    "topic": "zh-graphrag-research",
+    "locale": "zh",
+    "durationMs": 77,
+    "dryRun": false,
+    "totals": {
+      "nodes": 22,
+      "edges": 21,
+      "entities": 0,
+      "recommendations": 0
+    },
+    "files": {
+      "subgraph": true,
+      "context": true,
+      "metadata": true,
+      "page": true
+    },
+    "structure": {
+      "inferredScore": null,
+      "pagerankAvg": null
+    }
+  },
+  {
+    "type": "export",
+    "timestamp": "2025-11-05T06:42:00.136Z",
+    "docId": "zh/content/graphrag-research/index",
+    "docTitle": null,
+    "topic": "zh-graphrag-research",
+    "locale": "zh",
+    "durationMs": 54,
+    "dryRun": false,
+    "totals": {
+      "nodes": 22,
+      "edges": 21,
+      "entities": 0,
+      "recommendations": 0
+    },
+    "files": {
+      "subgraph": true,
+      "context": true,
+      "metadata": true,
+      "page": true
+    },
+    "structure": {
+      "inferredScore": null,
+      "pagerankAvg": null
+    }
+  },
+  {
+    "type": "ingest",
+    "timestamp": "2025-11-05T06:38:42.020Z",
+    "durationMs": 40280,
+    "locale": "all",
+    "includeDrafts": false,
+    "changedOnly": false,
+    "noCache": true,
+    "dryRun": false,
+    "adapter": "gemini",
+    "adapterModel": "gemini-2.5-pro",
+    "totals": {
+      "collected": 78,
+      "normalized": 1,
+      "readyForWrite": 1,
+      "processed": 1
+    },
+    "skipped": {
+      "total": 0,
+      "reasons": [],
+      "samples": []
+    },
+    "write": {
+      "attempted": 1,
+      "written": 1,
+      "cacheUpdated": false
+    }
+  },
+  {
+    "type": "export",
+    "timestamp": "2025-11-05T06:34:04.657Z",
+    "docId": "zh/content/graphrag-research/index",
+    "docTitle": null,
+    "topic": "zh-graphrag-research",
+    "locale": "zh",
+    "durationMs": 52,
+    "dryRun": false,
+    "totals": {
+      "nodes": 22,
+      "edges": 21,
+      "entities": 0,
+      "recommendations": 0
+    },
+    "files": {
+      "subgraph": true,
+      "context": true,
+      "metadata": true,
+      "page": true
+    },
+    "structure": {
+      "inferredScore": null,
+      "pagerankAvg": null
+    }
+  },
+  {
+    "type": "export",
+    "timestamp": "2025-11-05T06:11:18.941Z",
+    "docId": "zh/content/graphrag-research/index",
+    "docTitle": null,
+    "topic": "zh-graphrag-research",
+    "locale": "zh",
+    "durationMs": 89,
+    "dryRun": false,
+    "totals": {
+      "nodes": 22,
+      "edges": 21,
+      "entities": 0,
+      "recommendations": 0
+    },
+    "files": {
+      "subgraph": true,
+      "context": true,
+      "metadata": true,
+      "page": true
+    },
+    "structure": {
+      "inferredScore": null,
+      "pagerankAvg": null
+    }
+  },
+  {
+    "type": "explore",
+    "mode": "question",
+    "question": "GraphRAG 最新研究包含哪些方向？",
+    "docId": null,
+    "docs": 5,
+    "nodes": 0,
+    "edges": 0,
+    "truncatedNodes": false,
+    "truncatedEdges": false,
+    "durationMs": 282,
+    "sources": [
+      "vector"
+    ],
+    "timestamp": "2025-11-05T06:02:38.110Z"
+  },
+  {
     "type": "ingest",
     "timestamp": "2025-11-03T14:09:16.865Z",
     "durationMs": 41379,

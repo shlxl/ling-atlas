@@ -1,13 +1,13 @@
 {
   "query": {
     "kind": "question",
-    "value": "GraphRAG 集成的最新交付内容是什么？",
+    "value": "GraphRAG 最新研究包含哪些方向？",
     "docId": "zh/content/tutorial-authoring-to-publish/index",
     "params": {
       "includeLabels": [],
       "includeEdgeTypes": []
     },
-    "timestamp": "2025-10-31T20:07:52.584Z"
+    "timestamp": "2025-11-05T06:02:38.107Z"
   },
   "docs": [
     {
@@ -15,52 +15,43 @@
       "title": "写作到发布的完整流程",
       "url": "/zh/content/tutorial-authoring-to-publish/",
       "locale": "zh",
-      "score": 0.826,
+      "score": 0.7607,
       "rank": 1,
-      "vectorScore": 0.5029,
-      "structureScore": 0.15,
+      "vectorScore": 0.5215,
+      "structureScore": null,
       "scoreComponents": {
-        "vector": 0.7515,
-        "structure": 1
+        "vector": 0.7607,
+        "structure": 0
       },
-      "tags": [
-        "发布管线",
-        "写作流程",
-        "质量守门"
-      ],
-      "categories": [
-        "管理与协作"
-      ],
-      "updatedAt": "2025-10-20T00:00:00.000Z",
+      "tags": [],
+      "categories": [],
+      "updatedAt": null,
       "reasons": [
-        "语义相似度 0.503",
-        "实体 PageRank 均值 0.150"
+        "语义相似度 0.521"
       ],
-      "structureDetail": {
-        "feature": "gnn_pagerank",
-        "source": "entity_avg",
-        "pagerank": {
-          "avg": 0.15000000000000002,
-          "max": 0.15000000000000002
-        },
-        "top_entities": [
-          {
-            "name": "发布管线",
-            "type": "Concept",
-            "pagerank": 0.15000000000000002
-          },
-          {
-            "name": "质量守门",
-            "type": "Concept",
-            "pagerank": 0.15000000000000002
-          },
-          {
-            "name": "写作流程",
-            "type": "Concept",
-            "pagerank": 0.15000000000000002
-          }
-        ]
+      "structureDetail": null,
+      "source": "hybrid"
+    },
+    {
+      "id": "zh/content/telemetry-guide/index",
+      "title": "观测指标导览",
+      "url": "/zh/content/telemetry-guide/",
+      "locale": "zh",
+      "score": 0.7381,
+      "rank": 2,
+      "vectorScore": 0.4763,
+      "structureScore": null,
+      "scoreComponents": {
+        "vector": 0.7381,
+        "structure": 0
       },
+      "tags": [],
+      "categories": [],
+      "updatedAt": null,
+      "reasons": [
+        "语义相似度 0.476"
+      ],
+      "structureDetail": null,
       "source": "hybrid"
     },
     {
@@ -68,125 +59,21 @@
       "title": "Ling Atlas 项目缘起与系统全貌",
       "url": "/zh/content/project-overview/",
       "locale": "zh",
-      "score": 0.8093,
-      "rank": 2,
-      "vectorScore": 0.4553,
-      "structureScore": 0.15,
-      "scoreComponents": {
-        "vector": 0.7276,
-        "structure": 1
-      },
-      "tags": [
-        "项目治理",
-        "自动化运维",
-        "知识管理"
-      ],
-      "categories": [
-        "管理与协作"
-      ],
-      "updatedAt": "2025-10-20T00:00:00.000Z",
-      "reasons": [
-        "语义相似度 0.455",
-        "实体 PageRank 均值 0.150"
-      ],
-      "structureDetail": {
-        "feature": "gnn_pagerank",
-        "source": "entity_avg",
-        "pagerank": {
-          "avg": 0.15000000000000002,
-          "max": 0.15000000000000002
-        },
-        "top_entities": [
-          {
-            "name": "自动化运维",
-            "type": "Concept",
-            "pagerank": 0.15000000000000002
-          },
-          {
-            "name": "项目治理",
-            "type": "Concept",
-            "pagerank": 0.15000000000000002
-          },
-          {
-            "name": "知识管理",
-            "type": "Concept",
-            "pagerank": 0.15000000000000002
-          }
-        ]
-      },
-      "source": "hybrid"
-    },
-    {
-      "id": "zh/content/ai-placeholder-retrospective/index",
-      "title": "AI 占位阶段总结与实践",
-      "url": "/zh/content/ai-placeholder-retrospective/index.html",
-      "score": 20.381,
-      "rank": 2,
-      "tags": [
-        "回滚",
-        "模型冒烟",
-        "占位运行"
-      ],
-      "categories": [
-        "管理与协作"
-      ],
-      "updatedAt": "2025-10-20T00:00:00.000Z",
-      "reasons": [
-        "最近更新：2025-10-20T00:00:00.000Z"
-      ],
-      "source": "topn"
-    },
-    {
-      "id": "zh/content/telemetry-guide/index",
-      "title": "观测指标导览",
-      "url": "/zh/content/telemetry-guide/",
-      "locale": "zh",
-      "score": 0.8066,
+      "score": 0.7359,
       "rank": 3,
-      "vectorScore": 0.4475,
-      "structureScore": 0.15,
+      "vectorScore": 0.4718,
+      "structureScore": null,
       "scoreComponents": {
-        "vector": 0.7237,
-        "structure": 1
+        "vector": 0.7359,
+        "structure": 0
       },
-      "tags": [
-        "遥测",
-        "指标治理",
-        "运维看板"
-      ],
-      "categories": [
-        "管理与协作"
-      ],
-      "updatedAt": "2025-10-20T00:00:00.000Z",
+      "tags": [],
+      "categories": [],
+      "updatedAt": null,
       "reasons": [
-        "语义相似度 0.447",
-        "实体 PageRank 均值 0.150"
+        "语义相似度 0.472"
       ],
-      "structureDetail": {
-        "feature": "gnn_pagerank",
-        "source": "entity_avg",
-        "pagerank": {
-          "avg": 0.15000000000000002,
-          "max": 0.15000000000000002
-        },
-        "top_entities": [
-          {
-            "name": "运维看板",
-            "type": "Concept",
-            "pagerank": 0.15000000000000002
-          },
-          {
-            "name": "指标治理",
-            "type": "Concept",
-            "pagerank": 0.15000000000000002
-          },
-          {
-            "name": "遥测",
-            "type": "Concept",
-            "pagerank": 0.15000000000000002
-          }
-        ]
-      },
+      "structureDetail": null,
       "source": "hybrid"
     },
     {
@@ -194,851 +81,64 @@
       "title": "AI 管线占位与切换指南",
       "url": "/zh/content/ai-runtime-guide/",
       "locale": "zh",
-      "score": 20.381,
+      "score": 0.7357,
       "rank": 4,
-      "vectorScore": 0.42,
-      "structureScore": 0.15,
+      "vectorScore": 0.4715,
+      "structureScore": null,
       "scoreComponents": {
-        "vector": 0.71,
-        "structure": 1
+        "vector": 0.7357,
+        "structure": 0
       },
-      "tags": [
-        "运行时切换",
-        "冒烟测试",
-        "AI管线"
-      ],
-      "categories": [
-        "管理与协作"
-      ],
-      "updatedAt": "2025-10-20T00:00:00.000Z",
+      "tags": [],
+      "categories": [],
+      "updatedAt": null,
       "reasons": [
-        "语义相似度 0.420",
-        "实体 PageRank 均值 0.150",
-        "最近更新：2025-10-20T00:00:00.000Z"
+        "语义相似度 0.471"
       ],
-      "structureDetail": {
-        "feature": "gnn_pagerank",
-        "source": "entity_avg",
-        "pagerank": {
-          "avg": 0.15000000000000002,
-          "max": 0.15000000000000002
-        },
-        "top_entities": [
-          {
-            "name": "AI管线",
-            "type": "Concept",
-            "pagerank": 0.15000000000000002
-          },
-          {
-            "name": "运行时切换",
-            "type": "Concept",
-            "pagerank": 0.15000000000000002
-          },
-          {
-            "name": "冒烟测试",
-            "type": "Concept",
-            "pagerank": 0.15000000000000002
-          }
-        ]
-      },
+      "structureDetail": null,
       "source": "hybrid"
     },
     {
-      "id": "zh/content/pagegen-handbook/index",
-      "title": "Pagegen 运行手册",
-      "url": "/zh/content/pagegen-handbook/index.html",
-      "score": 20.381,
-      "rank": 4,
-      "tags": [
-        "调度插件",
-        "缓存优化",
-        "生成管线"
-      ],
-      "categories": [
-        "工程笔记"
-      ],
-      "updatedAt": "2025-10-20T00:00:00.000Z",
-      "reasons": [
-        "最近更新：2025-10-20T00:00:00.000Z"
-      ],
-      "source": "topn"
-    },
-    {
-      "id": "zh/content/pagegen-retrospective/index",
-      "title": "Pagegen 重构回顾（含占位阶段）",
-      "url": "/zh/content/pagegen-retrospective/",
+      "id": "zh/content/telemetry-cases/index",
+      "title": "观测指标场景案例与排障实录",
+      "url": "/zh/content/telemetry-cases/",
       "locale": "zh",
-      "score": 20.381,
+      "score": 0.7069,
       "rank": 5,
-      "vectorScore": 0.4075,
-      "structureScore": 0.15,
+      "vectorScore": 0.4137,
+      "structureScore": null,
       "scoreComponents": {
-        "vector": 0.7038,
-        "structure": 1
+        "vector": 0.7069,
+        "structure": 0
       },
-      "tags": [
-        "架构演进",
-        "性能优化",
-        "重构"
-      ],
-      "categories": [
-        "工程笔记"
-      ],
-      "updatedAt": "2025-10-20T00:00:00.000Z",
+      "tags": [],
+      "categories": [],
+      "updatedAt": null,
       "reasons": [
-        "语义相似度 0.408",
-        "实体 PageRank 均值 0.150",
-        "最近更新：2025-10-20T00:00:00.000Z"
+        "语义相似度 0.414"
       ],
-      "structureDetail": {
-        "feature": "gnn_pagerank",
-        "source": "entity_avg",
-        "pagerank": {
-          "avg": 0.15000000000000002,
-          "max": 0.15000000000000002
-        },
-        "top_entities": [
-          {
-            "name": "架构演进",
-            "type": "Concept",
-            "pagerank": 0.15000000000000002
-          },
-          {
-            "name": "性能优化",
-            "type": "Concept",
-            "pagerank": 0.15000000000000002
-          },
-          {
-            "name": "重构",
-            "type": "Concept",
-            "pagerank": 0.15000000000000002
-          }
-        ]
-      },
+      "structureDetail": null,
       "source": "hybrid"
     }
   ],
   "graph": {
-    "nodes": [
-      {
-        "id": "zh/content/tutorial-authoring-to-publish/index",
-        "labels": [
-          "Doc"
-        ],
-        "hop": 0,
-        "properties": {
-          "id": "zh/content/tutorial-authoring-to-publish/index",
-          "source_path": "docs/zh/content/tutorial-authoring-to-publish/index.md",
-          "title": "写作到发布的完整流程",
-          "updated_at": "2025-10-20T00:00:00.000Z",
-          "hash": "5c611413f5effcdc358c4683674707472e1cfd86ca10928d41944e960f261b99",
-          "description": "手把手演示从新建文章、预检聚合、观测指标复核到发布与回滚的全流程，配套常用命令与问题排查清单。",
-          "locale": "zh"
-        },
-        "type": "doc",
-        "title": "写作到发布的完整流程",
-        "locale": "zh",
-        "updatedAt": "2025-10-20T00:00:00.000Z",
-        "structure": {}
-      },
-      {
-        "id": "197",
-        "labels": [
-          "Tag"
-        ],
-        "hop": 1,
-        "properties": {
-          "name": "质量守门",
-          "slug": ""
-        },
-        "type": "tag",
-        "name": "质量守门"
-      },
-      {
-        "id": "1",
-        "labels": [
-          "Category"
-        ],
-        "hop": 1,
-        "properties": {
-          "name": "管理与协作",
-          "slug": ""
-        },
-        "type": "category",
-        "name": "管理与协作"
-      },
-      {
-        "id": "196",
-        "labels": [
-          "Tag"
-        ],
-        "hop": 1,
-        "properties": {
-          "name": "发布管线",
-          "slug": ""
-        },
-        "type": "tag",
-        "name": "发布管线"
-      },
-      {
-        "id": "195",
-        "labels": [
-          "Tag"
-        ],
-        "hop": 1,
-        "properties": {
-          "name": "写作流程",
-          "slug": ""
-        },
-        "type": "tag",
-        "name": "写作流程"
-      },
-      {
-        "id": "214",
-        "labels": [
-          "Chunk"
-        ],
-        "hop": 1,
-        "properties": {
-          "id": "zh/content/tutorial-authoring-to-publish/index#017",
-          "text": "- 只写中文，英文聚合也会生成吗？\n  > 英文目录没有内容时，英文导航/聚合会为空但不阻断构建。建议初期仅维护中文，英文后续补齐。\n- 草稿如何处理？\n  > Frontmatter 设 `status: draft` 即可避免进入聚合/RSS/Sitemap。\n- 如何批量改 slug？\n  > 先修改内容目录与 Frontmatter，再 `--full-sync`，最后检查 `_generated` 与 `nav.manifest.*.json`。",
-          "order": 17,
-          "doc_id": "zh/content/tutorial-authoring-to-publish/index"
-        },
-        "type": "Chunk",
-        "name": null
-      },
-      {
-        "id": "213",
-        "labels": [
-          "Chunk"
-        ],
-        "hop": 1,
-        "properties": {
-          "id": "zh/content/tutorial-authoring-to-publish/index#016",
-          "text": "## 5. FAQ",
-          "order": 16,
-          "doc_id": "zh/content/tutorial-authoring-to-publish/index"
-        },
-        "type": "Chunk",
-        "name": null
-      },
-      {
-        "id": "212",
-        "labels": [
-          "Chunk"
-        ],
-        "hop": 1,
-        "properties": {
-          "id": "zh/content/tutorial-authoring-to-publish/index#015",
-          "text": "- 发布后发现死链 → 修正文档或导航，重新 `publish`；\n- AI 冒烟不通过 → 切回 `AI_RUNTIME=placeholder`，再 `ai:prepare && ai:smoke`；\n- 构建异常 → 直接回退上一个 commit，再离线修复后重试。",
-          "order": 15,
-          "doc_id": "zh/content/tutorial-authoring-to-publish/index"
-        },
-        "type": "Chunk",
-        "name": null
-      },
-      {
-        "id": "211",
-        "labels": [
-          "Chunk"
-        ],
-        "hop": 1,
-        "properties": {
-          "id": "zh/content/tutorial-authoring-to-publish/index#014",
-          "text": "回滚建议：",
-          "order": 14,
-          "doc_id": "zh/content/tutorial-authoring-to-publish/index"
-        },
-        "type": "Chunk",
-        "name": null
-      },
-      {
-        "id": "210",
-        "labels": [
-          "Chunk"
-        ],
-        "hop": 1,
-        "properties": {
-          "id": "zh/content/tutorial-authoring-to-publish/index#013",
-          "text": "流程拆解：`tags:normalize → precheck → ai:prepare → ai:smoke → gen → build → push`。",
-          "order": 13,
-          "doc_id": "zh/content/tutorial-authoring-to-publish/index"
-        },
-        "type": "Chunk",
-        "name": null
-      },
-      {
-        "id": "209",
-        "labels": [
-          "Chunk"
-        ],
-        "hop": 1,
-        "properties": {
-          "id": "zh/content/tutorial-authoring-to-publish/index#012",
-          "text": "```bash\ncodex run publish --message \"content: 新增 <标题>\"\n```",
-          "order": 12,
-          "doc_id": "zh/content/tutorial-authoring-to-publish/index"
-        },
-        "type": "Chunk",
-        "name": null
-      },
-      {
-        "id": "208",
-        "labels": [
-          "Chunk"
-        ],
-        "hop": 1,
-        "properties": {
-          "id": "zh/content/tutorial-authoring-to-publish/index#011",
-          "text": "## 4. 发布与回滚",
-          "order": 11,
-          "doc_id": "zh/content/tutorial-authoring-to-publish/index"
-        },
-        "type": "Chunk",
-        "name": null
-      },
-      {
-        "id": "207",
-        "labels": [
-          "Chunk"
-        ],
-        "hop": 1,
-        "properties": {
-          "id": "zh/content/tutorial-authoring-to-publish/index#010",
-          "text": "- 观测指标页检查：缓存命中率、写入失败、AI 概览（可在占位阶段忽略 `missing`/`skipped`）。\n- 死链/构建体检：`npm run build`（阻断）或 `npm run check`（precheck+build）。\n- 常见问题：\n  - 聚合引用旧 slug → 运行 `--full-sync` 并更新 `schema/nav.json`；\n  - 写入失败 → 查看 CLI 错误与 `_generated/` 目标路径权限；\n  - 告警含义 → 参考《观测指标导览》。",
-          "order": 10,
-          "doc_id": "zh/content/tutorial-authoring-to-publish/index"
-        },
-        "type": "Chunk",
-        "name": null
-      },
-      {
-        "id": "206",
-        "labels": [
-          "Chunk"
-        ],
-        "hop": 1,
-        "properties": {
-          "id": "zh/content/tutorial-authoring-to-publish/index#009",
-          "text": "## 3. 质量守门与观测",
-          "order": 9,
-          "doc_id": "zh/content/tutorial-authoring-to-publish/index"
-        },
-        "type": "Chunk",
-        "name": null
-      },
-      {
-        "id": "205",
-        "labels": [
-          "Chunk"
-        ],
-        "hop": 1,
-        "properties": {
-          "id": "zh/content/tutorial-authoring-to-publish/index#008",
-          "text": "- `npm run gen -- --full-sync` 强制全量同步；\n- `npm run gen -- --no-cache` 观察 collect 真实解析；\n- `PAGEGEN_CONCURRENCY=8 npm run gen` 调整解析并发。",
-          "order": 8,
-          "doc_id": "zh/content/tutorial-authoring-to-publish/index"
-        },
-        "type": "Chunk",
-        "name": null
-      },
-      {
-        "id": "204",
-        "labels": [
-          "Chunk"
-        ],
-        "hop": 1,
-        "properties": {
-          "id": "zh/content/tutorial-authoring-to-publish/index#007",
-          "text": "必要时使用：",
-          "order": 7,
-          "doc_id": "zh/content/tutorial-authoring-to-publish/index"
-        },
-        "type": "Chunk",
-        "name": null
-      },
-      {
-        "id": "203",
-        "labels": [
-          "Chunk"
-        ],
-        "hop": 1,
-        "properties": {
-          "id": "zh/content/tutorial-authoring-to-publish/index#006",
-          "text": "```bash\nnpm run gen                 # 生成聚合页/RSS/Sitemap\nnpm run dev                 # 启动预览服务器\n```",
-          "order": 6,
-          "doc_id": "zh/content/tutorial-authoring-to-publish/index"
-        },
-        "type": "Chunk",
-        "name": null
-      },
-      {
-        "id": "202",
-        "labels": [
-          "Chunk"
-        ],
-        "hop": 1,
-        "properties": {
-          "id": "zh/content/tutorial-authoring-to-publish/index#005",
-          "text": "## 2. 本地生成与预览",
-          "order": 5,
-          "doc_id": "zh/content/tutorial-authoring-to-publish/index"
-        },
-        "type": "Chunk",
-        "name": null
-      },
-      {
-        "id": "201",
-        "labels": [
-          "Chunk"
-        ],
-        "hop": 1,
-        "properties": {
-          "id": "zh/content/tutorial-authoring-to-publish/index#004",
-          "text": "- 预检命令：`npm run precheck`（Frontmatter/Schema/配置校验）。",
-          "order": 4,
-          "doc_id": "zh/content/tutorial-authoring-to-publish/index"
-        },
-        "type": "Chunk",
-        "name": null
-      },
-      {
-        "id": "200",
-        "labels": [
-          "Chunk"
-        ],
-        "hop": 1,
-        "properties": {
-          "id": "zh/content/tutorial-authoring-to-publish/index#003",
-          "text": "```yaml\n  ---\n  title: <标题>\n  date: 'YYYY-MM-DD'\n  status: published\n  category_zh: 管理与协作 # 或工程笔记/架构设计等\n  tags_zh: [<标签1>, <标签2>]\n  series: 项目起航手记\n  series_slug: project-kickoff\n  slug: <kebab-case>\n  excerpt: <一句话摘要>\n  ---\n  ```",
-          "order": 3,
-          "doc_id": "zh/content/tutorial-authoring-to-publish/index"
-        },
-        "type": "Chunk",
-        "name": null
-      },
-      {
-        "id": "199",
-        "labels": [
-          "Chunk"
-        ],
-        "hop": 1,
-        "properties": {
-          "id": "zh/content/tutorial-authoring-to-publish/index#002",
-          "text": "- 目录约定：`docs/<locale>/content/<slug>/index.md`\n- Frontmatter 最小集：",
-          "order": 2,
-          "doc_id": "zh/content/tutorial-authoring-to-publish/index"
-        },
-        "type": "Chunk",
-        "name": null
-      },
-      {
-        "id": "198",
-        "labels": [
-          "Chunk"
-        ],
-        "hop": 1,
-        "properties": {
-          "id": "zh/content/tutorial-authoring-to-publish/index#001",
-          "text": "## 1. 写作前准备",
-          "order": 1,
-          "doc_id": "zh/content/tutorial-authoring-to-publish/index"
-        },
-        "type": "Chunk",
-        "name": null
-      },
-      {
-        "id": "238",
-        "labels": [
-          "Entity"
-        ],
-        "hop": 2,
-        "properties": {
-          "salience": 0.5,
-          "gnn_pagerank": 0.15000000000000002,
-          "name": "质量守门",
-          "type": "Concept",
-          "gnn_labelPropagation": {
-            "low": 238,
-            "high": 0
-          }
-        },
-        "type": "Concept",
-        "name": "质量守门",
-        "salience": 0.5,
-        "structure": {
-          "gnn_pagerank": 0.15000000000000002,
-          "gnn_labelPropagation": 238
-        }
-      },
-      {
-        "id": "237",
-        "labels": [
-          "Entity"
-        ],
-        "hop": 2,
-        "properties": {
-          "salience": 0.5,
-          "gnn_pagerank": 0.15000000000000002,
-          "name": "发布管线",
-          "type": "Concept",
-          "gnn_labelPropagation": {
-            "low": 237,
-            "high": 0
-          }
-        },
-        "type": "Concept",
-        "name": "发布管线",
-        "salience": 0.5,
-        "structure": {
-          "gnn_pagerank": 0.15000000000000002,
-          "gnn_labelPropagation": 237
-        }
-      },
-      {
-        "id": "236",
-        "labels": [
-          "Entity"
-        ],
-        "hop": 2,
-        "properties": {
-          "salience": 0.5,
-          "gnn_pagerank": 0.15000000000000002,
-          "name": "写作流程",
-          "type": "Concept",
-          "gnn_labelPropagation": {
-            "low": 236,
-            "high": 0
-          }
-        },
-        "type": "Concept",
-        "name": "写作流程",
-        "salience": 0.5,
-        "structure": {
-          "gnn_pagerank": 0.15000000000000002,
-          "gnn_labelPropagation": 236
-        }
-      },
-      {
-        "id": "zh/content/ai-placeholder-retrospective/index",
-        "labels": [
-          "Doc"
-        ],
-        "hop": 2,
-        "properties": {
-          "id": "zh/content/ai-placeholder-retrospective/index",
-          "source_path": "docs/zh/content/ai-placeholder-retrospective/index.md",
-          "title": "AI 占位阶段总结与实践",
-          "updated_at": "2025-10-20T00:00:00.000Z",
-          "hash": "a98db53dded05bb512de69d82c585fed33ac6f82af5ebbdcbca7d7597785fa0f",
-          "description": "记录 placeholder 运行时在落地过程中的价值、局限与最佳实践，为后续切换真实模型提供可复用的经验与风险清单。",
-          "locale": "zh"
-        },
-        "type": "doc",
-        "title": "AI 占位阶段总结与实践",
-        "locale": "zh",
-        "updatedAt": "2025-10-20T00:00:00.000Z",
-        "structure": {}
-      },
-      {
-        "id": "zh/content/project-overview/index",
-        "labels": [
-          "Doc"
-        ],
-        "hop": 2,
-        "properties": {
-          "id": "zh/content/project-overview/index",
-          "source_path": "docs/zh/content/project-overview/index.md",
-          "title": "Ling Atlas 项目缘起与系统全貌",
-          "updated_at": "2025-10-20T00:00:00.000Z",
-          "hash": "c2e4766c83ada5fd0f58f239fcf582e70fbbd6a26ece822da0ec5c115d86a180",
-          "description": "全面梳理 Ling Atlas 的愿景、演进路线与当前落地能力，帮助后续贡献者快速理解“个人向量化知识库”的系统边界与协作模式。",
-          "locale": "zh"
-        },
-        "type": "doc",
-        "title": "Ling Atlas 项目缘起与系统全貌",
-        "locale": "zh",
-        "updatedAt": "2025-10-20T00:00:00.000Z",
-        "structure": {}
-      },
-      {
-        "id": "zh/content/ai-runtime-guide/index",
-        "labels": [
-          "Doc"
-        ],
-        "hop": 2,
-        "properties": {
-          "id": "zh/content/ai-runtime-guide/index",
-          "source_path": "docs/zh/content/ai-runtime-guide/index.md",
-          "title": "AI 管线占位与切换指南",
-          "updated_at": "2025-10-20T00:00:00.000Z",
-          "hash": "c255526d10c0e3afdae8d5fe80ee03aedad30c095467386aaa18afc60844d632",
-          "description": "详细说明 Ling Atlas 在 placeholder 与真实模型之间切换的步骤、环境变量配置、冒烟守门与回滚策略，确保个人向量化知识库的构建过程安全可控。",
-          "locale": "zh"
-        },
-        "type": "doc",
-        "title": "AI 管线占位与切换指南",
-        "locale": "zh",
-        "updatedAt": "2025-10-20T00:00:00.000Z",
-        "structure": {}
-      },
-      {
-        "id": "zh/content/telemetry-guide/index",
-        "labels": [
-          "Doc"
-        ],
-        "hop": 2,
-        "properties": {
-          "id": "zh/content/telemetry-guide/index",
-          "source_path": "docs/zh/content/telemetry-guide/index.md",
-          "title": "观测指标导览",
-          "updated_at": "2025-10-20T00:00:00.000Z",
-          "hash": "4f9209b6491dd40faa125a8630ad1c648dace968045bde631b178da95e69e05e",
-          "description": "解读 Ling Atlas 观测指标页的各类数据来源、告警含义与排障流程，帮助维护者快速判断个人向量化知识库的运行健康度。",
-          "locale": "zh"
-        },
-        "type": "doc",
-        "title": "观测指标导览",
-        "locale": "zh",
-        "updatedAt": "2025-10-20T00:00:00.000Z",
-        "structure": {}
-      }
-    ],
-    "edges": [
-      {
-        "id": "0",
-        "source": "0",
-        "target": "1",
-        "type": "IN_CATEGORY",
-        "properties": {}
-      },
-      {
-        "id": "12",
-        "source": "13",
-        "target": "1",
-        "type": "IN_CATEGORY",
-        "properties": {}
-      },
-      {
-        "id": "108",
-        "source": "110",
-        "target": "1",
-        "type": "IN_CATEGORY",
-        "properties": {}
-      },
-      {
-        "id": "161",
-        "source": "163",
-        "target": "1",
-        "type": "IN_CATEGORY",
-        "properties": {}
-      },
-      {
-        "id": "192",
-        "source": "194",
-        "target": "1",
-        "type": "IN_CATEGORY",
-        "properties": {}
-      },
-      {
-        "id": "193",
-        "source": "194",
-        "target": "195",
-        "type": "HAS_TAG",
-        "properties": {}
-      },
-      {
-        "id": "194",
-        "source": "194",
-        "target": "196",
-        "type": "HAS_TAG",
-        "properties": {}
-      },
-      {
-        "id": "195",
-        "source": "194",
-        "target": "197",
-        "type": "HAS_TAG",
-        "properties": {}
-      },
-      {
-        "id": "196",
-        "source": "198",
-        "target": "194",
-        "type": "PART_OF",
-        "properties": {}
-      },
-      {
-        "id": "197",
-        "source": "199",
-        "target": "194",
-        "type": "PART_OF",
-        "properties": {}
-      },
-      {
-        "id": "198",
-        "source": "200",
-        "target": "194",
-        "type": "PART_OF",
-        "properties": {}
-      },
-      {
-        "id": "199",
-        "source": "201",
-        "target": "194",
-        "type": "PART_OF",
-        "properties": {}
-      },
-      {
-        "id": "200",
-        "source": "202",
-        "target": "194",
-        "type": "PART_OF",
-        "properties": {}
-      },
-      {
-        "id": "201",
-        "source": "203",
-        "target": "194",
-        "type": "PART_OF",
-        "properties": {}
-      },
-      {
-        "id": "202",
-        "source": "204",
-        "target": "194",
-        "type": "PART_OF",
-        "properties": {}
-      },
-      {
-        "id": "203",
-        "source": "205",
-        "target": "194",
-        "type": "PART_OF",
-        "properties": {}
-      },
-      {
-        "id": "204",
-        "source": "206",
-        "target": "194",
-        "type": "PART_OF",
-        "properties": {}
-      },
-      {
-        "id": "205",
-        "source": "207",
-        "target": "194",
-        "type": "PART_OF",
-        "properties": {}
-      },
-      {
-        "id": "206",
-        "source": "208",
-        "target": "194",
-        "type": "PART_OF",
-        "properties": {}
-      },
-      {
-        "id": "207",
-        "source": "209",
-        "target": "194",
-        "type": "PART_OF",
-        "properties": {}
-      },
-      {
-        "id": "208",
-        "source": "210",
-        "target": "194",
-        "type": "PART_OF",
-        "properties": {}
-      },
-      {
-        "id": "209",
-        "source": "211",
-        "target": "194",
-        "type": "PART_OF",
-        "properties": {}
-      },
-      {
-        "id": "210",
-        "source": "212",
-        "target": "194",
-        "type": "PART_OF",
-        "properties": {}
-      },
-      {
-        "id": "211",
-        "source": "213",
-        "target": "194",
-        "type": "PART_OF",
-        "properties": {}
-      },
-      {
-        "id": "212",
-        "source": "214",
-        "target": "194",
-        "type": "PART_OF",
-        "properties": {}
-      },
-      {
-        "id": "234",
-        "source": "198",
-        "target": "236",
-        "type": "MENTIONS",
-        "properties": {
-          "confidence": 0.5
-        }
-      },
-      {
-        "id": "235",
-        "source": "198",
-        "target": "237",
-        "type": "MENTIONS",
-        "properties": {
-          "confidence": 0.5
-        }
-      },
-      {
-        "id": "236",
-        "source": "198",
-        "target": "238",
-        "type": "MENTIONS",
-        "properties": {
-          "confidence": 0.5
-        }
-      }
-    ],
+    "nodes": [],
+    "edges": [],
     "stats": {
       "nodes": {
-        "total": 29,
-        "returned": 29,
+        "total": 0,
+        "returned": 0,
         "truncated": false,
-        "byLabel": {
-          "Doc": 5,
-          "Tag": 3,
-          "Category": 1,
-          "Chunk": 17,
-          "Entity": 3
-        },
-        "hops": {
-          "0": 1,
-          "1": 21,
-          "2": 7
-        },
-        "maxHop": 2,
+        "byLabel": {},
+        "hops": {},
+        "maxHop": 0,
         "limit": 50
       },
       "edges": {
-        "total": 28,
-        "returned": 28,
+        "total": 0,
+        "returned": 0,
         "truncated": false,
-        "byType": {
-          "IN_CATEGORY": 5,
-          "HAS_TAG": 3,
-          "PART_OF": 17,
-          "MENTIONS": 3
-        },
+        "byType": {},
         "limit": 100
       }
     },
@@ -1057,36 +157,36 @@
     {
       "docId": "zh/content/tutorial-authoring-to-publish/index",
       "title": "写作到发布的完整流程",
-      "reason": "语义相似度 0.503",
-      "score": 0.826,
+      "reason": "语义相似度 0.521",
+      "score": 0.7607,
+      "source": "hybrid"
+    },
+    {
+      "docId": "zh/content/telemetry-guide/index",
+      "title": "观测指标导览",
+      "reason": "语义相似度 0.476",
+      "score": 0.7381,
       "source": "hybrid"
     },
     {
       "docId": "zh/content/project-overview/index",
       "title": "Ling Atlas 项目缘起与系统全貌",
-      "reason": "语义相似度 0.455",
-      "score": 0.8093,
-      "source": "hybrid"
-    },
-    {
-      "docId": "zh/content/ai-placeholder-retrospective/index",
-      "title": "AI 占位阶段总结与实践",
-      "reason": "最近更新：2025-10-20T00:00:00.000Z",
-      "score": 20.381,
-      "source": "topn"
-    },
-    {
-      "docId": "zh/content/telemetry-guide/index",
-      "title": "观测指标导览",
-      "reason": "语义相似度 0.447",
-      "score": 0.8066,
+      "reason": "语义相似度 0.472",
+      "score": 0.7359,
       "source": "hybrid"
     },
     {
       "docId": "zh/content/ai-runtime-guide/index",
       "title": "AI 管线占位与切换指南",
-      "reason": "语义相似度 0.420",
-      "score": 20.381,
+      "reason": "语义相似度 0.471",
+      "score": 0.7357,
+      "source": "hybrid"
+    },
+    {
+      "docId": "zh/content/telemetry-cases/index",
+      "title": "观测指标场景案例与排障实录",
+      "reason": "语义相似度 0.414",
+      "score": 0.7069,
       "source": "hybrid"
     }
   ],
@@ -1096,28 +196,26 @@
       "model": "Xenova/all-MiniLM-L6-v2",
       "k": 5,
       "alpha": [
-        0.7,
-        0.3
+        1,
+        0
       ],
       "sources": [
-        "vector",
-        "structure"
+        "vector"
       ],
       "structure": {
         "feature": "gnn_pagerank",
-        "enabled": true,
-        "normalization": "max",
-        "maxScore": 0.15000000000000002,
+        "enabled": false,
+        "normalization": "none",
+        "maxScore": null,
         "requested": [
           "vector",
           "structure"
         ]
       }
     },
-    "durationMs": 387,
+    "durationMs": 282,
     "sources": [
-      "vector",
-      "structure"
+      "vector"
     ]
   }
 }

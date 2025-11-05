@@ -1459,3 +1459,52 @@
 {"timestamp":"2025-11-03T13:58:38.110Z","doc_id":"zh/content/graphrag-research/index","passed":true,"errors":[],"warnings":[]}
 {"timestamp":"2025-11-03T14:01:07.637Z","doc_id":"zh/content/graphrag-research/index","passed":true,"errors":[],"warnings":[]}
 {"timestamp":"2025-11-03T14:08:35.532Z","doc_id":"zh/content/graphrag-research/index","passed":true,"errors":[],"warnings":[]}
+{"timestamp":"2025-11-05T06:38:01.786Z","doc_id":"zh/content/graphrag-research/index","passed":true,"errors":[],"warnings":[]}
+{"timestamp":"2025-11-05T07:01:48.264Z","doc_id":"zh/content/graphrag-research/index","passed":true,"errors":[],"warnings":[]}
+{"timestamp":"2025-11-05T07:06:15.147Z","doc_id":"zh/content/graphrag-research/index","passed":true,"errors":[],"warnings":[]}
+{"timestamp":"2025-11-05T07:18:46.614Z","doc_id":"zh/content/graphrag-research/index","passed":true,"errors":[],"warnings":[]}
+{"timestamp":"2025-11-05T07:50:23.447Z","doc_id":"zh/content/graphrag-research/index","passed":true,"errors":[],"warnings":[]}
+{"timestamp":"2025-11-05T07:56:21.494Z","doc_id":"zh/content/graphrag-research/index","passed":true,"errors":[],"warnings":[]}
+{"timestamp":"2025-11-05T07:58:19.458Z","doc_id":"zh/content/graphrag-research/index","passed":true,"errors":[],"warnings":[]}
+{"timestamp":"2025-11-05T08:01:36.432Z","doc_id":"zh/content/graphrag-research/index","passed":true,"errors":[],"warnings":[]}
+{"timestamp":"2025-11-05T08:06:29.370Z","doc_id":"zh/content/graphrag-research/index","passed":true,"errors":[],"warnings":[]}
+{"timestamp":"2025-11-05T08:24:24.260Z","doc_id":"404","passed":false,"errors":[{"type":"FRONTMATTER_MISSING","message":"字段 title 缺失"},{"type":"FRONTMATTER_MISSING","message":"字段 updatedAt 缺失"},{"type":"FRONTMATTER_MISSING","message":"category 缺失"}],"warnings":[]}
+{"timestamp":"2025-11-05T08:24:24.261Z","doc_id":"index","passed":false,"errors":[{"type":"FRONTMATTER_MISSING","message":"字段 updatedAt 缺失"},{"type":"FRONTMATTER_MISSING","message":"category 缺失"}],"warnings":[]}
+{"timestamp":"2025-11-05T08:24:24.262Z","doc_id":"en/DEPLOYMENT","passed":false,"errors":[{"type":"FRONTMATTER_MISSING","message":"字段 updatedAt 缺失"},{"type":"FRONTMATTER_MISSING","message":"category 缺失"}],"warnings":[]}
+{"timestamp":"2025-11-05T08:24:24.262Z","doc_id":"en/MIGRATION","passed":false,"errors":[{"type":"FRONTMATTER_MISSING","message":"字段 updatedAt 缺失"},{"type":"FRONTMATTER_MISSING","message":"category 缺失"}],"warnings":[]}
+{"timestamp":"2025-11-05T08:24:24.262Z","doc_id":"en/index","passed":false,"errors":[{"type":"FRONTMATTER_MISSING","message":"字段 updatedAt 缺失"},{"type":"FRONTMATTER_MISSING","message":"category 缺失"}],"warnings":[]}
+{"timestamp":"2025-11-05T08:24:24.262Z","doc_id":"graph/index","passed":false,"errors":[{"type":"FRONTMATTER_MISSING","message":"字段 updatedAt 缺失"},{"type":"FRONTMATTER_MISSING","message":"category 缺失"}],"warnings":[]}
+{"timestamp":"2025-11-05T08:24:24.262Z","doc_id":"zh/DEPLOYMENT","passed":false,"errors":[{"type":"FRONTMATTER_MISSING","message":"字段 title 缺失"},{"type":"FRONTMATTER_MISSING","message":"字段 updatedAt 缺失"},{"type":"FRONTMATTER_MISSING","message":"category 缺失"}],"warnings":[]}
+{"timestamp":"2025-11-05T08:24:24.263Z","doc_id":"zh/MIGRATION","passed":false,"errors":[{"type":"FRONTMATTER_MISSING","message":"字段 title 缺失"},{"type":"FRONTMATTER_MISSING","message":"字段 updatedAt 缺失"},{"type":"FRONTMATTER_MISSING","message":"category 缺失"}],"warnings":[]}
+{"timestamp":"2025-11-05T08:24:24.263Z","doc_id":"zh/index","passed":false,"errors":[{"type":"FRONTMATTER_MISSING","message":"字段 updatedAt 缺失"},{"type":"FRONTMATTER_MISSING","message":"category 缺失"}],"warnings":[]}
+{"timestamp":"2025-11-05T08:24:24.263Z","doc_id":"en/about/metrics","passed":false,"errors":[{"type":"FRONTMATTER_MISSING","message":"字段 updatedAt 缺失"},{"type":"FRONTMATTER_MISSING","message":"category 缺失"}],"warnings":[]}
+{"timestamp":"2025-11-05T08:24:24.264Z","doc_id":"en/about/qa","passed":false,"errors":[{"type":"FRONTMATTER_MISSING","message":"字段 updatedAt 缺失"},{"type":"FRONTMATTER_MISSING","message":"category 缺失"}],"warnings":[]}
+{"timestamp":"2025-11-05T08:24:24.264Z","doc_id":"graph/explorer/index","passed":false,"errors":[{"type":"FRONTMATTER_MISSING","message":"字段 updatedAt 缺失"},{"type":"FRONTMATTER_MISSING","message":"category 缺失"}],"warnings":[]}
+{"timestamp":"2025-11-05T08:24:24.264Z","doc_id":"graph/zh-graphrag-research/context","passed":false,"errors":[{"type":"FRONTMATTER_MISSING","message":"字段 title 缺失"},{"type":"FRONTMATTER_MISSING","message":"字段 updatedAt 缺失"},{"type":"FRONTMATTER_MISSING","message":"category 缺失"}],"warnings":[]}
+{"timestamp":"2025-11-05T08:24:24.265Z","doc_id":"graph/zh-graphrag-research/index","passed":false,"errors":[{"type":"FRONTMATTER_MISSING","message":"字段 updatedAt 缺失"},{"type":"FRONTMATTER_MISSING","message":"category 缺失"}],"warnings":[]}
+{"timestamp":"2025-11-05T08:24:24.265Z","doc_id":"graph/zh-telemetry-guide/context","passed":false,"errors":[{"type":"FRONTMATTER_MISSING","message":"字段 title 缺失"},{"type":"FRONTMATTER_MISSING","message":"字段 updatedAt 缺失"},{"type":"FRONTMATTER_MISSING","message":"category 缺失"}],"warnings":[]}
+{"timestamp":"2025-11-05T08:24:24.266Z","doc_id":"graph/zh-telemetry-guide/index","passed":false,"errors":[{"type":"FRONTMATTER_MISSING","message":"字段 updatedAt 缺失"},{"type":"FRONTMATTER_MISSING","message":"category 缺失"}],"warnings":[]}
+{"timestamp":"2025-11-05T08:24:24.266Z","doc_id":"zh/about/metrics","passed":false,"errors":[{"type":"FRONTMATTER_MISSING","message":"字段 updatedAt 缺失"},{"type":"FRONTMATTER_MISSING","message":"category 缺失"}],"warnings":[]}
+{"timestamp":"2025-11-05T08:24:24.266Z","doc_id":"zh/about/qa","passed":false,"errors":[{"type":"FRONTMATTER_MISSING","message":"字段 updatedAt 缺失"},{"type":"FRONTMATTER_MISSING","message":"category 缺失"}],"warnings":[]}
+{"timestamp":"2025-11-05T08:24:24.267Z","doc_id":"zh/perf/lighthouse-2025-10-15","passed":false,"errors":[{"type":"FRONTMATTER_MISSING","message":"字段 title 缺失"},{"type":"FRONTMATTER_MISSING","message":"字段 updatedAt 缺失"},{"type":"FRONTMATTER_MISSING","message":"category 缺失"}],"warnings":[]}
+{"timestamp":"2025-11-05T08:24:24.268Z","doc_id":"zh/plans/aggregation-empty-link-plan","passed":false,"errors":[{"type":"FRONTMATTER_MISSING","message":"字段 title 缺失"},{"type":"FRONTMATTER_MISSING","message":"字段 updatedAt 缺失"},{"type":"FRONTMATTER_MISSING","message":"category 缺失"}],"warnings":[]}
+{"timestamp":"2025-11-05T08:24:24.268Z","doc_id":"zh/plans/module-inventory","passed":false,"errors":[{"type":"FRONTMATTER_MISSING","message":"字段 updatedAt 缺失"},{"type":"FRONTMATTER_MISSING","message":"category 缺失"}],"warnings":[]}
+{"timestamp":"2025-11-05T08:24:24.269Z","doc_id":"zh/plans/nav-config-playbook","passed":false,"errors":[{"type":"FRONTMATTER_MISSING","message":"字段 updatedAt 缺失"},{"type":"FRONTMATTER_MISSING","message":"category 缺失"}],"warnings":[]}
+{"timestamp":"2025-11-05T08:24:24.269Z","doc_id":"zh/plans/nav-config-schema","passed":false,"errors":[{"type":"FRONTMATTER_MISSING","message":"字段 updatedAt 缺失"},{"type":"FRONTMATTER_MISSING","message":"category 缺失"}],"warnings":[]}
+{"timestamp":"2025-11-05T08:24:24.270Z","doc_id":"zh/plans/pagegen-baseline","passed":false,"errors":[{"type":"FRONTMATTER_MISSING","message":"字段 updatedAt 缺失"},{"type":"FRONTMATTER_MISSING","message":"category 缺失"}],"warnings":[]}
+{"timestamp":"2025-11-05T08:24:24.271Z","doc_id":"zh/plans/pagegen-deep-dive","passed":false,"errors":[{"type":"FRONTMATTER_MISSING","message":"字段 updatedAt 缺失"},{"type":"FRONTMATTER_MISSING","message":"category 缺失"}],"warnings":[]}
+{"timestamp":"2025-11-05T08:24:24.272Z","doc_id":"zh/plans/pagegen-module-architecture","passed":false,"errors":[{"type":"FRONTMATTER_MISSING","message":"字段 updatedAt 缺失"},{"type":"FRONTMATTER_MISSING","message":"category 缺失"}],"warnings":[]}
+{"timestamp":"2025-11-05T08:24:24.273Z","doc_id":"zh/plans/pagegen-refactor-roadmap","passed":false,"errors":[{"type":"FRONTMATTER_MISSING","message":"字段 updatedAt 缺失"},{"type":"FRONTMATTER_MISSING","message":"category 缺失"}],"warnings":[]}
+{"timestamp":"2025-11-05T08:24:24.273Z","doc_id":"zh/plans/pagegen-validation-checklist","passed":false,"errors":[{"type":"FRONTMATTER_MISSING","message":"字段 updatedAt 缺失"},{"type":"FRONTMATTER_MISSING","message":"category 缺失"}],"warnings":[]}
+{"timestamp":"2025-11-05T08:24:24.274Z","doc_id":"zh/plans/refactor-optimization","passed":false,"errors":[{"type":"FRONTMATTER_MISSING","message":"字段 title 缺失"},{"type":"FRONTMATTER_MISSING","message":"字段 updatedAt 缺失"},{"type":"FRONTMATTER_MISSING","message":"category 缺失"}],"warnings":[]}
+{"timestamp":"2025-11-05T08:24:24.274Z","doc_id":"zh/plans/seo-config-playbook","passed":false,"errors":[{"type":"FRONTMATTER_MISSING","message":"字段 updatedAt 缺失"},{"type":"FRONTMATTER_MISSING","message":"category 缺失"}],"warnings":[]}
+{"timestamp":"2025-11-05T08:24:24.274Z","doc_id":"zh/content/ai-placeholder-retrospective/index","passed":true,"errors":[],"warnings":[]}
+{"timestamp":"2025-11-05T08:24:24.275Z","doc_id":"zh/content/ai-runtime-guide/index","passed":true,"errors":[],"warnings":[]}
+{"timestamp":"2025-11-05T08:24:24.276Z","doc_id":"zh/content/graphrag-research/index","passed":true,"errors":[],"warnings":[]}
+{"timestamp":"2025-11-05T08:24:24.276Z","doc_id":"zh/content/pagegen-handbook/index","passed":true,"errors":[],"warnings":[]}
+{"timestamp":"2025-11-05T08:24:24.277Z","doc_id":"zh/content/pagegen-retrospective/index","passed":true,"errors":[],"warnings":[]}
+{"timestamp":"2025-11-05T08:24:24.277Z","doc_id":"zh/content/project-overview/index","passed":true,"errors":[],"warnings":[]}
+{"timestamp":"2025-11-05T08:24:24.277Z","doc_id":"zh/content/telemetry-cases/index","passed":true,"errors":[],"warnings":[]}
+{"timestamp":"2025-11-05T08:24:24.278Z","doc_id":"zh/content/telemetry-guide/index","passed":true,"errors":[],"warnings":[]}
+{"timestamp":"2025-11-05T08:24:24.278Z","doc_id":"zh/content/tutorial-authoring-to-publish/index","passed":true,"errors":[],"warnings":[]}
+{"timestamp":"2025-11-05T08:24:24.279Z","doc_id":"zh/plans/Expansion/README","passed":false,"errors":[{"type":"FRONTMATTER_MISSING","message":"字段 title 缺失"},{"type":"FRONTMATTER_MISSING","message":"字段 updatedAt 缺失"},{"type":"FRONTMATTER_MISSING","message":"category 缺失"}],"warnings":[]}

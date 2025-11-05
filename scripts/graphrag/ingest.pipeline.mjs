@@ -352,51 +352,28 @@ async function main() {
     return;
   }
 
-  const driver = createDriver(neo4jConfig);
-  try {
-    await verifyConnectivity(driver);
-    console.log(`[${scriptName}] 已验证 Neo4j 连接`);
+    const driver = createDriver(neo4jConfig);
+    let result = { written: 0 };
+    try {
+      await verifyConnectivity(driver);
+      console.log(`[${scriptName}] 已验证 Neo4j 连接`);
 
-    await withSession(driver, neo4jConfig.database, async (session) => {
-      if (!options.skipSchema) {
-        await ensureSchema(session);
-      }
-    });
+      await withSession(driver, neo4jConfig.database, async (session) => {
+        if (!options.skipSchema) {
+          await ensureSchema(session);
+        }
+      });
 
-    const result = await writePayloads(driver, neo4jConfig.database, payloads);
-    console.log(
-      `[${scriptName}] 写入完成：${result.written} 文档`,
-    );
-
-    if (!options.noCache && result.written > 0) {
-      const timestamp = new Date().toISOString();
-      for (const doc of processedDocs) {
-        updateCacheEntry(cacheState.cache, doc, { writtenAt: timestamp });
-      }
-      const cachePath = await saveIngestCache(cacheState.cache, cacheState.path);
-      console.log(`[${scriptName}] 已更新缓存：${cachePath}`);
+      result = await writePayloads(driver, neo4jConfig.database, payloads);
+      console.log(
+        `[${scriptName}] 写入完成：${result.written} 文档`,
+      );
+    } catch (writeError) {
+      console.error(`[${scriptName}] 写入 Neo4j 失败: ${writeError.message || writeError}`);
+      // Optionally re-throw or handle the error as needed
+    } finally {
+      await driver.close();
     }
-
-    if (options.jsonOutput) {
-      console.log(JSON.stringify({ ...summary, written: result.written }, null, 2));
-    }
-
-    const durationMs = Date.now() - startedAt;
-    await recordTelemetrySafely(
-      createIngestTelemetryRecord({
-        options,
-        summary,
-        processedCount: processedDocs.length,
-        adapterName,
-        adapterModel,
-        durationMs,
-        written: result.written,
-        dryRun: false,
-      }),
-    );
-  } finally {
-    await driver.close();
-  }
 }
 
 main().catch((error) => {
