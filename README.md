@@ -39,8 +39,11 @@ NEO4J_URI=bolt://localhost:7687
 NEO4J_USER=neo4j
 NEO4J_PASSWORD=YOUR_PASSWORD
 NEO4J_DB=neo4j
-GRAPHRAG_ENTITY_PROVIDER=auto
+GRAPH_EXTRACTOR_PROVIDERS=gemini
 GEMINI_API_KEY=YOUR_GOOGLE_GEMINI_API_KEY_HERE
+GEMINI_DEFAULT_MODEL=gemini-1.5-pro
+OPENAI_API_KEY=YOUR_OPENAI_API_KEY_HERE
+OPENAI_DEFAULT_MODEL=gpt-4o-mini
 DEEPSEEK_API_KEY=YOUR_DEEPSEEK_API_KEY_HERE
 DEEPSEEK_API_BASE=https://api.deepseek.com/v1
 DEEPSEEK_MODEL=deepseek-chat
@@ -147,11 +150,32 @@ npm run graphrag:retrieve -- --mode hybrid --input hybrid.example.json --pretty
 
 导出目录包含 `subgraph.mmd`（Mermaid 子图）、`context.md`（实体统计与推荐阅读）、`metadata.json` 与自动生成的 `index.md` 主题页，可直接被 VitePress 渲染。所有 GraphRAG 主题会在 [`docs/graph/index.md`](docs/graph/index.md) 列出，便于在站点导航中访问。
 
+#### 多模型实体提取
+
+- 将 `.env` 中的 `GRAPH_EXTRACTOR_PROVIDERS` 设置为逗号分隔列表（例如 `gemini,openai,deepseek`），即可在实体抽取阶段按顺序串联多个模型，结果会自动合并并去重。
+- 如需临时覆盖，可在命令后追加 `--provider gemini,openai`，或在 CI 中通过环境变量传入。
+- 每个模型都需要对应的 API Key：
+  - Gemini：`GEMINI_API_KEY` / `GEMINI_DEFAULT_MODEL`
+  - OpenAI：`OPENAI_API_KEY` / `OPENAI_DEFAULT_MODEL`
+  - DeepSeek：`DEEPSEEK_API_KEY` / `DEEPSEEK_API_BASE` / `DEEPSEEK_MODEL`
+- 启用 OpenAI/DeepSeek 之前，请确保执行一次 `npm install @langchain/openai` 以安装对应的 LangChain Provider（离线环境可预先下载并放入 `node_modules`）。
+- 抽取结果会自动归一化常见实体类型（`Person`、`Organization`、`Paper` 等），优先输出英文标签，同时保留实体属性中的原始元数据，用于 UI 展示或二次分析。
+- 运行完成后，结果对象会在 `provider_runs` 字段中记录各模型的执行状态，便于在 `data/graphrag-metrics.json` 或 Telemetry 面板中追踪差异。
+
+#### 当前最高优先级：LLM 类型归一化计划
+
+- 正在落地“别名表 → LLM 重归一 → 本地缓存”三级兜底机制：当多模型抽取产出的类型未命中别名表时，自动调用轻量模型（可选）统一为英文规范标签，并将结果缓存到本地以降低后续成本。
+- 归一化流程将输出命中/回退统计到 metrics 与 telemetry，方便后续接入评估脚本与告警。
+- 后续阶段会逐步扩展批量评测、Telemetry 展示与人机协作工具，详见 `docs/zh/plans/graphrag-auto-evolution.md`。
+
 ### AI 管线配置与回滚
 
 - `AI_RUNTIME`：决定 `ai:prepare`/`ai:smoke` 的运行时（`placeholder`、`node`、`wasm` 等）。未设置时默认为 `placeholder` 并跳过真实模型下载。
 - `AI_EMBED_MODEL`：选择嵌入模型适配器，格式为 `<adapter>:<model>`；**未设置时默认尝试** `transformers-node:sentence-transformers:Xenova/all-MiniLM-L6-v2`，若需停用请显式设置为 `placeholder`。
 - `GEMINI_API_KEY`：用于 Gemini 适配器，请在 `.env` 文件中配置您的 Gemini API 密钥。
+- `OPENAI_API_KEY` / `OPENAI_DEFAULT_MODEL`：启用 OpenAI 管线时使用的密钥与默认模型，例如 `gpt-4o-mini`。在多模型模式下可作为 Gemini 的补充或备选。
+- `DEEPSEEK_API_KEY` / `DEEPSEEK_API_BASE` / `DEEPSEEK_MODEL`：配置 DeepSeek OpenAI-Compatible 接口的访问参数，默认指向 `https://api.deepseek.com/v1` 与 `deepseek-chat`。
+- `GRAPH_EXTRACTOR_PROVIDERS`：控制实体提取所串联的模型顺序，支持逗号分隔（例如 `gemini,openai,deepseek`），默认仅调用 Gemini；可通过 CLI `--provider <list>` 临时覆盖。
 - `AI_ENTITY_ADAPTER`：选择实体提取适配器，例如 `transformers` 或 `gemini`。默认值为 `placeholder`。
 - `AI_ENTITY_MODEL`：当使用 `gemini` 适配器时，指定要使用的 Gemini 模型，例如 `gemini-1.5-pro` 或 `gemini-1.5-flash`。默认值为 `gemini-1.5-pro`。
 - `AI_SUMMARY_MODEL`：摘要生成的适配器配置，格式同上；默认值为 `transformers-node:Xenova/distilbart-cnn-12-6`，问答脚本默认复用该值，可通过 `AI_QA_MODEL` 覆盖。
