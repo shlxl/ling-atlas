@@ -254,7 +254,9 @@ async function loadChatOpenAI() {
       error && typeof error.message === 'string'
         ? error.message
         : '无法加载 @langchain/openai 包';
-    throw new Error(`加载 OpenAI 提供方失败：${message}`);
+    throw new Error(
+      `加载 OpenAI 提供方失败：${message}。如需启用 openai/deepseek，请先执行 npm install @langchain/openai`
+    );
   }
 }
 
