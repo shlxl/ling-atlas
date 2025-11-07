@@ -1,5 +1,2207 @@
 [
   {
+    "type": "normalize_objects",
+    "domain": "objects",
+    "timestamp": "2025-11-07T09:51:45.219Z",
+    "durationMs": 0,
+    "documents": 9,
+    "enabled": true,
+    "totals": {
+      "total": 0,
+      "updated": 0,
+      "relationships": 0,
+      "entities": 0
+    },
+    "sources": {
+      "alias": 0,
+      "cache": 0,
+      "llm": 0,
+      "fallback": 0,
+      "reuse": 0
+    },
+    "cache": {
+      "path": "/Users/liuxiaoling/myproject/ling-atlas/data/graphrag-object-cache.json",
+      "size": 0,
+      "updated": false,
+      "writes": 0
+    },
+    "aliasEntries": 11,
+    "llm": {
+      "attempts": 0,
+      "success": 0,
+      "failures": 0,
+      "provider": null,
+      "model": null,
+      "disabledReason": null,
+      "errors": []
+    },
+    "samples": {
+      "updates": [],
+      "fallback": [],
+      "failures": []
+    }
+  },
+  {
+    "type": "normalize_relationships",
+    "domain": "relationships",
+    "timestamp": "2025-11-07T09:51:45.215Z",
+    "durationMs": 1,
+    "documents": 9,
+    "enabled": true,
+    "totals": {
+      "total": 0,
+      "updated": 0,
+      "relationships": 0
+    },
+    "sources": {
+      "alias": 0,
+      "cache": 0,
+      "llm": 0,
+      "fallback": 0,
+      "reuse": 0
+    },
+    "cache": {
+      "path": "/Users/liuxiaoling/myproject/ling-atlas/data/graphrag-relationship-type-cache.json",
+      "size": 0,
+      "updated": false,
+      "writes": 0
+    },
+    "aliasEntries": 14,
+    "llm": {
+      "attempts": 0,
+      "success": 0,
+      "failures": 0,
+      "provider": null,
+      "model": null,
+      "disabledReason": null,
+      "errors": []
+    },
+    "samples": {
+      "updates": [],
+      "fallback": [],
+      "failures": []
+    }
+  },
+  {
+    "type": "normalize",
+    "domain": "entities",
+    "timestamp": "2025-11-07T09:51:45.211Z",
+    "durationMs": 2807496,
+    "documents": 9,
+    "enabled": true,
+    "totals": {
+      "total": 31,
+      "updated": 0,
+      "entities": 31,
+      "docRoots": 0
+    },
+    "sources": {
+      "alias": 0,
+      "cache": 0,
+      "llm": 0,
+      "fallback": 31,
+      "reuse": 0
+    },
+    "cache": {
+      "path": "/Users/liuxiaoling/myproject/ling-atlas/data/graphrag-entity-type-cache.json",
+      "size": 0,
+      "updated": false,
+      "writes": 0
+    },
+    "aliasEntries": 5,
+    "llm": {
+      "attempts": 31,
+      "success": 0,
+      "failures": 31,
+      "provider": "gemini",
+      "model": "gemini-1.5-flash",
+      "disabledReason": null,
+      "errors": [
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: fetch failed",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: fetch failed",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: fetch failed",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: fetch failed",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: fetch failed",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: fetch failed",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: fetch failed",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: fetch failed",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: fetch failed",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: fetch failed",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: fetch failed",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: fetch failed",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: fetch failed",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: fetch failed",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: fetch failed",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: fetch failed",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: fetch failed",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: fetch failed",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: fetch failed",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: fetch failed",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: fetch failed",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: fetch failed",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: fetch failed",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: fetch failed",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: fetch failed",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: fetch failed",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: fetch failed",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: fetch failed",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: fetch failed",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: fetch failed",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: fetch failed"
+      ]
+    },
+    "samples": {
+      "updates": [],
+      "fallback": [
+        {
+          "name": "占位运行",
+          "reason": "llm-unavailable"
+        },
+        {
+          "name": "模型冒烟",
+          "reason": "llm-unavailable"
+        },
+        {
+          "name": "回滚",
+          "reason": "llm-unavailable"
+        },
+        {
+          "name": "AI管线",
+          "reason": "llm-unavailable"
+        },
+        {
+          "name": "冒烟测试",
+          "reason": "llm-unavailable"
+        }
+      ],
+      "failures": [
+        {
+          "name": "占位运行",
+          "message": "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: fetch failed"
+        },
+        {
+          "name": "模型冒烟",
+          "message": "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: fetch failed"
+        },
+        {
+          "name": "回滚",
+          "message": "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: fetch failed"
+        },
+        {
+          "name": "AI管线",
+          "message": "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: fetch failed"
+        },
+        {
+          "name": "冒烟测试",
+          "message": "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: fetch failed"
+        }
+      ]
+    }
+  },
+  {
+    "type": "ingest",
+    "timestamp": "2025-11-07T09:51:45.204Z",
+    "durationMs": 2807600,
+    "locale": "all",
+    "includeDrafts": false,
+    "changedOnly": false,
+    "noCache": false,
+    "dryRun": true,
+    "adapter": "placeholder",
+    "adapterModel": null,
+    "totals": {
+      "collected": 79,
+      "normalized": 79,
+      "readyForWrite": 9,
+      "processed": 9
+    },
+    "skipped": {
+      "total": 70,
+      "reasons": [
+        {
+          "reason": "自动生成产物，默认跳过",
+          "count": 38,
+          "sampleDocId": "zh/_generated/tags/index"
+        },
+        {
+          "reason": "质量守门失败",
+          "count": 32,
+          "sampleDocId": "404"
+        }
+      ],
+      "samples": [
+        {
+          "docId": "404",
+          "reason": "质量守门失败"
+        },
+        {
+          "docId": "index",
+          "reason": "质量守门失败"
+        },
+        {
+          "docId": "en/DEPLOYMENT",
+          "reason": "质量守门失败"
+        }
+      ]
+    },
+    "write": {
+      "attempted": 9,
+      "written": 0,
+      "cacheUpdated": false
+    }
+  },
+  {
+    "type": "normalize_objects",
+    "domain": "objects",
+    "timestamp": "2025-11-07T09:43:28.731Z",
+    "durationMs": 1,
+    "documents": 1,
+    "enabled": true,
+    "totals": {
+      "total": 0,
+      "updated": 0,
+      "relationships": 0,
+      "entities": 0
+    },
+    "sources": {
+      "alias": 0,
+      "cache": 0,
+      "llm": 0,
+      "fallback": 0,
+      "reuse": 0
+    },
+    "cache": {
+      "path": "/Users/liuxiaoling/myproject/ling-atlas/data/graphrag-object-cache.json",
+      "size": 0,
+      "updated": false,
+      "writes": 0
+    },
+    "aliasEntries": 11,
+    "llm": {
+      "attempts": 0,
+      "success": 0,
+      "failures": 0,
+      "provider": null,
+      "model": null,
+      "disabledReason": null,
+      "errors": []
+    },
+    "samples": {
+      "updates": [],
+      "fallback": [],
+      "failures": []
+    }
+  },
+  {
+    "type": "normalize_relationships",
+    "domain": "relationships",
+    "timestamp": "2025-11-07T09:43:28.727Z",
+    "durationMs": 6200,
+    "documents": 1,
+    "enabled": true,
+    "totals": {
+      "total": 30,
+      "updated": 2,
+      "relationships": 30
+    },
+    "sources": {
+      "alias": 2,
+      "cache": 0,
+      "llm": 0,
+      "fallback": 28,
+      "reuse": 1
+    },
+    "cache": {
+      "path": "/Users/liuxiaoling/myproject/ling-atlas/data/graphrag-relationship-type-cache.json",
+      "size": 0,
+      "updated": false,
+      "writes": 0
+    },
+    "aliasEntries": 14,
+    "llm": {
+      "attempts": 28,
+      "success": 0,
+      "failures": 28,
+      "provider": "gemini",
+      "model": "gemini-1.5-flash",
+      "disabledReason": null,
+      "errors": [
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods."
+      ]
+    },
+    "samples": {
+      "updates": [
+        {
+          "source": "GNN 参与的 GraphRAG",
+          "target": "GNN",
+          "previous": "使用",
+          "next": "Uses",
+          "reason": "matched-alias:使用",
+          "via": "alias"
+        },
+        {
+          "source": "GNN 参与的 GraphRAG",
+          "target": "LLM",
+          "previous": "使用",
+          "next": "Uses",
+          "reason": "matched-alias:使用",
+          "via": "alias"
+        }
+      ],
+      "fallback": [
+        {
+          "reason": "llm-unavailable"
+        },
+        {
+          "reason": "llm-unavailable"
+        },
+        {
+          "reason": "llm-unavailable"
+        },
+        {
+          "reason": "llm-unavailable"
+        },
+        {
+          "reason": "llm-unavailable"
+        }
+      ],
+      "failures": [
+        {
+          "source": "GraphRAG",
+          "target": "RAG",
+          "message": "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods."
+        },
+        {
+          "source": "GraphRAG",
+          "target": "图结构知识",
+          "message": "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods."
+        },
+        {
+          "source": "知识图谱",
+          "target": "图结构知识",
+          "message": "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods."
+        },
+        {
+          "source": "文本图",
+          "target": "图结构知识",
+          "message": "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods."
+        },
+        {
+          "source": "虚拟图",
+          "target": "图结构知识",
+          "message": "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods."
+        }
+      ]
+    }
+  },
+  {
+    "type": "normalize",
+    "domain": "entities",
+    "timestamp": "2025-11-07T09:43:28.724Z",
+    "durationMs": 6626,
+    "documents": 1,
+    "enabled": true,
+    "totals": {
+      "total": 62,
+      "updated": 2,
+      "entities": 31,
+      "docRoots": 31
+    },
+    "sources": {
+      "alias": 2,
+      "cache": 0,
+      "llm": 0,
+      "fallback": 60,
+      "reuse": 31
+    },
+    "cache": {
+      "path": "/Users/liuxiaoling/myproject/ling-atlas/data/graphrag-entity-type-cache.json",
+      "size": 0,
+      "updated": false,
+      "writes": 0
+    },
+    "aliasEntries": 5,
+    "llm": {
+      "attempts": 30,
+      "success": 0,
+      "failures": 30,
+      "provider": "gemini",
+      "model": "gemini-1.5-flash",
+      "disabledReason": null,
+      "errors": [
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods."
+      ]
+    },
+    "samples": {
+      "updates": [
+        {
+          "name": "Ling Atlas",
+          "previous": "项目",
+          "next": "Project",
+          "source": "alias"
+        },
+        {
+          "name": "Ling Atlas",
+          "previous": "项目",
+          "next": "Project",
+          "source": "alias"
+        }
+      ],
+      "fallback": [
+        {
+          "name": "GraphRAG",
+          "reason": "llm-unavailable"
+        },
+        {
+          "name": "RAG",
+          "reason": "llm-unavailable"
+        },
+        {
+          "name": "图结构知识",
+          "reason": "llm-unavailable"
+        },
+        {
+          "name": "知识图谱",
+          "reason": "llm-unavailable"
+        },
+        {
+          "name": "文本图",
+          "reason": "llm-unavailable"
+        }
+      ],
+      "failures": [
+        {
+          "name": "GraphRAG",
+          "message": "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods."
+        },
+        {
+          "name": "RAG",
+          "message": "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods."
+        },
+        {
+          "name": "图结构知识",
+          "message": "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods."
+        },
+        {
+          "name": "知识图谱",
+          "message": "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods."
+        },
+        {
+          "name": "文本图",
+          "message": "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods."
+        }
+      ]
+    }
+  },
+  {
+    "type": "ingest",
+    "timestamp": "2025-11-07T09:43:28.721Z",
+    "durationMs": 71834,
+    "locale": "all",
+    "includeDrafts": false,
+    "changedOnly": false,
+    "noCache": false,
+    "dryRun": false,
+    "adapter": "gemini",
+    "adapterModel": "gemini-2.5-pro",
+    "totals": {
+      "collected": 79,
+      "normalized": 1,
+      "readyForWrite": 1,
+      "processed": 1
+    },
+    "skipped": {
+      "total": 0,
+      "reasons": [],
+      "samples": []
+    },
+    "write": {
+      "attempted": 1,
+      "written": 1,
+      "cacheUpdated": true
+    }
+  },
+  {
+    "type": "normalize_objects",
+    "domain": "objects",
+    "timestamp": "2025-11-07T09:37:40.425Z",
+    "durationMs": 1,
+    "documents": 1,
+    "enabled": true,
+    "totals": {
+      "total": 0,
+      "updated": 0,
+      "relationships": 0,
+      "entities": 0
+    },
+    "sources": {
+      "alias": 0,
+      "cache": 0,
+      "llm": 0,
+      "fallback": 0,
+      "reuse": 0
+    },
+    "cache": {
+      "path": "/Users/liuxiaoling/myproject/ling-atlas/data/graphrag-object-cache.json",
+      "size": 0,
+      "updated": false,
+      "writes": 0
+    },
+    "aliasEntries": 11,
+    "llm": {
+      "attempts": 0,
+      "success": 0,
+      "failures": 0,
+      "provider": null,
+      "model": null,
+      "disabledReason": null,
+      "errors": []
+    },
+    "samples": {
+      "updates": [],
+      "fallback": [],
+      "failures": []
+    }
+  },
+  {
+    "type": "normalize_relationships",
+    "domain": "relationships",
+    "timestamp": "2025-11-07T09:37:40.422Z",
+    "durationMs": 0,
+    "documents": 1,
+    "enabled": true,
+    "totals": {
+      "total": 0,
+      "updated": 0,
+      "relationships": 0
+    },
+    "sources": {
+      "alias": 0,
+      "cache": 0,
+      "llm": 0,
+      "fallback": 0,
+      "reuse": 0
+    },
+    "cache": {
+      "path": "/Users/liuxiaoling/myproject/ling-atlas/data/graphrag-relationship-type-cache.json",
+      "size": 0,
+      "updated": false,
+      "writes": 0
+    },
+    "aliasEntries": 14,
+    "llm": {
+      "attempts": 0,
+      "success": 0,
+      "failures": 0,
+      "provider": null,
+      "model": null,
+      "disabledReason": null,
+      "errors": []
+    },
+    "samples": {
+      "updates": [],
+      "fallback": [],
+      "failures": []
+    }
+  },
+  {
+    "type": "normalize",
+    "domain": "entities",
+    "timestamp": "2025-11-07T09:37:40.419Z",
+    "durationMs": 2368,
+    "documents": 1,
+    "enabled": true,
+    "totals": {
+      "total": 7,
+      "updated": 0,
+      "entities": 7,
+      "docRoots": 0
+    },
+    "sources": {
+      "alias": 0,
+      "cache": 0,
+      "llm": 0,
+      "fallback": 7,
+      "reuse": 0
+    },
+    "cache": {
+      "path": "/Users/liuxiaoling/myproject/ling-atlas/data/graphrag-entity-type-cache.json",
+      "size": 0,
+      "updated": false,
+      "writes": 0
+    },
+    "aliasEntries": 5,
+    "llm": {
+      "attempts": 7,
+      "success": 0,
+      "failures": 7,
+      "provider": "gemini",
+      "model": "gemini-1.5-flash",
+      "disabledReason": null,
+      "errors": [
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods."
+      ]
+    },
+    "samples": {
+      "updates": [],
+      "fallback": [
+        {
+          "name": "生图检索增强生成",
+          "reason": "llm-unavailable"
+        },
+        {
+          "name": "多跳图检索",
+          "reason": "llm-unavailable"
+        },
+        {
+          "name": "向量融合",
+          "reason": "llm-unavailable"
+        },
+        {
+          "name": "混合检索",
+          "reason": "llm-unavailable"
+        },
+        {
+          "name": "子图提取与图路径检索",
+          "reason": "llm-unavailable"
+        }
+      ],
+      "failures": [
+        {
+          "name": "生图检索增强生成",
+          "message": "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods."
+        },
+        {
+          "name": "多跳图检索",
+          "message": "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods."
+        },
+        {
+          "name": "向量融合",
+          "message": "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods."
+        },
+        {
+          "name": "混合检索",
+          "message": "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods."
+        },
+        {
+          "name": "子图提取与图路径检索",
+          "message": "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods."
+        }
+      ]
+    }
+  },
+  {
+    "type": "ingest",
+    "timestamp": "2025-11-07T09:37:40.416Z",
+    "durationMs": 2870,
+    "locale": "all",
+    "includeDrafts": false,
+    "changedOnly": false,
+    "noCache": false,
+    "dryRun": false,
+    "adapter": "placeholder",
+    "adapterModel": null,
+    "totals": {
+      "collected": 79,
+      "normalized": 1,
+      "readyForWrite": 1,
+      "processed": 1
+    },
+    "skipped": {
+      "total": 0,
+      "reasons": [],
+      "samples": []
+    },
+    "write": {
+      "attempted": 1,
+      "written": 1,
+      "cacheUpdated": true
+    }
+  },
+  {
+    "type": "normalize_objects",
+    "domain": "objects",
+    "timestamp": "2025-11-07T09:34:48.663Z",
+    "durationMs": 0,
+    "documents": 1,
+    "enabled": true,
+    "totals": {
+      "total": 0,
+      "updated": 0,
+      "relationships": 0,
+      "entities": 0
+    },
+    "sources": {
+      "alias": 0,
+      "cache": 0,
+      "llm": 0,
+      "fallback": 0,
+      "reuse": 0
+    },
+    "cache": {
+      "path": "/Users/liuxiaoling/myproject/ling-atlas/data/graphrag-object-cache.json",
+      "size": 0,
+      "updated": false,
+      "writes": 0
+    },
+    "aliasEntries": 11,
+    "llm": {
+      "attempts": 0,
+      "success": 0,
+      "failures": 0,
+      "provider": null,
+      "model": null,
+      "disabledReason": null,
+      "errors": []
+    },
+    "samples": {
+      "updates": [],
+      "fallback": [],
+      "failures": []
+    }
+  },
+  {
+    "type": "normalize_relationships",
+    "domain": "relationships",
+    "timestamp": "2025-11-07T09:34:48.659Z",
+    "durationMs": 0,
+    "documents": 1,
+    "enabled": true,
+    "totals": {
+      "total": 0,
+      "updated": 0,
+      "relationships": 0
+    },
+    "sources": {
+      "alias": 0,
+      "cache": 0,
+      "llm": 0,
+      "fallback": 0,
+      "reuse": 0
+    },
+    "cache": {
+      "path": "/Users/liuxiaoling/myproject/ling-atlas/data/graphrag-relationship-type-cache.json",
+      "size": 0,
+      "updated": false,
+      "writes": 0
+    },
+    "aliasEntries": 14,
+    "llm": {
+      "attempts": 0,
+      "success": 0,
+      "failures": 0,
+      "provider": null,
+      "model": null,
+      "disabledReason": null,
+      "errors": []
+    },
+    "samples": {
+      "updates": [],
+      "fallback": [],
+      "failures": []
+    }
+  },
+  {
+    "type": "normalize",
+    "domain": "entities",
+    "timestamp": "2025-11-07T09:34:48.654Z",
+    "durationMs": 692892,
+    "documents": 1,
+    "enabled": true,
+    "totals": {
+      "total": 7,
+      "updated": 0,
+      "entities": 7,
+      "docRoots": 0
+    },
+    "sources": {
+      "alias": 0,
+      "cache": 0,
+      "llm": 0,
+      "fallback": 7,
+      "reuse": 0
+    },
+    "cache": {
+      "path": "/Users/liuxiaoling/myproject/ling-atlas/data/graphrag-entity-type-cache.json",
+      "size": 0,
+      "updated": false,
+      "writes": 0
+    },
+    "aliasEntries": 5,
+    "llm": {
+      "attempts": 7,
+      "success": 0,
+      "failures": 7,
+      "provider": "gemini",
+      "model": "gemini-1.5-flash",
+      "disabledReason": null,
+      "errors": [
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: fetch failed",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: fetch failed",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: fetch failed",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: fetch failed",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: fetch failed",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: fetch failed",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: fetch failed"
+      ]
+    },
+    "samples": {
+      "updates": [],
+      "fallback": [
+        {
+          "name": "生图检索增强生成",
+          "reason": "llm-unavailable"
+        },
+        {
+          "name": "多跳图检索",
+          "reason": "llm-unavailable"
+        },
+        {
+          "name": "向量融合",
+          "reason": "llm-unavailable"
+        },
+        {
+          "name": "混合检索",
+          "reason": "llm-unavailable"
+        },
+        {
+          "name": "子图提取与图路径检索",
+          "reason": "llm-unavailable"
+        }
+      ],
+      "failures": [
+        {
+          "name": "生图检索增强生成",
+          "message": "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: fetch failed"
+        },
+        {
+          "name": "多跳图检索",
+          "message": "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: fetch failed"
+        },
+        {
+          "name": "向量融合",
+          "message": "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: fetch failed"
+        },
+        {
+          "name": "混合检索",
+          "message": "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: fetch failed"
+        },
+        {
+          "name": "子图提取与图路径检索",
+          "message": "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: fetch failed"
+        }
+      ]
+    }
+  },
+  {
+    "type": "ingest",
+    "timestamp": "2025-11-07T09:34:48.647Z",
+    "durationMs": 692952,
+    "locale": "all",
+    "includeDrafts": false,
+    "changedOnly": false,
+    "noCache": false,
+    "dryRun": true,
+    "adapter": "placeholder",
+    "adapterModel": null,
+    "totals": {
+      "collected": 79,
+      "normalized": 1,
+      "readyForWrite": 1,
+      "processed": 1
+    },
+    "skipped": {
+      "total": 0,
+      "reasons": [],
+      "samples": []
+    },
+    "write": {
+      "attempted": 1,
+      "written": 0,
+      "cacheUpdated": false
+    }
+  },
+  {
+    "type": "normalize_objects",
+    "domain": "objects",
+    "timestamp": "2025-11-07T09:32:36.105Z",
+    "durationMs": 0,
+    "documents": 1,
+    "enabled": true,
+    "totals": {
+      "total": 0,
+      "updated": 0,
+      "relationships": 0,
+      "entities": 0
+    },
+    "sources": {
+      "alias": 0,
+      "cache": 0,
+      "llm": 0,
+      "fallback": 0,
+      "reuse": 0
+    },
+    "cache": {
+      "path": "/Users/liuxiaoling/myproject/ling-atlas/data/graphrag-object-cache.json",
+      "size": 0,
+      "updated": false,
+      "writes": 0
+    },
+    "aliasEntries": 11,
+    "llm": {
+      "attempts": 0,
+      "success": 0,
+      "failures": 0,
+      "provider": null,
+      "model": null,
+      "disabledReason": null,
+      "errors": []
+    },
+    "samples": {
+      "updates": [],
+      "fallback": [],
+      "failures": []
+    }
+  },
+  {
+    "type": "normalize_relationships",
+    "domain": "relationships",
+    "timestamp": "2025-11-07T09:32:36.102Z",
+    "durationMs": 0,
+    "documents": 1,
+    "enabled": true,
+    "totals": {
+      "total": 0,
+      "updated": 0,
+      "relationships": 0
+    },
+    "sources": {
+      "alias": 0,
+      "cache": 0,
+      "llm": 0,
+      "fallback": 0,
+      "reuse": 0
+    },
+    "cache": {
+      "path": "/Users/liuxiaoling/myproject/ling-atlas/data/graphrag-relationship-type-cache.json",
+      "size": 0,
+      "updated": false,
+      "writes": 0
+    },
+    "aliasEntries": 14,
+    "llm": {
+      "attempts": 0,
+      "success": 0,
+      "failures": 0,
+      "provider": null,
+      "model": null,
+      "disabledReason": null,
+      "errors": []
+    },
+    "samples": {
+      "updates": [],
+      "fallback": [],
+      "failures": []
+    }
+  },
+  {
+    "type": "normalize",
+    "domain": "entities",
+    "timestamp": "2025-11-07T09:32:36.099Z",
+    "durationMs": 2458,
+    "documents": 1,
+    "enabled": true,
+    "totals": {
+      "total": 7,
+      "updated": 0,
+      "entities": 7,
+      "docRoots": 0
+    },
+    "sources": {
+      "alias": 0,
+      "cache": 0,
+      "llm": 0,
+      "fallback": 7,
+      "reuse": 0
+    },
+    "cache": {
+      "path": "/Users/liuxiaoling/myproject/ling-atlas/data/graphrag-entity-type-cache.json",
+      "size": 0,
+      "updated": false,
+      "writes": 0
+    },
+    "aliasEntries": 5,
+    "llm": {
+      "attempts": 7,
+      "success": 0,
+      "failures": 7,
+      "provider": "gemini",
+      "model": "gemini-1.5-flash",
+      "disabledReason": null,
+      "errors": [
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods."
+      ]
+    },
+    "samples": {
+      "updates": [],
+      "fallback": [
+        {
+          "name": "生图检索增强生成",
+          "reason": "llm-unavailable"
+        },
+        {
+          "name": "多跳图检索",
+          "reason": "llm-unavailable"
+        },
+        {
+          "name": "向量融合",
+          "reason": "llm-unavailable"
+        },
+        {
+          "name": "混合检索",
+          "reason": "llm-unavailable"
+        },
+        {
+          "name": "子图提取与图路径检索",
+          "reason": "llm-unavailable"
+        }
+      ],
+      "failures": [
+        {
+          "name": "生图检索增强生成",
+          "message": "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods."
+        },
+        {
+          "name": "多跳图检索",
+          "message": "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods."
+        },
+        {
+          "name": "向量融合",
+          "message": "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods."
+        },
+        {
+          "name": "混合检索",
+          "message": "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods."
+        },
+        {
+          "name": "子图提取与图路径检索",
+          "message": "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods."
+        }
+      ]
+    }
+  },
+  {
+    "type": "ingest",
+    "timestamp": "2025-11-07T09:32:36.093Z",
+    "durationMs": 2519,
+    "locale": "all",
+    "includeDrafts": false,
+    "changedOnly": false,
+    "noCache": false,
+    "dryRun": true,
+    "adapter": "placeholder",
+    "adapterModel": null,
+    "totals": {
+      "collected": 79,
+      "normalized": 1,
+      "readyForWrite": 1,
+      "processed": 1
+    },
+    "skipped": {
+      "total": 0,
+      "reasons": [],
+      "samples": []
+    },
+    "write": {
+      "attempted": 1,
+      "written": 0,
+      "cacheUpdated": false
+    }
+  },
+  {
+    "type": "normalize_objects",
+    "domain": "objects",
+    "timestamp": "2025-11-07T08:51:03.971Z",
+    "durationMs": 1,
+    "documents": 1,
+    "enabled": true,
+    "totals": {
+      "total": 0,
+      "updated": 0,
+      "relationships": 0,
+      "entities": 0
+    },
+    "sources": {
+      "alias": 0,
+      "cache": 0,
+      "llm": 0,
+      "fallback": 0,
+      "reuse": 0
+    },
+    "cache": {
+      "path": "/Users/liuxiaoling/myproject/ling-atlas/data/graphrag-object-cache.json",
+      "size": 0,
+      "updated": false,
+      "writes": 0
+    },
+    "aliasEntries": 11,
+    "llm": {
+      "attempts": 0,
+      "success": 0,
+      "failures": 0,
+      "provider": null,
+      "model": null,
+      "disabledReason": null,
+      "errors": []
+    },
+    "samples": {
+      "updates": [],
+      "fallback": [],
+      "failures": []
+    }
+  },
+  {
+    "type": "normalize_relationships",
+    "domain": "relationships",
+    "timestamp": "2025-11-07T08:51:03.968Z",
+    "durationMs": 6891,
+    "documents": 1,
+    "enabled": true,
+    "totals": {
+      "total": 31,
+      "updated": 1,
+      "relationships": 31
+    },
+    "sources": {
+      "alias": 1,
+      "cache": 0,
+      "llm": 0,
+      "fallback": 30,
+      "reuse": 0
+    },
+    "cache": {
+      "path": "/Users/liuxiaoling/myproject/ling-atlas/data/graphrag-relationship-type-cache.json",
+      "size": 0,
+      "updated": false,
+      "writes": 0
+    },
+    "aliasEntries": 14,
+    "llm": {
+      "attempts": 30,
+      "success": 0,
+      "failures": 30,
+      "provider": "gemini",
+      "model": "gemini-1.5-flash",
+      "disabledReason": null,
+      "errors": [
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods."
+      ]
+    },
+    "samples": {
+      "updates": [
+        {
+          "source": "GraphRAG",
+          "target": "Graph Structure Knowledge",
+          "previous": "uses",
+          "next": "Uses",
+          "reason": "matched-alias:uses",
+          "via": "alias"
+        }
+      ],
+      "fallback": [
+        {
+          "reason": "llm-unavailable"
+        },
+        {
+          "reason": "llm-unavailable"
+        },
+        {
+          "reason": "llm-unavailable"
+        },
+        {
+          "reason": "llm-unavailable"
+        },
+        {
+          "reason": "llm-unavailable"
+        }
+      ],
+      "failures": [
+        {
+          "source": "GraphRAG",
+          "target": "RAG",
+          "message": "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods."
+        },
+        {
+          "source": "GraphRAG",
+          "target": "Multi-hop Reasoning",
+          "message": "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods."
+        },
+        {
+          "source": "GraphRAG",
+          "target": "Graph-enhanced Generation",
+          "message": "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods."
+        },
+        {
+          "source": "GraphRAG",
+          "target": "Naive RAG",
+          "message": "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods."
+        },
+        {
+          "source": "Early Systematic Review (2024)",
+          "target": "GraphRAG",
+          "message": "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods."
+        }
+      ]
+    }
+  },
+  {
+    "type": "normalize",
+    "domain": "entities",
+    "timestamp": "2025-11-07T08:51:03.966Z",
+    "durationMs": 6610,
+    "documents": 1,
+    "enabled": true,
+    "totals": {
+      "total": 60,
+      "updated": 2,
+      "entities": 30,
+      "docRoots": 30
+    },
+    "sources": {
+      "alias": 2,
+      "cache": 0,
+      "llm": 0,
+      "fallback": 58,
+      "reuse": 30
+    },
+    "cache": {
+      "path": "/Users/liuxiaoling/myproject/ling-atlas/data/graphrag-entity-type-cache.json",
+      "size": 0,
+      "updated": false,
+      "writes": 0
+    },
+    "aliasEntries": 5,
+    "llm": {
+      "attempts": 29,
+      "success": 0,
+      "failures": 29,
+      "provider": "gemini",
+      "model": "gemini-1.5-flash",
+      "disabledReason": null,
+      "errors": [
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods."
+      ]
+    },
+    "samples": {
+      "updates": [
+        {
+          "name": "Ling Atlas",
+          "previous": "System",
+          "next": "Project",
+          "source": "alias"
+        },
+        {
+          "name": "Ling Atlas",
+          "previous": "System",
+          "next": "Project",
+          "source": "alias"
+        }
+      ],
+      "fallback": [
+        {
+          "name": "GraphRAG",
+          "reason": "llm-unavailable"
+        },
+        {
+          "name": "RAG",
+          "reason": "llm-unavailable"
+        },
+        {
+          "name": "Graph Structure Knowledge",
+          "reason": "llm-unavailable"
+        },
+        {
+          "name": "Knowledge Graph",
+          "reason": "llm-unavailable"
+        },
+        {
+          "name": "LLM",
+          "reason": "llm-unavailable"
+        }
+      ],
+      "failures": [
+        {
+          "name": "GraphRAG",
+          "message": "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods."
+        },
+        {
+          "name": "RAG",
+          "message": "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods."
+        },
+        {
+          "name": "Graph Structure Knowledge",
+          "message": "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods."
+        },
+        {
+          "name": "Knowledge Graph",
+          "message": "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods."
+        },
+        {
+          "name": "LLM",
+          "message": "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods."
+        }
+      ]
+    }
+  },
+  {
+    "type": "ingest",
+    "timestamp": "2025-11-07T08:51:03.963Z",
+    "durationMs": 76994,
+    "locale": "all",
+    "includeDrafts": false,
+    "changedOnly": false,
+    "noCache": false,
+    "dryRun": false,
+    "adapter": "gemini",
+    "adapterModel": "gemini-2.5-pro",
+    "totals": {
+      "collected": 79,
+      "normalized": 1,
+      "readyForWrite": 1,
+      "processed": 1
+    },
+    "skipped": {
+      "total": 0,
+      "reasons": [],
+      "samples": []
+    },
+    "write": {
+      "attempted": 1,
+      "written": 1,
+      "cacheUpdated": true
+    }
+  },
+  {
+    "type": "normalize_objects",
+    "domain": "objects",
+    "timestamp": "2025-11-07T07:28:40.592Z",
+    "durationMs": 1,
+    "documents": 9,
+    "enabled": true,
+    "totals": {
+      "total": 0,
+      "updated": 0,
+      "relationships": 0,
+      "entities": 0
+    },
+    "sources": {
+      "alias": 0,
+      "cache": 0,
+      "llm": 0,
+      "fallback": 0,
+      "reuse": 0
+    },
+    "cache": {
+      "path": "/Users/liuxiaoling/myproject/ling-atlas/data/graphrag-object-cache.json",
+      "size": 0,
+      "updated": false,
+      "writes": 0
+    },
+    "aliasEntries": 11,
+    "llm": {
+      "attempts": 0,
+      "success": 0,
+      "failures": 0,
+      "provider": null,
+      "model": null,
+      "disabledReason": null,
+      "errors": []
+    },
+    "samples": {
+      "updates": [],
+      "fallback": [],
+      "failures": []
+    }
+  },
+  {
+    "type": "normalize_relationships",
+    "domain": "relationships",
+    "timestamp": "2025-11-07T07:28:40.589Z",
+    "durationMs": 1,
+    "documents": 9,
+    "enabled": true,
+    "totals": {
+      "total": 0,
+      "updated": 0,
+      "relationships": 0
+    },
+    "sources": {
+      "alias": 0,
+      "cache": 0,
+      "llm": 0,
+      "fallback": 0,
+      "reuse": 0
+    },
+    "cache": {
+      "path": "/Users/liuxiaoling/myproject/ling-atlas/data/graphrag-relationship-type-cache.json",
+      "size": 0,
+      "updated": false,
+      "writes": 0
+    },
+    "aliasEntries": 14,
+    "llm": {
+      "attempts": 0,
+      "success": 0,
+      "failures": 0,
+      "provider": null,
+      "model": null,
+      "disabledReason": null,
+      "errors": []
+    },
+    "samples": {
+      "updates": [],
+      "fallback": [],
+      "failures": []
+    }
+  },
+  {
+    "type": "normalize",
+    "domain": "entities",
+    "timestamp": "2025-11-07T07:28:40.585Z",
+    "durationMs": 8287,
+    "documents": 9,
+    "enabled": true,
+    "totals": {
+      "total": 31,
+      "updated": 0,
+      "entities": 31,
+      "docRoots": 0
+    },
+    "sources": {
+      "alias": 0,
+      "cache": 0,
+      "llm": 0,
+      "fallback": 31,
+      "reuse": 0
+    },
+    "cache": {
+      "path": "/Users/liuxiaoling/myproject/ling-atlas/data/graphrag-entity-type-cache.json",
+      "size": 0,
+      "updated": false,
+      "writes": 0
+    },
+    "aliasEntries": 5,
+    "llm": {
+      "attempts": 31,
+      "success": 0,
+      "failures": 31,
+      "provider": "gemini",
+      "model": "gemini-1.5-flash",
+      "disabledReason": null,
+      "errors": [
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods."
+      ]
+    },
+    "samples": {
+      "updates": [],
+      "fallback": [
+        {
+          "name": "占位运行",
+          "reason": "llm-unavailable"
+        },
+        {
+          "name": "模型冒烟",
+          "reason": "llm-unavailable"
+        },
+        {
+          "name": "回滚",
+          "reason": "llm-unavailable"
+        },
+        {
+          "name": "AI管线",
+          "reason": "llm-unavailable"
+        },
+        {
+          "name": "冒烟测试",
+          "reason": "llm-unavailable"
+        }
+      ],
+      "failures": [
+        {
+          "name": "占位运行",
+          "message": "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods."
+        },
+        {
+          "name": "模型冒烟",
+          "message": "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods."
+        },
+        {
+          "name": "回滚",
+          "message": "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods."
+        },
+        {
+          "name": "AI管线",
+          "message": "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods."
+        },
+        {
+          "name": "冒烟测试",
+          "message": "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods."
+        }
+      ]
+    }
+  },
+  {
+    "type": "ingest",
+    "timestamp": "2025-11-07T07:28:40.580Z",
+    "durationMs": 8364,
+    "locale": "all",
+    "includeDrafts": false,
+    "changedOnly": false,
+    "noCache": false,
+    "dryRun": true,
+    "adapter": "placeholder",
+    "adapterModel": null,
+    "totals": {
+      "collected": 79,
+      "normalized": 79,
+      "readyForWrite": 9,
+      "processed": 9
+    },
+    "skipped": {
+      "total": 70,
+      "reasons": [
+        {
+          "reason": "自动生成产物，默认跳过",
+          "count": 38,
+          "sampleDocId": "zh/_generated/tags/index"
+        },
+        {
+          "reason": "质量守门失败",
+          "count": 32,
+          "sampleDocId": "404"
+        }
+      ],
+      "samples": [
+        {
+          "docId": "404",
+          "reason": "质量守门失败"
+        },
+        {
+          "docId": "index",
+          "reason": "质量守门失败"
+        },
+        {
+          "docId": "en/DEPLOYMENT",
+          "reason": "质量守门失败"
+        }
+      ]
+    },
+    "write": {
+      "attempted": 9,
+      "written": 0,
+      "cacheUpdated": false
+    }
+  },
+  {
+    "type": "normalize",
+    "timestamp": "2025-11-07T04:16:12.747Z",
+    "durationMs": 7172,
+    "documents": 1,
+    "enabled": true,
+    "totals": {
+      "total": 62,
+      "updated": 2,
+      "entities": 31,
+      "docRoots": 31
+    },
+    "sources": {
+      "alias": 2,
+      "cache": 0,
+      "llm": 0,
+      "fallback": 60,
+      "reuse": 31
+    },
+    "cache": {
+      "path": "/Users/liuxiaoling/myproject/ling-atlas/data/graphrag-entity-type-cache.json",
+      "size": 0,
+      "updated": false,
+      "writes": 0
+    },
+    "aliasEntries": 5,
+    "llm": {
+      "attempts": 30,
+      "success": 0,
+      "failures": 30,
+      "provider": "gemini",
+      "model": "gemini-1.5-flash",
+      "disabledReason": null,
+      "errors": [
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods."
+      ]
+    },
+    "samples": {
+      "updates": [
+        {
+          "name": "Ling Atlas",
+          "previous": "项目/工具",
+          "next": "Project",
+          "source": "alias"
+        },
+        {
+          "name": "Ling Atlas",
+          "previous": "项目/工具",
+          "next": "Project",
+          "source": "alias"
+        }
+      ],
+      "fallback": [
+        {
+          "name": "GraphRAG",
+          "reason": "llm-unavailable"
+        },
+        {
+          "name": "RAG",
+          "reason": "llm-unavailable"
+        },
+        {
+          "name": "图结构知识",
+          "reason": "llm-unavailable"
+        },
+        {
+          "name": "知识图谱",
+          "reason": "llm-unavailable"
+        },
+        {
+          "name": "文本图",
+          "reason": "llm-unavailable"
+        }
+      ],
+      "failures": [
+        {
+          "name": "GraphRAG",
+          "message": "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods."
+        },
+        {
+          "name": "RAG",
+          "message": "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods."
+        },
+        {
+          "name": "图结构知识",
+          "message": "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods."
+        },
+        {
+          "name": "知识图谱",
+          "message": "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods."
+        },
+        {
+          "name": "文本图",
+          "message": "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods."
+        }
+      ]
+    }
+  },
+  {
+    "type": "ingest",
+    "timestamp": "2025-11-07T04:16:12.745Z",
+    "durationMs": 58798,
+    "locale": "all",
+    "includeDrafts": false,
+    "changedOnly": false,
+    "noCache": true,
+    "dryRun": false,
+    "adapter": "gemini",
+    "adapterModel": "gemini-2.5-pro",
+    "totals": {
+      "collected": 79,
+      "normalized": 1,
+      "readyForWrite": 1,
+      "processed": 1
+    },
+    "skipped": {
+      "total": 0,
+      "reasons": [],
+      "samples": []
+    },
+    "write": {
+      "attempted": 1,
+      "written": 1,
+      "cacheUpdated": false
+    }
+  },
+  {
+    "type": "normalize",
+    "timestamp": "2025-11-07T04:12:42.056Z",
+    "durationMs": 5762,
+    "documents": 1,
+    "enabled": true,
+    "totals": {
+      "total": 52,
+      "updated": 0,
+      "entities": 26,
+      "docRoots": 26
+    },
+    "sources": {
+      "alias": 2,
+      "cache": 0,
+      "llm": 0,
+      "fallback": 50,
+      "reuse": 26
+    },
+    "cache": {
+      "path": "/Users/liuxiaoling/myproject/ling-atlas/data/graphrag-entity-type-cache.json",
+      "size": 0,
+      "updated": false,
+      "writes": 0
+    },
+    "aliasEntries": 5,
+    "llm": {
+      "attempts": 25,
+      "success": 0,
+      "failures": 25,
+      "provider": "gemini",
+      "model": "gemini-1.5-flash",
+      "disabledReason": null,
+      "errors": [
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods."
+      ]
+    },
+    "samples": {
+      "updates": [],
+      "fallback": [
+        {
+          "name": "GraphRAG",
+          "reason": "llm-unavailable"
+        },
+        {
+          "name": "RAG",
+          "reason": "llm-unavailable"
+        },
+        {
+          "name": "图结构知识",
+          "reason": "llm-unavailable"
+        },
+        {
+          "name": "知识图谱",
+          "reason": "llm-unavailable"
+        },
+        {
+          "name": "文本图",
+          "reason": "llm-unavailable"
+        }
+      ],
+      "failures": [
+        {
+          "name": "GraphRAG",
+          "message": "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods."
+        },
+        {
+          "name": "RAG",
+          "message": "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods."
+        },
+        {
+          "name": "图结构知识",
+          "message": "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods."
+        },
+        {
+          "name": "知识图谱",
+          "message": "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods."
+        },
+        {
+          "name": "文本图",
+          "message": "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods."
+        }
+      ]
+    }
+  },
+  {
+    "type": "ingest",
+    "timestamp": "2025-11-07T04:12:42.053Z",
+    "durationMs": 37877,
+    "locale": "all",
+    "includeDrafts": false,
+    "changedOnly": false,
+    "noCache": true,
+    "dryRun": false,
+    "adapter": "gemini",
+    "adapterModel": null,
+    "totals": {
+      "collected": 79,
+      "normalized": 1,
+      "readyForWrite": 1,
+      "processed": 1
+    },
+    "skipped": {
+      "total": 0,
+      "reasons": [],
+      "samples": []
+    },
+    "write": {
+      "attempted": 1,
+      "written": 1,
+      "cacheUpdated": false
+    }
+  },
+  {
+    "type": "normalize",
+    "timestamp": "2025-11-07T04:10:53.430Z",
+    "durationMs": 6332,
+    "documents": 1,
+    "enabled": true,
+    "totals": {
+      "total": 56,
+      "updated": 2,
+      "entities": 28,
+      "docRoots": 28
+    },
+    "sources": {
+      "alias": 2,
+      "cache": 0,
+      "llm": 0,
+      "fallback": 54,
+      "reuse": 28
+    },
+    "cache": {
+      "path": "/Users/liuxiaoling/myproject/ling-atlas/data/graphrag-entity-type-cache.json",
+      "size": 0,
+      "updated": false,
+      "writes": 0
+    },
+    "aliasEntries": 5,
+    "llm": {
+      "attempts": 27,
+      "success": 0,
+      "failures": 27,
+      "provider": "gemini",
+      "model": "gemini-1.5-flash",
+      "disabledReason": null,
+      "errors": [
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.",
+        "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods."
+      ]
+    },
+    "samples": {
+      "updates": [
+        {
+          "name": "Ling Atlas",
+          "previous": "System",
+          "next": "Project",
+          "source": "alias"
+        },
+        {
+          "name": "Ling Atlas",
+          "previous": "System",
+          "next": "Project",
+          "source": "alias"
+        }
+      ],
+      "fallback": [
+        {
+          "name": "GraphRAG",
+          "reason": "llm-unavailable"
+        },
+        {
+          "name": "RAG",
+          "reason": "llm-unavailable"
+        },
+        {
+          "name": "Graph Structure Knowledge",
+          "reason": "llm-unavailable"
+        },
+        {
+          "name": "Knowledge Graph",
+          "reason": "llm-unavailable"
+        },
+        {
+          "name": "Text Graph",
+          "reason": "llm-unavailable"
+        }
+      ],
+      "failures": [
+        {
+          "name": "GraphRAG",
+          "message": "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods."
+        },
+        {
+          "name": "RAG",
+          "message": "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods."
+        },
+        {
+          "name": "Graph Structure Knowledge",
+          "message": "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods."
+        },
+        {
+          "name": "Knowledge Graph",
+          "message": "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods."
+        },
+        {
+          "name": "Text Graph",
+          "message": "[GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods."
+        }
+      ]
+    }
+  },
+  {
+    "type": "ingest",
+    "timestamp": "2025-11-07T04:10:53.427Z",
+    "durationMs": 45023,
+    "locale": "all",
+    "includeDrafts": false,
+    "changedOnly": false,
+    "noCache": true,
+    "dryRun": false,
+    "adapter": "gemini",
+    "adapterModel": null,
+    "totals": {
+      "collected": 79,
+      "normalized": 1,
+      "readyForWrite": 1,
+      "processed": 1
+    },
+    "skipped": {
+      "total": 0,
+      "reasons": [],
+      "samples": []
+    },
+    "write": {
+      "attempted": 1,
+      "written": 0,
+      "cacheUpdated": false
+    }
+  },
+  {
     "type": "export",
     "timestamp": "2025-11-05T08:54:00.818Z",
     "docId": "zh/content/graphrag-research/index",

@@ -51,9 +51,14 @@ const ChatWidget = defineAsyncComponent(() => import('./components/ChatWidget.vu
 const chatLabels: Record<LocaleCode, string> = { zh: '知识问答', en: 'Knowledge Chat' }
 const chatButtonLabel = computed(() => chatLabels[activeLocale.value] || chatLabels[getFallbackLocale()])
 const brandLink = computed(() => getFallbackPath(activeLocale.value))
+const localeBypassPrefixes = ['/graph/']
 
 function normalizePath(path: string) {
   return normalizeRoutePath(path)
+}
+
+function shouldBypassLocaleRedirect(path: string) {
+  return localeBypassPrefixes.some(prefix => path.startsWith(prefix))
 }
 
 function closeBanner() {
@@ -72,7 +77,7 @@ onMounted(() => {
   refreshPreferredLocale()
   const initialPath = normalizePath(router.route.path)
   let redirected = false
-  if (!hasLocalePrefix(initialPath)) {
+  if (!hasLocalePrefix(initialPath) && !shouldBypassLocaleRedirect(initialPath)) {
     const targetLocale = preferredLocale.value
     const targetPath = getFallbackPath(targetLocale)
     if (initialPath !== targetPath) {

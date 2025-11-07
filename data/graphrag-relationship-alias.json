@@ -1,0 +1,58 @@
+[
+  {
+    "relation": "RelatedTo",
+    "aliases": ["相关", "关联", "有关", "related", "connects to"]
+  },
+  {
+    "relation": "Mentions",
+    "aliases": ["提及", "提到", "引用", "mentions", "refers to", "cites"]
+  },
+  {
+    "relation": "Uses",
+    "aliases": ["使用", "利用", "集成", "uses", "依赖", "adopts", "builds on"]
+  },
+  {
+    "relation": "BasedOn",
+    "aliases": ["基于", "继承", "借鉴", "based on", "derived from"]
+  },
+  {
+    "relation": "PartOf",
+    "aliases": ["属于", "组成", "部分", "part of", "composed of", "包含"]
+  },
+  {
+    "relation": "BelongsTo",
+    "aliases": ["隶属于", "从属于", "属于某组织", "belongsto", "成员", "member of"]
+  },
+  {
+    "relation": "CollaboratesWith",
+    "aliases": ["合作", "协作", "联合", "collaborates with", "co-operates"]
+  },
+  {
+    "relation": "CompetesWith",
+    "aliases": ["竞争", "对抗", "竞争对手", "competes with", "vs"]
+  },
+  {
+    "relation": "Supports",
+    "aliases": ["支持", "增强", "赋能", "supports", "enables"]
+  },
+  {
+    "relation": "Opposes",
+    "aliases": ["反对", "阻碍", "冲突", "opposes", "conflicts with"]
+  },
+  {
+    "relation": "Produces",
+    "aliases": ["产出", "生产", "发布", "creates", "produces", "ships"]
+  },
+  {
+    "relation": "Leads",
+    "aliases": ["领导", "维护", "负责", "lead", "maintains", "heads"]
+  },
+  {
+    "relation": "Evaluates",
+    "aliases": ["评测", "衡量", "审查", "evaluates", "assesses"]
+  },
+  {
+    "relation": "LocatedIn",
+    "aliases": ["位于", "坐落在", "总部在", "located in", "based in"]
+  }
+]

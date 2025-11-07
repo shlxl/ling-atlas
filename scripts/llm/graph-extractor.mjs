@@ -304,7 +304,7 @@ export function mergeRawGraphs(graphs) {
   return merged;
 }
 
-async function createProviderLLM(provider, requestedModel) {
+export async function createProviderLLM(provider, requestedModel) {
   const normalized = (provider ?? '').toLowerCase();
   switch (normalized) {
     case 'gemini': {

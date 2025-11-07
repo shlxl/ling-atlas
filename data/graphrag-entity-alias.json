@@ -1,0 +1,27 @@
+[
+  {
+    "type": "Project",
+    "canonical": "Ling Atlas",
+    "aliases": ["Ling Atlas", "Ling-Atlas", "LingAtlas"]
+  },
+  {
+    "type": "Paper",
+    "canonical": "GraphRAG 研究综述",
+    "aliases": ["GraphRAG 研究综述", "GraphRAG 研究概述与综述", "GraphRAG Research Overview"]
+  },
+  {
+    "type": "Tool",
+    "canonical": "Pagefind",
+    "aliases": ["Pagefind"]
+  },
+  {
+    "type": "Technology",
+    "canonical": "Workbox",
+    "aliases": ["Workbox", "Workbox PWA"]
+  },
+  {
+    "type": "Organization",
+    "canonical": "Ling Research",
+    "aliases": ["Ling Research", "Ling 社区"]
+  }
+]

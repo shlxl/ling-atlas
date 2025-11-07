@@ -156,6 +156,11 @@ node --test tests/pagegen/plugin-example.integration.test.mjs
 - ✅ 导航配置初稿上线：`schema/nav.json` + `schema/nav.schema.json` 描述聚合/固定链接/分组结构，Pagegen 在生成 nav manifest 时读取配置，VitePress 主题也会同步解析；如需增减导航入口，请先修改 JSON 再运行 `npm run gen` + `npm run test:theme` 校验。
 - ✅ 阶段 1 后续：已补齐 orchestrator 输入/输出契约说明，扩展 `npm run test:pagegen` 端到端用例并统一阶段/语言/目标路径错误日志格式。
 - ✅ GraphRAG 管线：实体提取逻辑集中在 `scripts/llm/graph-extractor.mjs`，`--no-chunks`/`--no-frontmatter` 开关提供纯实体/关系图谱。Doc 仅通过 `HAS_ENTITY` 连接选出的主题实体（按标题或类型优先级挑选），实体按名称归一化并保留更具体类型。
+- ✅ 实体类型归一化运维指南：
+  - 别名表：编辑 `data/graphrag-entity-alias.json`（支持 `canonical` + `aliases` 数组），并运行 `npm run graphrag:ingest` 验证合并结果。建议与 `TAXONOMY.md`、导航配置同步维护，避免重复命名。
+  - 缓存：`data/graphrag-entity-type-cache.json` 自动记录每个实体的最新 LLM 判定；如需回滚，可删除单个 key 或设置 `GRAPHRAG_TYPE_NORMALIZER_DISABLE=1` 后重新写入上一版实体类型。
+  - 环境变量：`GRAPHRAG_TYPE_NORMALIZER_PROVIDERS`（如 `gemini,openai`）、`GRAPHRAG_TYPE_NORMALIZER_MODEL`（默认 `gemini-1.5-flash`）可覆写调用链；`GRAPHRAG_TYPE_NORMALIZER_DISABLE=1` 可在离线/本地快速跳过归一化。
+  - 遥测：`scripts/telemetry-merge.mjs` 会将最新归一化记录写入 `build.graphrag.normalize`，Telemetry 页面提供命中来源、LLM 成功率、缓存写入次数与失败样例，并在 `build.graphragHistory` 中触发告警。
 - 📌 规划文档：`docs/zh/plans/refactor-optimization.md`（提案）、`docs/zh/plans/pagegen-refactor-roadmap.md`（路线图）、`docs/zh/plans/pagegen-validation-checklist.md`（产物守门）。
 
 ## 10. 当前协作与审查计划（2024-XX）
@@ -189,10 +194,15 @@ node --test tests/pagegen/plugin-example.integration.test.mjs
   Locale Toggle 的选项文本会读取 `i18n.ui.localeToggleHint` 追加“已翻译 / 聚合回退 / 首页跳转”等标记，帮助读者理解切换结果；新语言若缺少对应翻译会出现空白后缀，提交前请补齐。选项的 `title` 与 `aria-label` 会使用 `i18n.ui.localeToggleDetail` 的文案提示最终跳转落点，如缺失会回退到默认语言，请同步维护。
   搜索框的结果排序现在依赖 `docs/.vitepress/theme/composables/localeMap.ts` 输出的 `detectLocaleFromPath` 来判断条目语言，并沿用聚合兜底策略；结果列表会依据 `i18n.ui.searchLocaleBadge` 的文案展示“本语言/跨语言回退”徽标，帮助读者预判落点。调整搜索逻辑时请确保仍复用该模块并同步维护该段翻译，避免重新实现语言判定或遗漏 BASE 兼容处理。
 - 🔜 **GraphRAG 自适应路线图**：新建 `docs/zh/plans/graphrag-auto-evolution.md`，规划反馈采集、评测守门、Prompt/模型策略自适应、多模型对比及人机协作等闭环，自下一轮迭代起按照阶段 0–2 逐步落地。
-- 🔥 **当期最高优先级**：上线“LLM 驱动的实体类型归一化”能力：
-  - 首期交付在多模型抽取后的补偿流程，实现“别名表 → LLM 归一 → 缓存”三级兜底（LLM 调用仅在别名未命中时触发，并可通过开关启用/禁用）。
-  - 输出缓存与统计（命中、回退、失败）写入 metrics/telemetry，便于后续接入评估脚本与自动回滚。
-  - 后续阶段继续扩展批量评估、Telemetry 告警与人机协作工具，详情见自适应路线图。
+- ✅ **实体类型归一化首期交付**：`graphrag:ingest` 现默认串联“别名表 → LLM → 缓存”三级兜底。
+  - 别名配置存放于 `data/graphrag-entity-alias.json`，支持 `canonical` + `aliases` 列表；缺省条目时可直接新增对象并运行 `npm run graphrag:ingest` 验证。
+  - LLM 归一化仅在别名与缓存均未命中时触发，可用 `GRAPHRAG_TYPE_NORMALIZER_DISABLE=1` 临时停用，或通过 `GRAPHRAG_TYPE_NORMALIZER_PROVIDERS` / `GRAPHRAG_TYPE_NORMALIZER_MODEL` 指定调用链。
+  - 缓存文件 `data/graphrag-entity-type-cache.json` 会自动增量更新；如需重建，可删除该文件或清空目标 key 后再次运行流水线。
+  - Telemetry 页面新增“实体类型归一化”卡片，展示处理条数、命中来源、LLM 调用/失败、缓存写入与样例，告警条目同步写入 `build.graphragHistory`。
+- 🔥 **下一阶段关注点（GraphRAG 三元组归一化）**：
+  1. ✅ **关系类型（Predicate）归一化**：`data/graphrag-relationship-alias.json` + `scripts/graphrag/relationship-type-normalizer.mjs` 已接管“别名 → LLM → 缓存”链路，`graphrag:ingest` 默认写入 `data/graphrag-relationship-type-cache.json` 并将结果同步到 Telemetry / 警报。
+  2. ✅ **属性/目标（Object）归一化**：`data/graphrag-object-alias.json` + `scripts/graphrag/object-normalizer.mjs` 统一 `relationships[].properties`/实体属性键值，落地“别名 → LLM → 缓存（data/graphrag-object-cache.json）”链路，`graphrag:ingest` 默认执行并在 Telemetry 中新增 `normalize_objects` 卡片与警报。
+  3. 🔜 **评测与告警**：补充三元组级守门脚本、CLI dry-run、Telemetry 卡片与历史告警（fallback、LLM 失败、别名缺失），形成 Subject/Predicate/Object 全链路的回滚和观测能力。
 - ✅ **Nav manifest 回归测试**：`npm run test:pagegen` 现包含单元 + 集成测试，`tests/pagegen/nav-manifest.integration.test.mjs` 会实际运行 `pagegen.mjs` 构建最小多语言站点，核对 `_generated`/`nav.manifest.<locale>.json`、i18n map 与指标摘要；`tests/pagegen/i18n-registry.test.mjs` 仍覆盖 manifest 引用与 canonical 注册的边界场景，CI 失败时请优先检查聚合目录或 locales 配置。
 - ✅ **Nav manifest / i18n map 链接守门**：`node scripts/check-links.mjs` 会同时校验 Markdown 内部链接与 `nav.manifest.<locale>.json`、`i18n-map.json` 的目标路径，确保聚合入口与跨语言映射不会指向缺失页面。
 - ✅ **Locale 切换兜底测试**：`npm run test:theme` 会执行 `tests/locale-map/core.test.mjs` 与 `tests/theme/preferred-locale.test.mjs`，验证当目标语言缺失聚合页时的跳转降级，以及首选语言记忆是否与主题共享存储键，确保不会出现空链或偏离记忆的跳转。

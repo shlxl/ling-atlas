@@ -11,6 +11,9 @@ import { extractEntities } from './ingest/extract-entities.mjs';
 import { buildPayload } from './ingest/build-payload.mjs';
 import { createQualityChecker } from './quality-check.mjs';
 import { appendGraphragMetric } from './telemetry.mjs';
+import { createEntityTypeNormalizer } from './entity-type-normalizer.mjs';
+import { createRelationshipTypeNormalizer } from './relationship-type-normalizer.mjs';
+import { createObjectPropertyNormalizer } from './object-normalizer.mjs';
 import {
   loadIngestCache,
   saveIngestCache,
@@ -165,6 +168,36 @@ function createIngestTelemetryRecord({
   };
 }
 
+function createNormalizationTelemetryRecord(
+  summary,
+  { durationMs = 0, documents = 0 } = {},
+  domain = 'entities',
+) {
+  if (!summary || typeof summary !== 'object') {
+    return null;
+  }
+  const typeName =
+    domain === 'relationships'
+      ? 'normalize_relationships'
+      : domain === 'objects'
+        ? 'normalize_objects'
+        : 'normalize';
+  return {
+    type: typeName,
+    domain,
+    timestamp: new Date().toISOString(),
+    durationMs,
+    documents,
+    enabled: Boolean(summary.enabled),
+    totals: summary.records ?? null,
+    sources: summary.sources ?? null,
+    cache: summary.cache ?? null,
+    aliasEntries: summary.aliasEntries ?? 0,
+    llm: summary.llm ?? null,
+    samples: summary.samples ?? null,
+  };
+}
+
 async function main() {
   const scriptName = getScriptName(import.meta.url);
   const rawArgs = process.argv.slice(2);
@@ -236,7 +269,46 @@ async function main() {
   const payloads = [];
   const processedDocs = [];
   const qualityChecker = await createQualityChecker();
+  let typeNormalizer = null;
+  let relationshipNormalizer = null;
+  let objectNormalizer = null;
+  let entityNormalizationDurationMs = 0;
+  let relationshipNormalizationDurationMs = 0;
+  let objectNormalizationDurationMs = 0;
   let adapter = null;
+
+  try {
+    typeNormalizer = await createEntityTypeNormalizer();
+    console.log(
+      `[${scriptName}] 实体类型归一化：${typeNormalizer.isEnabled() ? '已启用' : '已禁用'}`,
+    );
+  } catch (error) {
+    console.warn(
+      `[${scriptName}] 初始化实体类型归一化失败：${error?.message ?? error}`,
+    );
+  }
+
+  try {
+    relationshipNormalizer = await createRelationshipTypeNormalizer();
+    console.log(
+      `[${scriptName}] 关系类型归一化：${relationshipNormalizer.isEnabled() ? '已启用' : '已禁用'}`,
+    );
+  } catch (error) {
+    console.warn(
+      `[${scriptName}] 初始化关系类型归一化失败：${error?.message ?? error}`,
+    );
+  }
+
+  try {
+    objectNormalizer = await createObjectPropertyNormalizer();
+    console.log(
+      `[${scriptName}] 属性归一化：${objectNormalizer.isEnabled() ? '已启用' : '已禁用'}`,
+    );
+  } catch (error) {
+    console.warn(
+      `[${scriptName}] 初始化属性归一化失败：${error?.message ?? error}`,
+    );
+  }
 
   const adapterName =
     options.adapter ?? process.env.GRAPHRAG_ENTITY_ADAPTER ?? 'placeholder';
@@ -299,9 +371,9 @@ async function main() {
       continue;
     }
 
-    let entities;
+    let aggregation;
     try {
-      entities = await extractEntities(doc, { adapter });
+      aggregation = await extractEntities(doc, { adapter });
     } catch (error) {
       const message = error?.message ?? String(error);
       console.warn(
@@ -315,8 +387,26 @@ async function main() {
       continue;
     }
 
+    if (typeNormalizer) {
+      const started = Date.now();
+      await typeNormalizer.normalizeAggregation(doc, aggregation);
+      entityNormalizationDurationMs += Date.now() - started;
+    }
+
+    if (relationshipNormalizer) {
+      const started = Date.now();
+      await relationshipNormalizer.normalizeAggregation(doc, aggregation);
+      relationshipNormalizationDurationMs += Date.now() - started;
+    }
+
+    if (objectNormalizer) {
+      const started = Date.now();
+      await objectNormalizer.normalizeAggregation(doc, aggregation);
+      objectNormalizationDurationMs += Date.now() - started;
+    }
+
     payloads.push(
-      buildPayload(doc, entities, {
+      buildPayload(doc, aggregation, {
         includeChunks: !options.noChunks,
         includeMentions: !options.noChunks,
         includeFrontmatter: !options.noFrontmatter,
@@ -330,6 +420,9 @@ async function main() {
   );
 
   const summary = buildSummary({ documents, payloads, skipped });
+  const entityNormalizationSummary = typeNormalizer?.getSummary?.();
+  const relationshipNormalizationSummary = relationshipNormalizer?.getSummary?.();
+  const objectNormalizationSummary = objectNormalizer?.getSummary?.();
 
   if (noWriteMode) {
     console.log(`[${scriptName}] dry-run/no-write 模式，跳过 Neo4j 写入`);
@@ -337,6 +430,36 @@ async function main() {
     if (options.jsonOutput) {
       console.log(JSON.stringify(summary, null, 2));
     }
+    if (typeNormalizer) {
+      try {
+        await typeNormalizer.persistCache();
+      } catch (error) {
+        console.warn(
+          `[${scriptName}] 写入实体类型缓存失败：${error?.message ?? error}`,
+        );
+      }
+    }
+
+    if (relationshipNormalizer) {
+      try {
+        await relationshipNormalizer.persistCache();
+      } catch (error) {
+        console.warn(
+          `[${scriptName}] 写入关系类型缓存失败：${error?.message ?? error}`,
+        );
+      }
+    }
+
+    if (objectNormalizer) {
+      try {
+        await objectNormalizer.persistCache();
+      } catch (error) {
+        console.warn(
+          `[${scriptName}] 写入属性归一化缓存失败：${error?.message ?? error}`,
+        );
+      }
+    }
+
     await recordTelemetrySafely(
       createIngestTelemetryRecord({
         options,
@@ -349,6 +472,43 @@ async function main() {
         dryRun: true,
       }),
     );
+
+    if (entityNormalizationSummary) {
+      await recordTelemetrySafely(
+        createNormalizationTelemetryRecord(
+          entityNormalizationSummary,
+          {
+            durationMs: entityNormalizationDurationMs,
+            documents: processedDocs.length,
+          },
+          'entities',
+        ),
+      );
+    }
+    if (relationshipNormalizationSummary) {
+      await recordTelemetrySafely(
+        createNormalizationTelemetryRecord(
+          relationshipNormalizationSummary,
+          {
+            durationMs: relationshipNormalizationDurationMs,
+            documents: processedDocs.length,
+          },
+          'relationships',
+        ),
+      );
+    }
+    if (objectNormalizationSummary) {
+      await recordTelemetrySafely(
+        createNormalizationTelemetryRecord(
+          objectNormalizationSummary,
+          {
+            durationMs: objectNormalizationDurationMs,
+            documents: processedDocs.length,
+          },
+          'objects',
+        ),
+      );
+    }
     return;
   }
 
@@ -405,6 +565,36 @@ async function main() {
     console.log(JSON.stringify(finalSummary, null, 2));
   }
 
+  if (typeNormalizer) {
+    try {
+      await typeNormalizer.persistCache();
+    } catch (cacheError) {
+      console.warn(
+        `[${scriptName}] 写入实体类型缓存失败：${cacheError?.message ?? cacheError}`,
+      );
+    }
+  }
+
+  if (relationshipNormalizer) {
+    try {
+      await relationshipNormalizer.persistCache();
+    } catch (cacheError) {
+      console.warn(
+        `[${scriptName}] 写入关系类型缓存失败：${cacheError?.message ?? cacheError}`,
+      );
+    }
+  }
+
+  if (objectNormalizer) {
+    try {
+      await objectNormalizer.persistCache();
+    } catch (cacheError) {
+      console.warn(
+        `[${scriptName}] 写入属性归一化缓存失败：${cacheError?.message ?? cacheError}`,
+      );
+    }
+  }
+
   await recordTelemetrySafely(
     createIngestTelemetryRecord({
       options,
@@ -417,6 +607,45 @@ async function main() {
       dryRun: false,
     }),
   );
+
+  if (entityNormalizationSummary) {
+    await recordTelemetrySafely(
+      createNormalizationTelemetryRecord(
+        entityNormalizationSummary,
+        {
+          durationMs: entityNormalizationDurationMs,
+          documents: processedDocs.length,
+        },
+        'entities',
+      ),
+    );
+  }
+
+  if (relationshipNormalizationSummary) {
+    await recordTelemetrySafely(
+      createNormalizationTelemetryRecord(
+        relationshipNormalizationSummary,
+        {
+          durationMs: relationshipNormalizationDurationMs,
+          documents: processedDocs.length,
+        },
+        'relationships',
+      ),
+    );
+  }
+
+  if (objectNormalizationSummary) {
+    await recordTelemetrySafely(
+      createNormalizationTelemetryRecord(
+        objectNormalizationSummary,
+        {
+          durationMs: objectNormalizationDurationMs,
+          documents: processedDocs.length,
+        },
+        'objects',
+      ),
+    );
+  }
 }
 
 main().catch((error) => {
