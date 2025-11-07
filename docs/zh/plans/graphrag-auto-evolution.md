@@ -80,3 +80,17 @@ Gemini 版实体提取脚本已经完成从 Python 向 JS/TS 的迁移，并与 
 ## 下一步
 
 短期先聚焦阶段 0–2：完成反馈清单、评测脚本与守门整合。确认闭环可用后，再依次实现 Prompt 自适应、多模型对比和人机协作工具。
+
+## 最新进展
+
+- ✅ `npm run graphrag:ingest` 已内置“别名表 → LLM → 缓存”类型归一化链路：配置位于 `data/graphrag-entity-alias.json`，
+  回写缓存为 `data/graphrag-entity-type-cache.json`，并可通过 `GRAPHRAG_TYPE_NORMALIZER_PROVIDERS` /
+  `GRAPHRAG_TYPE_NORMALIZER_MODEL` / `GRAPHRAG_TYPE_NORMALIZER_DISABLE` 调整策略。
+- ✅ `data/graphrag-metrics.json` 与 Telemetry 页面新增 `normalize` 记录，实时展示处理条目、命中来源、LLM 成功/失败、缓存写入与示例，
+  相关告警同步写入 `build.graphragHistory`，为后续评测与回滚提供可观测性基线。
+- ✅ 关系（Predicate）归一化上线：`scripts/graphrag/relationship-type-normalizer.mjs` + `data/graphrag-relationship-alias.json`
+  负责判定 `relationships[].type`，缓存写入 `data/graphrag-relationship-type-cache.json`，Telemetry 增加
+  `normalize_relationships` 记录及警报，确保实体/关系可同时观测。
+- ✅ 属性/对象归一化落地：`scripts/graphrag/object-normalizer.mjs` 统一 `relationships[].properties` 与实体属性值，
+  别名配置位于 `data/graphrag-object-alias.json`，缓存写入 `data/graphrag-object-cache.json`，Telemetry/告警新增
+  `normalize_objects` 视图，Subject/Predicate/Object 三段归一能力打通。

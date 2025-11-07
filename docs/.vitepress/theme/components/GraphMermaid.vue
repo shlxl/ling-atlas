@@ -39,7 +39,10 @@ const graphText = ref('')
 let renderAbort = false
 
 const route = useRoute()
-const mermaidSources = import.meta.glob('../../../**/*.mmd', { as: 'raw' })
+const mermaidSources = import.meta.glob('../../../**/*.mmd', {
+  query: '?raw',
+  import: 'default'
+})
 
 const resolvedPath = computed(() => resolveGraphPath(props.path))
 
