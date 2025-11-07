@@ -584,12 +584,13 @@ function mergeHeaders(base: PageHeader[], extra: PageHeader[]) {
 
 function slugifyHeader(value: string) {
   return value
+    .normalize('NFKD')
     .trim()
     .toLowerCase()
-    .normalize('NFKD')
-    .replace(/[^\w\s-]/g, '')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9\u00c0-\uffff\s-]/g, '')
     .replace(/\s+/g, '-')
-    .replace(/--+/g, '-')
+    .replace(/-+/g, '-')
     .replace(/^-+|-+$/g, '')
 }
 
