@@ -225,6 +225,398 @@
           <p v-else class="graphrag-reasons-empty">{{ copy.graphrag.noSkipped }}</p>
         </div>
 
+        <div v-if="graphragNormalize" class="graphrag-card">
+          <h3>{{ copy.graphrag.normalizeTitle }}</h3>
+          <p>
+            <strong>{{ copy.graphrag.lastRun }}</strong>
+            {{ formatDate(graphragNormalize.timestamp) }}
+            — {{ copy.graphrag.normalizeStatusLabel }}
+            <span :class="statusClass(graphragNormalize.enabled ? 'ok' : 'degraded')">
+              {{ boolLabel(graphragNormalize.enabled) }}
+            </span>
+          </p>
+          <p>
+            <strong>{{ copy.graphrag.durationLabel }}</strong>
+            {{ graphragNormalize.durationMs == null ? copy.common.notAvailable : formatNumber(graphragNormalize.durationMs) + ' ms' }}
+            <span v-if="graphragNormalize.documents != null" class="graphrag-topic-link">
+              · {{ copy.graphrag.normalizeDocsLabel }} {{ formatNumber(graphragNormalize.documents) }}
+            </span>
+          </p>
+          <table>
+            <thead>
+              <tr>
+                <th>{{ copy.graphrag.summaryHeaders.metric }}</th>
+                <th>{{ copy.graphrag.summaryHeaders.value }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>{{ copy.graphrag.normalizeMetrics.total }}</td>
+                <td>{{ formatNumber(graphragNormalize.totals?.total) }}</td>
+              </tr>
+              <tr>
+                <td>{{ copy.graphrag.normalizeMetrics.updated }}</td>
+                <td>{{ formatNumber(graphragNormalize.totals?.updated) }}</td>
+              </tr>
+              <tr>
+                <td>{{ copy.graphrag.normalizeMetrics.entities }}</td>
+                <td>{{ formatNumber(graphragNormalize.totals?.entities) }}</td>
+              </tr>
+              <tr>
+                <td>{{ copy.graphrag.normalizeMetrics.docRoots }}</td>
+                <td>{{ formatNumber(graphragNormalize.totals?.docRoots) }}</td>
+              </tr>
+              <tr>
+                <td>{{ copy.graphrag.normalizeMetrics.alias }}</td>
+                <td>{{ formatNumber(graphragNormalize.sources?.alias) }}</td>
+              </tr>
+              <tr>
+                <td>{{ copy.graphrag.normalizeMetrics.cache }}</td>
+                <td>{{ formatNumber(graphragNormalize.sources?.cache) }}</td>
+              </tr>
+              <tr>
+                <td>{{ copy.graphrag.normalizeMetrics.llm }}</td>
+                <td>{{ formatNumber(graphragNormalize.sources?.llm) }}</td>
+              </tr>
+              <tr>
+                <td>{{ copy.graphrag.normalizeMetrics.fallback }}</td>
+                <td>{{ formatNumber(graphragNormalize.sources?.fallback) }}</td>
+              </tr>
+            </tbody>
+          </table>
+          <p>
+            {{ copy.graphrag.normalizeAliasCount }} {{ formatNumber(graphragNormalize.aliasEntries) }}
+            · {{ copy.graphrag.normalizeCacheSize }} {{ formatNumber(graphragNormalize.cache?.size) }}
+            · {{ copy.graphrag.normalizeCacheWrites }} {{ formatNumber(graphragNormalize.cache?.writes) }}
+          </p>
+          <p>
+            {{ copy.graphrag.normalizeCachePath }}
+            <code>{{ graphragNormalize.cache?.path ?? copy.common.notAvailable }}</code>
+          </p>
+          <p>
+            {{ copy.graphrag.normalizeLLMProvider }}
+            <code>{{ graphragNormalize.llm?.provider ?? copy.common.notAvailable }}</code>
+            <span v-if="graphragNormalize.llm?.model">
+              · {{ copy.graphrag.normalizeLLMModel }}
+              <code>{{ graphragNormalize.llm?.model }}</code>
+            </span>
+          </p>
+          <p>
+            {{ copy.graphrag.normalizeLLMAttempts }} {{ formatNumber(graphragNormalize.llm?.attempts) }}
+            · {{ copy.graphrag.normalizeLLMSuccess }} {{ formatNumber(graphragNormalize.llm?.success) }}
+            · {{ copy.graphrag.normalizeLLMFailures }} {{ formatNumber(graphragNormalize.llm?.failures) }}
+            <span v-if="graphragNormalize.llm?.disabledReason">
+              — {{ copy.graphrag.normalizeLLMDisabled }} {{ graphragNormalize.llm?.disabledReason }}
+            </span>
+          </p>
+          <div
+            v-if="graphragNormalizeSamples.updates.length || graphragNormalizeSamples.fallback.length || graphragNormalizeSamples.failures.length"
+            class="graphrag-samples"
+          >
+            <details>
+              <summary>{{ copy.graphrag.normalizeSamplesTitle }}</summary>
+              <div v-if="graphragNormalizeSamples.updates.length">
+                <h4>{{ copy.graphrag.normalizeSamplesUpdated }}</h4>
+                <ul>
+                  <li v-for="(item, index) in graphragNormalizeSamples.updates" :key="`norm-update-${index}`">
+                    <code>{{ item.name ?? copy.common.unknown }}</code>
+                    <span>
+                      {{ copy.graphrag.normalizeSampleFrom }}
+                      <code>{{ item.previous ?? copy.common.notAvailable }}</code>
+                      → <code>{{ item.next ?? copy.common.notAvailable }}</code>
+                      <span v-if="item.source">（{{ item.source }}）</span>
+                    </span>
+                  </li>
+                </ul>
+              </div>
+              <div v-if="graphragNormalizeSamples.fallback.length">
+                <h4>{{ copy.graphrag.normalizeSamplesFallback }}</h4>
+                <ul>
+                  <li v-for="(item, index) in graphragNormalizeSamples.fallback" :key="`norm-fallback-${index}`">
+                    <code>{{ item.name ?? copy.common.unknown }}</code>
+                    <span>
+                      {{ copy.graphrag.normalizeSampleReason }} {{ item.reason ?? copy.common.unknownReason }}
+                    </span>
+                  </li>
+                </ul>
+              </div>
+              <div v-if="graphragNormalizeSamples.failures.length">
+                <h4>{{ copy.graphrag.normalizeSamplesFailures }}</h4>
+                <ul>
+                  <li v-for="(item, index) in graphragNormalizeSamples.failures" :key="`norm-failure-${index}`">
+                    <code>{{ item.name ?? copy.common.unknown }}</code>
+                    <span>
+                      {{ copy.graphrag.normalizeSampleReason }} {{ item.message ?? copy.common.unknownReason }}
+                    </span>
+                  </li>
+                </ul>
+              </div>
+            </details>
+          </div>
+        </div>
+
+        <div v-if="graphragNormalizeRelationships" class="graphrag-card">
+          <h3>{{ copy.graphrag.normalizeRelTitle }}</h3>
+          <p>
+            <strong>{{ copy.graphrag.lastRun }}</strong>
+            {{ formatDate(graphragNormalizeRelationships.timestamp) }}
+            — {{ copy.graphrag.normalizeStatusLabel }}
+            <span :class="statusClass(graphragNormalizeRelationships.enabled ? 'ok' : 'degraded')">
+              {{ boolLabel(graphragNormalizeRelationships.enabled) }}
+            </span>
+          </p>
+          <p>
+            <strong>{{ copy.graphrag.durationLabel }}</strong>
+            {{ graphragNormalizeRelationships.durationMs == null ? copy.common.notAvailable : formatNumber(graphragNormalizeRelationships.durationMs) + ' ms' }}
+            <span v-if="graphragNormalizeRelationships.documents != null" class="graphrag-topic-link">
+              · {{ copy.graphrag.normalizeDocsLabel }} {{ formatNumber(graphragNormalizeRelationships.documents) }}
+            </span>
+          </p>
+          <table>
+            <thead>
+              <tr>
+                <th>{{ copy.graphrag.summaryHeaders.metric }}</th>
+                <th>{{ copy.graphrag.summaryHeaders.value }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>{{ copy.graphrag.normalizeRelMetrics.total }}</td>
+                <td>{{ formatNumber(graphragNormalizeRelationships.totals?.total) }}</td>
+              </tr>
+              <tr>
+                <td>{{ copy.graphrag.normalizeRelMetrics.updated }}</td>
+                <td>{{ formatNumber(graphragNormalizeRelationships.totals?.updated) }}</td>
+              </tr>
+              <tr>
+                <td>{{ copy.graphrag.normalizeRelMetrics.relationships }}</td>
+                <td>{{ formatNumber(graphragNormalizeRelationships.totals?.relationships) }}</td>
+              </tr>
+              <tr>
+                <td>{{ copy.graphrag.normalizeRelMetrics.alias }}</td>
+                <td>{{ formatNumber(graphragNormalizeRelationships.sources?.alias) }}</td>
+              </tr>
+              <tr>
+                <td>{{ copy.graphrag.normalizeRelMetrics.cache }}</td>
+                <td>{{ formatNumber(graphragNormalizeRelationships.sources?.cache) }}</td>
+              </tr>
+              <tr>
+                <td>{{ copy.graphrag.normalizeRelMetrics.llm }}</td>
+                <td>{{ formatNumber(graphragNormalizeRelationships.sources?.llm) }}</td>
+              </tr>
+              <tr>
+                <td>{{ copy.graphrag.normalizeRelMetrics.fallback }}</td>
+                <td>{{ formatNumber(graphragNormalizeRelationships.sources?.fallback) }}</td>
+              </tr>
+            </tbody>
+          </table>
+          <p>
+            {{ copy.graphrag.normalizeAliasCount }} {{ formatNumber(graphragNormalizeRelationships.aliasEntries) }}
+            · {{ copy.graphrag.normalizeCacheSize }} {{ formatNumber(graphragNormalizeRelationships.cache?.size) }}
+            · {{ copy.graphrag.normalizeCacheWrites }} {{ formatNumber(graphragNormalizeRelationships.cache?.writes) }}
+          </p>
+          <p>
+            {{ copy.graphrag.normalizeCachePath }}
+            <code>{{ graphragNormalizeRelationships.cache?.path ?? copy.common.notAvailable }}</code>
+          </p>
+          <p>
+            {{ copy.graphrag.normalizeLLMProvider }}
+            <code>{{ graphragNormalizeRelationships.llm?.provider ?? copy.common.notAvailable }}</code>
+            <span v-if="graphragNormalizeRelationships.llm?.model">
+              · {{ copy.graphrag.normalizeLLMModel }}
+              <code>{{ graphragNormalizeRelationships.llm?.model }}</code>
+            </span>
+          </p>
+          <p>
+            {{ copy.graphrag.normalizeLLMAttempts }} {{ formatNumber(graphragNormalizeRelationships.llm?.attempts) }}
+            · {{ copy.graphrag.normalizeLLMSuccess }} {{ formatNumber(graphragNormalizeRelationships.llm?.success) }}
+            · {{ copy.graphrag.normalizeLLMFailures }} {{ formatNumber(graphragNormalizeRelationships.llm?.failures) }}
+            <span v-if="graphragNormalizeRelationships.llm?.disabledReason">
+              — {{ copy.graphrag.normalizeLLMDisabled }} {{ graphragNormalizeRelationships.llm?.disabledReason }}
+            </span>
+          </p>
+          <div
+            v-if="graphragRelationshipSamples.updates.length || graphragRelationshipSamples.fallback.length || graphragRelationshipSamples.failures.length"
+            class="graphrag-samples"
+          >
+            <details>
+              <summary>{{ copy.graphrag.normalizeRelSamplesTitle }}</summary>
+              <div v-if="graphragRelationshipSamples.updates.length">
+                <h4>{{ copy.graphrag.normalizeRelSamplesUpdated }}</h4>
+                <ul>
+                  <li v-for="(item, index) in graphragRelationshipSamples.updates" :key="`rel-update-${index}`">
+                    <code>{{ item.source ?? copy.common.unknown }}</code>
+                    →
+                    <code>{{ item.target ?? copy.common.unknown }}</code>
+                    <span>
+                      {{ copy.graphrag.normalizeSampleFrom }}
+                      <code>{{ item.previous ?? copy.common.notAvailable }}</code>
+                      → <code>{{ item.next ?? copy.common.notAvailable }}</code>
+                      <span v-if="item.via">（{{ item.via }}）</span>
+                    </span>
+                  </li>
+                </ul>
+              </div>
+              <div v-if="graphragRelationshipSamples.fallback.length">
+                <h4>{{ copy.graphrag.normalizeRelSamplesFallback }}</h4>
+                <ul>
+                  <li v-for="(item, index) in graphragRelationshipSamples.fallback" :key="`rel-fallback-${index}`">
+                    <code>{{ item.source ?? copy.common.unknown }}</code>
+                    →
+                    <code>{{ item.target ?? copy.common.unknown }}</code>
+                    <span>
+                      {{ copy.graphrag.normalizeSampleReason }} {{ item.reason ?? copy.common.unknownReason }}
+                    </span>
+                  </li>
+                </ul>
+              </div>
+              <div v-if="graphragRelationshipSamples.failures.length">
+                <h4>{{ copy.graphrag.normalizeRelSamplesFailures }}</h4>
+                <ul>
+                  <li v-for="(item, index) in graphragRelationshipSamples.failures" :key="`rel-failure-${index}`">
+                    <code>{{ item.source ?? copy.common.unknown }}</code>
+                    →
+                    <code>{{ item.target ?? copy.common.unknown }}</code>
+                    <span>
+                      {{ copy.graphrag.normalizeSampleReason }} {{ item.message ?? copy.common.unknownReason }}
+                    </span>
+                  </li>
+                </ul>
+              </div>
+            </details>
+          </div>
+        </div>
+
+        <div v-if="graphragNormalizeObjects" class="graphrag-card">
+          <h3>{{ copy.graphrag.normalizeObjTitle }}</h3>
+          <p>
+            <strong>{{ copy.graphrag.lastRun }}</strong>
+            {{ formatDate(graphragNormalizeObjects.timestamp) }}
+            — {{ copy.graphrag.normalizeStatusLabel }}
+            <span :class="statusClass(graphragNormalizeObjects.enabled ? 'ok' : 'degraded')">
+              {{ boolLabel(graphragNormalizeObjects.enabled) }}
+            </span>
+          </p>
+          <p>
+            <strong>{{ copy.graphrag.durationLabel }}</strong>
+            {{ graphragNormalizeObjects.durationMs == null ? copy.common.notAvailable : formatNumber(graphragNormalizeObjects.durationMs) + ' ms' }}
+            <span v-if="graphragNormalizeObjects.documents != null" class="graphrag-topic-link">
+              · {{ copy.graphrag.normalizeDocsLabel }} {{ formatNumber(graphragNormalizeObjects.documents) }}
+            </span>
+          </p>
+          <table>
+            <thead>
+              <tr>
+                <th>{{ copy.graphrag.summaryHeaders.metric }}</th>
+                <th>{{ copy.graphrag.summaryHeaders.value }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>{{ copy.graphrag.normalizeObjMetrics.total }}</td>
+                <td>{{ formatNumber(graphragNormalizeObjects.totals?.total) }}</td>
+              </tr>
+              <tr>
+                <td>{{ copy.graphrag.normalizeObjMetrics.updated }}</td>
+                <td>{{ formatNumber(graphragNormalizeObjects.totals?.updated) }}</td>
+              </tr>
+              <tr>
+                <td>{{ copy.graphrag.normalizeObjMetrics.relationships }}</td>
+                <td>{{ formatNumber(graphragNormalizeObjects.totals?.relationships) }}</td>
+              </tr>
+              <tr>
+                <td>{{ copy.graphrag.normalizeObjMetrics.entities }}</td>
+                <td>{{ formatNumber(graphragNormalizeObjects.totals?.entities) }}</td>
+              </tr>
+              <tr>
+                <td>{{ copy.graphrag.normalizeObjMetrics.alias }}</td>
+                <td>{{ formatNumber(graphragNormalizeObjects.sources?.alias) }}</td>
+              </tr>
+              <tr>
+                <td>{{ copy.graphrag.normalizeObjMetrics.cache }}</td>
+                <td>{{ formatNumber(graphragNormalizeObjects.sources?.cache) }}</td>
+              </tr>
+              <tr>
+                <td>{{ copy.graphrag.normalizeObjMetrics.llm }}</td>
+                <td>{{ formatNumber(graphragNormalizeObjects.sources?.llm) }}</td>
+              </tr>
+              <tr>
+                <td>{{ copy.graphrag.normalizeObjMetrics.fallback }}</td>
+                <td>{{ formatNumber(graphragNormalizeObjects.sources?.fallback) }}</td>
+              </tr>
+            </tbody>
+          </table>
+          <p>
+            {{ copy.graphrag.normalizeAliasCount }} {{ formatNumber(graphragNormalizeObjects.aliasEntries) }}
+            · {{ copy.graphrag.normalizeCacheSize }} {{ formatNumber(graphragNormalizeObjects.cache?.size) }}
+            · {{ copy.graphrag.normalizeCacheWrites }} {{ formatNumber(graphragNormalizeObjects.cache?.writes) }}
+          </p>
+          <p>
+            {{ copy.graphrag.normalizeCachePath }}
+            <code>{{ graphragNormalizeObjects.cache?.path ?? copy.common.notAvailable }}</code>
+          </p>
+          <p>
+            {{ copy.graphrag.normalizeLLMProvider }}
+            <code>{{ graphragNormalizeObjects.llm?.provider ?? copy.common.notAvailable }}</code>
+            <span v-if="graphragNormalizeObjects.llm?.model">
+              · {{ copy.graphrag.normalizeLLMModel }}
+              <code>{{ graphragNormalizeObjects.llm?.model }}</code>
+            </span>
+          </p>
+          <p>
+            {{ copy.graphrag.normalizeLLMAttempts }} {{ formatNumber(graphragNormalizeObjects.llm?.attempts) }}
+            · {{ copy.graphrag.normalizeLLMSuccess }} {{ formatNumber(graphragNormalizeObjects.llm?.success) }}
+            · {{ copy.graphrag.normalizeLLMFailures }} {{ formatNumber(graphragNormalizeObjects.llm?.failures) }}
+            <span v-if="graphragNormalizeObjects.llm?.disabledReason">
+              — {{ copy.graphrag.normalizeLLMDisabled }} {{ graphragNormalizeObjects.llm?.disabledReason }}
+            </span>
+          </p>
+          <div
+            v-if="graphragObjectSamples.updates.length || graphragObjectSamples.fallback.length || graphragObjectSamples.failures.length"
+            class="graphrag-samples"
+          >
+            <details>
+              <summary>{{ copy.graphrag.normalizeObjSamplesTitle }}</summary>
+              <div v-if="graphragObjectSamples.updates.length">
+                <h4>{{ copy.graphrag.normalizeObjSamplesUpdated }}</h4>
+                <ul>
+                  <li v-for="(item, index) in graphragObjectSamples.updates" :key="`obj-update-${index}`">
+                    <code>{{ item.key ?? copy.common.unknown }}</code>
+                    <span>
+                      {{ copy.graphrag.normalizeSampleFrom }}
+                      <code>{{ item.previousKey ?? copy.common.notAvailable }}</code>
+                      → <code>{{ item.key ?? copy.common.notAvailable }}</code>
+                      <span v-if="item.location">（{{ item.location }}）</span>
+                    </span>
+                  </li>
+                </ul>
+              </div>
+              <div v-if="graphragObjectSamples.fallback.length">
+                <h4>{{ copy.graphrag.normalizeObjSamplesFallback }}</h4>
+                <ul>
+                  <li v-for="(item, index) in graphragObjectSamples.fallback" :key="`obj-fallback-${index}`">
+                    <code>{{ item.key ?? copy.common.unknown }}</code>
+                    <span>
+                      {{ copy.graphrag.normalizeSampleReason }} {{ item.reason ?? copy.common.unknownReason }}
+                    </span>
+                  </li>
+                </ul>
+              </div>
+              <div v-if="graphragObjectSamples.failures.length">
+                <h4>{{ copy.graphrag.normalizeObjSamplesFailures }}</h4>
+                <ul>
+                  <li v-for="(item, index) in graphragObjectSamples.failures" :key="`obj-failure-${index}`">
+                    <code>{{ item.key ?? copy.common.unknown }}</code>
+                    <span>
+                      {{ copy.graphrag.normalizeSampleReason }} {{ item.message ?? copy.common.unknownReason }}
+                    </span>
+                  </li>
+                </ul>
+              </div>
+            </details>
+          </div>
+        </div>
+
         <div v-if="graphragExport" class="graphrag-card">
           <h3>{{ copy.graphrag.exportTitle }}</h3>
           <p>
@@ -745,7 +1137,65 @@ const COPY_MAP = {
       },
       reasonsTitle: '跳过原因 Top',
       sampleLabel: '示例文档',
-      noSkipped: '未记录跳过的文档。'
+      noSkipped: '未记录跳过的文档。',
+      normalizeTitle: '实体类型归一化',
+      normalizeStatusLabel: '状态',
+      normalizeDocsLabel: '处理文档',
+      normalizeMetrics: {
+        total: '处理条目',
+        updated: '更新条目',
+        entities: '实体记录',
+        docRoots: 'Doc Root 记录',
+        alias: '别名命中',
+        cache: '缓存命中',
+        llm: 'LLM 调用',
+        fallback: '回退次数'
+      },
+      normalizeAliasCount: '别名条目',
+      normalizeCacheSize: '缓存条目',
+      normalizeCacheWrites: '缓存写入',
+      normalizeCachePath: '缓存路径：',
+      normalizeLLMProvider: 'LLM 提供方：',
+      normalizeLLMModel: '模型',
+      normalizeLLMAttempts: '调用次数',
+      normalizeLLMSuccess: '成功',
+      normalizeLLMFailures: '失败',
+      normalizeLLMDisabled: '禁用原因：',
+      normalizeSamplesTitle: '查看样例',
+      normalizeSamplesUpdated: '类型变更',
+      normalizeSamplesFallback: '回退记录',
+      normalizeSamplesFailures: '失败记录',
+      normalizeSampleFrom: '类型从',
+      normalizeSampleReason: '原因',
+      normalizeRelTitle: '关系类型归一化',
+      normalizeRelMetrics: {
+        total: '处理关系',
+        updated: '更新关系',
+        relationships: '关系记录',
+        alias: '别名命中',
+        cache: '缓存命中',
+        llm: 'LLM 调用',
+        fallback: '回退次数'
+      },
+      normalizeRelSamplesTitle: '查看关系样例',
+      normalizeRelSamplesUpdated: '关系类型变更',
+      normalizeRelSamplesFallback: '回退关系',
+      normalizeRelSamplesFailures: '失败关系',
+      normalizeObjTitle: '属性归一化',
+      normalizeObjMetrics: {
+        total: '处理属性',
+        updated: '更新属性',
+        relationships: '关系属性条目',
+        entities: '实体属性条目',
+        alias: '别名命中',
+        cache: '缓存命中',
+        llm: 'LLM 调用',
+        fallback: '回退次数'
+      },
+      normalizeObjSamplesTitle: '查看属性样例',
+      normalizeObjSamplesUpdated: '属性键变更',
+      normalizeObjSamplesFallback: '回退属性',
+      normalizeObjSamplesFailures: '失败属性'
     },
     ai: {
       title: 'AI 构建指标',
@@ -898,7 +1348,65 @@ const COPY_MAP = {
       },
       reasonsTitle: 'Top skip reasons',
       sampleLabel: 'Sample doc',
-      noSkipped: 'No skipped documents recorded.'
+      noSkipped: 'No skipped documents recorded.',
+      normalizeTitle: 'Entity Type Normalization',
+      normalizeStatusLabel: 'Status',
+      normalizeDocsLabel: 'Docs',
+      normalizeMetrics: {
+        total: 'Processed records',
+        updated: 'Updated records',
+        entities: 'Entity rows',
+        docRoots: 'Doc root rows',
+        alias: 'Alias hits',
+        cache: 'Cache hits',
+        llm: 'LLM calls',
+        fallback: 'Fallback count'
+      },
+      normalizeAliasCount: 'Alias entries',
+      normalizeCacheSize: 'Cache entries',
+      normalizeCacheWrites: 'Cache writes',
+      normalizeCachePath: 'Cache path:',
+      normalizeLLMProvider: 'LLM provider:',
+      normalizeLLMModel: 'Model',
+      normalizeLLMAttempts: 'Attempts',
+      normalizeLLMSuccess: 'Success',
+      normalizeLLMFailures: 'Failures',
+      normalizeLLMDisabled: 'Disabled reason:',
+      normalizeSamplesTitle: 'Show samples',
+      normalizeSamplesUpdated: 'Type updates',
+      normalizeSamplesFallback: 'Fallback records',
+      normalizeSamplesFailures: 'Failure records',
+      normalizeSampleFrom: 'Type from',
+      normalizeSampleReason: 'Reason',
+      normalizeRelTitle: 'Relationship Type Normalization',
+      normalizeRelMetrics: {
+        total: 'Processed relationships',
+        updated: 'Updated relationships',
+        relationships: 'Relationship rows',
+        alias: 'Alias hits',
+        cache: 'Cache hits',
+        llm: 'LLM calls',
+        fallback: 'Fallback count'
+      },
+      normalizeRelSamplesTitle: 'Show relationship samples',
+      normalizeRelSamplesUpdated: 'Relationship type updates',
+      normalizeRelSamplesFallback: 'Fallback relationships',
+      normalizeRelSamplesFailures: 'Failed relationships',
+      normalizeObjTitle: 'Attribute Normalization',
+      normalizeObjMetrics: {
+        total: 'Processed attributes',
+        updated: 'Updated attributes',
+        relationships: 'Relationship entries',
+        entities: 'Entity entries',
+        alias: 'Alias hits',
+        cache: 'Cache hits',
+        llm: 'LLM calls',
+        fallback: 'Fallback count'
+      },
+      normalizeObjSamplesTitle: 'Show attribute samples',
+      normalizeObjSamplesUpdated: 'Attribute key updates',
+      normalizeObjSamplesFallback: 'Fallback attributes',
+      normalizeObjSamplesFailures: 'Failed attributes'
     },
     ai: {
       title: 'AI Build Metrics',
@@ -1018,6 +1526,9 @@ const graphragIngest = computed(() => graphrag.value?.ingest ?? null)
 const graphragExport = computed(() => graphrag.value?.export ?? null)
 const graphragRetrieve = computed(() => graphrag.value?.retrieve ?? null)
 const graphragExplore = computed(() => graphrag.value?.explore ?? null)
+const graphragNormalize = computed(() => graphrag.value?.normalize ?? null)
+const graphragNormalizeRelationships = computed(() => graphrag.value?.normalize_relationships ?? null)
+const graphragNormalizeObjects = computed(() => graphrag.value?.normalize_objects ?? null)
 const graphragExportDocLink = computed(() => docLinkFromId(graphragExport.value?.docId))
 const graphragExportTopicLink = computed(() => {
   const topic = graphragExport.value?.topic
@@ -1041,6 +1552,32 @@ const graphragExportFiles = computed(() => {
   return Object.entries(files)
     .filter(([, written]) => Boolean(written))
     .map(([key]) => key)
+})
+const graphragNormalizeSamples = computed(() => {
+  const samples = graphragNormalize.value?.samples ?? {}
+  return {
+    updates: Array.isArray(samples.updates) ? samples.updates : [],
+    fallback: Array.isArray(samples.fallback) ? samples.fallback : [],
+    failures: Array.isArray(samples.failures) ? samples.failures : []
+  }
+})
+
+const graphragRelationshipSamples = computed(() => {
+  const samples = graphragNormalizeRelationships.value?.samples ?? {}
+  return {
+    updates: Array.isArray(samples.updates) ? samples.updates : [],
+    fallback: Array.isArray(samples.fallback) ? samples.fallback : [],
+    failures: Array.isArray(samples.failures) ? samples.failures : []
+  }
+})
+
+const graphragObjectSamples = computed(() => {
+  const samples = graphragNormalizeObjects.value?.samples ?? {}
+  return {
+    updates: Array.isArray(samples.updates) ? samples.updates : [],
+    fallback: Array.isArray(samples.fallback) ? samples.fallback : [],
+    failures: Array.isArray(samples.failures) ? samples.failures : []
+  }
 })
 
 const aiErrors = computed<AIDomainError[]>(() => {
@@ -1574,6 +2111,20 @@ function listToText(values?: string[] | null): string {
 .graphrag-files ul {
   padding-left: 1.2rem;
   margin: 0;
+}
+.graphrag-samples {
+  margin-top: 0.75rem;
+}
+.graphrag-samples h4 {
+  margin: 0.5rem 0 0.25rem;
+  font-size: 0.95rem;
+}
+.graphrag-samples ul {
+  padding-left: 1.2rem;
+  margin: 0;
+}
+.graphrag-samples code {
+  margin-right: 0.25rem;
 }
 .graphrag-reasons-empty,
 .graphrag-empty {

@@ -762,6 +762,9 @@ async function loadLatestGraphragSummary(root) {
   if (!Array.isArray(parsed) || !parsed.length) return null
 
   const summary = pickLatestByType(parsed)
+  if (!summary) {
+    return null
+  }
   summary.warnings = computeGraphragWarnings(summary)
   return summary
 }
@@ -822,6 +825,47 @@ function computeGraphragWarnings(summary = {}) {
       timestamp: explore.timestamp
     })
   }
+
+  function handleNormalizationWarnings(record, { scope, label }) {
+    if (!record) return
+    if (record.enabled === false) {
+      addWarning({
+        scope,
+        message: `${label}已禁用，图谱类型可能无法对齐。`,
+        severity: 'warning',
+        timestamp: record.timestamp
+      })
+    }
+    if ((record.llm?.failures ?? 0) > 0) {
+      addWarning({
+        scope,
+        message: `${label}阶段 LLM 失败 ${record.llm.failures} 次，请检查模型/密钥。`,
+        severity: 'warning',
+        timestamp: record.timestamp
+      })
+    }
+    if ((record.sources?.fallback ?? 0) > 0) {
+      addWarning({
+        scope,
+        message: `${label}仍有 ${record.sources.fallback} 条回退到原始类型，请补充别名或缓存。`,
+        severity: 'info',
+        timestamp: record.timestamp
+      })
+    }
+  }
+
+  handleNormalizationWarnings(summary.normalize, {
+    scope: 'normalize.entities',
+    label: '实体类型归一化'
+  })
+  handleNormalizationWarnings(summary.normalize_relationships, {
+    scope: 'normalize.relationships',
+    label: '关系类型归一化'
+  })
+  handleNormalizationWarnings(summary.normalize_objects, {
+    scope: 'normalize.objects',
+    label: '属性归一化'
+  })
 
   return warnings
 }

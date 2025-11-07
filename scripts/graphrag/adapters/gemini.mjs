@@ -1,7 +1,4 @@
-import { spawn } from 'child_process';
-import path from 'path';
-
-const SCRIPT_PATH = path.resolve(process.cwd(), 'app.py');
+import { generateKnowledgeGraph } from '../../llm/graph-extractor.mjs';
 const MAX_DOC_CHARS = Number.parseInt(
   process.env.GRAPHRAG_GEMINI_MAX_DOC_CHARS ?? '12000',
   10,
@@ -12,52 +9,22 @@ const MAX_MENTIONS_PER_NODE = Number.parseInt(
 );
 
 const DEFAULT_MODEL = process.env.GRAPHRAG_GEMINI_DEFAULT_MODEL || 'gemini-2.5-pro';
+const PROVIDER_CHAIN =
+  process.env.GRAPHRAG_EXTRACTOR_PROVIDERS ??
+  process.env.GRAPHRAG_EXTRACTOR_PROVIDER ??
+  process.env.GRAPH_EXTRACTOR_PROVIDERS ??
+  process.env.GRAPH_EXTRACTOR_PROVIDER;
 
-function callPythonScript(text, { modelName }) {
-  return new Promise((resolve, reject) => {
+async function callGenerator(text, { modelName } = {}) {
+  try {
     const resolvedModel = modelName || DEFAULT_MODEL;
-    const args = [SCRIPT_PATH, '--model', resolvedModel];
-
-    const pythonProcess = spawn('python3', args, {
-      env: process.env,
+    return await generateKnowledgeGraph(text, {
+      modelName: resolvedModel,
+      provider: PROVIDER_CHAIN,
     });
-
-    let stdoutData = '';
-    let stderrData = '';
-
-    pythonProcess.stdout.on('data', (data) => {
-      stdoutData += data.toString();
-    });
-
-    pythonProcess.stderr.on('data', (data) => {
-      stderrData += data.toString();
-    });
-
-    pythonProcess.on('close', (code) => {
-      if (code !== 0) {
-        let errorMsg = `Python 脚本执行失败，退出码: ${code}`;
-        if (stderrData) {
-          try {
-            const parsedError = JSON.parse(stderrData);
-            errorMsg += ` - ${parsedError.error}`;
-          } catch {
-            errorMsg += ` - ${stderrData}`;
-          }
-        }
-        return reject(new Error(errorMsg));
-      }
-
-      try {
-        const result = JSON.parse(stdoutData);
-        resolve(result);
-      } catch (error) {
-        reject(new Error(`解析 Python 脚本输出失败: ${error.message}`));
-      }
-    });
-
-    pythonProcess.stdin.write(text);
-    pythonProcess.stdin.end();
-  });
+  } catch (error) {
+    throw new Error(`调用 Gemini 实体提取失败: ${error?.message ?? error}`);
+  }
 }
 
 function buildDocContext(doc) {
@@ -154,7 +121,7 @@ export async function loadGeminiAdapter({ model = DEFAULT_MODEL } = {}) {
       }
 
       try {
-        const result = await callPythonScript(text, {
+        const result = await callGenerator(text, {
           modelName: model,
         });
 
@@ -186,12 +153,12 @@ export async function loadGeminiAdapter({ model = DEFAULT_MODEL } = {}) {
         const mentions = buildMentions(doc, result?.nodes ?? []);
         allMentions.push(...mentions);
       } catch (error) {
-        throw new Error(`调用 Python 实体提取脚本失败: ${error.message}`);
+        throw new Error(`调用 Gemini 实体提取失败: ${error.message}`);
       }
 
       diagnostics.push({
         level: 'info',
-        message: `Python (Gemini) 脚本识别到 ${allEntities.size} 个实体`,
+        message: `Gemini 模型识别到 ${allEntities.size} 个实体`,
       });
 
       if (truncated) {

@@ -1,0 +1,78 @@
+[
+  {
+    "key": "weight",
+    "type": "number",
+    "description": "0-1 之间的权重/置信度/相关性得分",
+    "aliases": ["weight", "score", "rank_score", "confidence", "confidence_score", "置信度", "相关度", "强度", "probability", "similarity", "relevance_score", "trust"],
+    "valueRange": { "min": 0, "max": 1 },
+    "precision": 4,
+    "valueAliases": [
+      { "value": 1, "aliases": ["high", "高", "strong", "100%"] },
+      { "value": 0.5, "aliases": ["medium", "中", "0.5"] },
+      { "value": 0, "aliases": ["low", "低", "weak", "0%"] }
+    ]
+  },
+  {
+    "key": "evidence",
+    "type": "string",
+    "description": "关系或实体的引用/原文证据",
+    "aliases": ["evidence", "reason", "justification", "reference", "excerpt", "说明", "依据", "证据", "引用", "support"]
+  },
+  {
+    "key": "source",
+    "type": "string",
+    "description": "数据来源/出处",
+    "aliases": ["source", "来源", "出处", "reference_url", "link", "origin", "provenance", "数据来源"]
+  },
+  {
+    "key": "summary",
+    "type": "string",
+    "description": "简短摘要/提要",
+    "aliases": ["summary", "概述", "摘要", "overview", "short_summary"]
+  },
+  {
+    "key": "description",
+    "type": "string",
+    "description": "详细描述/补充说明",
+    "aliases": ["description", "desc", "detail", "说明", "描述"]
+  },
+  {
+    "key": "salience",
+    "type": "number",
+    "description": "0-1 之间的显著性/重要程度",
+    "aliases": ["salience", "importance", "relevance", "saliency", "entity_score", "important_score", "显著性", "重要度", "重要性", "confidence"],
+    "valueRange": { "min": 0, "max": 1 },
+    "precision": 3
+  },
+  {
+    "key": "url",
+    "type": "string",
+    "description": "外部链接 / 引用地址",
+    "aliases": ["url", "link", "href", "reference_url", "canonical_url", "链接", "地址"]
+  },
+  {
+    "key": "snippet",
+    "type": "string",
+    "description": "引用片段 / 关键上下文",
+    "aliases": ["snippet", "quote", "excerpt", "片段", "引用片段", "上下文", "context_snippet"]
+  },
+  {
+    "key": "rank",
+    "type": "number",
+    "description": "排序/优先级/排名（整数或自然数）",
+    "aliases": ["rank", "order", "position", "priority", "排名", "顺序", "排序"],
+    "precision": 0
+  },
+  {
+    "key": "tags",
+    "type": "array",
+    "description": "标签/主题列表",
+    "aliases": ["tags", "labels", "keywords", "topics", "标签", "主题"]
+  },
+  {
+    "key": "status",
+    "type": "string",
+    "description": "状态/阶段说明",
+    "aliases": ["status", "state", "阶段", "phase", "情况"]
+  }
+]

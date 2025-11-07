@@ -4,11 +4,14 @@ import { fileURLToPath } from 'node:url'
 import path from 'node:path'
 import cssnano from 'cssnano'
 import fs from 'node:fs'
+import MarkdownIt from 'markdown-it'
 import { VitePWA } from 'vite-plugin-pwa'
 import { navFromMeta as buildNavFromMeta } from './theme/nav-core.mjs'
 import type { NavManifest, NavTranslations } from './theme/nav-core.mjs'
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const ROOT_DIR = path.resolve(__dirname, '..', '..')
+const DOCS_DIR = path.resolve(ROOT_DIR, 'docs')
+const markdown = new MarkdownIt({ html: true })
 const NAV_CONFIG = loadNavConfig()
 const SEO_CONFIG = loadSeoConfig()
 const SEO_SITE_ORIGIN = resolveSeoSiteOrigin(SEO_CONFIG)
@@ -373,6 +376,10 @@ function loadLocaleMeta(localeId: LocaleCode) {
   return loadMeta(candidates[0]!)
 }
 
+const defaultLocaleKey = SUPPORTED_LOCALES[0]?.vitepressKey
+const fallbackRootNavConfig =
+  (defaultLocaleKey && localizedLocaleConfigs[defaultLocaleKey]?.themeConfig) || {}
+
 export default defineConfig({
   // Inject base from env to support GitHub Pages subpath deployment
   base: baseFromEnv,
@@ -391,6 +398,9 @@ export default defineConfig({
     })
     return [...seoHead, ...faviconHeadEntries] as HeadConfig[]
   },
+  transformPageData(pageData) {
+    appendGraphContextHeaders(pageData)
+  },
   themeConfig: {
     socialLinks: [{ icon: 'github', link: 'https://github.com/shlxl/ling-atlas' }],
     // Disable the built-in locale dropdown to avoid linking to untranslated
@@ -406,8 +416,10 @@ export default defineConfig({
       title: 'Ling Atlas',
       description: 'Select your preferred language to continue.',
       themeConfig: {
-        nav: [],
-        sidebar: false
+        nav: cloneNavConfig(fallbackRootNavConfig.nav) ?? [],
+        sidebar: fallbackRootNavConfig.sidebar ?? 'auto',
+        lightModeSwitchTitle: fallbackRootNavConfig.lightModeSwitchTitle ?? 'Switch to light mode',
+        darkModeSwitchTitle: fallbackRootNavConfig.darkModeSwitchTitle ?? 'Switch to dark mode'
       }
     },
     ...localizedLocaleConfigs
@@ -476,6 +488,111 @@ export default defineConfig({
     }
   }
 })
+
+function cloneNavConfig(nav: any) {
+  if (!nav) return []
+  return JSON.parse(JSON.stringify(nav))
+}
+
+type PageHeader = {
+  level: number
+  title: string
+  slug: string
+  children?: PageHeader[]
+}
+
+function appendGraphContextHeaders(pageData: { relativePath?: string; headers?: PageHeader[] }) {
+  const relativePath = pageData?.relativePath
+  if (!relativePath || !relativePath.startsWith('graph/') || !relativePath.endsWith('/index.md')) {
+    return
+  }
+  const contextFile = resolveGraphContextFile(relativePath)
+  if (!contextFile) return
+  const extraHeaders = extractHeadersFromMarkdown(contextFile)
+  if (!extraHeaders.length) return
+  const existing = Array.isArray(pageData.headers) ? [...pageData.headers] : []
+  pageData.headers = mergeHeaders(existing, extraHeaders)
+}
+
+function resolveGraphContextFile(relativePath: string) {
+  const dir = path.dirname(relativePath)
+  const candidate = path.join(DOCS_DIR, dir, 'context.md')
+  if (fs.existsSync(candidate)) return candidate
+  return null
+}
+
+function extractHeadersFromMarkdown(filePath: string): PageHeader[] {
+  let content = ''
+  try {
+    content = fs.readFileSync(filePath, 'utf8')
+  } catch {
+    return []
+  }
+  if (!content) return []
+  const tokens = markdown.parse(content, {})
+  const headers: PageHeader[] = []
+  const parentStack = new Map<number, PageHeader>()
+
+  for (let index = 0; index < tokens.length; index += 1) {
+    const token = tokens[index]
+    if (token.type !== 'heading_open') continue
+    const level = Number.parseInt(token.tag.slice(1), 10)
+    if (!Number.isFinite(level) || level < 2 || level > 4) continue
+    const inline = tokens[index + 1]
+    const title = inline && inline.type === 'inline' ? inline.content.trim() : ''
+    if (!title) continue
+    const slug = slugifyHeader(title)
+    const header: PageHeader = { level, title, slug, children: [] }
+
+    if (level === 2) {
+      headers.push(header)
+      parentStack.set(2, header)
+      parentStack.delete(3)
+      parentStack.delete(4)
+      continue
+    }
+
+    const parent = parentStack.get(level - 1) ?? headers[headers.length - 1]
+    if (parent) {
+      parent.children = parent.children || []
+      parent.children.push(header)
+      parentStack.set(level, header)
+      if (level === 3) parentStack.delete(4)
+    } else {
+      headers.push(header)
+      parentStack.set(level, header)
+    }
+  }
+
+  return headers
+}
+
+function mergeHeaders(base: PageHeader[], extra: PageHeader[]) {
+  const seen = new Set<string>()
+  for (const header of base) {
+    seen.add(header.slug)
+    header.children?.forEach(child => seen.add(child.slug))
+  }
+  for (const header of extra) {
+    if (!seen.has(header.slug)) {
+      base.push(header)
+      seen.add(header.slug)
+    }
+  }
+  return base
+}
+
+function slugifyHeader(value: string) {
+  return value
+    .normalize('NFKD')
+    .trim()
+    .toLowerCase()
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9\u00c0-\uffff\s-]/g, '')
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-+|-+$/g, '')
+}
 
 function loadMeta(file: string) {
   if (fs.existsSync(file)) {
