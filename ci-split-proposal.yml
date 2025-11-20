@@ -1,0 +1,143 @@
+name: CI Split Draft (backend + frontend)
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+on:
+  pull_request:
+    branches: [ main, master ]
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    env:
+      BASE: /ling-atlas/
+      SITE_ORIGIN: https://shlxl.github.io/ling-atlas
+      ORT_LOG_SEVERITY_LEVEL: '3'
+      ORT_LOGGING_LEVEL: '3'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: 'npm'
+      - name: Node info
+        run: |
+          node -v
+          npm -v
+      - run: npm ci
+      - name: 归一标签（非阻断）
+        run: npm run tags:normalize
+      - name: Frontmatter 校验（阻断）
+        run: npm run precheck
+      - name: Markdown lint
+        run: npm run md:lint
+      - name: 链接检查
+        run: node scripts/check-links.mjs
+      - name: 图片优化
+        run: node scripts/img-opt.mjs
+      - name: 生成聚合页（pagegen）
+        run: npm run gen
+      - name: Pagegen 单元测试
+        run: npm run test:pagegen
+      - name: 统计聚合快照
+        run: node scripts/stats-lint.mjs
+      - name: Build semantic texts
+        run: npm run embeddings:build
+      - name: Build knowledge chunks
+        run: node scripts/chunk-build.mjs
+      - name: Offline search eval
+        run: node scripts/eval/offline.mjs
+      - name: Generate embedding payload (占位)
+        run: node scripts/embed-build.mjs
+      - name: Generate summaries (soft fail)
+        run: node scripts/summary.mjs || true
+      - name: Generate QA pairs (soft fail)
+        run: node scripts/qa-build.mjs || true
+      - name: Prepare AI models
+        if: |
+          (github.event_name == 'push' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/')))
+          || (github.event_name == 'pull_request' && contains(join(github.event.pull_request.labels.*.name, ','), 'ai-smoke'))
+        run: npm run ai:prepare
+      - name: AI smoke test (fallback aware)
+        if: |
+          (github.event_name == 'push' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/')))
+          || (github.event_name == 'pull_request' && contains(join(github.event.pull_request.labels.*.name, ','), 'ai-smoke'))
+        run: npm run ai:smoke
+      - name: 构建 + 搜索索引（阻断）
+        run: npm run build:search
+      - name: Bundle budget check
+        run: node .codex/budget.mjs
+      - name: npm audit (non-blocking)
+        continue-on-error: true
+        run: npm audit
+      - name: License summary
+        run: npm run license
+      - name: Generate SBOM
+        run: npm run sbom
+      - name: Install Lighthouse OS Dependencies
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: sudo apt-get update && sudo apt-get install -y libnspr4
+      - name: Lighthouse CI
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: ./node_modules/.bin/lhci autorun --collect.chromeFlags="--no-sandbox"
+      - name: Merge telemetry data
+        run: node scripts/telemetry-merge.mjs
+      - name: 准备 backend artifact 结构
+        run: |
+          mkdir -p packages/backend/dist/data
+          rsync -a docs/public/data/ packages/backend/dist/data/
+          if [ -d docs/public/.well-known ]; then
+            rsync -a docs/public/.well-known/ packages/backend/dist/data/.well-known/
+          fi
+      - name: 上传 backend artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-data
+          path: packages/backend/dist/data
+
+  frontend:
+    needs: backend
+    runs-on: ubuntu-latest
+    env:
+      BASE: /ling-atlas/
+      SITE_ORIGIN: https://shlxl.github.io/ling-atlas
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: 'npm'
+      - name: Node info
+        run: |
+          node -v
+          npm -v
+      - run: npm ci
+      - name: 下载 backend artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: backend-data
+          path: packages/backend/dist/data
+      - name: 同步 backend 产物到前端
+        run: npm run artifacts:sync
+      - name: 构建 + 搜索索引（阻断）
+        run: npm run build:search
+      - name: Upload Pages artifact
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs/.vitepress/dist
+
+  deploy:
+    needs: frontend
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
