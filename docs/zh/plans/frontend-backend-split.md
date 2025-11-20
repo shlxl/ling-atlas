@@ -25,6 +25,16 @@ title: 前后端拆分规划（草案）
 - 前端流水线：拉取 artifact → `npm run build`（可读取 BASE/SITE_ORIGIN）→ Pages/静态部署。保留回退环境变量以兼容旧路径。
 - Shadow build：拆分初期保留单仓全链路构建，对比产物哈希，异常时回滚。
 
+### 前端消费 backend 产物与 CI 拆分建议
+
+- 本地构建：backend 输出 `docs/public/data/`、`docs/.vitepress/dist/.well-known/` 等产物，同时产出 `dist/data/` artifact（后续供前端拉取）。
+- 前端构建：从本地 `../backend/dist/data` 或 CI artifact 下载数据再跑 `vitepress build docs`，避免重复执行 pagegen/AI/GraphRAG。
+- CI 结构：
+  1) backend job：`npm ci` → precheck/pagegen/AI/GraphRAG/telemetry → 上传 artifact（`dist/data` + SRI manifest 等）。
+  2) frontend job：下载 artifact → `npm ci`（frontend scope） → `vitepress build docs` → Pages 发布。
+  3) shadow build：拆分初期保留原流水线对比产物哈希，异常时回滚。
+- 回滚：若 artifact 缺失或损坏，前端可 fallback 到上一个成功版本的 artifact 或直接运行本地 pagegen 生成数据。
+
 ## 迁移步骤
 
 1) 选定基线 tag（当前全绿+守门通过），冻结契约。
