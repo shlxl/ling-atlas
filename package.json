@@ -2,6 +2,9 @@
   "name": "ling-atlas",
   "private": true,
   "type": "module",
+  "workspaces": [
+    "packages/*"
+  ],
   "lint-staged": {
     "docs/**/*.md": "markdownlint-cli2 --fix"
   },

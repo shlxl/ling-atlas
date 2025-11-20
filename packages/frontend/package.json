@@ -1,0 +1,7 @@
+{
+  "name": "@ling-atlas/frontend",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "description": "VitePress site and theme (stub for workspace split)."
+}

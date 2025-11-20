@@ -1,0 +1,7 @@
+{
+  "name": "@ling-atlas/shared",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "description": "Shared schema/types/contracts for frontend/backend (stub for workspace split)."
+}
