@@ -3,5 +3,9 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
-  "description": "Pagegen/AI/GraphRAG scripts and data artifact build pipeline (stub for workspace split)."
+  "description": "Pagegen/AI/GraphRAG scripts and data artifact build pipeline (stub for workspace split).",
+  "exports": {
+    "./telemetry/merge": "./src/telemetry/merge.mjs",
+    "./graphrag/guard-utils": "./src/graphrag/guard-utils.mjs"
+  }
 }
