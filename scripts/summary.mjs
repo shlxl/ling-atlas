@@ -24,7 +24,7 @@ const OUTPUT_FILE = path.join(OUTPUT_DIR, 'summaries.json')
 
 async function main() {
   installEpipeHandlers()
-  configureOrtLogging('3')
+  configureOrtLogging('4')
   const scriptStartedAt = Date.now()
   const preferredLocale = getPreferredLocale()
   const preferredLocaleConfig =
