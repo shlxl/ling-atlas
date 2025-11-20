@@ -15,6 +15,11 @@
     "./pagegen/writer": "./src/pagegen/writer.mjs",
     "./ai/prepare": "./src/ai/prepare.mjs",
     "./ai/smoke": "./src/ai/smoke.mjs",
-    "./ai/utils": "./src/ai/utils.mjs"
+    "./ai/utils": "./src/ai/utils.mjs",
+    "./graphrag/ingest": "./src/graphrag/ingest.pipeline.mjs",
+    "./graphrag/export": "./src/graphrag/export.mjs",
+    "./graphrag/retrieve": "./src/graphrag/retrieve.mjs",
+    "./graphrag/explore": "./src/graphrag/explore.mjs",
+    "./graphrag/config": "./src/graphrag/config.mjs"
   }
 }
