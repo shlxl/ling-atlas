@@ -12,6 +12,9 @@
     "./pagegen/feeds": "./src/pagegen/feeds.mjs",
     "./pagegen/plugin-registry": "./src/pagegen/plugin-registry.mjs",
     "./pagegen/scheduler": "./src/pagegen/scheduler.mjs",
-    "./pagegen/writer": "./src/pagegen/writer.mjs"
+    "./pagegen/writer": "./src/pagegen/writer.mjs",
+    "./ai/prepare": "./src/ai/prepare.mjs",
+    "./ai/smoke": "./src/ai/smoke.mjs",
+    "./ai/utils": "./src/ai/utils.mjs"
   }
 }
