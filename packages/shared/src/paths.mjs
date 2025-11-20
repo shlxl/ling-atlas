@@ -4,7 +4,7 @@ import path from 'node:path'
 const ROOT_DIR = path.resolve(fileURLToPath(new URL('../../../', import.meta.url)))
 const DOCS_DIR = path.join(ROOT_DIR, 'docs')
 const DATA_DIR = path.join(ROOT_DIR, 'data')
-const DIST_DIR = path.join(ROOT_DIR, 'dist')
+const DIST_DIR = path.join(ROOT_DIR, 'packages', 'backend', 'dist')
 const DIST_DATA_DIR = path.join(DIST_DIR, 'data')
 const GENERATED_DIR = path.join(DOCS_DIR, '_generated')
 const PUBLIC_DIR = path.join(DOCS_DIR, 'public')
