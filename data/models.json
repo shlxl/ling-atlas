@@ -78,7 +78,7 @@
       "smoke": {
         "status": "passed",
         "reason": null,
-        "verifiedAt": "2025-11-05T09:57:54.797Z"
+        "verifiedAt": "2025-11-20T10:44:44.469Z"
       }
     }
   ],
@@ -89,7 +89,7 @@
     "executed": 1,
     "skipped": 0,
     "failed": 0,
-    "verifiedAt": "2025-11-05T09:57:54.797Z",
+    "verifiedAt": "2025-11-20T10:44:44.470Z",
     "failures": []
   },
   "history": {
@@ -100,7 +100,17 @@
         "executed": 1,
         "skipped": 0,
         "failed": 0,
+        "verifiedAt": "2025-11-20T10:44:44.470Z",
+        "failures": []
+      },
+      {
+        "status": "passed",
+        "runtime": "node",
+        "executed": 1,
+        "skipped": 0,
+        "failed": 0,
         "verifiedAt": "2025-11-05T09:57:54.797Z",
+        "reason": null,
         "failures": []
       },
       {
@@ -130,16 +140,6 @@
         "skipped": 0,
         "failed": 0,
         "verifiedAt": "2025-11-03T07:00:54.795Z",
-        "reason": null,
-        "failures": []
-      },
-      {
-        "status": "passed",
-        "runtime": "node",
-        "executed": 1,
-        "skipped": 0,
-        "failed": 0,
-        "verifiedAt": "2025-10-31T17:25:37.457Z",
         "reason": null,
         "failures": []
       }

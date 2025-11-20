@@ -6,7 +6,7 @@
     "packages/*"
   ],
   "lint-staged": {
-    "docs/**/*.md": "markdownlint-cli2 --fix"
+    "docs/**/*.md": "npx --yes markdownlint-cli2@0.18.1 --fix"
   },
   "scripts": {
     "backend:gen": "npm run gen -w @ling-atlas/backend",
@@ -59,6 +59,8 @@
   "devDependencies": {
     "@cyclonedx/bom": "^4.1.2",
     "@lhci/cli": "^0.15.1",
+    "@ling-atlas/backend": "file:packages/backend",
+    "@ling-atlas/shared": "file:packages/shared",
     "@sparticuz/chromium": "^141.0.0",
     "ajv": "^8.17.1",
     "cssnano": "^7.1.1",

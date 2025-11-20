@@ -235,6 +235,7 @@ npm run graphrag:retrieve -- --mode hybrid --input hybrid.example.json --pretty
 - 链接巡检守门补测：新增 `tests/pagegen/check-links.integration.test.mjs` 以覆盖临时目录与 nav/i18n 缺失路径，CI 现可直接阻断缺链提交。
 - 站点级 SEO/OpenGraph Schema：`schema/seo.json` + 主题 `<meta>` 注入与回滚指引已上线，运维手册同步更新。
 - AI 适配层：`scripts/ai/adapters/*` 支持 Transformers.js / onnxruntime-node，与占位实现共享降级路径，并将构建摘要写入 `docs/public/data/*.json`。
+- Backend/Frontend 分层试运行：新增 `packages/backend`（暴露 pagegen/AI/GraphRAG 脚本）与 `packages/shared`（共享 telemetry 常量），`npm run artifacts:sync` 用于将 backend 产物复制到前端；CI 已拆为 backend → frontend → deploy 三段，前端 job 会下载 `backend-data` artifact 并构建静态站点。
 - **近期交付摘要**：
   - 🧩 局部重建实验：`scripts/pagegen/sync.mjs`、`scripts/pagegen/collect.mjs` 与 orchestrator 现联动 Git 快照与缓存命中率，默认增量流程在多语言目录下跑通，并补齐运行指引。
   - 📈 指标时间序列基线：`node scripts/telemetry-merge.mjs` 已将阶段指标写入带时间戳的 `data/telemetry.json`，路线图与文档同步记录导出路径。
@@ -257,6 +258,7 @@ npm run graphrag:retrieve -- --mode hybrid --input hybrid.example.json --pretty
 > 以下清单同步自仓库根部的 `AGENTS.md`，便于贡献者在不离开 README 的情况下快速了解约束与常用命令。
 
 - **角色与脚本管线**：通过 `codex run <task>` 调用 `.codex/*.mjs` 中的脚本，涵盖 `plan`、`precheck`、`gen`、`build`、`deploy`、`audit` 等角色；`publish` 会串联 tags 规范化 → precheck → ai:prepare → ai:smoke → gen → build → git 推送。
+- **CI 分层与产物同步**：主线 CI 拆为 backend → frontend → deploy，backend job 生成 `packages/backend/dist/data` 并上传 `backend-data` artifact，frontend job 下载后执行 `npm run artifacts:sync` 再构建；本地若需复现，可先 `npm run gen && npm run artifacts:sync` 再 build。
 - **内容统计守门**：CI 在 `npm run test:pagegen` 后追加 `node scripts/stats-lint.mjs`，同时上传 `data/stats.snapshot.json` 作为工件，便于观察分类/标签分布的阶段变化。
 - **本地预检**：安装依赖后会自动执行 `husky install`，现有的 `pre-commit` 钩子会调用 `lint-staged`，针对提交的 Markdown 运行 `npm run md:lint`。如需跳过，可在本地使用 `HUSKY=0 git commit ...`。
 - **环境要求**：Node ≥ 22、npm ≥ 10、git ≥ 2.45，`.env` 需包含 `BASE=/ling-atlas/`、`SITE_ORIGIN=https://<user>.github.io/ling-atlas`、`GIT_REMOTE=origin`、`GIT_BRANCH=main`。
