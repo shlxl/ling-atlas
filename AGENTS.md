@@ -91,6 +91,7 @@ codex run publish --message "chore: content update"
 codex run dev
 codex run audit   # 可选
 npm run stats:lint
+npm run artifacts:sync   # 将 backend 产物同步到前端目录（CI frontend job 已默认调用）
 npm run ai:prepare
 npm run ai:smoke
 node --test tests/pagegen/plugin-example.integration.test.mjs
@@ -171,6 +172,7 @@ node --test tests/pagegen/plugin-cli.integration.test.mjs
 - ✅ **Pagegen 深入检查**：`docs/zh/plans/pagegen-deep-dive.md` 与 orchestrator 契约说明已对齐，metrics/日志/集成测试缺口完成收敛，并补强导航与 i18n 预检用例。
 - ✅ **多语言内容统计**：`npm run stats:lint` 现按语言聚合分类/标签，CI 已提交 `data/stats.snapshot.json` 工件，可长期观察内容演进；README/协作清单已同步新增命令说明。
 - ✅ **局部重建实验完成**：`scripts/pagegen/sync.mjs`、`scripts/pagegen/collect.mjs` 与 orchestrator 串联 Git 快照与缓存命中信息，默认增量流程已在多语言目录验证通过，并补齐运行指引。
+- ✅ **CI 分层试运行**：`.github/workflows/ci.yml` 已拆分 backend/frontend/deploy 三段。Backend job 负责 gen/AI/GraphRAG 守门并上传 `backend-data` artifact（`packages/backend/dist/data`），Frontend job 下载后执行 `npm run artifacts:sync`、`npm run build:search` 并上传 Pages artifact，Deploy 仅在 main 推送触发。后续如调整产物路径请同步更新 `artifacts:sync` 与 workflow。
 - ✅ **指标时间序列基线已建立**：`node scripts/telemetry-merge.mjs` 会把最新阶段指标写入 `data/telemetry.json` 并带时间戳，README/路线图同步记录导出步骤，形成可追溯快照。
 - ✅ **AI 产出质量评测蓝本到位**：基准集整理于 `data/gold.jsonl`，`npm run ai:smoke` 在 placeholder 运行时会读取并输出跳过日志，评测指标方案写入规划文档供后续接入。
 - ✅ **AI 遥测与生命周期守门合流**：`scripts/telemetry-merge.mjs` 现输出带版本的 `build.ai` 摘要节点，`codex run publish` / `npm run build` 默认串联 `ai:prepare` → `ai:smoke`，失败会在 manifest 中记录降级原因。

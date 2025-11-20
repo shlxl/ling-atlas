@@ -3,5 +3,9 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
-  "description": "Shared schema/types/contracts for frontend/backend (stub for workspace split)."
+  "description": "Shared schema/types/contracts for frontend/backend (stub for workspace split).",
+  "exports": {
+    ".": "./src/index.mjs",
+    "./telemetry/constants": "./src/telemetry/constants.mjs"
+  }
 }

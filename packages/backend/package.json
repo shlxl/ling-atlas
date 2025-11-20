@@ -4,6 +4,9 @@
   "version": "0.0.0",
   "type": "module",
   "description": "Pagegen/AI/GraphRAG scripts and data artifact build pipeline (stub for workspace split).",
+  "dependencies": {
+    "@ling-atlas/shared": "file:../shared"
+  },
   "exports": {
     "./telemetry/merge": "./src/telemetry/merge.mjs",
     "./graphrag/guard-utils": "./src/graphrag/guard-utils.mjs",
