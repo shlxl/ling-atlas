@@ -26,6 +26,7 @@ async function main() {
   installEpipeHandlers()
   configureOrtLogging('4')
   const scriptStartedAt = Date.now()
+  const runtime = String(process.env.AI_RUNTIME || 'placeholder').toLowerCase()
   const preferredLocale = getPreferredLocale()
   const preferredLocaleConfig =
     LOCALE_REGISTRY.find(locale => locale.code === preferredLocale) || LOCALE_REGISTRY[0]
@@ -38,7 +39,10 @@ async function main() {
   const documents = await collectLocaleDocuments(preferredLocaleConfig)
   await ensureDir(OUTPUT_DIR)
 
-  const defaultSpec = 'transformers-node:Xenova/distilbart-cnn-12-6'
+  const defaultSpec =
+    runtime && runtime !== 'placeholder' && runtime !== 'none'
+      ? 'transformers-node:Xenova/distilbart-cnn-12-6'
+      : 'placeholder'
   const spec = resolveAdapterSpec({ envKey: 'AI_SUMMARY_MODEL', cliFlag: 'adapter' }) || defaultSpec
   const previous = await readJSONIfExists(OUTPUT_FILE)
 
