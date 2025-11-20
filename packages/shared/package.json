@@ -5,7 +5,9 @@
   "type": "module",
   "description": "Shared schema/types/contracts for frontend/backend (stub for workspace split).",
   "exports": {
-    ".": "./src/index.mjs",
-    "./telemetry/constants": "./src/telemetry/constants.mjs"
+    "./paths": "./src/paths.mjs",
+    "./contracts/manifest": "./src/contracts/manifest.mjs",
+    "./telemetry/constants": "./src/telemetry/constants.mjs",
+    ".": "./src/index.mjs"
   }
 }

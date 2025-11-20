@@ -3,5 +3,13 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
-  "description": "VitePress site and theme (stub for workspace split)."
+  "description": "VitePress site and theme (stub for workspace split).",
+  "dependencies": {
+    "@ling-atlas/shared": "file:../shared"
+  },
+  "scripts": {
+    "build": "node ./src/cli.mjs build",
+    "dev": "node ./src/cli.mjs dev",
+    "preview": "node ./src/cli.mjs preview"
+  }
 }

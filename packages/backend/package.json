@@ -5,7 +5,16 @@
   "type": "module",
   "description": "Pagegen/AI/GraphRAG scripts and data artifact build pipeline (stub for workspace split).",
   "dependencies": {
-    "@ling-atlas/shared": "file:../shared"
+    "@ling-atlas/shared": "file:../shared",
+    "globby": "^14.0.1"
+  },
+  "scripts": {
+    "gen": "node ./src/cli.mjs gen",
+    "build:data": "node ./src/cli.mjs build:data",
+    "ingest": "node ./src/cli.mjs ingest",
+    "ai:prepare": "node ./src/cli.mjs ai:prepare",
+    "ai:smoke": "node ./src/cli.mjs ai:smoke",
+    "artifacts:sync": "node ./src/cli.mjs artifacts:sync"
   },
   "exports": {
     "./telemetry/merge": "./src/telemetry/merge.mjs",

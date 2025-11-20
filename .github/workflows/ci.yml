@@ -29,6 +29,8 @@ jobs:
           node -v
           npm -v
       - run: npm ci
+      - name: Shared manifest contract lint
+        run: npm run shared:lint
       - name: 归一标签（非阻断）
         run: npm run tags:normalize
       - name: Frontmatter 校验（阻断）
@@ -86,13 +88,8 @@ jobs:
         run: ./node_modules/.bin/lhci autorun --collect.chromeFlags="--no-sandbox"
       - name: Merge telemetry data
         run: node scripts/telemetry-merge.mjs
-      - name: 准备 backend artifact 结构
-        run: |
-          mkdir -p packages/backend/dist/data
-          rsync -a docs/public/data/ packages/backend/dist/data/
-          if [ -d docs/public/.well-known ]; then
-            rsync -a docs/public/.well-known/ packages/backend/dist/data/.well-known/
-          fi
+      - name: 同步 backend 产物并生成 manifest
+        run: npm run backend:artifacts
       - name: 上传 backend artifact
         uses: actions/upload-artifact@v4
         with:
