@@ -5,7 +5,7 @@
   "type": "module",
   "description": "VitePress site and theme (stub for workspace split).",
   "dependencies": {
-    "@ling-atlas/shared": "workspace:*"
+    "@ling-atlas/shared": "file:../shared"
   },
   "scripts": {
     "build": "node ./src/cli.mjs build",
