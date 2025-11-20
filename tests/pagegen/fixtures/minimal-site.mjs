@@ -193,3 +193,11 @@ export async function pathExists(target) {
     return false
   }
 }
+
+export async function writePluginModule(root, filename, source) {
+  const pluginDir = path.join(root, 'scripts', 'pagegen', 'plugins')
+  await fs.mkdir(pluginDir, { recursive: true })
+  const target = path.join(pluginDir, filename)
+  await fs.writeFile(target, source, 'utf8')
+  return target
+}

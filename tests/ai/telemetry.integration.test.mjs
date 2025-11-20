@@ -127,6 +127,24 @@ test('ai events flushed and merged into telemetry snapshot', async t => {
     noopLogger
   )
 
+  const smokeTimestamp = new Date(Date.now() + 1000).toISOString()
+  await flushAIEvents(
+    'smoke',
+    [
+      {
+        event: 'ai.smoke.summary',
+        timestamp: smokeTimestamp,
+        runtime: 'placeholder',
+        status: 'passed',
+        executed: 2,
+        skipped: 0,
+        failed: 0,
+        failures: []
+      }
+    ],
+    noopLogger
+  )
+
   const modelsDir = path.join(tmpRoot, 'data')
   await fs.mkdir(modelsDir, { recursive: true })
   const smokeManifest = {
@@ -188,6 +206,8 @@ test('ai events flushed and merged into telemetry snapshot', async t => {
   assert.equal(telemetry.build.ai.overview?.smoke?.status, 'passed')
   assert.equal(telemetry.build.ai.smoke?.summary?.status, 'passed')
   assert.equal(telemetry.build.ai.smoke?.summary?.executed, 2)
+  assert.equal(telemetry.build.ai.smoke?.summary?.runtime, 'placeholder')
+  assert.equal(telemetry.build.ai.smoke?.summary?.verifiedAt, smokeTimestamp)
   assert.ok(Array.isArray(telemetry.build.ai.smoke?.history))
   assert.ok((telemetry.build.ai.smoke?.history?.length ?? 0) >= 1)
   assert.equal(telemetry.build.ai.smoke?.history?.[0]?.status, 'passed')

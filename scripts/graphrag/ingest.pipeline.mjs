@@ -20,6 +20,7 @@ import {
   shouldProcessDoc,
   updateCacheEntry,
 } from './cache.mjs';
+import { evaluateNormalizationGuards } from './guard-utils.mjs';
 
 const VALUE_OPTIONS = new Map([
   ['--locale', 'locale'],
@@ -132,6 +133,7 @@ function createIngestTelemetryRecord({
   durationMs,
   written,
   dryRun,
+  guardAlerts
 }) {
   return {
     type: 'ingest',
@@ -165,6 +167,7 @@ function createIngestTelemetryRecord({
       written: Number(written ?? 0),
       cacheUpdated: !options.noCache && Number(written ?? 0) > 0,
     },
+    guardAlerts: Array.isArray(guardAlerts) ? guardAlerts : [],
   };
 }
 
@@ -424,6 +427,28 @@ async function main() {
   const relationshipNormalizationSummary = relationshipNormalizer?.getSummary?.();
   const objectNormalizationSummary = objectNormalizer?.getSummary?.();
 
+  const guardResult = evaluateNormalizationGuards(
+    [
+      { domain: 'entities', summary: entityNormalizationSummary },
+      { domain: 'relationships', summary: relationshipNormalizationSummary },
+      { domain: 'objects', summary: objectNormalizationSummary },
+    ],
+    {
+      mode: process.env.GRAPHRAG_GUARD_MODE || 'warn',
+      llmFailureThreshold: process.env.GRAPHRAG_GUARD_LLM_FAILURES,
+      fallbackThreshold: process.env.GRAPHRAG_GUARD_FALLBACKS,
+    }
+  )
+  for (const alert of guardResult.alerts) {
+    const prefix = alert.severity === 'error' ? '[guard:error]' : '[guard:warn]'
+    console[alert.severity === 'error' ? 'error' : 'warn'](
+      `${prefix} ${alert.message}`
+    )
+  }
+  if (!noWriteMode && guardResult.shouldFail) {
+    throw new Error('graphrag normalization guard triggered (LLM failures)')
+  }
+
   if (noWriteMode) {
     console.log(`[${scriptName}] dry-run/no-write 模式，跳过 Neo4j 写入`);
     const durationMs = Date.now() - startedAt;
@@ -460,6 +485,10 @@ async function main() {
       }
     }
 
+    if (guardResult.shouldFail) {
+      throw new Error('graphrag normalization guard triggered (LLM failures)')
+    }
+
     await recordTelemetrySafely(
       createIngestTelemetryRecord({
         options,
@@ -470,6 +499,7 @@ async function main() {
         durationMs,
         written: 0,
         dryRun: true,
+        guardAlerts: guardResult.alerts,
       }),
     );
 
@@ -605,6 +635,7 @@ async function main() {
       durationMs,
       written,
       dryRun: false,
+      guardAlerts: guardResult.alerts,
     }),
   );
 

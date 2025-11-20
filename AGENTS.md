@@ -94,6 +94,7 @@ npm run stats:lint
 npm run ai:prepare
 npm run ai:smoke
 node --test tests/pagegen/plugin-example.integration.test.mjs
+node --test tests/pagegen/plugin-cli.integration.test.mjs
 ```
 
 > 提示：`codex run build` 与 `codex run publish` 会自动执行 `npm run ai:prepare` / `npm run ai:smoke`，保证本地与 CI 的模型守门一致。
@@ -128,7 +129,7 @@ node --test tests/pagegen/plugin-example.integration.test.mjs
 - 构建阶段新增脚本：`node scripts/embed-build.mjs`（必跑，占位文本）、`node scripts/summary.mjs || true`、`node scripts/qa-build.mjs || true`，产物输出到 `docs/public/data/`。
 - 如本地尚未接入模型，脚本会退化为文本/元信息导出，不会阻塞构建；后续可替换为 Transformers.js / onnxruntime-node 编码器。
 - 前端可按需读取 `embeddings.json`、`summaries.json`、`qa.json`（例如搜索框或专门的问答页）；缺失时不影响正常渲染。
-- 脚本会在 `data/ai-events/` 写入 `ai.embed.*`、`ai.summary.*`、`ai.qa.*` 遥测事件，记录批次数量、推理/写入耗时、成功率与产物路径等信息；`node scripts/telemetry-merge.mjs` 会清理已消费的事件文件，并将结果聚合为与 `build.pagegen` 对齐的 `build.ai` 节点同步到 `docs/public/telemetry.json`。可通过 `AI_TELEMETRY_DISABLE=1` 临时停写事件，或设置 `AI_TELEMETRY_PATH=<dir>` 将事件重定向至指定目录（测试/沙箱场景）。
+- 脚本会在 `data/ai-events/` 写入 `ai.embed.*`、`ai.summary.*`、`ai.qa.*` 与 `ai.smoke.summary` 遥测事件，记录批次数量、推理/写入耗时、成功率、冒烟失败清单与产物路径；`node scripts/telemetry-merge.mjs` 会清理已消费的事件文件，并将结果聚合为与 `build.pagegen` 对齐的 `build.ai` 节点同步到 `docs/public/telemetry.json`。可通过 `AI_TELEMETRY_DISABLE=1` 临时停写事件，或设置 `AI_TELEMETRY_PATH=<dir>` 将事件重定向至指定目录（测试/沙箱场景）。
 - 适配器配置：通过环境变量 `AI_EMBED_MODEL`、`AI_SUMMARY_MODEL`（问答可用 `AI_QA_MODEL` 覆盖）或命令行参数 `--adapter <adapter>:<model>` 选择实现；默认或显式设置 `placeholder` 时沿用占位逻辑。
 - 依赖提示：`transformers-node` 适配器需要 `npm install @xenova/transformers` 并提前准备模型（默认缓存到 `~/.cache/huggingface/`，离线部署可设置 `TRANSFORMERS_CACHE`）；`onnxruntime` 适配器需要 `npm install onnxruntime-node`，并手动下载 `.onnx` 模型至本地可读目录。
 - 降级与缓存：脚本会输出 `ai.*.adapter.*` 结构化日志，记录解析、失败与成功事件；若适配器执行失败或产出为空，会自动回退到 placeholder 并复用上一版 JSON 产物，保障前端体验。
@@ -175,10 +176,13 @@ node --test tests/pagegen/plugin-example.integration.test.mjs
 - ✅ **AI 遥测与生命周期守门合流**：`scripts/telemetry-merge.mjs` 现输出带版本的 `build.ai` 摘要节点，`codex run publish` / `npm run build` 默认串联 `ai:prepare` → `ai:smoke`，失败会在 manifest 中记录降级原因。
 - ✅ **Pagegen 调度插件化落地**：调度器支持阶段并行覆盖（`--parallel-stage feeds=4` / `PAGEGEN_PARALLEL_STAGES`），`--plugin` / `PAGEGEN_PLUGINS` 可注入自定义阶段，`--no-plugins` 与 `--ignore-plugin-errors` 提供回退；metrics 额外写出 `scheduler` 与 `plugins` 摘要。
 - 📌 **下一阶段重点**：
-  1. 扩展 `ai:smoke` 结果写入 telemetry，生成结构化失败清单并与 `build.ai` 打通。
-  2. 产出官方 Pagegen 插件示例与端到端用例，完善 `--plugin` 协议与回滚测试夹具。
-  3. 更新协作手册与 README，汇总并发覆盖、插件加载 与 AI 守门的运维/回退案例。
-- **执行顺序建议**：先完成 1（把冒烟结果接入 telemetry 与降级链路）→ 2（在指标到位后补强插件示例与测试）→ 3（功能稳定后统一文档与运维手册）。
+  1. ✅ 扩展 `ai:smoke` 结果写入 telemetry，生成结构化失败清单并与 `build.ai` 打通（telemetry-merge 读取 smoke 事件并合流 manifest）。
+  2. ✅ 产出官方 Pagegen 插件示例与端到端用例（含 CLI 覆盖、`--ignore-plugin-errors` 回退链路），完善 `--plugin` 协议与回滚测试夹具。
+  3. ✅ 更新协作手册与 README，汇总并发覆盖、插件加载 与 AI 守门的运维/回退案例。
+  4. ✅ GraphRAG 归一化告警：telemetry-merge 聚合实体/关系/属性的 LLM 失败、全量回退、别名缺失等信息，Telemetry 页面同步展示警告。
+- ⚙️ GraphRAG 告警阈值：`GRAPHRAG_WARN_LLM_FAILURE_ERROR`（默认 3，达到则标记 error 级告警），`GRAPHRAG_WARN_FALLBACK_WARNING`（默认 10，回退数量达到则升级为 warning，低于则为 info）。
+- 🧪 GraphRAG 归一化守门：`GRAPHRAG_GUARD_MODE=warn|fail|off`（默认 warn），`GRAPHRAG_GUARD_LLM_FAILURES`（默认 50）、`GRAPHRAG_GUARD_FALLBACKS`（默认 100）；guard 触发会写入 ingest telemetry 的 `guardAlerts`，fail 模式下触发 error 会直接退出流水线。
+- **执行顺序建议**：已完成 1/2/3/4；后续可聚焦 GraphRAG 三元组告警细化、评测阈值与回滚案例沉淀。
 - ✅ **导航配置引用守门**：`scripts/validate-nav-config.mjs` 与 `scripts/pagegen.locales.mjs` 现会校验 `aggregates`、`sections`、`links` 的引用关系，运行前即可捕获缺失键，Pagegen orchestrator 中的 nav manifest 也会提示未映射的聚合键。
 - ✅ **导航与 i18n 预检显式化**：i18n registry 与导航配置加载过程会在 manifestKey/slug 缺失时即时抛错，`normalizeAggregates` 等关键路径同步补强定位信息，对应单测已覆盖误删/拼写错误场景。
 - ✅ **Pagegen 指标可观测性**：collect 阶段输出缓存命中率、解析错误摘要；feeds 阶段记录各语言 RSS/Sitemap 数量并写入 metrics JSON，CLI/Telemetry 同步展示缓存命中与写入跳过统计，并新增 `scheduler` / `plugins` 摘要可追踪并发设置与插件状态，dry-run/CI 可直接观察。

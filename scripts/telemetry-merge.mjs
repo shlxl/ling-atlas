@@ -9,6 +9,18 @@ const AI_DOMAINS = ['embed', 'summary', 'qa']
 
 const MAX_SMOKE_HISTORY = 5
 
+const DEFAULT_GRAPHRAG_THRESHOLDS = {
+  llmFailureError: 3,
+  fallbackWarning: 10
+}
+
+const SMOKE_EVENT_SCHEMA = {
+  required: ['timestamp', 'status'],
+  numeric: ['executed', 'skipped', 'failed'],
+  boolean: [],
+  optional: ['runtime', 'reason', 'verifiedAt', 'failures']
+}
+
 const AI_EVENT_SCHEMA = {
   start: {
     required: ['timestamp', 'inputCount'],
@@ -117,6 +129,50 @@ function validateAIEvent(domain, event, logger) {
   }
 
   for (const field of schema.boolean || []) {
+    if (event[field] === undefined) continue
+    event[field] = Boolean(event[field])
+  }
+
+  return true
+}
+
+function validateSmokeEvent(event, logger) {
+  if (!event || typeof event !== 'object') {
+    logger?.warn?.('[telemetry] skip invalid smoke event: non-object payload')
+    return false
+  }
+
+  if (typeof event.event !== 'string' || event.event !== 'ai.smoke.summary') {
+    logger?.warn?.('[telemetry] skip smoke event with unsupported name')
+    return false
+  }
+
+  if (!isValidTimestamp(event.timestamp)) {
+    logger?.warn?.('[telemetry] skip smoke event: invalid timestamp')
+    return false
+  }
+
+  const missing = (SMOKE_EVENT_SCHEMA.required || []).filter(field => event[field] === undefined)
+  if (missing.length) {
+    logger?.warn?.(
+      `[telemetry] skip smoke event: missing required field(s) ${missing.join(', ')}`
+    )
+    return false
+  }
+
+  for (const field of SMOKE_EVENT_SCHEMA.numeric || []) {
+    if (event[field] === undefined) continue
+    const coerced = coerceNumber(event[field])
+    if (coerced === null) {
+      logger?.warn?.(
+        `[telemetry] skip smoke event: field "${field}" should be numeric`
+      )
+      return false
+    }
+    event[field] = coerced
+  }
+
+  for (const field of SMOKE_EVENT_SCHEMA.boolean || []) {
     if (event[field] === undefined) continue
     event[field] = Boolean(event[field])
   }
@@ -360,6 +416,7 @@ async function collectAIEvents({ root, logger }) {
   }
 
   const grouped = new Map()
+  const smokeEvents = []
   const processedFiles = []
 
   for (const entry of entries) {
@@ -388,6 +445,19 @@ async function collectAIEvents({ root, logger }) {
       continue
     }
 
+    if (domain === 'smoke') {
+      const validSmokeEvents = events.filter(evt => validateSmokeEvent(evt, logger))
+      if (validSmokeEvents.length) {
+        smokeEvents.push(...validSmokeEvents)
+      } else {
+        logger?.warn?.(
+          `[telemetry] skip smoke event file ${entry.name}: no events passed schema validation`
+        )
+      }
+      processedFiles.push(filePath)
+      continue
+    }
+
     const validEvents = events.filter(evt => validateAIEvent(domain, evt, logger))
     if (!validEvents.length) {
       logger?.warn?.(
@@ -407,7 +477,7 @@ async function collectAIEvents({ root, logger }) {
     processedFiles.map(file => fs.unlink(file).catch(() => {}))
   )
 
-  return grouped
+  return { aiEvents: grouped, smokeEvents }
 }
 
 function computeSuccessRate(outputCount, inputCount) {
@@ -607,6 +677,87 @@ function resolveOverallStatus(counts) {
   return 'ok'
 }
 
+function sanitizeSmokeSummaryEntry(entry = {}) {
+  if (!entry || typeof entry !== 'object') return null
+  const verifiedAt = entry.verifiedAt ?? entry.timestamp ?? null
+  return {
+    status: entry.status ?? 'unknown',
+    runtime: entry.runtime ?? null,
+    executed: Number(entry.executed ?? 0),
+    skipped: Number(entry.skipped ?? 0),
+    failed: Number(entry.failed ?? 0),
+    verifiedAt,
+    reason: entry.reason ?? null,
+    failures: Array.isArray(entry.failures)
+      ? entry.failures.map(item => ({
+          id: item?.id ?? item?.modelId ?? null,
+          reason: item?.reason ?? null
+        }))
+      : []
+  }
+}
+
+function summarizeSmokeEvents(events = []) {
+  if (!Array.isArray(events) || !events.length) return null
+  const sanitized = events
+    .map(event => sanitizeSmokeSummaryEntry(event))
+    .filter(Boolean)
+    .sort((a, b) => {
+      const timeA = a?.verifiedAt ? Date.parse(a.verifiedAt) : 0
+      const timeB = b?.verifiedAt ? Date.parse(b.verifiedAt) : 0
+      return timeB - timeA
+    })
+
+  if (!sanitized.length) return null
+  const summary = sanitized[0]
+  const history = sanitized.slice(0, MAX_SMOKE_HISTORY)
+
+  return { summary, history }
+}
+
+function pickLatestSmokeSummary(...summaries) {
+  const list = summaries
+    .flat()
+    .filter(Boolean)
+    .sort((a, b) => {
+      const tsA = a?.verifiedAt ? Date.parse(a.verifiedAt) : 0
+      const tsB = b?.verifiedAt ? Date.parse(b.verifiedAt) : 0
+      return tsB - tsA
+    })
+  return list[0] ?? null
+}
+
+function mergeSmokeTelemetry(manifestSmoke, smokeEvents) {
+  const base = manifestSmoke
+    ? { ...manifestSmoke }
+    : { summary: null, models: [], runtime: null, fallback: null, generatedAt: null, history: [] }
+
+  const eventsSummary = summarizeSmokeEvents(smokeEvents)
+  const summary = pickLatestSmokeSummary(eventsSummary?.summary, base.summary)
+
+  const combinedHistory = []
+  if (eventsSummary?.history) combinedHistory.push(...eventsSummary.history)
+  if (Array.isArray(base.history)) combinedHistory.push(...base.history)
+
+  const history = combinedHistory
+    .filter(Boolean)
+    .sort((a, b) => {
+      const tsA = a?.verifiedAt ? Date.parse(a.verifiedAt) : 0
+      const tsB = b?.verifiedAt ? Date.parse(b.verifiedAt) : 0
+      return tsB - tsA
+    })
+    .slice(0, MAX_SMOKE_HISTORY)
+
+  return {
+    summary,
+    models: base.models ?? [],
+    runtime: summary?.runtime ?? base.runtime ?? null,
+    fallback: base.fallback ?? null,
+    generatedAt: base.generatedAt ?? summary?.verifiedAt ?? null,
+    history
+  }
+}
+
 function updateAIOverview(state, options = {}) {
   const normalized = normalizeAIState(state)
   const smokeSummary = options?.smoke?.summary || options?.smoke || null
@@ -772,6 +923,14 @@ async function loadLatestGraphragSummary(root) {
 function computeGraphragWarnings(summary = {}) {
   const warnings = []
   if (!summary || typeof summary !== 'object') return warnings
+  const thresholds = {
+    llmFailureError: Number.isFinite(Number(process.env.GRAPHRAG_WARN_LLM_FAILURE_ERROR))
+      ? Number(process.env.GRAPHRAG_WARN_LLM_FAILURE_ERROR)
+      : DEFAULT_GRAPHRAG_THRESHOLDS.llmFailureError,
+    fallbackWarning: Number.isFinite(Number(process.env.GRAPHRAG_WARN_FALLBACK_WARNING))
+      ? Number(process.env.GRAPHRAG_WARN_FALLBACK_WARNING)
+      : DEFAULT_GRAPHRAG_THRESHOLDS.fallbackWarning
+  }
 
   function addWarning({ scope, message, severity = 'warning', timestamp }) {
     warnings.push({
@@ -790,6 +949,16 @@ function computeGraphragWarnings(summary = {}) {
       severity: 'error',
       timestamp: ingest.timestamp
     })
+  }
+  if (Array.isArray(ingest?.guardAlerts)) {
+    for (const alert of ingest.guardAlerts) {
+      addWarning({
+        scope: alert.scope || 'ingest.guard',
+        message: alert.message || 'GraphRAG 归一化守门触发',
+        severity: alert.severity === 'error' ? 'error' : 'warning',
+        timestamp: alert.timestamp || ingest?.timestamp
+      })
+    }
   }
 
   const retrieve = summary.retrieve
@@ -836,19 +1005,48 @@ function computeGraphragWarnings(summary = {}) {
         timestamp: record.timestamp
       })
     }
-    if ((record.llm?.failures ?? 0) > 0) {
+    const failures = Number(record.llm?.failures ?? 0)
+    if (failures > 0) {
       addWarning({
         scope,
-        message: `${label}阶段 LLM 失败 ${record.llm.failures} 次，请检查模型/密钥。`,
+        message: `${label}阶段 LLM 失败 ${failures} 次，请检查模型/密钥。`,
+        severity: failures >= thresholds.llmFailureError ? 'error' : 'warning',
+        timestamp: record.timestamp
+      })
+    }
+    const fallbackCount = Number(record.sources?.fallback ?? 0)
+    if (fallbackCount > 0) {
+      addWarning({
+        scope,
+        message: `${label}仍有 ${fallbackCount} 条回退到原始类型，请补充别名或缓存。`,
+        severity: fallbackCount >= thresholds.fallbackWarning ? 'warning' : 'info',
+        timestamp: record.timestamp
+      })
+    }
+    if ((record.aliasEntries ?? 0) === 0) {
+      addWarning({
+        scope,
+        message: `${label}未配置别名表，可能导致归一化命中率过低。`,
         severity: 'warning',
         timestamp: record.timestamp
       })
     }
-    if ((record.sources?.fallback ?? 0) > 0) {
+    const total = Number(record.totals?.total ?? 0)
+    const updated = Number(record.totals?.updated ?? 0)
+    if (record.enabled !== false && total > 0 && updated === 0) {
       addWarning({
         scope,
-        message: `${label}仍有 ${record.sources.fallback} 条回退到原始类型，请补充别名或缓存。`,
-        severity: 'info',
+        message: `${label}处理 ${total} 条但未成功更新，已全部回退，请检查日志与配置。`,
+        severity: 'warning',
+        timestamp: record.timestamp
+      })
+    }
+    const sampleFailures = Array.isArray(record.samples?.failures) ? record.samples.failures.length : 0
+    if (sampleFailures > 0) {
+      addWarning({
+        scope,
+        message: `${label}存在 ${sampleFailures} 条失败样例，请检查别名/模型结果。`,
+        severity: 'warning',
         timestamp: record.timestamp
       })
     }
@@ -896,22 +1094,16 @@ export async function mergeTelemetry({ root = process.cwd(), logger = console } 
 
   state.build.ai = normalizeAIState(state.build.ai)
 
-  const aiGrouped = await collectAIEvents({ root, logger })
-  if (aiGrouped.size > 0) {
-    state.build.ai = mergeAIState(state.build.ai, aiGrouped, logger)
+  const { aiEvents = new Map(), smokeEvents = [] } = (await collectAIEvents({ root, logger })) || {}
+  if (aiEvents.size > 0) {
+    state.build.ai = mergeAIState(state.build.ai, aiEvents, logger)
   }
 
   const modelSmoke = await loadModelSmokeSummary(root, logger)
+  const mergedSmoke = mergeSmokeTelemetry(modelSmoke, smokeEvents)
 
-  state.build.ai = updateAIOverview(state.build.ai, { smoke: modelSmoke })
-  state.build.ai.smoke = {
-    summary: modelSmoke?.summary ?? null,
-    models: modelSmoke?.models ?? [],
-    runtime: modelSmoke?.runtime ?? null,
-    fallback: modelSmoke?.fallback ?? null,
-    generatedAt: modelSmoke?.generatedAt ?? null,
-    history: modelSmoke?.history ?? []
-  }
+  state.build.ai = updateAIOverview(state.build.ai, { smoke: mergedSmoke })
+  state.build.ai.smoke = mergedSmoke
   logAIOverview(state.build.ai, logger)
 
   const graphragSummary = await loadLatestGraphragSummary(root)

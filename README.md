@@ -79,6 +79,7 @@ DEEPSEEK_TEMPERATURE=0.2
 - `npm run gen -- --parallel-stage feeds=4`：覆盖特定阶段的并发度，也可设置 `PAGEGEN_PARALLEL_STAGES=feeds=4,collect=off`
 - `npm run gen -- --plugin ./scripts/pagegen/plugins/example.mjs`：加载示例插件，运行后会在 `data/pagegen-plugin.example.json` 输出调度摘要；使用 `--no-plugins` 或 `PAGEGEN_DISABLE_PLUGINS=1` 可回退默认管线
 - `npm run test:pagegen`：运行 Pagegen 模块单元测试 + 集成测试（含 nav manifest 输出与聚合产物核对）
+- `node --test tests/pagegen/plugin-cli.integration.test.mjs`：验证 Pagegen CLI 插件链路（成功写报表、插件报错退出、`--ignore-plugin-errors` 回退）
 - `npm run test:links`：基于临时站点夹具运行链接巡检，覆盖 Markdown、nav manifest、i18n map 成功与失败场景
 - `npm run stats:lint`：按语言统计分类/标签，控制台输出 TopN 并写入 `data/stats.snapshot.json`，CI 会上传该快照方便历史对比
 - `npm run stats:diff -- --baseline <ref:path|file> [--current <file>]`：对比两份分类/标签快照，输出高于阈值的差异（默认 warn≥30%、fail≥60%）；未显式指定时会尝试从 git 历史（`origin/main`、`HEAD^` 等）寻找 baseline，若无法定位则打印提示并跳过对比
@@ -238,15 +239,18 @@ npm run graphrag:retrieve -- --mode hybrid --input hybrid.example.json --pretty
   - 🧩 局部重建实验：`scripts/pagegen/sync.mjs`、`scripts/pagegen/collect.mjs` 与 orchestrator 现联动 Git 快照与缓存命中率，默认增量流程在多语言目录下跑通，并补齐运行指引。
   - 📈 指标时间序列基线：`node scripts/telemetry-merge.mjs` 已将阶段指标写入带时间戳的 `data/telemetry.json`，路线图与文档同步记录导出路径。
   - 🤖 AI 质量评测蓝本：评测基准集写入 `data/gold.jsonl`，`npm run ai:smoke` 会读取基线并在 placeholder 模式输出跳过日志，形成后续守门的设计基础。
-  - 🔌 Pagegen 插件示例：新增 `scripts/pagegen/plugins/example.mjs` 与 `node --test tests/pagegen/plugin-example.integration.test.mjs`，演示如何在管线末尾输出调度摘要并校验回退行为。
+  - 🔌 Pagegen 插件示例/端到端：`scripts/pagegen/plugins/example.mjs` 搭配 `tests/pagegen/plugin-example.integration.test.mjs`、`tests/pagegen/plugin-cli.integration.test.mjs`，覆盖调度摘要写入、插件报错失败退出与 `--ignore-plugin-errors` 回退链路。
   - 🛰️ 调度插件化：`scripts/pagegen/plugin-registry.mjs` / `scheduler.mjs` 支持 `--parallel-stage`、`--plugin`、`--no-plugins` 等覆盖，metrics 新增 `scheduler` 与 `plugins` 摘要。
-  - 🛡️ AI 守门串联：`npm run build` / `codex run publish` 默认执行 `ai:prepare` → `ai:smoke`，`build.ai` 节点带 schema 版本与 overview，失败时自动写入回退原因。
+  - 🛡️ AI 守门串联：`npm run build` / `codex run publish` 默认执行 `ai:prepare` → `ai:smoke`，并将 smoke 事件与 manifest 合并进 `build.ai` 概览（带 schema 版本、失败清单与回退原因）。
+  - 🕸️ GraphRAG 告警：`scripts/telemetry-merge.mjs` 聚合实体/关系/属性归一化的 LLM 失败、全量回退、别名缺失等指标，Telemetry 页面显示对应警告。
+    - 阈值可调：`GRAPHRAG_WARN_LLM_FAILURE_ERROR`（默认 3，达到即标记 error 级）、`GRAPHRAG_WARN_FALLBACK_WARNING`（默认 10，回退数达到则 warning，否则 info）。
+    - 守门可调：`GRAPHRAG_GUARD_MODE=warn|fail|off`（默认 warn）；`GRAPHRAG_GUARD_LLM_FAILURES`（默认 50）、`GRAPHRAG_GUARD_FALLBACKS`（默认 100），超阈值会写入 ingest telemetry `guardAlerts`，fail 模式下直接中止。
 - 下一阶段重点：
-  1. 📊 将 scheduler / AI 指标接入站点 Telemetry 页面，补齐可视化与阈值告警脚本。
-  2. 🔌 产出官方 Pagegen 插件示例与端到端用例，完善 `--plugin` 协议与回滚测试夹具。
-  3. 🧪 扩展 `ai:smoke` 结果写入 telemetry，生成结构化失败清单并与 `build.ai` 打通。
-  4. 📚 更新协作手册，汇总并发覆盖、插件加载与 AI 守门的运维/回退案例，使 README、AGENTS 与规划文档保持一致。
-- 执行顺序建议：先完成 1（先补齐可观测面板再推进依赖任务）→ 3（把冒烟结果接入 telemetry 与降级链路）→ 2（在指标到位后补强插件示例与测试）→ 4（功能稳定后统一文档）。
+  1. ✅ 扩展 `ai:smoke` 结果写入 telemetry，生成结构化失败清单并与 `build.ai` 打通。
+  2. ✅ 将 scheduler / AI 指标接入站点 Telemetry 页面，补齐可视化与阈值告警脚本。
+  3. ✅ 产出官方 Pagegen 插件示例与端到端用例，完善 `--plugin` 协议与回滚测试夹具（含 CLI 回退）。
+  4. ✅ 补充协作手册，汇总并发覆盖、插件加载与 AI 守门的运维/回退案例；GraphRAG 归一化告警已在 telemetry 与前端展示。
+- 执行顺序建议：后续可聚焦 GraphRAG 三元组告警细化与评测阈值、更多插件场景沉淀。
 
 ## 协作约束速查
 

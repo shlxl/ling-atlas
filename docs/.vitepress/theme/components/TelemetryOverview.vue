@@ -1838,6 +1838,16 @@ function evaluateAlerts(snapshot: TelemetryData, currentLocale: 'zh' | 'en', cur
     }
   }
 
+  const graphragWarnings = snapshot.build?.graphrag?.warnings || []
+  for (const warn of graphragWarnings) {
+    const level = (warn.severity || '').toLowerCase() === 'error' ? 'danger' : 'warning'
+    list.push({
+      level: level as 'warning' | 'danger',
+      message: warn.message || (currentLocale === 'en' ? 'GraphRAG warning' : 'GraphRAG 告警'),
+      detail: warn.scope || warn.timestamp || undefined
+    })
+  }
+
   return list
 }
 

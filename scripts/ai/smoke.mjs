@@ -2,7 +2,7 @@ import fs from 'node:fs/promises'
 import path from 'node:path'
 import os from 'node:os'
 import { fileURLToPath } from 'node:url'
-import { readJSONIfExists, logStructured } from './utils.mjs'
+import { readJSONIfExists, logStructured, flushAIEvents } from './utils.mjs'
 
 const MAX_SMOKE_HISTORY = 5
 
@@ -178,6 +178,20 @@ async function main() {
     }
 
     await fs.writeFile(MANIFEST_PATH, `${JSON.stringify(updatedManifest, null, 2)}\n`, 'utf8')
+
+    await flushAIEvents('smoke', [
+      {
+        event: 'ai.smoke.summary',
+        timestamp: updatedManifest.smoke.verifiedAt,
+        runtime,
+        status: updatedManifest.smoke.status,
+        executed: updatedManifest.smoke.executed,
+        skipped: updatedManifest.smoke.skipped,
+        failed: updatedManifest.smoke.failed,
+        reason: updatedManifest.smoke.reason,
+        failures: updatedManifest.smoke.failures
+      }
+    ]).catch(() => {})
 
     logStructured('ai.models.smoke.skipped', {
       runtime,
@@ -399,6 +413,20 @@ async function main() {
   }
 
   await fs.writeFile(MANIFEST_PATH, `${JSON.stringify(updatedManifest, null, 2)}\n`, 'utf8')
+
+  await flushAIEvents('smoke', [
+    {
+      event: 'ai.smoke.summary',
+      timestamp: summary.verifiedAt,
+      runtime: summary.runtime,
+      status: summary.status,
+      executed: summary.executed,
+      skipped: summary.skipped,
+      failed: summary.failed,
+      reason: summary.reason,
+      failures: failureDetails
+    }
+  ]).catch(() => {})
 
   if (failed > 0) {
     throw new Error(`Smoke tests failed for: ${failedIds.join(', ')}`)
