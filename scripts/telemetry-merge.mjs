@@ -8,6 +8,8 @@ import {
   resolveNumberEnv
 } from '../packages/shared/src/telemetry/constants.mjs'
 
+export { AI_TELEMETRY_SCHEMA_VERSION } from '../packages/shared/src/telemetry/constants.mjs'
+
 const TOP_LIMIT = 100
 
 const AI_DOMAINS = ['embed', 'summary', 'qa']

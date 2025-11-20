@@ -44,6 +44,11 @@ async function main() {
 
   const events = []
 
+  const skipSummary =
+    String(process.env.AI_RUNTIME || '').toLowerCase() === 'placeholder' ||
+    String(process.env.AI_SUMMARY_DISABLE || '').toLowerCase() === '1' ||
+    String(spec || '').toLowerCase() === 'placeholder'
+
   events.push(
     logStructured(
       'ai.summary.start',
@@ -55,6 +60,50 @@ async function main() {
       console
     )
   )
+
+  if (skipSummary) {
+    const nowTs = new Date().toISOString()
+    events.push(
+      logStructured(
+        'ai.summary.adapter.resolved',
+        {
+          requested: spec || 'placeholder',
+          adapter: 'placeholder',
+          model: null,
+          fallback: true,
+          reason: 'summary disabled or placeholder runtime'
+        },
+        console
+      )
+    )
+    events.push(
+      logStructured(
+        'ai.summary.complete',
+        {
+          adapter: 'placeholder',
+          model: null,
+          fallback: true,
+          cacheReuse: true,
+          count: 0,
+          inputCount: documents.length,
+          outputCount: 0,
+          successRate: 1,
+          totalMs: 0,
+          inferenceMs: 0,
+          writeMs: 0,
+          target: OUTPUT_FILE,
+          batchCount: 0,
+          retries: 0,
+          timestamp: nowTs
+        },
+        console
+      )
+    )
+
+    await flushAIEvents('summary', events, console)
+    console.warn('[summary] 已跳过摘要生成（placeholder/runtime disabled），未产生新的摘要文件')
+    return
+  }
 
   let restoreOrt
   try {
