@@ -5,7 +5,8 @@ import path from 'node:path'
 import { test } from 'node:test'
 
 import { flushAIEvents } from '../../scripts/ai/utils.mjs'
-import { mergeTelemetry, AI_TELEMETRY_SCHEMA_VERSION } from '../../scripts/telemetry-merge.mjs'
+import { AI_TELEMETRY_SCHEMA_VERSION } from '../../packages/shared/src/telemetry/constants.mjs'
+import { mergeTelemetry } from '../../scripts/telemetry-merge.mjs'
 
 const noopLogger = { log() {}, warn() {}, error() {} }
 

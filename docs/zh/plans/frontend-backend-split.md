@@ -11,6 +11,7 @@ title: 前后端拆分规划（草案）
 
 - 数据产物：`docs/public/data/*.json`（telemetry / embeddings / summaries / qa / i18n-map / nav.manifest.*）、GraphRAG Explorer/Export JSON、`/api/knowledge.json`。
 - 配置/Schema：`schema/locales.json`、`schema/nav.json`、frontmatter schema、telemetry `build.*` JSON 结构。
+- 共享包：`packages/shared` 暴露 telemetry/guard 常量，后续会汇总 schema/types 供前后端共用。
 - 环境变量：`BASE`、`SITE_ORIGIN`、Neo4j/AI 密钥、GraphRAG guard/env。
 
 ## 拆分路径（推荐）
