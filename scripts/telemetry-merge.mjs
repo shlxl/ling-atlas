@@ -1,18 +1,18 @@
 import fs from 'node:fs/promises'
 import path from 'node:path'
 
-const TOP_LIMIT = 100
+import {
+  AI_TELEMETRY_SCHEMA_VERSION,
+  DEFAULT_GRAPHRAG_WARN_FALLBACK_WARNING,
+  DEFAULT_GRAPHRAG_WARN_LLM_FAILURE_ERROR,
+  resolveNumberEnv
+} from '../packages/shared/src/telemetry/constants.mjs'
 
-export const AI_TELEMETRY_SCHEMA_VERSION = '2024-11-01'
+const TOP_LIMIT = 100
 
 const AI_DOMAINS = ['embed', 'summary', 'qa']
 
 const MAX_SMOKE_HISTORY = 5
-
-const DEFAULT_GRAPHRAG_THRESHOLDS = {
-  llmFailureError: 3,
-  fallbackWarning: 10
-}
 
 const SMOKE_EVENT_SCHEMA = {
   required: ['timestamp', 'status'],
@@ -924,12 +924,14 @@ function computeGraphragWarnings(summary = {}) {
   const warnings = []
   if (!summary || typeof summary !== 'object') return warnings
   const thresholds = {
-    llmFailureError: Number.isFinite(Number(process.env.GRAPHRAG_WARN_LLM_FAILURE_ERROR))
-      ? Number(process.env.GRAPHRAG_WARN_LLM_FAILURE_ERROR)
-      : DEFAULT_GRAPHRAG_THRESHOLDS.llmFailureError,
-    fallbackWarning: Number.isFinite(Number(process.env.GRAPHRAG_WARN_FALLBACK_WARNING))
-      ? Number(process.env.GRAPHRAG_WARN_FALLBACK_WARNING)
-      : DEFAULT_GRAPHRAG_THRESHOLDS.fallbackWarning
+    llmFailureError: resolveNumberEnv(
+      'GRAPHRAG_WARN_LLM_FAILURE_ERROR',
+      DEFAULT_GRAPHRAG_WARN_LLM_FAILURE_ERROR
+    ),
+    fallbackWarning: resolveNumberEnv(
+      'GRAPHRAG_WARN_FALLBACK_WARNING',
+      DEFAULT_GRAPHRAG_WARN_FALLBACK_WARNING
+    )
   }
 
   function addWarning({ scope, message, severity = 'warning', timestamp }) {

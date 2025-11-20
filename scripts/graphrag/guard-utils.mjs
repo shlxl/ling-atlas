@@ -1,5 +1,10 @@
-const DEFAULT_LLM_FAILURE_THRESHOLD = 50
-const DEFAULT_FALLBACK_THRESHOLD = 100
+import {
+  DEFAULT_GRAPHRAG_GUARD_FALLBACKS,
+  DEFAULT_GRAPHRAG_GUARD_LLM_FAILURES,
+  DEFAULT_GRAPHRAG_GUARD_MODE,
+  resolveNumberEnv,
+  resolveStringEnv
+} from '../../packages/shared/src/telemetry/constants.mjs'
 
 function toNumber(value, fallback) {
   const num = Number(value)
@@ -24,9 +29,9 @@ function normalizeSummaries(summaries = []) {
 export function evaluateNormalizationGuards(
   summaries,
   {
-    mode = process.env.GRAPHRAG_GUARD_MODE || 'warn',
-    llmFailureThreshold = toNumber(process.env.GRAPHRAG_GUARD_LLM_FAILURES, DEFAULT_LLM_FAILURE_THRESHOLD),
-    fallbackThreshold = toNumber(process.env.GRAPHRAG_GUARD_FALLBACKS, DEFAULT_FALLBACK_THRESHOLD)
+    mode = resolveStringEnv('GRAPHRAG_GUARD_MODE', DEFAULT_GRAPHRAG_GUARD_MODE),
+    llmFailureThreshold = resolveNumberEnv('GRAPHRAG_GUARD_LLM_FAILURES', DEFAULT_GRAPHRAG_GUARD_LLM_FAILURES),
+    fallbackThreshold = resolveNumberEnv('GRAPHRAG_GUARD_FALLBACKS', DEFAULT_GRAPHRAG_GUARD_FALLBACKS)
   } = {}
 ) {
   const normalized = normalizeSummaries(summaries)
