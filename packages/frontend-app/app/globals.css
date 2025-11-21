@@ -1,0 +1,24 @@
+/* 全局样式（Next App Router 级别） */
+body {
+  margin: 0;
+  background: #0f172a;
+  color: #e2e8f0;
+  font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+a {
+  color: #93c5fd;
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+h1, h2 {
+  margin: 0 0 0.5rem;
+}
+
+p {
+  margin: 0.25rem 0;
+}

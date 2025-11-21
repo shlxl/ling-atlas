@@ -1,0 +1,14 @@
+{
+  "name": "@ling-atlas/api",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "description": "Minimal API/BFF skeleton serving dist/data artifacts.",
+  "scripts": {
+    "start": "node server.mjs",
+    "api:start": "node server.mjs"
+  },
+  "dependencies": {
+    "@ling-atlas/shared": "file:../shared"
+  }
+}

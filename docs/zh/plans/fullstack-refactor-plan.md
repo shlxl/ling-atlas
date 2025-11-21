@@ -4,6 +4,16 @@ title: 前后端分离后的技术栈重构计划（去静态化版本）
 
 > 目标：在保留现有 Pagegen / AI / GraphRAG 成果的同时，摆脱以静态页面（VitePress + Vue）为中心的技术栈束缚，构建“数据驱动 + 可插拔前端”的演进式架构，支持 API 化交付、动态体验与多端复用。
 
+## 进度更新（2025-XX-XX）
+
+- ✅ 已完成：在 `@ling-atlas/shared` 定义数据 manifest 契约与 `validateManifest` / `getDataPath` helper，默认对齐 `packages/backend/dist/data`；backend README 已声明产物路径与契约。
+- ✅ 新增 `npm run backend:manifest`：将 nav/i18n/telemetry/pagegen/graphrag/AI 产物拷贝到 `packages/backend/dist/data/`，生成 `manifest.json` + `checksums.txt`（复用 shared 契约）。
+- ✅ `npm run build` 已串联 `backend:manifest`，本地/CI 构建默认产出 dist/data + manifest；新增 workspace 入口 `npm run backend:gen -w packages/backend`。
+- ✅ Pagegen nav/i18n/metrics 与 Telemetry merge 已在生成阶段同步写入 `packages/backend/dist/data`（统一用 `getDataPath`），减少二次拷贝。
+- ✅ AI 占位/摘要/QA 产物写入 `docs/public/data` 时同步落盘 dist/data；GraphRAG 遥测写入后同步 dist/data。
+- ✅ API 查询增强：search endpoint 支持标题优先、位置加权的多词匹配与高亮，graph doc 返回的 mermaid subgraph 解析为节点/边/标签/class 的结构化 JSON；Next Demo 页面已展示 Graph block（节点/边统计与示例）。
+- ⏳ 待完成：根级生成阶段写入 manifest/checksums 并上载 artifact，AI/GraphRAG 其他产出（如导出包）在生成时直接输出到 dist/data，CI 对接校验。
+
 ## 背景与新诉求
 
 - 当前代码仍以 VitePress 静态站点为核心，Pagegen/GraphRAG/AI 产物直接落到 `docs/_generated`，前端主题组件读取本地 JSON，未体现前后端分离后的 API/工件契约。
@@ -28,27 +38,38 @@ title: 前后端分离后的技术栈重构计划（去静态化版本）
 
 ### 阶段 0：基础对齐（最快 1 周）
 
-- 在 `packages/shared/src/contracts` 增加 manifest 定义：数据版本、生成时间、依赖 commit、产物清单（nav/i18n/Telemetry/GraphRAG/搜索）、签名哈希，提供 `validateManifest`。
-- 约定统一路径/命名：`dist/data/{nav,i18n,telemetry,graphrag,search}/`，并提供 `getDataPath(locale, kind)` helper。
-- 在根级 npm scripts 引入 workspace 调用：`npm run backend:gen -w packages/backend`、`npm run shared:lint -w packages/shared`，保留旧命令作为回退但标记为 deprecated。
+- ✅ 在 `packages/shared/src/contracts` 增加 manifest 定义与 `validateManifest`；提供 `getDataPath(locale, kind)`（默认指向 `packages/backend/dist/data`）。
+- ✅ 新增 `npm run backend:manifest`：当前从现有产物生成 `packages/backend/dist/data` + manifest/checksums，涵盖 nav/i18n/telemetry/pagegen/graphrag/AI。
+- ✅ `npm run build` 串联 `backend:manifest`，确保构建结束时默认写出 dist/data + manifest/checksums；提供 workspace 入口 `npm run backend:gen -w packages/backend`。
+- ✅ Pagegen 已在 nav manifest/i18n map/metrics 输出阶段同步写入 dist/data（getDataPath）；Telemetry merge 写出 dist/public/dist-data 三路。
+- ✅ AI （embeddings/summaries/qa）生成时同步写出 dist/data；GraphRAG metrics 写出后同步 dist/data。
+- ✅ CI backend job 改用 `npm run backend:manifest` 生成 dist/data + manifest，并新增 `shared:lint` 守门。
+- ✅ 前端数据访问层雏形：新增 `packages/frontend/src/data/fetchData.mjs`，按 kind/locale 统一从 dist/data/API 读取，预留 fallback。
+- ✅ GraphRAG metrics 与 docs/graph 导出产物纳入 dist/data 与 manifest，format 扩展支持 md/mmd；CI 下载 artifact 后校验 manifest/checksums。
+- ✅ i18n 文案与 search 产物（embeddings-texts/pagefind）纳入 dist/data 与 manifest，VitePress 构建优先读取 dist/data；EN nav 无内容时回退首选语言。
+- ✅ API skeleton：新增 `packages/api`，提供 `/api/nav/:locale`、`/api/i18n-map`、`/api/i18n`、`/api/telemetry`、`/api/manifest`，默认读取 `packages/backend/dist/data`。
+- ✅ API 查询增补：`/api/search`（含 `?q=` 简易检索）、`/api/search/pagefind`、`/api/graph`/`/api/graph/topn`，资产路径基于 manifest 动态解析，ETag/If-None-Match 支持。
+- ⏳ 约定统一路径/命名：`dist/data/{nav,i18n,telemetry,graphrag,search}/`，生成阶段直接写出并复用 helper（AI/GraphRAG 其他产物接线中，前端访问层接入/Next 示例待做）。
+  - 持续任务：API 补充 ETag/版本切换、搜索/GraphRAG 查询接口；前端（VitePress/Next）改用 `/api` base。
 
 ### 阶段 1：Backend 服务化与 API 发布（2–3 周）
 
-- 将 Pagegen/GraphRAG/AI 入口迁移到 `packages/backend/src`，拆分为“任务”模块，可通过 CLI/HTTP/BullMQ 触发；输出 manifest + 产物摘要。
-- 新建 `packages/api`（或 backend 子目录）实现：
-  - **静态文件分发**：读取 `dist/data`，支持 `ETag`/`Last-Modified`、范围读取与 gzip/br。
-  - **动态聚合接口**：如 `/nav/:locale`、`/search?q=`、`/graph/entities?id=`，添加速率限制与权限/签名开关。
-  - **回滚与版本选择**：根据 manifest version/commit 切换读取目录或对象存储前缀。
-- 在 CI 中新增 job：`backend:gen → api:publish(上传对象存储/edge KV) → 产物签名/缓存`，输出 artifact 与 manifest 校验报告。
+- ✅ API/BFF 雏形完成：`packages/api` 提供 nav/i18n/telemetry/manifest/search/pagefind/graph 资产读取，支持 ETag/If-None-Match，search 端支持 `q`+分页，graph doc 返回结构化 subgraph。
+- ✅ 前端默认走 `/api` 数据源（head 注入 DATA_BASE），localeMap/apiClient/fetchData 先读 API 再回退静态。
+- ✅ CI 已增加 API 冒烟（启动 skeleton + api-smoke），backend job 产物校验（checksums/manifest:check）完备。
+- ✅ 后续增强：搜索再排序/高亮、GraphRAG subgraph 结构化解析与 doc 聚合补全。
+- ⏳ 可选：manifest 版本切换与前端回滚策略（版本 pin/回退 UI 仍待设计）。
+- ✔ 当前状态：阶段 1 主干完成，可将剩余增强（graph 查询过滤/分页、manifest 版本回滚 UI）列入阶段 2 backlog。
 
 ### 阶段 2：前端可插拔化（2–4 周）
 
-- 在 `packages/frontend` 提供“数据访问层”：封装 `fetchData(kind, locale, source)`，优先读取 API/对象存储，其次回退本地静态产物；支持 SSE/轮询接收增量更新。
-- 对 VitePress 主题进行最小改造：移除直接访问 `docs/_generated` 的路径，全部改用访问层 + shared 契约校验；增量数据可在客户端替换状态而非重建。
-- 新建 SSR/SPA 示例包（如 `packages/frontend-app`）：
-  - 选择 Next/Nuxt/SolidStart 任一方案，展示导航/搜索/GraphRAG 视图与 Telemetry 面板；
-  - 通过 env/BASE 注入 API 入口与 manifest 版本，验证“同一数据，多前端消费”。
-- 为 CLI/批处理消费者提供 `packages/shared` 内的 Node API（如 `loadTelemetry(manifest)`），支持脚本化使用。
+- ✅ 数据访问层雏形：`packages/frontend/src/data/fetchData.mjs` + VitePress 主题默认走 `/api` 数据源，API 状态卡组件可用。
+- ✅ VitePress 页面接入 API：metrics 页面引入 `ApiStatus` 组件展示 API readiness；主题注册 ApiStatus。
+- ⏳ VitePress 其他页面（nav/search 等）切换 API 渲染并做冒烟（保留 `_generated` 回退）。
+- ✅ SSR/SPA 示例 scaffold：`packages/frontend-app` 初始化 Next.js App Router 占位页，消费 `/api` 的 nav/i18n/telemetry/graph/search`。
+- ✅ Next 页面已拉取 nav/i18n/telemetry/manifest 并展示 nav 类目列表（API base 默认 `http://127.0.0.1:8787/api`，可用 `API_BASE` 覆写）。
+- ✅ Next Demo 增补 Graph block：读取 `/api/graph/doc` 的结构化 subgraph，展示节点/边统计与示例条目（可通过 `GRAPH_DOC` 切换）。
+- ⏳ 多前端一致性校验：新增 e2e/快照，确保 VitePress 与 Next 读取同一数据源时 nav/i18n/telemetry 等一致。
 
 ### 阶段 3：观测、回滚与性能治理（2–3 周）
 

@@ -1,0 +1,21 @@
+# API 包
+
+- 初始 BFF skeleton，读取 `packages/backend/dist/data` 中的产物并提供 REST 接口：
+  - `GET /api/nav/:locale`：返回 nav manifest（缺失时回退 DEFAULT_LOCALE，默认 zh）。
+  - `GET /api/i18n-map`：返回 i18n-map.json。
+  - `GET /api/i18n`：返回 i18n 文案（`.vitepress/i18n.json`）。
+  - `GET /api/telemetry`：telemetry.json。
+  - `GET /api/manifest`：manifest.json。
+  - `GET /api/search/embeddings-texts`：embeddings-texts.json。
+  - `GET /api/search`：返回 search 资产在 manifest 中的路径，可传 `?q=`（内置包含匹配，标题优先、包含高亮）+ `limit`/`offset`。
+  - `GET /api/search/pagefind`：pagefind manifest。
+  - `GET /api/search/pagefind/*`：代理 pagefind 索引/worker 资产。
+  - `GET /api/search?q=xxx`：简单全文检索（基于 embeddings-texts.json，按包含匹配、位置打分，支持 `limit`/`offset`）。
+  - `GET /api/graph/*`：代理 docs/graph 导出的 md/mmd/json。
+  - `GET /api/graph/topn`：返回 graphrag 产物 TopN 路径（示例）。
+  - `GET /api/graph/doc?id=<slug>`：按 slug 返回 docs/graph/{id} 下的文件内容（json/md/mmd 自动解析），并附带合并的 `merged` 字段（metadata/subgraph/context/index 概览，subgraph 会解析出节点/边/标签/class）。
+- 环境变量：
+  - `DATA_ROOT`：数据根目录（默认 `packages/backend/dist/data`）。
+  - `HOST` / `PORT`：监听地址，默认 `0.0.0.0:8787`。
+  - `DEFAULT_LOCALE`：nav 回退语言，默认 `zh`。
+- 启动：`npm run start -w packages/api`。
